@@ -41,7 +41,7 @@ export function planSeasonEvents(state: GameState): SystemResult {
     ...createEmptyFanVoteCampaign({
       id: campaignId,
       seasonId,
-      title: "Midseason Fan Voting",
+      title: "All-Star Fan Voting",
       openDate: window.votingOpenDate,
       closeDate: window.votingCloseDate,
     }),

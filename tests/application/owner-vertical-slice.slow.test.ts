@@ -49,7 +49,10 @@ import {
   isUserOnDraftClock,
   tryAutoPickActiveDraftSlot,
 } from "@/systems/draft";
-import { listFreeAgents } from "@/systems/free-agency";
+import {
+  evaluateInterestAtSalary,
+  listFreeAgents,
+} from "@/systems/free-agency";
 import { getActivePhaseId } from "@/systems/phase-engine";
 import { reconcileRosterManagement } from "@/systems/roster-management";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
@@ -777,10 +780,17 @@ describe("Owner Mode vertical slice", () => {
         faState = (await store.load(saveId))!.state;
       }
 
-      const signTarget = faPool.playerIds[0]!;
+      const signSalary = 1_500_000;
+      // Better free agents hold out for more than this offer.
+      const signTarget = faPool.playerIds.find(
+        (playerId) =>
+          evaluateInterestAtSalary(faState, playerId, faTeamId, signSalary)
+            .interested,
+      );
+      expect(signTarget).toBeDefined();
       const signed = await signOwnerFreeAgent(
         saveId,
-        { playerId: signTarget, salary: 1_500_000, years: 1 },
+        { playerId: signTarget!, salary: signSalary, years: 1 },
         store,
       );
       expect(signed.ok).toBe(true);

@@ -464,17 +464,17 @@ describe("blocked season start (calendar date inspector)", () => {
     expect(primaryCount(container)).toBeLessThanOrEqual(1);
   });
 
-  it("user roster of 7: names the team and the limit, no simulate button", () => {
+  it("user roster of 11: names the team and the limit, no simulate button", () => {
     const legal = stateAt("preseason.preparation");
-    const state = shrinkUserRoster(legal, 7);
+    const state = shrinkUserRoster(legal, 11);
     const teamId = state.user.activeOwnerTeamId;
-    expect(state.world.teams[teamId]!.roster.length).toBe(7);
+    expect(state.world.teams[teamId]!.roster.length).toBe(11);
     const date = openerOf(state);
     const { inspector, container } = renderInspector(state, date);
     expect(inspector.simulationPreview!.canSimulate).toBe(false);
     const text = container.textContent ?? "";
     expect(text).toContain("Cannot begin regular season");
-    expect(text).toMatch(/at least 8/);
+    expect(text).toMatch(/at least 12/);
     // The message must say whose roster is short.
     const team = state.world.teams[teamId]!;
     expect(
@@ -489,13 +489,13 @@ describe("blocked season start (calendar date inspector)", () => {
   });
 
   it("a date after the opener is blocked the same way", () => {
-    const state = shrinkUserRoster(stateAt("preseason.preparation"), 7);
+    const state = shrinkUserRoster(stateAt("preseason.preparation"), 11);
     const later = new Date(`${openerOf(state)}T00:00:00Z`);
     later.setUTCDate(later.getUTCDate() + 10);
     const { container } = renderInspector(
       state,
       later.toISOString().slice(0, 10),
     );
-    expect(container.textContent).toMatch(/at least 8/);
+    expect(container.textContent).toMatch(/at least 12/);
   });
 });

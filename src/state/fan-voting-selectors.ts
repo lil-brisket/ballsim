@@ -12,6 +12,9 @@ import type {
 /** Players listed per conference column. */
 export const FAN_VOTE_LEADERS_PER_CONFERENCE = 12;
 
+/** Hub heading; older saves store "Midseason Fan Voting" on the campaign. */
+export const FAN_VOTING_HUB_TITLE = "Fan Voting";
+
 export type FanVoteLeaderRow = {
   rank: number;
   previousRank: number | null;
@@ -58,7 +61,7 @@ export function toFanVotingHubView(state: GameState): FanVotingHubView {
   if (!campaign) {
     return {
       saveId,
-      title: "Midseason Fan Voting",
+      title: FAN_VOTING_HUB_TITLE,
       status: "none",
       openDate: null,
       closeDate: null,
@@ -112,6 +115,8 @@ export function toFanVotingHubView(state: GameState): FanVotingHubView {
           : "League";
       return { id, label, leaders };
     })
+    // Candidates stay unranked until the first vote tick.
+    .filter((conference) => conference.leaders.length > 0)
     .sort((a, b) => a.label.localeCompare(b.label));
 
   let daysRemaining: number | null = null;
@@ -128,7 +133,7 @@ export function toFanVotingHubView(state: GameState): FanVotingHubView {
 
   return {
     saveId,
-    title: campaign.title,
+    title: FAN_VOTING_HUB_TITLE,
     status: campaign.status,
     openDate: campaign.openDate,
     closeDate: campaign.closeDate,
