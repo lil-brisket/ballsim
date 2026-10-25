@@ -66,6 +66,7 @@ export {
   loadDevelopmentLeagueHubView,
   loadFinanceHubView,
   loadFranchiseHubView,
+  loadFranchiseOwnershipView,
   loadTransactionHubView,
   loadStandingsPageView,
   loadLeagueScheduleView,

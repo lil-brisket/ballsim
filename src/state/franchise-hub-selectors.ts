@@ -177,7 +177,7 @@ export function toFranchiseRelocationSummary(
   const state = toRelocationPresentationState(assessment, process, phase);
   const href =
     state === "eligible" || (state === "in_progress" && phase === "offseason")
-      ? `/dashboard/${saveId}/relocation`
+      ? `/dashboard/${saveId}/franchise/relocation`
       : null;
   return {
     state,
