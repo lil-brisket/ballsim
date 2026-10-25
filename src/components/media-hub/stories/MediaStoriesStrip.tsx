@@ -31,6 +31,8 @@ function leadPlayerOf(
       return attachment.player;
     case "award":
       return attachment.winner;
+    case "award_race":
+      return attachment.contenders[0]?.player ?? null;
     default:
       return null;
   }

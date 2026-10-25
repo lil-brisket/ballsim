@@ -186,6 +186,36 @@ function buildSpec(post: TimelinePost): Spec {
           : [],
       };
     }
+    case "award_race": {
+      const lead = a.contenders[0] ?? null;
+      const leadName = lead?.player ? fullName(lead.player) : null;
+      return {
+        fans: lead?.team
+          ? [
+              {
+                team: lead.team,
+                stance: "up",
+                detail: leadName ? `${leadName} for ${a.awardName}.` : null,
+              },
+            ]
+          : [],
+        beatTeamId: lead?.team?.teamId ?? null,
+        reporter: [`The ${a.awardName} race has plenty of weeks left.`],
+        analyst: [
+          leadName
+            ? `${leadName} has set the pace so far.`
+            : "Plenty of separation still to come.",
+        ],
+        players: lead?.player
+          ? [
+              {
+                ref: lead.player,
+                texts: ["Just taking it one game at a time."],
+              },
+            ]
+          : [],
+      };
+    }
     case "playoff": {
       const s = a.seriesScore;
       const detail = s ? `${s.winner}–${s.loser}.` : null;

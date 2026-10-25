@@ -46,6 +46,7 @@ describe("media showcase page", () => {
         "game",
         "performance",
         "award",
+        "award_race",
         "playoff",
         "streak",
         "trade",
@@ -71,6 +72,9 @@ describe("media showcase page", () => {
     // award
     expect(feed.getByText("Most Valuable Player")).toBeTruthy();
     expect(feed.getByText("Dale Whitcombe")).toBeTruthy();
+    // award race
+    expect(feed.getByText("Defensive Player of the Year race")).toBeTruthy();
+    expect(feed.getByText("Previous leader: Imani Strand")).toBeTruthy();
     // playoff
     expect(feed.getByText("Champions")).toBeTruthy();
     expect(feed.getByText("Sweep")).toBeTruthy();

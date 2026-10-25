@@ -156,6 +156,10 @@ function attachmentPlayerIds(attachment: TimelineAttachment): string[] {
       return [attachment.player.playerId];
     case "award":
       return attachment.winner ? [attachment.winner.playerId] : [];
+    case "award_race":
+      return attachment.contenders.flatMap((c) =>
+        c.player ? [c.player.playerId] : [],
+      );
     case "trade":
       return attachment.movements.map((m) => m.player.playerId);
     case "signing":
@@ -174,6 +178,8 @@ function attachmentTeams(attachment: TimelineAttachment): TimelineTeamRef[] {
       return [attachment.team, attachment.opponent];
     case "award":
       return attachment.team ? [attachment.team] : [];
+    case "award_race":
+      return attachment.contenders.flatMap((c) => (c.team ? [c.team] : []));
     case "playoff":
       return attachment.loser
         ? [attachment.winner, attachment.loser]

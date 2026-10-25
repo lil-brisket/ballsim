@@ -30,6 +30,7 @@ import { computeEngagement, type Engagement } from "./engagement";
 import { hashParts, pick } from "./seed";
 import type {
   AwardAttachment,
+  AwardRaceAttachment,
   GameAttachment,
   InjuryAttachment,
   LeagueAttachment,
@@ -541,6 +542,65 @@ function awardTemplates(a: AwardAttachment): TemplateSet {
   };
 }
 
+// ----------------------------------------------------------- award races
+
+const RACE_LABELS: Partial<Record<AwardRaceAttachment["awardId"], string>> = {
+  mvp: "MVP",
+  dpoy: "DPOY",
+  roy: "ROY",
+};
+const LADDER_LENGTH = 3;
+
+function awardRaceTemplates(r: AwardRaceAttachment): TemplateSet {
+  const label = RACE_LABELS[r.awardId] ?? r.awardName;
+  const week = formatGameDate(r.throughDate);
+  const named = r.contenders.flatMap((c) => {
+    const name = c.player ? fullName(c.player) : c.coachName;
+    return name ? [{ name, abbreviation: c.team?.abbreviation ?? null }] : [];
+  });
+  const lead = named[0];
+  const second = named[1];
+  const prev = r.previousLeaderName;
+  if (!lead) {
+    return {
+      caseKey: "empty",
+      variants: [anyone(() => `The ${label} race is taking shape.`)],
+    };
+  }
+  const ladder = named
+    .slice(0, LADDER_LENGTH)
+    .map(
+      (c, i) =>
+        `${i + 1}. ${c.name}${c.abbreviation ? ` (${c.abbreviation})` : ""}`,
+    )
+    .join(" ");
+  return {
+    caseKey: prev ? "new_leader" : "ladder",
+    variants: [
+      anyone(() => `${label} ladder, week ending ${week}: ${ladder}`),
+      anyone(() => `The ${label} race through ${week}: ${ladder}`),
+      anyone(() =>
+        prev
+          ? joinParts(
+              `${lead.name} takes over the top of the ${label} race from ${prev}.`,
+              ladder,
+            )
+          : null,
+      ),
+      anyone(() =>
+        prev
+          ? `New leader in the ${label} race: ${lead.name} moves past ${prev}.`
+          : null,
+      ),
+      anyone(() =>
+        !prev && second
+          ? `${lead.name} leads the ${label} race, with ${second.name} next in line.`
+          : null,
+      ),
+    ],
+  };
+}
+
 // -------------------------------------------------------------- playoffs
 
 function playoffTemplates(p: PlayoffAttachment): TemplateSet {
@@ -983,6 +1043,8 @@ function templatesFor(post: TimelinePost): TemplateSet {
       return performanceTemplates(a);
     case "award":
       return awardTemplates(a);
+    case "award_race":
+      return awardRaceTemplates(a);
     case "playoff":
       return playoffTemplates(a);
     case "streak":
@@ -1038,6 +1100,7 @@ export function authorCandidates(
       list = [cast.team(a.team.teamId), cast.analyst];
       break;
     case "award":
+    case "award_race":
       list = [cast.league];
       break;
     case "playoff":

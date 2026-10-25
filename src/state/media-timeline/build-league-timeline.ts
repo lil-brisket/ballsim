@@ -3,6 +3,7 @@ import type { MediaReadState } from "@/domain/entities/media-item";
 import type { TeamId } from "@/domain/ids";
 import { computeRelevanceScore } from "@/systems/media-hub/relevance";
 import type { GameState, OwnedFranchiseState } from "@/state/game-state";
+import { detectAwardRaces } from "./detect-award-races";
 import { detectAwards } from "./detect-awards";
 import { detectGames } from "./detect-games";
 import { detectPerformances } from "./detect-performances";
@@ -32,6 +33,8 @@ export const TIMELINE_LIMITS = {
   /** Trending counts tags over this many game days. */
   trendingGameDays: 7,
   trendingCount: 5,
+  /** Weekly award-race posts kept per award (each re-scores the season). */
+  awardRaceWeeks: 4,
   pageSize: 20,
 } as const;
 
@@ -141,6 +144,7 @@ function buildFullTimeline(
     ...detectPerformances(input),
     ...detectStreaks(input),
     ...detectAwards(input),
+    ...detectAwardRaces(input),
     ...detectPlayoffs(input),
   ];
   const relevanceByTeams = new Map<string, number>();

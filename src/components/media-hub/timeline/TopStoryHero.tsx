@@ -41,6 +41,8 @@ export function heroTeamOf(
     case "signing":
     case "injury":
       return attachment.team;
+    case "award_race":
+      return attachment.contenders[0]?.team ?? null;
     case "playoff":
       return attachment.winner;
     case "trade":
@@ -172,6 +174,18 @@ function heroGraphic(
           ) : null,
         player: attachment.winner,
       };
+    case "award_race": {
+      const leader = attachment.contenders[0]?.player ?? null;
+      return {
+        graphic: leader ? (
+          <HeroPortrait player={leader} branding={branding} context={context} />
+        ) : (
+          <TeamMark branding={branding} size="lg" />
+        ),
+        numbers: null,
+        player: leader,
+      };
+    }
     case "game": {
       const { home, away, score, winnerTeamId } = attachment;
       return {
