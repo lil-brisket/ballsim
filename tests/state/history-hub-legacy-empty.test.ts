@@ -10,7 +10,8 @@ import {
   toTeamRecordsView,
 } from "@/state/franchise-selectors";
 import {
-  HISTORY_HUB_TABS,
+  HISTORY_HUB_ROUTE_TABS,
+  misroutedHistoryHubTab,
   resolveHistoryHubTab,
   toHistoryHubView,
 } from "@/state/history-hub-selectors";
@@ -56,9 +57,9 @@ describe("history hub on a save with no history", () => {
     expect(toPlayerHistoryView(state, "missing").hasHistory).toBe(false);
   });
 
-  it("builds every hub tab on both routes without throwing", () => {
-    for (const route of ["awards", "history"] as const) {
-      for (const tab of HISTORY_HUB_TABS) {
+  it("builds every hub tab on every route without throwing", () => {
+    for (const route of ["awards", "history", "team"] as const) {
+      for (const tab of HISTORY_HUB_ROUTE_TABS[route]) {
         const view = toHistoryHubView(state, route, { tab });
         expect(view.tab).toBe(tab);
       }
@@ -97,28 +98,64 @@ describe("resolveHistoryHubTab (legacy deep links)", () => {
     ).toBe("awards");
   });
 
-  it("defaults /history to Team Records for the owner team", () => {
-    expect(resolveHistoryHubTab(state, "history", {})).toBe("teams");
-    const view = toHistoryHubView(state, "history", {});
+  it("defaults /history to League History", () => {
+    expect(resolveHistoryHubTab(state, "history", {})).toBe("league");
+  });
+
+  it("defaults /team/history to Team Records for the owner team", () => {
+    expect(resolveHistoryHubTab(state, "team", {})).toBe("teams");
+    const view = toHistoryHubView(state, "team", {});
     expect(view.selectedTeam?.teamId).toBe(state.user.activeOwnerTeamId);
     expect(view.ownerFranchise).not.toBeNull();
   });
 
-  it("honours explicit tab, team, and player params", () => {
-    expect(resolveHistoryHubTab(state, "history", { tab: "players" })).toBe(
-      "players",
-    );
-    expect(resolveHistoryHubTab(state, "history", { tab: "bogus" })).toBe(
+  it("ignores a tab the route does not show", () => {
+    expect(resolveHistoryHubTab(state, "team", { tab: "league" })).toBe(
       "teams",
     );
+    expect(resolveHistoryHubTab(state, "history", { tab: "teams" })).toBe(
+      "league",
+    );
+    expect(toHistoryHubView(state, "awards", { tab: "teams" }).tab).not.toBe(
+      "teams",
+    );
+  });
+
+  it("names the route that owns a misrouted tab", () => {
+    expect(misroutedHistoryHubTab("awards", { tab: "teams" })).toBe("team");
+    expect(misroutedHistoryHubTab("awards", { tab: "players" })).toBe("team");
+    expect(misroutedHistoryHubTab("awards", { tab: "league" })).toBe("history");
+    expect(misroutedHistoryHubTab("history", { tab: "awards" })).toBe("awards");
+    expect(misroutedHistoryHubTab("history", { tab: "players" })).toBe("team");
+    expect(misroutedHistoryHubTab("team", { tab: "current" })).toBe("awards");
+    expect(misroutedHistoryHubTab("team", { tab: "jerseys" })).toBeNull();
+    expect(misroutedHistoryHubTab("awards", { tab: "awards" })).toBeNull();
+    expect(misroutedHistoryHubTab("awards", {})).toBeNull();
+    expect(misroutedHistoryHubTab("awards", { tab: "bogus" })).toBeNull();
+  });
+
+  it("builds the retired jerseys tab only when asked on the team route", () => {
+    const view = toHistoryHubView(state, "team", { tab: "jerseys" });
+    expect(view.tab).toBe("jerseys");
+    expect(view.retiredJerseys).not.toBeNull();
+    expect(view.retiredJerseys?.retiredNumbers).toEqual([]);
+    expect(view.teamRecords).toBeNull();
+    expect(toHistoryHubView(state, "team", {}).retiredJerseys).toBeNull();
+  });
+
+  it("honours explicit tab, team, and player params", () => {
+    expect(resolveHistoryHubTab(state, "team", { tab: "players" })).toBe(
+      "players",
+    );
+    expect(resolveHistoryHubTab(state, "team", { tab: "bogus" })).toBe("teams");
     const [, other] = teamIds(state);
-    const teamView = toHistoryHubView(state, "history", {
+    const teamView = toHistoryHubView(state, "team", {
       tab: "teams",
       team: other,
     });
     expect(teamView.selectedTeam?.teamId).toBe(other);
     expect(teamView.ownerStory).toBeNull();
-    const playerView = toHistoryHubView(state, "history", {
+    const playerView = toHistoryHubView(state, "team", {
       tab: "players",
       player: "p_x",
     });

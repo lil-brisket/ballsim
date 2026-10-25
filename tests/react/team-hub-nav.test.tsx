@@ -22,6 +22,9 @@ describe("TeamHubSubNav", () => {
     expect(
       screen.getByRole("link", { name: "Contracts" }).getAttribute("href"),
     ).toBe("/dashboard/save_test/team/contracts");
+    expect(
+      screen.getByRole("link", { name: "History" }).getAttribute("href"),
+    ).toBe("/dashboard/save_test/team/history");
 
     unmount();
   });

@@ -159,6 +159,28 @@ export type AwardAttachment = {
   runnerUp: { name: string; teamAbbreviation: string | null } | null;
 };
 
+export type AwardRaceContender = {
+  /** 1 = leading the race. */
+  rank: number;
+  /** Null for coach races. */
+  player: TimelinePlayerRef | null;
+  coachName: string | null;
+  team: TimelineTeamRef | null;
+};
+
+/** Weekly standings of an award that has not been decided yet. */
+export type AwardRaceAttachment = {
+  type: "award_race";
+  awardId: AwardDefinitionId;
+  awardName: string;
+  seasonYear: number;
+  /** Last day of the week the standings cover (a Sunday). */
+  throughDate: string;
+  contenders: AwardRaceContender[];
+  /** The previous week's leader when someone else leads now; else null. */
+  previousLeaderName: string | null;
+};
+
 export type PlayoffEvent = "series_won" | "champion" | "previous_champion";
 
 export type PlayoffAttachment = {
@@ -226,6 +248,7 @@ export type TimelineAttachment =
   | GameAttachment
   | PerformanceAttachment
   | AwardAttachment
+  | AwardRaceAttachment
   | PlayoffAttachment
   | StreakAttachment
   | TradeAttachment

@@ -7,6 +7,16 @@ export const AWARD_METRIC_VERSION = 1;
 
 export const AWARD_CANDIDATE_LIMIT = 5;
 
+/**
+ * Voters do not copy the scoring table. Each contender within `maxScoreGap`
+ * points of the leader gets ballot weight exp(-gap / scoreSpread), so a tight
+ * race can go to the runner-up while a clear leader nearly always wins.
+ */
+export const AWARD_VOTING_CONFIG = {
+  scoreSpread: 1,
+  maxScoreGap: 5,
+} as const;
+
 export const AWARD_ELIGIBILITY_CONFIG = {
   playerOfMonth: { minGames: 5, minMinutes: 100 },
   rookieOfMonth: { minGames: 4, minMinutes: 80 },

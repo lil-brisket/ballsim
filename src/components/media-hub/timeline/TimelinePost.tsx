@@ -3,6 +3,7 @@ import type {
   TimelinePostView,
 } from "@/state/media-timeline/post-view";
 import { AwardAttachmentCard } from "./AwardAttachmentCard";
+import { AwardRaceAttachmentCard } from "./AwardRaceAttachmentCard";
 import { GameAttachmentCard } from "./GameAttachmentCard";
 import { InjuryAttachmentCard } from "./InjuryAttachmentCard";
 import { LeagueAttachmentCard } from "./LeagueAttachmentCard";
@@ -35,6 +36,10 @@ export function TimelineAttachmentCard(props: {
       );
     case "award":
       return <AwardAttachmentCard attachment={attachment} context={context} />;
+    case "award_race":
+      return (
+        <AwardRaceAttachmentCard attachment={attachment} context={context} />
+      );
     case "playoff":
       return (
         <PlayoffAttachmentCard attachment={attachment} context={context} />

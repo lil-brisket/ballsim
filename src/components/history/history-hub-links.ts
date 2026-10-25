@@ -1,17 +1,17 @@
-import type {
-  HistoryHubRoute,
-  HistoryHubTab,
-} from "@/state/history-hub-selectors";
+import type { HistoryHubRoute } from "@/state/history-hub-selectors";
 
 export type HistoryHubLinkParams = {
-  tab?: HistoryHubTab;
+  tab?: string;
   season?: string;
   award?: string;
   team?: string;
   player?: string;
 };
 
-/** Hub URL on the same legacy route (/awards or /history) the user is on. */
+/**
+ * Hub URL for a route: /awards, /history, or /team/history for the team
+ * route (team records, player history, retired jerseys).
+ */
 export function historyHubHref(
   saveId: string,
   route: HistoryHubRoute,
@@ -22,6 +22,9 @@ export function historyHubHref(
     if (value) search.set(key, value);
   }
   const qs = search.toString();
-  const base = `/dashboard/${saveId}/${route}`;
+  const base =
+    route === "team"
+      ? `/dashboard/${saveId}/team/history`
+      : `/dashboard/${saveId}/${route}`;
   return qs ? `${base}?${qs}` : base;
 }
