@@ -53,6 +53,7 @@ import {
   evaluateInterestAtSalary,
   listFreeAgents,
 } from "@/systems/free-agency";
+import { freeAgentAsk } from "@/systems/free-agent-market";
 import { getActivePhaseId } from "@/systems/phase-engine";
 import { reconcileRosterManagement } from "@/systems/roster-management";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
@@ -780,17 +781,27 @@ describe("Owner Mode vertical slice", () => {
         faState = (await store.load(saveId))!.state;
       }
 
-      const signSalary = 1_500_000;
-      // Better free agents hold out for more than this offer.
-      const signTarget = faPool.playerIds.find(
-        (playerId) =>
-          evaluateInterestAtSalary(faState, playerId, faTeamId, signSalary)
-            .interested,
-      );
-      expect(signTarget).toBeDefined();
+      // Player ids are random UUIDs, so development (and so asking prices)
+      // differs run to run: offer each free agent at least his ask, cheapest
+      // first, instead of a fixed salary.
+      const signOffer = faPool.playerIds
+        .map((playerId) => ({
+          playerId,
+          salary: Math.max(
+            1_500_000,
+            freeAgentAsk(faState, faState.world.players[playerId]!),
+          ),
+        }))
+        .sort((a, b) => a.salary - b.salary)
+        .find(
+          ({ playerId, salary }) =>
+            evaluateInterestAtSalary(faState, playerId, faTeamId, salary)
+              .interested,
+        );
+      expect(signOffer).toBeDefined();
       const signed = await signOwnerFreeAgent(
         saveId,
-        { playerId: signTarget!, salary: signSalary, years: 1 },
+        { playerId: signOffer!.playerId, salary: signOffer!.salary, years: 1 },
         store,
       );
       expect(signed.ok).toBe(true);
