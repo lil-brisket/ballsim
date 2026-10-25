@@ -227,14 +227,14 @@ describe("franchise-hub-selectors", () => {
     const hub = toFranchiseHubView(state);
     expect(hub.relocationSummary.state).toBe("eligible");
     expect(hub.relocationSummary.href).toBe(
-      `/dashboard/${state.meta.saveId}/relocation`,
+      `/dashboard/${state.meta.saveId}/franchise/relocation`,
     );
     const relocationDecision = hub.decisions.find(
       (item) => item.id === "action_relocation",
     );
     expect(relocationDecision).toBeDefined();
     expect(relocationDecision?.href).toBe(
-      `/dashboard/${state.meta.saveId}/relocation`,
+      `/dashboard/${state.meta.saveId}/franchise/relocation`,
     );
     expect(relocationDecision?.hrefLabel).toBe("Review Stay vs Move");
   });
@@ -248,7 +248,7 @@ describe("franchise-hub-selectors", () => {
     const hub = toFranchiseHubView(state);
     expect(hub.relocationSummary.state).toBe("in_progress");
     expect(hub.relocationSummary.href).toBe(
-      `/dashboard/${state.meta.saveId}/relocation`,
+      `/dashboard/${state.meta.saveId}/franchise/relocation`,
     );
   });
 

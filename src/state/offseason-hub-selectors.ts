@@ -279,7 +279,10 @@ export function toOffseasonHubView(state: GameState): OffseasonHubView {
   ];
 
   if (isRelocationAccessible(state, teamId)) {
-    quickLinks.push({ label: "Relocation", href: `${base}/relocation` });
+    quickLinks.push({
+      label: "Relocation",
+      href: `${base}/franchise/relocation`,
+    });
   }
 
   return {

@@ -3,13 +3,12 @@ import { notFound } from "next/navigation";
 import { loadFranchiseHubView } from "@/application/game-service";
 import { FacilitiesSummarySection } from "@/components/franchise/FacilitiesSummarySection";
 import { FinanceSnapshotCard } from "@/components/franchise/FinanceSnapshotCard";
+import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
 import { RelocationSummarySection } from "@/components/franchise/RelocationSummarySection";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
-import { FranchiseHistorySummary } from "@/components/owner/FranchiseHistorySummary";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -31,8 +30,9 @@ function formatDriver(key: string | null): string | null {
 }
 
 /**
- * Franchise Hub — ownership / GM command center.
- * Deep work lives on subsystem pages; this surface does not submit actions.
+ * Franchise Hub overview — ownership / GM command center.
+ * Deep work lives on subsystem pages and the History / Relocation tabs;
+ * this surface does not submit actions.
  */
 export default async function FranchiseOverviewPage({
   params,
@@ -47,36 +47,19 @@ export default async function FranchiseOverviewPage({
 
   const positive = formatDriver(view.valueExplanation.topPositiveDriver);
   const negative = formatDriver(view.valueExplanation.topNegativeDriver);
+  const tenure =
+    view.ownerTenureYears > 0
+      ? `${view.ownerTenureYears} season${view.ownerTenureYears === 1 ? "" : "s"}`
+      : null;
+  const subtitle = tenure
+    ? `${view.teamName} · owner tenure ${tenure}`
+    : view.teamName;
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Franchise"
-        subtitle={`${view.teamName} · long-term ownership`}
-      />
+      <PageHeader title="Franchise" subtitle={subtitle} />
+      <FranchiseSubNav saveId={saveId} active="overview" />
       {error ? <ErrorState message={error} /> : null}
-
-      <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-zinc-800 pb-3">
-        <div>
-          <p className="text-sm text-zinc-400">Organization</p>
-          <SectionHeading as="h2" title={view.teamName} />
-          <p className="text-sm text-zinc-500">
-            Owner tenure:{" "}
-            {view.ownerTenureYears > 0
-              ? `${view.ownerTenureYears} season${view.ownerTenureYears === 1 ? "" : "s"}`
-              : "—"}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-zinc-400">Franchise value</p>
-          <p className="text-lg font-medium text-zinc-100">
-            <MoneyDisplay amount={view.franchiseValue} />
-          </p>
-          <p className="text-sm capitalize text-zinc-500">
-            {view.valueExplanation.standing.replaceAll("_", " ")}
-          </p>
-        </div>
-      </div>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -102,7 +85,14 @@ export default async function FranchiseOverviewPage({
         />
         <StatCard
           label="Value"
-          value={<MoneyDisplay amount={view.snapshot.franchiseValue} />}
+          value={
+            <>
+              <MoneyDisplay amount={view.snapshot.franchiseValue} />
+              <p className="mt-1 font-sans text-sm font-normal capitalize text-zinc-500">
+                {view.valueExplanation.standing.replaceAll("_", " ")}
+              </p>
+            </>
+          }
           density="compact"
         />
       </section>
@@ -180,14 +170,6 @@ export default async function FranchiseOverviewPage({
               );
             })}
           </ul>
-        )}
-      </Section>
-
-      <Section title="Franchise History">
-        {view.history.seasons.length === 0 ? (
-          <EmptyState message="No franchise history recorded yet." />
-        ) : (
-          <FranchiseHistorySummary view={view.history} />
         )}
       </Section>
     </div>

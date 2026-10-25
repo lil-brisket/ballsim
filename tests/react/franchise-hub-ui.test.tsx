@@ -92,7 +92,7 @@ describe("Franchise hub UI", () => {
         summary={relocation({
           state: "eligible",
           statusLabel: "strong case",
-          href: "/dashboard/save_1/relocation",
+          href: "/dashboard/save_1/franchise/relocation",
           primaryDriver: "Weak local market",
         })}
       />,
@@ -100,7 +100,7 @@ describe("Franchise hub UI", () => {
     expect(screen.getByText("Explore Relocation")).toBeTruthy();
     expect(screen.getByText("Weak local market")).toBeTruthy();
     expect(screen.getByRole("link").getAttribute("href")).toBe(
-      "/dashboard/save_1/relocation",
+      "/dashboard/save_1/franchise/relocation",
     );
     expect(container.querySelector("form")).toBeNull();
   });
