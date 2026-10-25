@@ -1418,7 +1418,9 @@ describe("canPerformAction", () => {
   let base: GameState;
 
   beforeAll(() => {
-    const fixture = createDraftFixture();
+    // Legal rosters with room on both sides: one release stays at or above
+    // the minimum, one signing stays at or below the maximum.
+    const fixture = createDraftFixture({ rosterSize: 13 });
     const rng = createSeededRng(TEST_RNG_SEED);
     base = createDraft(fixture, rng).state;
   });

@@ -7,6 +7,7 @@ import {
 } from "@/systems/custom-content/parse";
 import { validateRosterPackage } from "@/systems/custom-content/validate-roster";
 import { validateDraftClassPackage } from "@/systems/custom-content/validate-draft-class";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import {
   makeDraftClassPackage,
   makeFullRosterPackage,
@@ -22,16 +23,19 @@ const STAR_ATTRIBUTES = Object.fromEntries(
   PLAYER_ATTRIBUTE_KEYS.map((key) => [key, 92]),
 ) as PlayerSourceRecord["attributes"];
 
-function eightManTeam(
+function minimumRosterTeam(
   overrides: Partial<PlayerSourceRecord> = {},
 ): RosterPlayerSource[] {
-  return Array.from({ length: 8 }, (_, index) => ({
-    ...makePlayerSource({
-      ...overrides,
-      sourceId: `nba_${index}`,
+  return Array.from(
+    { length: TRADE_ROSTER_RULES.minRosterSize },
+    (_, index) => ({
+      ...makePlayerSource({
+        ...overrides,
+        sourceId: `nba_${index}`,
+      }),
+      teamSourceId: "t0",
     }),
-    teamSourceId: "t0",
-  }));
+  );
 }
 
 describe("custom content validation", () => {
@@ -155,7 +159,7 @@ describe("custom content validation", () => {
   it("accepts NBA-sized centers and star overalls without body or overall warnings", () => {
     const pkg = makeRosterPackage({
       teams: [{ sourceId: "t0", name: "Centers" }],
-      players: eightManTeam({
+      players: minimumRosterTeam({
         position: "C",
         archetype: "rim_protector",
         heightInches: 88,
@@ -182,7 +186,7 @@ describe("custom content validation", () => {
   it("does not warn when a legal roster is smaller than the default 15", () => {
     const pkg = makeRosterPackage({
       teams: [{ sourceId: "t0", name: "Core" }],
-      players: eightManTeam({
+      players: minimumRosterTeam({
         position: "PG",
         archetype: "scoring_guard",
       }),
@@ -202,7 +206,7 @@ describe("custom content validation", () => {
   it("does not warn when a veteran custom star has 99 potential", () => {
     const pkg = makeRosterPackage({
       teams: [{ sourceId: "t0", name: "Stars" }],
-      players: eightManTeam({
+      players: minimumRosterTeam({
         position: "C",
         archetype: "rim_protector",
         age: 32,
@@ -227,7 +231,7 @@ describe("custom content validation", () => {
   it("accepts a light NBA point guard without body warnings", () => {
     const pkg = makeRosterPackage({
       teams: [{ sourceId: "t0", name: "Guards" }],
-      players: eightManTeam({
+      players: minimumRosterTeam({
         position: "PG",
         archetype: "scoring_guard",
         heightInches: 74,
@@ -251,7 +255,7 @@ describe("custom content validation", () => {
   it("still rejects bodies outside the NBA import envelope", () => {
     const tooTall = makeRosterPackage({
       teams: [{ sourceId: "t0", name: "A" }],
-      players: eightManTeam({
+      players: minimumRosterTeam({
         position: "C",
         archetype: "rim_protector",
         heightInches: 91,
@@ -260,7 +264,7 @@ describe("custom content validation", () => {
     });
     const tooLight = makeRosterPackage({
       teams: [{ sourceId: "t0", name: "A" }],
-      players: eightManTeam({
+      players: minimumRosterTeam({
         position: "PG",
         archetype: "scoring_guard",
         heightInches: 74,

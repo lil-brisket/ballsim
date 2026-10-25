@@ -8,6 +8,7 @@ import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
 import type { GameState } from "@/state/game-state";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { processWeeklyPlayerPayroll } from "@/systems/player-payroll";
 import {
   AI_WAIVE_MAX_DEAD_MONEY_CAP_SHARE,
@@ -200,20 +201,23 @@ describe("getPlayerReleaseBlockReason", () => {
     let state = regularSeasonLeague();
     const teamId = firstTeam(state);
     const team = state.world.teams[teamId]!;
-    // Cut the roster down to the minimum of 8 without dead money noise.
+    // Cut the roster down to the minimum without dead money noise.
     state = {
       ...state,
       world: {
         ...state.world,
         teams: {
           ...state.world.teams,
-          [teamId]: { ...team, roster: team.roster.slice(0, 8) },
+          [teamId]: {
+            ...team,
+            roster: team.roster.slice(0, TRADE_ROSTER_RULES.minRosterSize),
+          },
         },
       },
     };
     const playerId = state.world.teams[teamId]!.roster[0]!;
     expect(getPlayerReleaseBlockReason(state, { playerId, teamId })).toMatch(
-      /fewer than 8/,
+      new RegExp(`fewer than ${TRADE_ROSTER_RULES.minRosterSize}`),
     );
   });
 

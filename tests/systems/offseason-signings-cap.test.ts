@@ -16,6 +16,7 @@ import {
   DEFAULT_ROSTER_SIZE,
   rosterPositionForSlot,
 } from "@/systems/roster-generation-config";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import type { PlayerPosition } from "@/domain/entities/player";
 import { seasonRecord, withFranchiseHistory } from "../state/history-fixtures";
 import { fillShortRosters } from "@/systems/roster-generation";
@@ -106,10 +107,19 @@ function releaseFromTeam(
 }
 
 describe("offseason signings and the salary cap (#82)", () => {
-  it("tops up an owner's short roster with minimum deals only (#93)", () => {
+  it("tops up an owner's short roster to the minimum with minimum deals only (#93)", () => {
     const { state: initial, rng } = setup("fill_owner_minimum", 34);
     const ownerId = initial.user.activeOwnerTeamId;
-    const state = releaseFromTeam(initial, ownerId, 2);
+    // An owner team is only filled up to the roster minimum, so drop it two
+    // below that.
+    const state = releaseFromTeam(
+      initial,
+      ownerId,
+      DEFAULT_ROSTER_SIZE - TRADE_ROSTER_RULES.minRosterSize + 2,
+    );
+    expect(state.world.teams[ownerId]!.roster.length).toBe(
+      TRADE_ROSTER_RULES.minRosterSize - 2,
+    );
     const year = getContractSigningYear(state);
     const cap = getLeagueSalaryCap(state);
     expect(getTeamPayroll(ownerId, year, state)).toBeLessThan(cap);
@@ -120,6 +130,9 @@ describe("offseason signings and the salary cap (#82)", () => {
       (playerId) => !before.has(playerId),
     );
     expect(added).toHaveLength(2);
+    expect(filled.world.teams[ownerId]!.roster).toHaveLength(
+      TRADE_ROSTER_RULES.minRosterSize,
+    );
     for (const playerId of added) {
       const contract =
         filled.business.contracts[filled.world.players[playerId]!.contractId!]!;
@@ -187,7 +200,8 @@ describe("offseason signings and the salary cap (#82)", () => {
   it("fills a capped-out roster with minimum deals, not market contracts", () => {
     const { state: initial, rng } = setup("fill_respects_cap", 33);
     const teamId = aiTeamIds(initial)[0]!;
-    let state = releaseFromTeam(initial, teamId, 3);
+    // Clear the opening free agents so the fill has to generate players.
+    let state = withoutFreeAgents(releaseFromTeam(initial, teamId, 3));
     const year = getContractSigningYear(state);
     const cap = getLeagueSalaryCap(state);
 
@@ -257,7 +271,12 @@ describe("offseason signings and the salary cap (#82)", () => {
   it("signs the best free agent left for the minimum when no team can pay him", () => {
     const { state: initial, rng } = setup("fill_best_at_minimum", 36);
     const ownerId = initial.user.activeOwnerTeamId;
-    let state = releaseFromTeam(initial, ownerId, 1);
+    // Drop the owner one below the minimum so the fill signs exactly one player.
+    let state = releaseFromTeam(
+      initial,
+      ownerId,
+      DEFAULT_ROSTER_SIZE - TRADE_ROSTER_RULES.minRosterSize + 1,
+    );
     const position = rosterPositionForSlot(
       state.world.teams[ownerId]!.roster.length,
     );
@@ -284,6 +303,22 @@ describe("offseason signings and the salary cap (#82)", () => {
     ).toBeGreaterThan(REPLACEMENT_LEVEL_OVERALL);
   });
 });
+
+/** Drops every unsigned player from the world (including opening free agents). */
+function withoutFreeAgents(state: GameState): GameState {
+  const freeAgents = new Set<string>(listFreeAgents(state).playerIds);
+  return {
+    ...state,
+    world: {
+      ...state.world,
+      players: Object.fromEntries(
+        Object.entries(state.world.players).filter(
+          ([id]) => !freeAgents.has(id),
+        ),
+      ),
+    },
+  };
+}
 
 /** Turns the first free agent into the best (all-88) player at `position`. */
 function withBestFreeAgentAt(

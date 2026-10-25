@@ -20,6 +20,10 @@ import { createPlayer } from "../factories/player";
 import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
 import { asPlayerId } from "@/domain/ids";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
+import {
+  evaluateInterestAtSalary,
+  listFreeAgents,
+} from "@/systems/free-agency";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
 import { maxContractSalary, vetMinSalary } from "@/systems/salary-scale";
 import { TEST_RNG_SEED } from "../helpers/determinism";
@@ -106,4 +110,31 @@ describe("owner free-agent signing salary bounds", () => {
       );
     },
   );
+
+  it("answers a signing on the spot: a turned-down deal saves nothing (#183)", async () => {
+    const { store, saveId, cap } = await setup();
+    const before = (await store.load(saveId))!.state;
+    const teamId = before.user.activeOwnerTeamId;
+    const salary = vetMinSalary(cap);
+    const holdout = listFreeAgents(before).playerIds.find(
+      (playerId) =>
+        !evaluateInterestAtSalary(before, playerId, teamId, salary).interested,
+    );
+    expect(holdout).toBeDefined();
+
+    const result = await signOwnerFreeAgent(
+      saveId,
+      { playerId: holdout!, salary, years: 1 },
+      store,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/turned down the offer/);
+    }
+    const after = (await store.load(saveId))!.state;
+    expect(after.world.players[holdout!]!.contractId).toBeNull();
+    expect(after.business.freeAgency.offers).toEqual(
+      before.business.freeAgency.offers,
+    );
+  });
 });

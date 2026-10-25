@@ -72,6 +72,9 @@ describe("free-agency-hub-selectors", () => {
     // A new league starts in preseason, when free agents can be signed.
     expect(hub.inSeason).toBe(true);
     expect(hub.inactiveReason).toBeNull();
+    // It opens with a market (#183); in-season signings have no standing offers.
+    expect(hub.availableCount).toBeGreaterThan(0);
+    expect(hub.offers).toEqual([]);
   });
 
   it("shows next season's payroll and cap space in the offseason (#82)", () => {

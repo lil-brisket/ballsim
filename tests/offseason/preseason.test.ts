@@ -278,22 +278,23 @@ describe("leaving Staff & Development", () => {
     }
   });
 
-  it("signs the fills of a short user roster at the minimum, never at market", () => {
+  it("fills a short user roster only to the league minimum, at the minimum salary", () => {
     const state = removeFromRoster(
       beforeCamp,
       userTeamId,
-      beforeCamp.world.teams[userTeamId]!.roster.length - minRosterSize,
+      beforeCamp.world.teams[userTeamId]!.roster.length - (minRosterSize - 3),
     );
-    const shortBy = state.world.teams[userTeamId]!.roster.length;
-    expect(shortBy).toBe(minRosterSize);
+    const kept = state.world.teams[userTeamId]!.roster.length;
+    expect(kept).toBe(minRosterSize - 3);
     const known = new Set(state.world.teams[userTeamId]!.roster);
 
     const next = advanceLeaguePhase(state).state;
     const roster = next.world.teams[userTeamId]!.roster;
-    expect(roster).toHaveLength(maxRosterSize);
+    // The owner picks the spots above the minimum.
+    expect(roster).toHaveLength(minRosterSize);
     const minimum = vetMinSalary(getLeagueSalaryCap(next));
     const signed = roster.filter((playerId) => !known.has(playerId));
-    expect(signed).toHaveLength(maxRosterSize - shortBy);
+    expect(signed).toHaveLength(3);
     for (const playerId of signed) {
       const contract =
         next.business.contracts[next.world.players[playerId]!.contractId!]!;

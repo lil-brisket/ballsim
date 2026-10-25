@@ -26,6 +26,7 @@ import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store"
 import { createNewOwnerSave } from "@/application/game-service";
 import { validateGameState } from "@/persistence/validate-game-state";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { makeFullRosterPackage } from "../helpers/custom-content";
 
 describe("custom roster save creation", () => {
@@ -57,7 +58,7 @@ describe("custom roster save creation", () => {
     settings.draft.mode = "fantasy";
     const pkg = makeFullRosterPackage({
       teamCount: settings.league.teamCount,
-      playersPerTeam: 8,
+      playersPerTeam: TRADE_ROSTER_RULES.minRosterSize,
     });
     const result = await createNewOwnerSave(
       { name: "Custom Fantasy", settings, rosterPackage: pkg, rngSeed: 23 },
@@ -80,7 +81,9 @@ describe("custom roster save creation", () => {
     const customCount = Object.keys(loaded!.state.world.players).filter((id) =>
       id.startsWith("custom_"),
     ).length;
-    expect(customCount).toBe(settings.league.teamCount * 8);
+    expect(customCount).toBe(
+      settings.league.teamCount * TRADE_ROSTER_RULES.minRosterSize,
+    );
     expect(Object.keys(loaded!.state.world.players).length).toBeGreaterThan(
       customCount,
     );

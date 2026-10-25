@@ -1,6 +1,7 @@
 /**
  * Free Agency Hub presentation.
- * Market / My Offers / Recent Signings. True OVR intentionally exposed (existing model).
+ * Market, plus the owner's offers in offseason free agency. True OVR
+ * intentionally exposed (existing model).
  */
 
 import {
@@ -16,7 +17,6 @@ import { getActiveOwnerTeamId } from "@/state/owner-context";
 import {
   toFreeAgentViews,
   toFreeAgencyOfferViews,
-  toOpenFreeAgencyOfferViews,
   type FreeAgentView,
   type FreeAgencyOfferView,
 } from "@/state/selectors";
@@ -40,16 +40,6 @@ import {
   getTeamPayroll,
 } from "@/systems/salary-cap";
 
-export type FreeAgencyRecentSigning = {
-  offerId: string;
-  playerId: string;
-  playerName: string;
-  salary: number | null;
-  years: number;
-  status: string;
-  createdOn: string;
-};
-
 export type FreeAgencyHubView = {
   active: boolean;
   /**
@@ -68,9 +58,12 @@ export type FreeAgencyHubView = {
   /** Intentional: true OVR from existing FreeAgentView. */
   exposesTrueOverall: true;
   market: FreeAgentView[];
-  myOffers: FreeAgencyOfferView[];
-  openOffers: FreeAgencyOfferView[];
-  recentSignings: FreeAgencyRecentSigning[];
+  /**
+   * Offseason free agency only: the owner's offers this window, open ones
+   * and how the rest were answered. Empty during the season, where a signing
+   * is answered on the spot.
+   */
+  offers: FreeAgencyOfferView[];
   decisions: ActionCenterItem[];
   /** Offer sheets to answer and sheets the owner has out. */
   rfa: OwnerRfaView;
@@ -89,23 +82,20 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
   const signingYear = getContractSigningYear(state);
   const owner = toOwnerDashboardView(state);
   const inSeason = isInSeasonSigningOpen(state);
-  const active = isInLeaguePhase(state, "offseason.free_agency") || inSeason;
+  const freeAgencyOpen = isInLeaguePhase(state, "offseason.free_agency");
+  const active = freeAgencyOpen || inSeason;
 
   const market = toFreeAgentViews(state);
-  const allOffers = toFreeAgencyOfferViews(state);
-  const openOffers = toOpenFreeAgencyOfferViews(state);
-  const recentSignings: FreeAgencyRecentSigning[] = allOffers
-    .filter((o) => o.status === "accepted")
-    .map((o) => ({
-      offerId: o.offerId,
-      playerId: o.playerId,
-      playerName: o.playerName,
-      salary: o.salary,
-      years: o.years,
-      status: o.status,
-      createdOn: o.createdOn,
-    }))
-    .sort((a, b) => b.createdOn.localeCompare(a.createdOn));
+  const windowStart =
+    state.competition.phase?.enteredDate ??
+    state.competition.season.offseasonStageEnteredDate ??
+    state.world.calendar.currentDate;
+  // Offers are made only in this window and withdrawn when it closes.
+  const offers = freeAgencyOpen
+    ? toFreeAgencyOfferViews(state).filter(
+        (offer) => offer.createdOn >= windowStart,
+      )
+    : [];
 
   const actionCenter = buildActionCenterView({
     actionItems: owner.actionItems,
@@ -137,9 +127,7 @@ export function toFreeAgencyHubView(state: GameState): FreeAgencyHubView {
     availableCount: market.length,
     exposesTrueOverall: true,
     market,
-    myOffers: allOffers,
-    openOffers,
-    recentSignings,
+    offers,
     decisions,
     rfa: toOwnerRfaView(state),
     payrollRules: toPayrollRulesView(state),

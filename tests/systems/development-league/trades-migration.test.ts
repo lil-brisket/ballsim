@@ -17,6 +17,7 @@ import {
 import { assignPlayerToDevelopmentLeague } from "@/systems/development-league/assignment";
 import { isPlayerDlAssigned } from "@/systems/development-league/franchise-membership";
 import { executeTrade } from "@/systems/trades/trade-execution";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 
 function seedDraftedPlayer(
   state: ReturnType<typeof createTestGameState>,
@@ -82,7 +83,7 @@ describe("Development League trades", () => {
       (id) => id !== teamA,
     )!;
     // Pad both top-league rosters to satisfy min roster size after trade
-    for (let i = 0; i < 9; i += 1) {
+    for (let i = 0; i < TRADE_ROSTER_RULES.minRosterSize + 1; i += 1) {
       state = seedDraftedPlayer(state, {
         playerId: `pad_a_${i}`,
         teamId: teamA,

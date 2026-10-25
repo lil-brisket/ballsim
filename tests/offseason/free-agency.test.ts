@@ -928,8 +928,13 @@ describe("CPU teams through the free-agency window", () => {
   });
 
   it("never grows the pool", () => {
+    // The league opens with unsigned filler players (ids `player_fa_*`) that
+    // were never part of the stressed pool; count only the stressed pool.
     const sizes = setup.fa.states.map(
-      (state) => listFreeAgents(state).playerIds.length,
+      (state) =>
+        listFreeAgents(state).playerIds.filter(
+          (id) => !String(id).startsWith("player_fa_"),
+        ).length,
     );
     for (let day = 1; day < sizes.length; day += 1) {
       expect(sizes[day]!, `day ${day}`).toBeLessThanOrEqual(sizes[day - 1]!);

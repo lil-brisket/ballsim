@@ -5,7 +5,10 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { bootstrapWorld, runWorldPipeline } from "@/systems/world-pipeline";
 import { beginRegularSeasonFromPreseason } from "@/systems/simulation/season-lifecycle";
 import { generateRosters, fillShortRosters } from "@/systems/roster-generation";
-import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
+import {
+  DEFAULT_ROSTER_SIZE,
+  OPENING_FREE_AGENT_COUNT,
+} from "@/systems/roster-generation-config";
 import { generateSchedule } from "@/systems/schedule-generation";
 import { resetDomainEventSequenceForTests } from "@/domain/events/domain-event";
 import {
@@ -25,8 +28,9 @@ describe("roster and schedule generation", () => {
     const result = generateRosters(state, rng);
 
     const teamCount = Object.keys(state.world.teams).length;
+    // Rostered players plus the unsigned opening free agents.
     expect(Object.keys(result.state.world.players)).toHaveLength(
-      teamCount * DEFAULT_ROSTER_SIZE,
+      teamCount * DEFAULT_ROSTER_SIZE + OPENING_FREE_AGENT_COUNT,
     );
     expect(Object.keys(result.state.business.contracts)).toHaveLength(
       teamCount * DEFAULT_ROSTER_SIZE,
@@ -84,8 +88,13 @@ describe("roster and schedule generation", () => {
       }
     }
 
-    for (const player of Object.values(result.state.world.players)) {
-      expect(player.teamId).not.toBeNull();
+    const signed = Object.values(result.state.world.players).filter(
+      (player) => player.teamId !== null,
+    );
+    expect(signed).toHaveLength(
+      Object.keys(result.state.world.teams).length * DEFAULT_ROSTER_SIZE,
+    );
+    for (const player of signed) {
       const team = result.state.world.teams[player.teamId!];
       expect(team).toBeDefined();
       expect(team!.roster).toContain(player.id);
@@ -101,7 +110,10 @@ describe("roster and schedule generation", () => {
     });
     const rng = createSeededRng(state.meta.rngState);
     const generated = generateRosters(state, rng).state;
-    const teamId = Object.keys(generated.world.teams).sort()[0]!;
+    // An AI team: an owner's team is only filled up to the roster minimum.
+    const teamId = Object.keys(generated.world.teams)
+      .sort()
+      .find((id) => id !== generated.user.activeOwnerTeamId)!;
     const team = generated.world.teams[teamId]!;
     const shortened = {
       ...generated,

@@ -8,6 +8,7 @@ import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { canonicalCustomPlayerId } from "@/systems/custom-content/normalize";
 import { makeFullRosterPackage } from "../../helpers/custom-content";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 
 describe("custom roster import", () => {
   it("applies a valid package into a complete GameState", () => {
@@ -118,7 +119,7 @@ describe("custom roster import", () => {
     ).toBe(true);
   });
 
-  it("pads a custom roster into a full 15-man fantasy pool", () => {
+  it("pads a minimum-size custom roster into a full 15-man fantasy pool", () => {
     const fantasySettings = cloneGameSettings(CBL_GAME_SETTINGS);
     fantasySettings.draft.mode = "fantasy";
     const state = createInitialGameState({
@@ -127,7 +128,10 @@ describe("custom roster import", () => {
       settings: fantasySettings,
     });
     const teamCount = Object.keys(state.world.teams).length;
-    const pkg = makeFullRosterPackage({ teamCount, playersPerTeam: 8 });
+    const pkg = makeFullRosterPackage({
+      teamCount,
+      playersPerTeam: TRADE_ROSTER_RULES.minRosterSize,
+    });
     const boot = bootstrapWorld(
       state,
       createSeededRng(state.meta.rngState),
@@ -154,7 +158,7 @@ describe("custom roster import", () => {
     const fillCount = Object.keys(boot.world.players).filter((id) =>
       id.startsWith("fantasy_fill_"),
     ).length;
-    expect(customCount).toBe(teamCount * 8);
+    expect(customCount).toBe(teamCount * TRADE_ROSTER_RULES.minRosterSize);
     expect(fillCount).toBeGreaterThan(0);
     expect(Object.keys(boot.world.players).length).toBe(
       customCount + fillCount,

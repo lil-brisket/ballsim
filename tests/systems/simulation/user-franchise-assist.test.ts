@@ -4,7 +4,7 @@ import { createTestGameState } from "../../factories/game-state";
 import { createSeededRng } from "@/domain/rng";
 import { runUserFranchiseAssist } from "@/systems/simulation/user-franchise-assist";
 import { evaluateManagementAction } from "@/systems/simulation/management-policy";
-import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { bootstrapWorld } from "@/systems/world-pipeline";
@@ -58,7 +58,10 @@ describe("user-franchise-assist", () => {
 
     const teamId = state.user.activeOwnerTeamId;
     const team = state.world.teams[teamId]!;
-    const keep = team.roster.slice(0, Math.max(1, DEFAULT_ROSTER_SIZE - 3));
+    const keep = team.roster.slice(
+      0,
+      Math.max(1, TRADE_ROSTER_RULES.minRosterSize - 3),
+    );
     for (const playerId of team.roster) {
       if (!keep.includes(playerId)) {
         const player = state.world.players[playerId];

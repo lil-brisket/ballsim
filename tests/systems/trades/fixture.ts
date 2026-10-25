@@ -15,7 +15,7 @@ import { createPlayer } from "../../factories/player";
 import { TEST_NOW_ISO, TEST_RNG_SEED } from "../../helpers/determinism";
 
 export type TradeFixtureOptions = {
-  /** Players per team (default 10 — within 8–12 roster bounds). */
+  /** Players per team (default 13 — within the 12–15 roster bounds). */
   rosterSize?: number;
   /** Salary for each contracted player in the current season year. */
   salary?: number;
@@ -29,7 +29,7 @@ export type TradeFixtureOptions = {
 export function createTradeFixture(
   options: TradeFixtureOptions = {},
 ): GameState {
-  const rosterSize = options.rosterSize ?? 10;
+  const rosterSize = options.rosterSize ?? 13;
   const defaultSalary = options.salary ?? 5_000_000;
   const base = createInitialGameState({
     saveId: "save_trade",

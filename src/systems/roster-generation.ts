@@ -3,10 +3,11 @@ import {
   asPlayerId,
   asTeamId,
   type PlayerId,
+  type TeamId,
 } from "@/domain/ids";
 import { type Player, type PlayerPosition } from "@/domain/entities/player";
 import { createContract, type Contract } from "@/domain/entities/contract";
-import type { Rng } from "@/domain/rng";
+import { createSeededRng, deriveSeed, type Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import {
@@ -23,6 +24,8 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { generatePlayerWithRng } from "@/systems/player-generation";
 import {
   DEFAULT_ROSTER_SIZE,
+  OPENING_FREE_AGENT_QUALITY,
+  OPENING_FREE_AGENT_COUNT,
   rosterPositionForSlot,
   rosterQualityBandForSlot,
 } from "@/systems/roster-generation-config";
@@ -30,9 +33,11 @@ import { recommendRosterManagement } from "@/systems/roster-management";
 import { getContractSigningYear, getTeamPayroll } from "@/systems/salary-cap";
 import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
 import { isUserControlledTeam } from "@/state/owner-context";
+import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 
 /**
- * Fills empty team rosters with fictional players and starter contracts.
+ * Fills empty team rosters with fictional players and starter contracts, and
+ * opens the league with a small pool of unsigned free agents.
  * Idempotent: no-op when any players already exist.
  *
  * Player identity, attributes, potential, and personality come from
@@ -105,6 +110,25 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
       ...teams[teamId]!,
       roster: rosterPlayerIds,
     };
+  }
+
+  // Opening free agents draw from their own stream, so adding them leaves the
+  // team rosters and everything seeded after world generation unchanged.
+  const freeAgentRng = createSeededRng(
+    deriveSeed(rng.getState(), "opening-free-agents"),
+  );
+  for (let index = 0; index < OPENING_FREE_AGENT_COUNT; index += 1) {
+    const playerId = asPlayerId(`player_fa_${index}`);
+    const player = generatePlayerWithRng(freeAgentRng, {
+      id: playerId,
+      teamId: null,
+      contractId: null,
+      position: rosterPositionForSlot(index),
+      occupiedNames,
+      qualityBand: OPENING_FREE_AGENT_QUALITY,
+    });
+    occupiedNames.add(`${player.firstName} ${player.lastName}`);
+    players[playerId] = player;
   }
 
   let stateWithContracts: GameState = {
@@ -229,7 +253,8 @@ function isReplacementLevel(player: Player): boolean {
 }
 
 /**
- * Adds players so every team reaches {@link DEFAULT_ROSTER_SIZE}.
+ * Adds players so every AI team reaches {@link DEFAULT_ROSTER_SIZE} and every
+ * owner's team reaches the league minimum (the owner chooses the rest).
  * Used after offseason attrition when the free-agent pool cannot fill holes.
  *
  * Each spot goes to the best free agent left at the position. A fill
@@ -242,12 +267,16 @@ function isReplacementLevel(player: Player): boolean {
  * on every leftover.
  */
 export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
+  const fillTarget = (teamId: TeamId) =>
+    isUserControlledTeam(state, teamId)
+      ? TRADE_ROSTER_RULES.minRosterSize
+      : DEFAULT_ROSTER_SIZE;
   const shortTeamIds = (
     Object.keys(state.world.teams) as ReturnType<typeof asTeamId>[]
   )
     .filter(
       (teamId) =>
-        (state.world.teams[teamId]?.roster.length ?? 0) < DEFAULT_ROSTER_SIZE,
+        (state.world.teams[teamId]?.roster.length ?? 0) < fillTarget(teamId),
     )
     .sort(
       (a, b) =>
@@ -371,7 +400,7 @@ export function fillShortRosters(state: GameState, rng: Rng): SystemResult {
     filling = false;
     for (const teamId of shortTeamIds) {
       const fill = progress.get(teamId)!;
-      if (fill.roster.length >= DEFAULT_ROSTER_SIZE) continue;
+      if (fill.roster.length >= fillTarget(teamId)) continue;
       fillOne(teamId, fill);
       filling = true;
     }
