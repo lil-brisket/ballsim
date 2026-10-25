@@ -129,6 +129,16 @@ export function SaveCard(props: {
                 Open
               </button>
             </form>
+            {/* Online leagues cannot be imported, so no backup file for them. */}
+            {preview.participationMode !== "online" ? (
+              <a
+                href={`/api/saves/${preview.id}/export`}
+                download
+                className={buttonClass()}
+              >
+                Download
+              </a>
+            ) : null}
             {showDelete ? (
               <DeleteSave id={preview.id} name={preview.name} />
             ) : null}

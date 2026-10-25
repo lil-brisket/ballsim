@@ -5,6 +5,7 @@ import {
 } from "@/application/game-service";
 import { filterSavePreviewsForMode } from "@/application/save-preview-helpers";
 import { SaveCard } from "@/components/game/SaveCard";
+import { buttonClass } from "@/components/ui/Button";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { GameMode } from "@/state/game-state";
@@ -54,6 +55,27 @@ export default async function SavesPage({ searchParams }: SavesPageProps) {
       </header>
 
       {error ? <ErrorState message={error} /> : null}
+
+      <form
+        action="/api/saves/import"
+        method="post"
+        encType="multipart/form-data"
+        className="flex flex-col gap-3 sm:flex-row sm:items-end"
+      >
+        <label className="block flex-1 text-sm text-zinc-300">
+          Import a save file
+          <input
+            type="file"
+            name="saveFile"
+            required
+            accept="application/json,.json"
+            className="mt-2 block w-full text-sm text-zinc-400 file:mr-3 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-900 file:min-h-11 file:px-3 file:py-1.5 file:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+          />
+        </label>
+        <button type="submit" className={buttonClass()}>
+          Import
+        </button>
+      </form>
 
       {previews.length === 0 ? (
         <EmptyState
