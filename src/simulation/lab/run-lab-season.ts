@@ -10,7 +10,10 @@ import {
   OWNER_CAREER_SCENARIO_ID,
   scenarioVersionFor,
 } from "@/simulation/lab/scenario-version";
-import type { LabLeaguePreset } from "@/simulation/lab/lab-league-preset";
+import {
+  settingsForLabPreset,
+  type LabLeaguePreset,
+} from "@/simulation/lab/lab-league-preset";
 import { toLabFailure } from "@/simulation/lab/map-failure";
 import {
   evaluateSeasonInvariants,
@@ -27,6 +30,7 @@ export type RunLabSeasonOptions = {
   seed: number;
   seasons: number;
   mode?: "owner-career";
+  /** Defaults to the preset's Lab settings (full management for the owner). */
   gameSettings?: GameSettings;
   preset?: LabLeaguePreset;
   /** League game fidelity; default is the possession engine for every game. */
@@ -58,6 +62,7 @@ export function runLabSeason(options: RunLabSeasonOptions): LabSeasonResult {
     throw new Error("runLabSeason: seasons must be a positive integer.");
   }
   const preset = options.preset ?? "cbl";
+  const gameSettings = options.gameSettings ?? settingsForLabPreset(preset);
   const seedList = buildMasterSeedList(options.seed, OWNER_CAREER_SCENARIO_ID);
   const persisted = persistLabRun(options, {
     scenarioName: OWNER_CAREER_SCENARIO_ID,
@@ -69,7 +74,7 @@ export function runLabSeason(options: RunLabSeasonOptions): LabSeasonResult {
       scenarioId: OWNER_CAREER_SCENARIO_ID,
       rotation: "on",
       preset,
-      usesLabPresetSettings: options.gameSettings != null,
+      usesLabPresetSettings: true,
     },
     seedList,
   });
@@ -92,7 +97,7 @@ export function runLabSeason(options: RunLabSeasonOptions): LabSeasonResult {
   const career = runLeagueCareer({
     seed: options.seed,
     seasons,
-    gameSettings: options.gameSettings,
+    gameSettings,
     gameFidelity: options.fidelity,
     skipOwnerGameplay: options.skipOwnerGameplay,
     onSeasonComplete: (state, seasonIndex) => {
