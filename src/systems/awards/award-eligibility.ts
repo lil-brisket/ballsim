@@ -105,15 +105,32 @@ export function isRookieEligible(
     const season = history?.seasons.find((s) => s.seasonYear === seasonYear);
     return (season?.competition.regular.games ?? 0) > 0;
   }
-  const games = getPrimaryLeagueFinalGames(state, {
-    seasonId: state.competition.season.id,
-    competitionTypes: ["regular_season"],
-  });
-  return games.some((game) =>
-    game.playerStats.some(
-      (row) => row.playerId === playerId && (row.minutes > 0 || row.points > 0),
-    ),
-  );
+  return currentSeasonAppearances(state).has(playerId);
+}
+
+const appearancesByState = new WeakMap<GameState, Set<string>>();
+
+/**
+ * Players who got on the floor in this season's regular-season games. Cached
+ * per state: award pools check every player, and the weekly award race runs
+ * several pools against the same state.
+ */
+function currentSeasonAppearances(state: GameState): Set<string> {
+  let appeared = appearancesByState.get(state);
+  if (!appeared) {
+    appeared = new Set();
+    const games = getPrimaryLeagueFinalGames(state, {
+      seasonId: state.competition.season.id,
+      competitionTypes: ["regular_season"],
+    });
+    for (const game of games) {
+      for (const row of game.playerStats) {
+        if (row.minutes > 0 || row.points > 0) appeared.add(row.playerId);
+      }
+    }
+    appearancesByState.set(state, appeared);
+  }
+  return appeared;
 }
 
 export function meetsMinGamesMinutes(

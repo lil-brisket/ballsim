@@ -3,8 +3,9 @@
  * Composes award-selectors; does not invent voting data.
  */
 
-import { getCalendarMonthId } from "@/domain/calendar-date";
+import { getCalendarMonthId, parseCalendarDate } from "@/domain/calendar-date";
 import type {
+  AwardCandidateResult,
   AwardCadence,
   AwardDefinition,
   AwardDefinitionId,
@@ -21,6 +22,11 @@ import {
   MONTHLY_AWARD_IDS,
   YEARLY_AWARD_IDS,
 } from "@/systems/awards/award-definitions";
+import {
+  awardRaceThroughDate,
+  evaluateAwardRace,
+} from "@/systems/awards/award-race";
+import { getPlayerIdentity } from "@/state/player-identity";
 
 export type AwardsHubRow = LeagueAwardRowView & {
   seasonYear: number;
@@ -44,6 +50,23 @@ export type AwardsHubRow = LeagueAwardRowView & {
 export type AwardAvailability =
   "won" | "pending" | "not_started" | "not_applicable";
 
+export type AwardRaceContenderView = {
+  rank: number;
+  subjectId: string;
+  name: string;
+  href: string | null;
+  teamId: string | null;
+  teamAbbreviation: string | null;
+  score: number;
+};
+
+/** Weekly snapshot of who is in contention for an undecided award. */
+export type AwardRaceView = {
+  /** Last day of the completed week the race covers (YYYY-MM-DD). */
+  throughDate: string;
+  contenders: AwardRaceContenderView[];
+};
+
 export type CurrentSeasonAwardSlot = {
   key: string;
   awardId: AwardDefinitionId;
@@ -56,6 +79,8 @@ export type CurrentSeasonAwardSlot = {
   periodLabel: string | null;
   status: AwardAvailability;
   winner: AwardsHubRow | null;
+  /** Pending slots only, when races were requested and someone qualifies. */
+  race: AwardRaceView | null;
 };
 
 export type CurrentSeasonAwardGroup = {
@@ -125,6 +150,7 @@ function slotFor(
     periodLabel: def.cadence === "monthly" ? formatPeriodLabel(period) : null,
     status,
     winner,
+    race: null,
   };
 }
 
@@ -135,12 +161,74 @@ function majorStatus(state: GameState): AwardAvailability {
   return "not_applicable";
 }
 
+function toRaceContender(
+  state: GameState,
+  def: AwardDefinition,
+  candidate: AwardCandidateResult,
+): AwardRaceContenderView {
+  const saveId = state.meta.saveId;
+  let name: string = candidate.subjectId;
+  let href: string | null = null;
+  if (def.subjectType === "coach") {
+    const coach = state.world.coaches[candidate.subjectId];
+    if (coach) name = `${coach.firstName} ${coach.lastName}`;
+  } else {
+    name =
+      getPlayerIdentity(state, candidate.subjectId)?.displayName ??
+      candidate.subjectId;
+    href = `/dashboard/${saveId}/players/${candidate.subjectId}`;
+  }
+  const team = candidate.teamId ? state.world.teams[candidate.teamId] : null;
+  return {
+    rank: candidate.rank,
+    subjectId: candidate.subjectId,
+    name,
+    href,
+    teamId: candidate.teamId,
+    teamAbbreviation: team?.abbreviation ?? null,
+    score: candidate.score,
+  };
+}
+
+function attachRace(
+  state: GameState,
+  slot: CurrentSeasonAwardSlot,
+  throughDate: string,
+): CurrentSeasonAwardSlot {
+  if (slot.status !== "pending") return slot;
+  const race = evaluateAwardRace(state, slot.awardId, {
+    throughDate,
+    period: slot.period ?? undefined,
+  });
+  if (!race) return slot;
+  const def = AWARD_DEFINITIONS[slot.awardId];
+  return {
+    ...slot,
+    race: {
+      throughDate: race.throughDate,
+      contenders: race.contenders.map((c) => toRaceContender(state, def, c)),
+    },
+  };
+}
+
+/** "Week ending January 11" label for a race cut-off date. */
+export function formatRaceWeekLabel(throughDate: string): string {
+  const { day } = parseCalendarDate(throughDate);
+  const month = formatPeriodLabel(getCalendarMonthId(throughDate))?.split(
+    " ",
+  )[0];
+  return `Week ending ${month} ${day}`;
+}
+
 /**
  * Current-season award slots with explicit availability. Only catalog awards
  * from AWARD_DEFINITIONS appear; nothing is invented (e.g. no Finals MVP).
+ * `races` adds the weekly contender list to pending slots; it re-scores the
+ * season, so only the Current Season tab asks for it.
  */
 export function toCurrentSeasonAwardGroups(
   state: GameState,
+  options?: { races?: boolean },
 ): CurrentSeasonAwardGroup[] {
   const seasonYear = state.competition.season.year;
   const rows = toHubRows(state, { seasonYear });
@@ -194,9 +282,14 @@ export function toCurrentSeasonAwardGroups(
         MONTHLY_AWARD_IDS.indexOf(b.awardId),
   );
 
+  const throughDate = awardRaceThroughDate(state.world.calendar.currentDate);
+  const withRaces = (slots: CurrentSeasonAwardSlot[]) =>
+    options?.races
+      ? slots.map((slot) => attachRace(state, slot, throughDate))
+      : slots;
   const byTier: Record<DisplayedAwardTier, CurrentSeasonAwardSlot[]> = {
-    major,
-    monthly,
+    major: withRaces(major),
+    monthly: withRaces(monthly),
   };
   return TIER_GROUP_ORDER.map((tier) => ({
     tier,

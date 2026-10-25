@@ -17,6 +17,11 @@ export {
   isSixthManEligible,
 } from "@/systems/awards/award-eligibility";
 export {
+  awardRaceThroughDate,
+  evaluateAwardRace,
+  type AwardRace,
+} from "@/systems/awards/award-race";
+export {
   runMonthlyAwards,
   runYearlyAwards,
   type AwardsPipelineResult,

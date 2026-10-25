@@ -11,6 +11,7 @@ import {
   type PlayerSeasonStatLine,
 } from "@/domain/entities/player-history";
 import type { CoachId, PlayerId, TeamId } from "@/domain/ids";
+import { createSeededRng, deriveSeed } from "@/domain/rng";
 import type { GameState } from "@/state/game-state";
 import {
   isRookieEligible,
@@ -41,9 +42,10 @@ import {
   AWARD_ELIGIBILITY_CONFIG,
   AWARD_METRIC_VERSION,
   AWARD_SCORING_CONFIG,
+  AWARD_VOTING_CONFIG,
 } from "@/systems/awards/awards-config";
 import {
-  aggregatePlayerPeriodStats,
+  aggregateAllPlayersInGames,
   aggregateTeamPeriodRecords,
   getPrimaryGamesForMonth,
   getPrimaryLeagueFinalGames,
@@ -103,6 +105,34 @@ function rankCandidates(scored: ScoredCandidate[]): ScoredCandidate[] {
   });
 }
 
+/**
+ * Index of the voted winner in `top` (score order). Seeded per award result
+ * so the main RNG stream is untouched and a save always replays the same vote.
+ */
+function voteWinnerIndex(
+  state: GameState,
+  resultId: string,
+  top: readonly ScoredCandidate[],
+): number {
+  const leaderScore = top[0]!.score;
+  const weights = top.map((row) => {
+    const gap = leaderScore - row.score;
+    return gap > AWARD_VOTING_CONFIG.maxScoreGap
+      ? 0
+      : Math.exp(-gap / AWARD_VOTING_CONFIG.scoreSpread);
+  });
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const rng = createSeededRng(
+    deriveSeed(state.meta.rngSeed, `award-vote:${resultId}`),
+  );
+  let roll = rng.next() * total;
+  for (let index = 0; index < weights.length; index += 1) {
+    roll -= weights[index]!;
+    if (roll < 0) return index;
+  }
+  return 0;
+}
+
 function toAwardResult(
   state: GameState,
   awardId: AwardDefinitionId,
@@ -114,14 +144,18 @@ function toAwardResult(
   const leagueId = state.world.league.id;
   const seasonYear = state.competition.season.year;
   const seasonId = state.competition.season.id;
+  const id = buildAwardResultId(leagueId, seasonYear, period, awardId);
   const top = ranked.slice(0, AWARD_CANDIDATE_LIMIT);
-  const winnerRow = top[0]!;
+  const winnerIndex = voteWinnerIndex(state, id, top);
+  const winnerRow = top[winnerIndex]!;
+  // Final vote order: the winner first, the rest still by score.
+  const voted = [winnerRow, ...top.filter((_, index) => index !== winnerIndex)];
   const winner: AwardSubjectRef = {
     subjectType: def.subjectType,
     subjectId: winnerRow.subjectId as PlayerId | CoachId,
     teamId: winnerRow.teamId,
   };
-  const candidates: AwardCandidateResult[] = top.map((row, index) => ({
+  const candidates: AwardCandidateResult[] = voted.map((row, index) => ({
     subjectId: row.subjectId as PlayerId | CoachId,
     teamId: row.teamId,
     rank: index + 1,
@@ -130,7 +164,7 @@ function toAwardResult(
   }));
 
   return {
-    id: buildAwardResultId(leagueId, seasonYear, period, awardId),
+    id,
     awardId,
     cadence: def.cadence,
     leagueId,
@@ -164,14 +198,14 @@ function buildPlayerPool(
   minGames: number,
   minMinutes: number,
 ): PeriodPlayerAgg[] {
-  const pool: PeriodPlayerAgg[] = [];
-  for (const playerId of playerIds) {
-    const agg = aggregatePlayerPeriodStats(playerId, games);
-    if (meetsMinGamesMinutes(agg, minGames, minMinutes)) {
-      pool.push(agg);
-    }
-  }
-  return pool;
+  // One pass over the box scores; per-player scans are too slow for the
+  // weekly award race, which evaluates several cut-off dates.
+  const wanted = new Set<string>(playerIds);
+  return aggregateAllPlayersInGames(games).filter(
+    (agg) =>
+      wanted.has(agg.playerId) &&
+      meetsMinGamesMinutes(agg, minGames, minMinutes),
+  );
 }
 
 function scoreProductionPool(
@@ -235,11 +269,24 @@ function scoreProductionPool(
   });
 }
 
+/** Month games, optionally cut off at an inclusive date (award race). */
+function monthGamesThrough(
+  state: GameState,
+  monthId: string,
+  throughDate: string | undefined,
+) {
+  const games = getPrimaryGamesForMonth(state, monthId);
+  return throughDate === undefined
+    ? games
+    : games.filter((game) => game.date <= throughDate);
+}
+
 export function evaluatePlayerOfMonth(
   state: GameState,
   monthId: string,
+  options?: { throughDate?: string },
 ): AwardResult | null {
-  const games = getPrimaryGamesForMonth(state, monthId);
+  const games = monthGamesThrough(state, monthId, options?.throughDate);
   if (games.length === 0) return null;
   const cfg = AWARD_ELIGIBILITY_CONFIG.playerOfMonth;
   const pool = buildPlayerPool(
@@ -267,8 +314,9 @@ export function evaluatePlayerOfMonth(
 export function evaluateRookieOfMonth(
   state: GameState,
   monthId: string,
+  options?: { throughDate?: string },
 ): AwardResult | null {
-  const games = getPrimaryGamesForMonth(state, monthId);
+  const games = monthGamesThrough(state, monthId, options?.throughDate);
   if (games.length === 0) return null;
   const cfg = AWARD_ELIGIBILITY_CONFIG.rookieOfMonth;
   const seasonYear = state.competition.season.year;
@@ -295,8 +343,9 @@ export function evaluateRookieOfMonth(
 export function evaluateDefensivePlayerOfMonth(
   state: GameState,
   monthId: string,
+  options?: { throughDate?: string },
 ): AwardResult | null {
-  const games = getPrimaryGamesForMonth(state, monthId);
+  const games = monthGamesThrough(state, monthId, options?.throughDate);
   if (games.length === 0) return null;
   const cfg = AWARD_ELIGIBILITY_CONFIG.defensivePlayerOfMonth;
   const pool = buildPlayerPool(
@@ -678,8 +727,11 @@ export function evaluateMostImproved(
     prior: PlayerSeasonStatLine;
   }> = [];
 
+  const aggByPlayer = new Map(
+    aggregateAllPlayersInGames(games).map((agg) => [agg.playerId, agg]),
+  );
   for (const playerId of candidates) {
-    const agg = aggregatePlayerPeriodStats(playerId, games);
+    const agg = aggByPlayer.get(playerId)!;
     if (
       !meetsMinGamesMinutes(
         agg,
@@ -814,9 +866,13 @@ function qualifyingPlayoffTeamIds(state: GameState): Set<string> {
   }
 }
 
-export function evaluateCoachOfYear(state: GameState): AwardResult | null {
+export function evaluateCoachOfYear(
+  state: GameState,
+  options?: { throughDate?: string },
+): AwardResult | null {
   const games = getPrimaryLeagueFinalGames(state, {
     competitionTypes: ["regular_season"],
+    throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
   const teamRecords = aggregateTeamPeriodRecords(games);
