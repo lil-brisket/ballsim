@@ -28,8 +28,13 @@ import {
 
 /** Share of each positive non-focus gain a development focus moves. */
 export const FOCUS_SHIFT_SHARE = 0.5;
-/** Players this age or younger follow a development plan. */
-export const DEVELOPMENT_PLAN_MAX_AGE = 25;
+/**
+ * Share of each camp-attribute decline a camp shields (rounded up, so a
+ * single point is shielded whole); the decline lands on other attributes.
+ */
+export const FOCUS_SHIELD_SHARE = 0.5;
+/** CPU players this age or younger attend their position's default camp. */
+export const CPU_CAMP_MAX_AGE = 25;
 
 /**
  * One deterministic annual development step at the player's current age.
@@ -90,7 +95,8 @@ export function developPlayer(
     deltas[key] = delta;
   }
 
-  // A focus moves growth, never adds it: the same draws, redistributed.
+  // A camp moves growth and decline, never adds growth: the same draws,
+  // redistributed.
   const focused = redistributeForFocus(deltas, focus);
   for (const key of PLAYER_ATTRIBUTE_KEYS) {
     const nextRating = nextAttributes[key] + (focused[key] ?? 0);
@@ -125,7 +131,9 @@ export function developPlayer(
 /**
  * Moves {@link FOCUS_SHIFT_SHARE} of each positive non-focus gain into the
  * focus attributes (round-robin, within the annual cap); what does not fit
- * goes back where it came from. Total growth is unchanged; balanced is a
+ * goes back where it came from. Then shields {@link FOCUS_SHIELD_SHARE} of
+ * each remaining focus decline by moving it onto non-focus attributes (see
+ * {@link shieldFocusDeclines}). Total change is unchanged; balanced is a
  * no-op.
  */
 export function redistributeForFocus(
@@ -167,7 +175,41 @@ export function redistributeForFocus(
     next[key] = (next[key] ?? 0) + back;
     pool -= back;
   }
+  shieldFocusDeclines(next, targets);
   return next;
+}
+
+/**
+ * Moves part of each focus decline onto the non-focus attributes, one point
+ * at a time round-robin: first those already declining, else any; never
+ * past the annual cap. What does not fit stays on the focus attribute.
+ */
+function shieldFocusDeclines(
+  next: Partial<Record<keyof PlayerAttributes, number>>,
+  targets: readonly (keyof PlayerAttributes)[],
+): void {
+  const others = PLAYER_ATTRIBUTE_KEYS.filter((key) => !targets.includes(key));
+  const declining = others.filter((key) => (next[key] ?? 0) < 0);
+  const receivers = declining.length > 0 ? declining : others;
+  let index = 0;
+  for (const key of targets) {
+    const delta = next[key] ?? 0;
+    if (delta >= 0) continue;
+    let amount = Math.ceil(-delta * FOCUS_SHIELD_SHARE);
+    let stalled = 0;
+    while (amount > 0 && stalled < receivers.length) {
+      const receiver = receivers[index % receivers.length]!;
+      index += 1;
+      if ((next[receiver] ?? 0) > -MAX_ANNUAL_ATTRIBUTE_CHANGE) {
+        next[receiver] = (next[receiver] ?? 0) - 1;
+        next[key] = (next[key] ?? 0) + 1;
+        amount -= 1;
+        stalled = 0;
+      } else {
+        stalled += 1;
+      }
+    }
+  }
 }
 
 /**

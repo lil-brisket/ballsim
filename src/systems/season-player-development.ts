@@ -20,7 +20,7 @@ import { FACILITY_LEVEL_MAX } from "@/domain/entities/franchise-ops";
 import {
   developPlayer,
   clampPlayerToPotential,
-  DEVELOPMENT_PLAN_MAX_AGE,
+  CPU_CAMP_MAX_AGE,
 } from "@/systems/player-development";
 import { developmentStageForAge } from "@/systems/player-generation-config";
 import { trainerDevelopmentMultiplier } from "@/systems/staff-effects";
@@ -181,19 +181,23 @@ export function processSeasonPlayerDevelopment(
 }
 
 /**
- * The focus a player develops with this offseason: the owner's plan for his
- * team's young players, or the CPU default for his position. Older players
- * and free agents develop balanced.
+ * The camp a player attends this offseason: the owner's pick for anyone on
+ * the owner's team, or the CPU default for the position up to
+ * {@link CPU_CAMP_MAX_AGE}. Older CPU players and free agents develop
+ * balanced.
  */
 export function developmentFocusFor(
   state: GameState,
   player: Player,
 ): DevelopmentFocus {
-  if (player.teamId == null || player.age > DEVELOPMENT_PLAN_MAX_AGE) {
+  if (player.teamId == null) {
     return "balanced";
   }
   if (isUserControlledTeam(state, player.teamId)) {
     return state.business.developmentPlans?.[player.id] ?? "balanced";
+  }
+  if (player.age > CPU_CAMP_MAX_AGE) {
+    return "balanced";
   }
   return DEFAULT_FOCUS_BY_POSITION[player.position];
 }

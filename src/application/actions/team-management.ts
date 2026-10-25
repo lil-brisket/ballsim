@@ -3,7 +3,7 @@
 import {
   updateOwnerLineupAndRotation,
   updateOwnerCoachingPhilosophy,
-  setOwnerDevelopmentFocus,
+  setOwnerDevelopmentFocuses,
   retireOwnerJerseyNumber,
   applyOwnerCoachingPreset,
 } from "@/application/game-service";
@@ -142,15 +142,18 @@ export async function applyCoachingPresetAction(
   redirect(path);
 }
 
-export async function setDevelopmentFocusAction(
+/** Camps form: one `camp:<playerId>` select per player. */
+export async function setDevelopmentFocusesAction(
   formData: FormData,
 ): Promise<void> {
   const saveId = String(formData.get("saveId") ?? "");
   const path = returnPath(formData, saveId);
-  const result = await setOwnerDevelopmentFocus(saveId, {
-    playerId: String(formData.get("playerId") ?? ""),
-    focus: String(formData.get("focus") ?? "balanced"),
-  });
+  const camps: { playerId: string; focus: string }[] = [];
+  for (const [name, value] of formData.entries()) {
+    if (!name.startsWith("camp:")) continue;
+    camps.push({ playerId: name.slice("camp:".length), focus: String(value) });
+  }
+  const result = await setOwnerDevelopmentFocuses(saveId, { camps });
   if (!result.ok) {
     redirectWithError(path, result.error);
   }

@@ -31,7 +31,8 @@ import { developmentOpportunityFactor } from "@/systems/injury/injury-effects";
 import { PLAYER_RETIREMENT_MIN_AGE } from "@/systems/league-rules/invariants";
 import {
   developPlayer,
-  DEVELOPMENT_PLAN_MAX_AGE,
+  CPU_CAMP_MAX_AGE,
+  FOCUS_SHIELD_SHARE,
   FOCUS_SHIFT_SHARE,
   redistributeForFocus,
 } from "@/systems/player-development";
@@ -430,7 +431,7 @@ describe("development focus", () => {
   });
 
   it.each(DEVELOPMENT_FOCUSES.filter((focus) => focus !== "balanced"))(
-    "%s moves growth into its attributes without changing the total",
+    "%s moves growth into and decline out of its attributes without changing the total",
     (focus) => {
       const targets = DEVELOPMENT_FOCUS_ATTRIBUTES[focus];
       let moved = 0;
@@ -442,18 +443,24 @@ describe("development focus", () => {
           const before = deltas[key] ?? 0;
           const after = shifted[key] ?? 0;
           expect(after).toBeLessThanOrEqual(MAX_ANNUAL_ATTRIBUTE_CHANGE);
+          expect(after).toBeGreaterThanOrEqual(-MAX_ANNUAL_ATTRIBUTE_CHANGE);
           if (targets.includes(key)) {
             expect(after).toBeGreaterThanOrEqual(before);
+            // A decline the growth shift left in place is shielded.
+            if (before < 0 && after < 0) {
+              expect(after).toBeGreaterThanOrEqual(
+                before + Math.ceil(-before * FOCUS_SHIELD_SHARE),
+              );
+            }
           } else {
-            // Non-targets give up at most FOCUS_SHIFT_SHARE of a gain and
-            // never lose anything else.
+            // Non-targets give up at most FOCUS_SHIFT_SHARE of a gain, or
+            // absorb shielded decline; they never gain.
             expect(after).toBeLessThanOrEqual(before);
-            if (before <= 0) expect(after).toBe(before);
-            expect(after).toBeGreaterThanOrEqual(
-              before > 0
-                ? before - Math.floor(before * FOCUS_SHIFT_SHARE)
-                : before,
-            );
+            if (before > 0) {
+              expect(after).toBeGreaterThanOrEqual(
+                before - Math.floor(before * FOCUS_SHIFT_SHARE),
+              );
+            }
           }
         }
         if (targets.some((key) => (shifted[key] ?? 0) > (deltas[key] ?? 0))) {
@@ -475,6 +482,33 @@ describe("development focus", () => {
         developPlayer(player, createSeededRng(seed), 1, "balanced"),
       ).toEqual(developPlayer(player, createSeededRng(seed)));
     }
+  });
+
+  it("a camp shields a veteran's camp skills from decline", () => {
+    const player = createPlayer({
+      age: 34,
+      attributes: uniformPlayerAttributes(70),
+      potential: { overall: 70 },
+    });
+    const targets = DEVELOPMENT_FOCUS_ATTRIBUTES.defense;
+    const campChange = (focus: DevelopmentFocus) => {
+      let sum = 0;
+      for (let seed = 0; seed < 300; seed += 1) {
+        const developed = developPlayer(
+          player,
+          createSeededRng(seed),
+          1,
+          focus,
+        );
+        for (const key of targets) {
+          sum += developed.attributes[key] - player.attributes[key];
+        }
+      }
+      return sum;
+    };
+    const balanced = campChange("balanced");
+    expect(balanced).toBeLessThan(0);
+    expect(campChange("defense")).toBeGreaterThan(balanced / 2);
   });
 
   it("a focus raises its attributes on average, at the same total growth", () => {
@@ -515,7 +549,7 @@ describe("development focus", () => {
     const cpuTeam = Object.keys(state.world.teams).find(
       (id) => id !== userTeam,
     ) as TeamId;
-    const young = (teamId: TeamId | null, age = DEVELOPMENT_PLAN_MAX_AGE) =>
+    const young = (teamId: TeamId | null, age = CPU_CAMP_MAX_AGE) =>
       createPlayer({ id: "focus_p", teamId, age, position: "PG" });
 
     it("uses the owner's plan on the user team, balanced when none is set", () => {
@@ -545,7 +579,7 @@ describe("development focus", () => {
       }
     });
 
-    it("develops older players and free agents balanced", () => {
+    it("sends owner veterans to camp; older CPU players and free agents develop balanced", () => {
       const planned: GameState = {
         ...state,
         business: {
@@ -553,17 +587,11 @@ describe("development focus", () => {
           developmentPlans: { focus_p: "shooting" },
         },
       };
+      expect(developmentFocusFor(planned, young(userTeam, 33))).toBe(
+        "shooting",
+      );
       expect(
-        developmentFocusFor(
-          planned,
-          young(userTeam, DEVELOPMENT_PLAN_MAX_AGE + 1),
-        ),
-      ).toBe("balanced");
-      expect(
-        developmentFocusFor(
-          planned,
-          young(cpuTeam, DEVELOPMENT_PLAN_MAX_AGE + 1),
-        ),
+        developmentFocusFor(planned, young(cpuTeam, CPU_CAMP_MAX_AGE + 1)),
       ).toBe("balanced");
       expect(developmentFocusFor(planned, young(null, 20))).toBe("balanced");
     });

@@ -7,7 +7,10 @@ import { PLAYER_ATTRIBUTE_KEYS } from "@/domain/entities/player";
 import type { PlayerId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
 import type { GameState } from "@/state/game-state";
-import { setDevelopmentFocus } from "@/systems/development-plans";
+import {
+  setDevelopmentFocus,
+  setDevelopmentFocuses,
+} from "@/systems/development-plans";
 import {
   developPlayer,
   redistributeForFocus,
@@ -41,9 +44,12 @@ describe("redistributeForFocus", () => {
     for (const key of targets) {
       expect(moved[key]!).toBeLessThanOrEqual(MAX_ANNUAL_ATTRIBUTE_CHANGE);
     }
-    // Declines are never moved.
+    // Focus declines are shielded; other declines only deepen.
     for (const key of PLAYER_ATTRIBUTE_KEYS) {
-      if ((deltas[key] ?? 0) < 0) expect(moved[key]).toBe(deltas[key]);
+      if ((deltas[key] ?? 0) >= 0) continue;
+      if (targets.includes(key))
+        expect(moved[key]!).toBeGreaterThan(deltas[key]!);
+      else expect(moved[key]!).toBeLessThanOrEqual(deltas[key]!);
     }
   });
 
@@ -109,7 +115,7 @@ describe("setDevelopmentFocus", () => {
     ).toBe(undefined);
   });
 
-  it("rejects other teams' players, veterans and unknown focuses", () => {
+  it("accepts veterans; rejects other teams' players and unknown camps", () => {
     const state = league();
     const teamId = state.user.activeOwnerTeamId;
     const other = Object.keys(state.world.teams).find((id) => id !== teamId)!;
@@ -122,11 +128,32 @@ describe("setDevelopmentFocus", () => {
         ...state.world,
         players: {
           ...state.world.players,
-          [mine]: { ...state.world.players[mine]!, age: 31 },
+          [mine]: { ...state.world.players[mine]!, age: 33 },
         },
       },
     };
-    expect(setDevelopmentFocus(veteran, mine, "defense").ok).toBe(false);
+    expect(setDevelopmentFocus(veteran, mine, "iq").ok).toBe(true);
     expect(setDevelopmentFocus(state, mine, "juggling").ok).toBe(false);
+  });
+
+  it("sets a batch of camps all or nothing", () => {
+    const state = league();
+    const teamId = state.user.activeOwnerTeamId;
+    const [a, b] = state.world.teams[teamId]!.roster;
+    const other = Object.keys(state.world.teams).find((id) => id !== teamId)!;
+    const theirs = state.world.teams[other]!.roster[0]!;
+    const set = setDevelopmentFocuses(state, [
+      { playerId: a!, focus: "finishing" },
+      { playerId: b!, focus: "shooting" },
+    ]);
+    expect(set.ok && set.state.business.developmentPlans).toEqual({
+      [a!]: "finishing",
+      [b!]: "shooting",
+    });
+    const rejected = setDevelopmentFocuses(state, [
+      { playerId: a!, focus: "finishing" },
+      { playerId: theirs, focus: "shooting" },
+    ]);
+    expect(rejected.ok).toBe(false);
   });
 });

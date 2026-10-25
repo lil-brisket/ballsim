@@ -1,7 +1,7 @@
 /**
- * Owner development plans: one focus per young player on an owned team.
- * The focus shifts how offseason growth is spread (see developPlayer); it
- * never adds growth.
+ * Owner training camps: one camp (stored as a development focus) per player
+ * on the owned team. The camp shifts how offseason growth and decline are
+ * spread (see redistributeForFocus); it never adds growth.
  */
 
 import {
@@ -11,7 +11,6 @@ import {
 import type { PlayerId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import { isUserControlledTeam } from "@/state/owner-context";
-import { DEVELOPMENT_PLAN_MAX_AGE } from "@/systems/player-development";
 
 export function setDevelopmentFocus(
   state: GameState,
@@ -19,7 +18,7 @@ export function setDevelopmentFocus(
   focus: string,
 ): { ok: true; state: GameState } | { ok: false; error: string } {
   if (!isDevelopmentFocus(focus)) {
-    return { ok: false, error: "Unknown development focus." };
+    return { ok: false, error: "Unknown training camp." };
   }
   const player = state.world.players[playerId];
   if (!player || player.teamId == null) {
@@ -30,12 +29,6 @@ export function setDevelopmentFocus(
     !isUserControlledTeam(state, player.teamId)
   ) {
     return { ok: false, error: "Player is not on your team." };
-  }
-  if (player.age > DEVELOPMENT_PLAN_MAX_AGE) {
-    return {
-      ok: false,
-      error: `Development plans are for players ${DEVELOPMENT_PLAN_MAX_AGE} and younger.`,
-    };
   }
   const plans = { ...(state.business.developmentPlans ?? {}) };
   if (focus === "balanced") {
@@ -50,4 +43,21 @@ export function setDevelopmentFocus(
       business: { ...state.business, developmentPlans: plans },
     },
   };
+}
+
+/**
+ * Set several camps at once (the camps form). All or nothing: the first
+ * invalid entry rejects the whole batch.
+ */
+export function setDevelopmentFocuses(
+  state: GameState,
+  entries: readonly { playerId: PlayerId; focus: string }[],
+): { ok: true; state: GameState } | { ok: false; error: string } {
+  let next = state;
+  for (const entry of entries) {
+    const result = setDevelopmentFocus(next, entry.playerId, entry.focus);
+    if (!result.ok) return result;
+    next = result.state;
+  }
+  return { ok: true, state: next };
 }
