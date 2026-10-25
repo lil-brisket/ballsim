@@ -1,5 +1,6 @@
 import type { Calendar } from "@/domain/entities/calendar";
 import type { Coach } from "@/domain/entities/coach";
+import type { RetiredPlayerRecord } from "@/domain/entities/retired-player";
 import type { Conference } from "@/domain/entities/conference";
 import type { Contract } from "@/domain/entities/contract";
 import type { DeadMoneyState } from "@/domain/entities/dead-money";
@@ -72,7 +73,7 @@ import type {
   FranchisePhaseState,
 } from "@/systems/phase-engine/phase-types";
 
-export const GAME_STATE_SCHEMA_VERSION = 80;
+export const GAME_STATE_SCHEMA_VERSION = 81;
 
 /** League personnel market for staff free agency (not a business-finance concept). */
 export type StaffMarketState = {
@@ -126,6 +127,12 @@ export type WorldSlice = {
    * Kept on world because jersey-number reconciliation only sees world.
    */
   retiredNumbers: RetiredNumbersState;
+  /**
+   * Slim archive of every retired player, by id (schema v81+). The full
+   * player row leaves the per-action save two seasons after retirement
+   * (see persistence/save-history.ts); this record stays.
+   */
+  retiredPlayers: Record<string, RetiredPlayerRecord>;
 };
 
 export type CompetitionSlice = {

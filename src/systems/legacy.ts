@@ -15,6 +15,7 @@
 
 import type { HallOfFameInductee } from "@/domain/entities/legacy";
 import type { PlayerSeasonStatLine } from "@/domain/entities/player-history";
+import type { CareerBasis } from "@/domain/entities/retired-player";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import { isJerseyNumber } from "@/domain/jersey-number";
@@ -65,17 +66,15 @@ const ZERO_LINE: PlayerSeasonStatLine = {
   ftAttempted: 0,
 };
 
-/** Career totals, awards, titles and Hall of Fame score from history. */
-export function careerSummary(
+/** Career basis from a player's season records (empty without any). */
+export function careerBasisFromHistory(
   state: GameState,
   playerId: PlayerId,
-): CareerSummary {
+): CareerBasis {
   const seasons = state.business.playerHistory[playerId]?.seasons ?? [];
   const totals = { ...ZERO_LINE };
-  const seasonsByTeam: Record<string, number> = {};
-  let titles = 0;
+  const teamSeasons: CareerBasis["teamSeasons"] = [];
   let lastSeasonYear: number | null = null;
-  let primaryTeamId: TeamId | null = null;
   for (const season of seasons) {
     const line = season.competition.regular;
     for (const key of Object.keys(totals) as (keyof PlayerSeasonStatLine)[]) {
@@ -87,17 +86,47 @@ export function careerSummary(
     );
     const teamId = season.contractSnapshot.teamId;
     if (teamId) {
-      seasonsByTeam[teamId] = (seasonsByTeam[teamId] ?? 0) + 1;
-      const record = state.business.franchiseHistory[teamId]?.seasons.find(
-        (s) => s.seasonYear === season.seasonYear,
-      );
-      if (record?.championship) titles += 1;
-      if (
-        primaryTeamId === null ||
-        seasonsByTeam[teamId]! >= seasonsByTeam[primaryTeamId]!
-      ) {
-        primaryTeamId = teamId;
-      }
+      teamSeasons.push({ seasonYear: season.seasonYear, teamId });
+    }
+  }
+  return { seasons: seasons.length, lastSeasonYear, totals, teamSeasons };
+}
+
+/**
+ * Season records while the player's history is in the save, else the
+ * archived basis of a retired player whose history has left it.
+ */
+function careerBasis(state: GameState, playerId: PlayerId): CareerBasis {
+  if (state.business.playerHistory[playerId] === undefined) {
+    const archived = state.world.retiredPlayers[playerId];
+    if (archived) return archived.career;
+  }
+  return careerBasisFromHistory(state, playerId);
+}
+
+/** Career totals, awards, titles and Hall of Fame score from history. */
+export function careerSummary(
+  state: GameState,
+  playerId: PlayerId,
+): CareerSummary {
+  const { seasons, lastSeasonYear, totals, teamSeasons } = careerBasis(
+    state,
+    playerId,
+  );
+  const seasonsByTeam: Record<string, number> = {};
+  let titles = 0;
+  let primaryTeamId: TeamId | null = null;
+  for (const { seasonYear, teamId } of teamSeasons) {
+    seasonsByTeam[teamId] = (seasonsByTeam[teamId] ?? 0) + 1;
+    const record = state.business.franchiseHistory[teamId]?.seasons.find(
+      (s) => s.seasonYear === seasonYear,
+    );
+    if (record?.championship) titles += 1;
+    if (
+      primaryTeamId === null ||
+      seasonsByTeam[teamId]! >= seasonsByTeam[primaryTeamId]!
+    ) {
+      primaryTeamId = teamId;
     }
   }
   const awards: Record<string, number> = {};
@@ -117,13 +146,13 @@ export function careerSummary(
     0,
   );
   const score = Math.round(
-    (seasons.length * perGame) / 2 + awardPoints + titles * TITLE_POINTS,
+    (seasons * perGame) / 2 + awardPoints + titles * TITLE_POINTS,
   );
   return {
     playerId,
-    seasons: seasons.length,
+    seasons,
     lastSeasonYear,
-    totals,
+    totals: { ...totals },
     awards,
     titles,
     primaryTeamId,
@@ -143,10 +172,11 @@ export function processHallOfFameInductions(state: GameState): SystemResult {
   );
   const inducted: HallOfFameInductee[] = [];
   const events: DomainEvent[] = [];
-  for (const player of Object.values(state.world.players).sort((a, b) =>
+  // Retired players' archive records outlive their full rows (save-history.ts).
+  for (const player of Object.values(state.world.retiredPlayers).sort((a, b) =>
     a.id < b.id ? -1 : 1,
   )) {
-    if (player.retired !== true || already.has(player.id)) continue;
+    if (already.has(player.id)) continue;
     const career = careerSummary(state, player.id);
     if (
       career.lastSeasonYear === null ||
@@ -217,10 +247,11 @@ export function getRetireNumberBlockReason(
   playerId: PlayerId,
   teamId: TeamId,
 ): string | null {
-  const player = state.world.players[playerId];
-  if (!player) return "Player not found.";
-  if (player.retired !== true) {
-    return "Numbers are retired once a player's career is over.";
+  const player = state.world.retiredPlayers[playerId];
+  if (!player) {
+    return state.world.players[playerId]
+      ? "Numbers are retired once a player's career is over."
+      : "Player not found.";
   }
   const career = careerSummary(state, playerId);
   if ((career.seasonsByTeam[teamId] ?? 0) < RETIRE_NUMBER_MIN_SEASONS) {
@@ -255,7 +286,7 @@ export function retireJerseyNumber(
 ): SystemResult {
   const blocked = getRetireNumberBlockReason(state, playerId, teamId);
   if (blocked) throw new Error(blocked);
-  const player = state.world.players[playerId]!;
+  const player = state.world.retiredPlayers[playerId]!;
   const entry = {
     number: player.jerseyNumber,
     playerId,

@@ -29,6 +29,7 @@ import {
 } from "@/systems/salary-cap";
 import { getFinancialStatement } from "@/systems/team-finances";
 import { getControlledTeam } from "@/state/selectors/teams-roster";
+import { getPlayerIdentity } from "@/state/player-identity";
 
 export type FreeAgentView = {
   playerId: string;
@@ -305,9 +306,9 @@ export function toContractsView(state: GameState): ContractRowView[] {
     rows.push({
       contractId: contract.id,
       playerId: contract.playerId,
-      playerName: player
-        ? `${player.firstName} ${player.lastName}`
-        : contract.playerId,
+      playerName:
+        getPlayerIdentity(state, contract.playerId)?.displayName ??
+        contract.playerId,
       position: player?.position ?? "—",
       salary: getContractSalaryForYear(contract, year) ?? null,
       startYear: contract.startYear,

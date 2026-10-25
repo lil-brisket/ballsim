@@ -13,7 +13,7 @@ import { projectSaveEntities } from "@/persistence/mappers/save-projection-mappe
 import { getPrisma } from "@/persistence/prisma";
 import {
   mergeSaveHistory,
-  splitColdHistory,
+  splitForStorage,
   type SaveHistory,
   type SaveHistoryChunk,
 } from "@/persistence/save-history";
@@ -196,8 +196,10 @@ export function createPrismaSaveGameStore(
       state: GameState;
       ownerUserId?: string | null;
     }): Promise<LoadedSaveGame> {
-      const { hot, chunks } = splitColdHistory(input.state);
-      const stateJson = prepareStateJson(hot);
+      const { stateJson, chunks } = splitForStorage(
+        input.state,
+        prepareStateJson,
+      );
       const row = await db().$transaction(async (tx) => {
         const created = await tx.saveGame.create({
           data: {
@@ -247,8 +249,10 @@ export function createPrismaSaveGameStore(
       state: GameState;
       ifUpdatedAt?: Date;
     }): Promise<LoadedSaveGame> {
-      const { hot, chunks } = splitColdHistory(input.state);
-      const stateJson = prepareStateJson(hot);
+      const { stateJson, chunks } = splitForStorage(
+        input.state,
+        prepareStateJson,
+      );
       const row = await db().$transaction(async (tx) => {
         if (input.ifUpdatedAt != null) {
           const result = await tx.saveGame.updateMany({

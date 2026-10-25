@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRequestSaveStore } from "@/application/request-save-store";
+import { loadSaveWithHistory } from "@/application/game-service";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { HistoryHub } from "@/components/history/HistoryHub";
 import {
@@ -19,7 +19,8 @@ type PageProps = {
 export default async function HistoryPage({ params, searchParams }: PageProps) {
   const { saveId } = await params;
   const { error, ...query } = await searchParams;
-  const loaded = await getRequestSaveStore().load(saveId);
+  // Long-retired players and old seasons live in the stored history.
+  const loaded = await loadSaveWithHistory(saveId);
   if (!loaded) {
     notFound();
   }

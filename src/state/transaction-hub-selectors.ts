@@ -18,6 +18,7 @@ import {
   toBrandingView,
   type TeamBrandingView,
 } from "@/state/team-branding-view";
+import { getPlayerIdentity } from "@/state/player-identity";
 
 /** Filter chips — maps to DomainEventType sets (single source). */
 export const TRANSACTION_FILTER_GROUPS = {
@@ -157,10 +158,9 @@ function resolvePlayer(
   if (typeof playerId !== "string" || !playerId) {
     return null;
   }
-  const player = state.world.players[playerId];
   return {
     id: playerId,
-    name: player ? `${player.firstName} ${player.lastName}` : playerId,
+    name: getPlayerIdentity(state, playerId)?.displayName ?? playerId,
     portrait: selectPlayerPortrait(state, playerId),
   };
 }

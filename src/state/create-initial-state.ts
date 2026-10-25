@@ -207,6 +207,7 @@ export function createInitialGameState(
       scheduledEvents: {},
       playerPortraits: {},
       retiredNumbers: {},
+      retiredPlayers: {},
     },
     competition: {
       season: {
@@ -549,6 +550,7 @@ export function createFourTeamInitialGameState(
       scheduledEvents: {},
       playerPortraits: {},
       retiredNumbers: {},
+      retiredPlayers: {},
     },
     competition: {
       season: {

@@ -1,5 +1,7 @@
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import { asPlayerId } from "@/domain/ids";
+import type { Player } from "@/domain/entities/player";
+import type { RetiredPlayerRecord } from "@/domain/entities/retired-player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
@@ -11,6 +13,7 @@ import {
 } from "@/systems/league-rules/invariants";
 import { withClearedDevelopmentLeagueAssignment } from "@/systems/development-league/assignment";
 import { stripPlayersFromAllTradeBlocks } from "@/systems/trades/trade-block";
+import { careerBasisFromHistory } from "@/systems/legacy";
 
 /**
  * Chance a free agent who sat out the whole season unsigned leaves the
@@ -97,6 +100,10 @@ export function processPlayerRetirements(
             contractId: null,
           }),
         },
+        retiredPlayers: {
+          ...current.world.retiredPlayers,
+          [playerId]: createRetiredPlayerRecord(current, after, year),
+        },
       },
     };
 
@@ -113,7 +120,7 @@ export function processPlayerRetirements(
       ...current,
       world: { ...current.world, teams },
       business: {
-        ...current.business,
+        ...withoutActivePlayerState(current.business, playerId),
         tradeBlocks: stripPlayersFromAllTradeBlocks(
           current.business.tradeBlocks,
           [asPlayerId(playerId)],
@@ -151,6 +158,37 @@ export function processPlayerRetirements(
   }
 
   return systemResult(current, events);
+}
+
+/**
+ * Morale, extension talks and a development plan only mean something for a
+ * player who still plays; dropping them also lets his row be archived.
+ */
+function withoutActivePlayerState(
+  business: GameState["business"],
+  playerId: string,
+): GameState["business"] {
+  const { [playerId]: _morale, ...playerMorale } = business.playerMorale;
+  const { [playerId]: _talks, ...extensionTalks } = business.extensionTalks;
+  const { [playerId]: _plan, ...developmentPlans } = business.developmentPlans;
+  return { ...business, playerMorale, extensionTalks, developmentPlans };
+}
+
+/** The archive record kept after the player's row leaves the save. */
+export function createRetiredPlayerRecord(
+  state: GameState,
+  player: Player,
+  retiredSeasonYear: number,
+): RetiredPlayerRecord {
+  return {
+    id: player.id,
+    firstName: player.firstName,
+    lastName: player.lastName,
+    position: player.position,
+    jerseyNumber: player.jerseyNumber,
+    retiredSeasonYear,
+    career: careerBasisFromHistory(state, player.id),
+  };
 }
 
 export function releasePlayerContractOnRetirement(

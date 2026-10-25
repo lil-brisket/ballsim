@@ -21,6 +21,8 @@ type SeasonGrowth = {
   hotGzipBytes: number;
   players: number;
   retiredPlayers: number;
+  /** Player rows left in the hot snapshot (long-retired ones are archived). */
+  hotPlayers: number;
   playerTableBytes: number;
   /** Largest hot-snapshot slices (world.*, business.*, ...) by JSON bytes. */
   largestSlices: Record<string, number>;
@@ -85,6 +87,7 @@ function main(): void {
         hotGzipBytes: gzipSync(hotJson, { level: 1 }).length,
         players: players.length,
         retiredPlayers: players.filter((player) => player.retired).length,
+        hotPlayers: Object.keys(hot.world.players).length,
         playerTableBytes: Buffer.byteLength(
           JSON.stringify(state.world.players),
         ),
@@ -96,7 +99,7 @@ function main(): void {
       process.stderr.write(
         `season ${row.season}: hot ${(row.hotJsonBytes / 1e6).toFixed(1)} MB` +
           ` (gzip ${(row.hotGzipBytes / 1e6).toFixed(2)} MB),` +
-          ` players ${row.players} (${row.retiredPlayers} retired),` +
+          ` players ${row.players} (${row.retiredPlayers} retired, ${row.hotPlayers} hot),` +
           ` ${row.msPerDay} ms/day\n`,
       );
       lastDate = date;

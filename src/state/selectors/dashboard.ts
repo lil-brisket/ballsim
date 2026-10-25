@@ -443,7 +443,10 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
     }),
     participation: toParticipationView(state),
     teamCount: Object.keys(state.world.teams).length,
-    playerCount: Object.keys(state.world.players).length,
+    // Active players: long-retired rows leave the per-action save.
+    playerCount: Object.values(state.world.players).filter(
+      (player) => player.retired !== true,
+    ).length,
     payroll: getTeamPayroll(team.id, year, state),
     capSpace: getTeamCapSpace(team.id, year, state),
     cash: state.business.finances[team.id]?.businessFunds ?? 0,

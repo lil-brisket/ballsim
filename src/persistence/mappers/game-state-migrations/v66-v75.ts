@@ -416,3 +416,92 @@ export function migrateV79ToV80(state: GameState): GameState {
     },
   };
 }
+
+/**
+ * Deterministic v80 → v81: archive every retired player in
+ * `world.retiredPlayers` (identity plus career basis from his season
+ * records), so his full row can leave the per-action save. The retirement
+ * season is his last recorded season, else the current one. Retired
+ * players' morale, extension talks and development plans are dropped, as
+ * retirement now does.
+ */
+export function migrateV80ToV81(state: GameState): GameState {
+  const year = state.competition.season.year;
+  const retiredPlayers: GameState["world"]["retiredPlayers"] = {
+    ...((
+      state.world as { retiredPlayers?: GameState["world"]["retiredPlayers"] }
+    ).retiredPlayers ?? {}),
+  };
+  for (const playerId of Object.keys(state.world.players).sort()) {
+    const player = state.world.players[playerId]!;
+    if (player.retired !== true || retiredPlayers[playerId]) continue;
+    const seasons = state.business.playerHistory[playerId]?.seasons ?? [];
+    const totals = {
+      games: 0,
+      minutes: 0,
+      points: 0,
+      rebounds: 0,
+      assists: 0,
+      steals: 0,
+      blocks: 0,
+      turnovers: 0,
+      fgMade: 0,
+      fgAttempted: 0,
+      threeMade: 0,
+      threeAttempted: 0,
+      ftMade: 0,
+      ftAttempted: 0,
+    };
+    const teamSeasons: GameState["world"]["retiredPlayers"][string]["career"]["teamSeasons"] =
+      [];
+    let lastSeasonYear: number | null = null;
+    for (const season of seasons) {
+      const line = season.competition.regular;
+      for (const key of Object.keys(totals) as (keyof typeof totals)[]) {
+        totals[key] += line[key];
+      }
+      lastSeasonYear = Math.max(
+        lastSeasonYear ?? season.seasonYear,
+        season.seasonYear,
+      );
+      if (season.contractSnapshot.teamId) {
+        teamSeasons.push({
+          seasonYear: season.seasonYear,
+          teamId: season.contractSnapshot.teamId,
+        });
+      }
+    }
+    retiredPlayers[playerId] = {
+      id: player.id,
+      firstName: player.firstName,
+      lastName: player.lastName,
+      position: player.position,
+      jerseyNumber: player.jerseyNumber,
+      retiredSeasonYear: Math.min(year, lastSeasonYear ?? year),
+      career: { seasons: seasons.length, lastSeasonYear, totals, teamSeasons },
+    };
+  }
+  const active = <T>(entries: Record<string, T>): Record<string, T> =>
+    Object.fromEntries(
+      Object.entries(entries).filter(
+        ([playerId]) => state.world.players[playerId]?.retired !== true,
+      ),
+    );
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 81,
+    },
+    world: {
+      ...state.world,
+      retiredPlayers,
+    },
+    business: {
+      ...state.business,
+      playerMorale: active(state.business.playerMorale),
+      extensionTalks: active(state.business.extensionTalks),
+      developmentPlans: active(state.business.developmentPlans),
+    },
+  };
+}

@@ -166,6 +166,7 @@ import {
   migrateV77ToV78,
   migrateV78ToV79,
   migrateV79ToV80,
+  migrateV80ToV81,
   type GameStateV67,
   type GameStateV68,
   type GameStateV69,
@@ -313,6 +314,7 @@ const MIGRATE_ONE_STEP: Record<number, (state: unknown) => unknown> = {
   77: (state) => migrateV77ToV78(state as GameStateV77),
   78: (state) => migrateV78ToV79(state as GameState),
   79: (state) => migrateV79ToV80(state as GameState),
+  80: (state) => migrateV80ToV81(state as GameState),
 };
 
 /**

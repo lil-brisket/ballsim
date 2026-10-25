@@ -43,6 +43,8 @@ export type AdvanceMode =
 
 export type MultiYearSimOptions = {
   seasons: number;
+  /** false keeps retired players' rows in the saved snapshot. Default true. */
+  archiveRetiredPlayers?: boolean;
   /** Preferred: new preset API. */
   managementPreset?: AiManagementPreset;
   /** @deprecated Prefer managementPreset. Mapped via legacyManagementModeToPreset. */
@@ -348,7 +350,9 @@ async function handleBlockedGates(
 export async function runMultiYearSimulation(
   options: MultiYearSimOptions,
 ): Promise<MultiYearSimResult> {
-  const store = createMemorySaveGameStore();
+  const store = createMemorySaveGameStore({
+    archivePlayers: options.archiveRetiredPlayers,
+  });
   const seed = options.seed ?? TEST_RNG_SEED;
   const settings = cloneGameSettings(options.settingsBase ?? CBL_GAME_SETTINGS);
   const managementPreset: AiManagementPreset =

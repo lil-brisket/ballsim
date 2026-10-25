@@ -92,6 +92,8 @@ describe("memory store history", () => {
     expect(await store.loadHistory("save_history_twice")).toEqual({
       games: {},
       drafts: {},
+      players: {},
+      playerHistory: {},
     });
   });
 });

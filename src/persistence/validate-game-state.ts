@@ -443,7 +443,13 @@ export function validateGameState(state: unknown): asserts state is GameState {
   validatePayrollAssessments(business.payrollAssessments, world.teams);
   validatePlayerMorale(business.playerMorale, world.players);
   validateDevelopmentPlans(business.developmentPlans, world.players);
-  validateLegacy(business.hallOfFame, world.retiredNumbers, world.players);
+  validateRetiredPlayers(world.retiredPlayers, world.players);
+  validateLegacy(
+    business.hallOfFame,
+    world.retiredNumbers,
+    world.players,
+    world.retiredPlayers as Record<string, unknown>,
+  );
 
   const staffContracts = (business as Record<string, unknown>).staffContracts;
   const sponsorships = (business as Record<string, unknown>).sponsorships;
@@ -811,6 +817,11 @@ export function validateGameState(state: unknown): asserts state is GameState {
 
   const teamIds = new Set(Object.keys(world.teams));
   const playerIds = new Set(Object.keys(world.players));
+  // Long-retired players whose rows left for the stored history: finished
+  // contracts and closed offers may still name them.
+  const archivedPlayerIds = new Set(
+    Object.keys(world.retiredPlayers ?? {}).filter((id) => !playerIds.has(id)),
+  );
   const contractIds = new Set(Object.keys(business.contracts));
   const gameIds = new Set(Object.keys(competition.games));
   const seasonId = competition.season.id;
@@ -893,7 +904,16 @@ export function validateGameState(state: unknown): asserts state is GameState {
       contractValue.teamId,
       `business.contracts[${contractId}].teamId`,
     );
-    if (!playerIds.has(contractValue.playerId)) {
+    if (archivedPlayerIds.has(contractValue.playerId)) {
+      if (
+        typeof contractValue.endYear === "number" &&
+        contractValue.endYear >= competition.season.year
+      ) {
+        fail(
+          `business.contracts[${contractId}] is still running for archived player "${contractValue.playerId}".`,
+        );
+      }
+    } else if (!playerIds.has(contractValue.playerId)) {
       fail(
         `business.contracts[${contractId}].playerId "${contractValue.playerId}" is missing from world.players.`,
       );
@@ -1018,7 +1038,13 @@ export function validateGameState(state: unknown): asserts state is GameState {
       offerValue.teamId,
       `business.freeAgency.offers[${offerId}].teamId`,
     );
-    if (!playerIds.has(offerValue.playerId as string)) {
+    if (archivedPlayerIds.has(offerValue.playerId as string)) {
+      if (isOpenOffer(offerValue.status as FreeAgencyOfferStatus)) {
+        fail(
+          `business.freeAgency.offers[${offerId}] is open for archived player "${offerValue.playerId}".`,
+        );
+      }
+    } else if (!playerIds.has(offerValue.playerId as string)) {
       fail(
         `business.freeAgency.offers[${offerId}].playerId "${offerValue.playerId}" is missing from world.players.`,
       );
@@ -1084,6 +1110,9 @@ export function validateGameState(state: unknown): asserts state is GameState {
 
     if (offerValue.status === "accepted") {
       const acceptedContractId = offerValue.contractId as string;
+      if (archivedPlayerIds.has(offerValue.playerId as string)) {
+        continue;
+      }
       const signedPlayer = world.players[offerValue.playerId as string];
       assertRecord(signedPlayer, `world.players[${offerValue.playerId}]`);
       if (!contractIds.has(acceptedContractId)) {
@@ -1889,11 +1918,57 @@ function validateDevelopmentPlans(
   }
 }
 
+function validateRetiredPlayers(
+  retiredPlayers: unknown,
+  players: Record<string, unknown>,
+): void {
+  if (retiredPlayers == null) {
+    fail("world.retiredPlayers is required.");
+  }
+  assertRecord(retiredPlayers, "world.retiredPlayers");
+  for (const [playerId, value] of Object.entries(retiredPlayers)) {
+    const path = `world.retiredPlayers[${playerId}]`;
+    assertRecord(value, path);
+    if (value.id !== playerId) {
+      fail(`${path}.id must match its key.`);
+    }
+    assertNonEmptyString(value.firstName, `${path}.firstName`);
+    assertNonEmptyString(value.lastName, `${path}.lastName`);
+    if (!Number.isInteger(value.retiredSeasonYear)) {
+      fail(`${path}.retiredSeasonYear must be an integer.`);
+    }
+    assertRecord(value.career, `${path}.career`);
+    if (!Number.isInteger(value.career.seasons)) {
+      fail(`${path}.career.seasons must be an integer.`);
+    }
+    assertRecord(value.career.totals, `${path}.career.totals`);
+    if (!Array.isArray(value.career.teamSeasons)) {
+      fail(`${path}.career.teamSeasons must be an array.`);
+    }
+    const player = players[playerId] as { retired?: unknown } | undefined;
+    if (player !== undefined && player.retired !== true) {
+      fail(`${path}: the player in world.players is not retired.`);
+    }
+  }
+  for (const [playerId, value] of Object.entries(players)) {
+    if ((value as { retired?: unknown }).retired === true) {
+      if (!(playerId in retiredPlayers)) {
+        fail(`world.players[${playerId}] is retired but not archived.`);
+      }
+    }
+  }
+}
+
 function validateLegacy(
   hallOfFame: unknown,
   retiredNumbers: unknown,
   players: Record<string, unknown>,
+  retiredPlayers: Record<string, unknown>,
 ): void {
+  // Legends may have left world.players for the retired-player archive.
+  const known = (playerId: unknown): playerId is string =>
+    typeof playerId === "string" &&
+    (playerId in players || playerId in retiredPlayers);
   if (hallOfFame == null) {
     fail("business.hallOfFame is required.");
   }
@@ -1905,8 +1980,8 @@ function validateLegacy(
   hallOfFame.inductees.forEach((value: unknown, index: number) => {
     const path = `business.hallOfFame.inductees[${index}]`;
     assertRecord(value, path);
-    if (typeof value.playerId !== "string" || !(value.playerId in players)) {
-      fail(`${path}.playerId must reference world.players.`);
+    if (!known(value.playerId)) {
+      fail(`${path}.playerId must reference a player.`);
     }
     if (seen.has(value.playerId)) {
       fail(`${path}: player inducted twice.`);
@@ -1935,8 +2010,8 @@ function validateLegacy(
         fail(`${path}: number retired twice.`);
       }
       numbers.add(entry.number as number);
-      if (typeof entry.playerId !== "string" || !(entry.playerId in players)) {
-        fail(`${path}.playerId must reference world.players.`);
+      if (!known(entry.playerId)) {
+        fail(`${path}.playerId must reference a player.`);
       }
     });
   }
