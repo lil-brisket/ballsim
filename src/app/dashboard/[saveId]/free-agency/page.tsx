@@ -5,6 +5,7 @@ import { TaxLineNote } from "@/components/finances/PayrollRulesPanel";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  advanceDayAction,
   finishFreeAgencyAction,
   makeFreeAgentOfferAction,
   signFreeAgentAction,
@@ -129,79 +130,108 @@ export default async function FreeAgencyPage({
             />
           ) : null}
 
-          <Section title="My Offers">
-            {hub.openOffers.length === 0 ? (
-              <EmptyState message="No open offers from your team." />
-            ) : (
-              <ul className="space-y-2">
-                {hub.openOffers.map((offer) => (
-                  <li
-                    key={offer.offerId}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 px-4 py-3 text-sm"
+          {hub.inSeason ? null : (
+            <Section
+              title="My Offers"
+              action={
+                <form action={advanceDayAction}>
+                  <input type="hidden" name="saveId" value={saveId} />
+                  <input type="hidden" name="returnPath" value={returnPath} />
+                  <button
+                    type="submit"
+                    className={buttonClass({ variant: "secondary" })}
                   >
-                    <div className="flex min-w-0 items-start gap-2">
-                      <PlayerPortrait
-                        playerId={offer.playerId}
-                        portrait={selectPlayerPortrait(
-                          loaded.state,
-                          offer.playerId,
-                        )}
-                        firstName={splitDisplayName(offer.playerName).firstName}
-                        lastName={splitDisplayName(offer.playerName).lastName}
-                        size="sm"
-                      />
-                      <div>
-                        <p className="text-zinc-100">
-                          <PlayerEntityLink
-                            saveId={saveId}
-                            playerId={offer.playerId}
-                          >
-                            {offer.playerName}
-                          </PlayerEntityLink>
-                        </p>
-                        <p className="text-zinc-500">
-                          {offer.years}y ·{" "}
-                          {offer.salary !== null ? (
-                            <MoneyDisplay amount={offer.salary} />
-                          ) : (
-                            "—"
+                    Sim 1 day
+                  </button>
+                </form>
+              }
+            >
+              <p className="mb-2 text-sm text-zinc-500">
+                Free agents answer standing offers each day. Sim a day to see
+                who signs.
+              </p>
+              {hub.offers.length === 0 ? (
+                <EmptyState message="No offers from your team yet." />
+              ) : (
+                <ul className="space-y-2">
+                  {hub.offers.map((offer) => (
+                    <li
+                      key={offer.offerId}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 px-4 py-3 text-sm"
+                    >
+                      <div className="flex min-w-0 items-start gap-2">
+                        <PlayerPortrait
+                          playerId={offer.playerId}
+                          portrait={selectPlayerPortrait(
+                            loaded.state,
+                            offer.playerId,
                           )}
-                        </p>
+                          firstName={
+                            splitDisplayName(offer.playerName).firstName
+                          }
+                          lastName={splitDisplayName(offer.playerName).lastName}
+                          size="sm"
+                        />
+                        <div>
+                          <p className="text-zinc-100">
+                            <PlayerEntityLink
+                              saveId={saveId}
+                              playerId={offer.playerId}
+                            >
+                              {offer.playerName}
+                            </PlayerEntityLink>
+                          </p>
+                          <p className="text-zinc-500">
+                            {offer.years}y ·{" "}
+                            {offer.salary !== null ? (
+                              <MoneyDisplay amount={offer.salary} />
+                            ) : (
+                              "—"
+                            )}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <StatusBadge label={offer.status} />
-                      <ConfirmDialog
-                        title="Withdraw offer"
-                        description={`Withdraw the open offer for ${offer.playerName}.`}
-                        confirmLabel="Withdraw"
-                      >
-                        <form action={withdrawFreeAgentOfferAction}>
-                          <input type="hidden" name="saveId" value={saveId} />
-                          <input
-                            type="hidden"
-                            name="offerId"
-                            value={offer.offerId}
-                          />
-                          <input
-                            type="hidden"
-                            name="returnPath"
-                            value={returnPath}
-                          />
-                          <button
-                            type="submit"
-                            className={buttonClass({ variant: "danger" })}
+                      <div className="flex items-center gap-3">
+                        <StatusBadge label={offer.status} />
+                        {offer.status === "pending" ||
+                        offer.status === "negotiating" ? (
+                          <ConfirmDialog
+                            title="Withdraw offer"
+                            description={`Withdraw the open offer for ${offer.playerName}.`}
+                            confirmLabel="Withdraw"
                           >
-                            Confirm withdraw
-                          </button>
-                        </form>
-                      </ConfirmDialog>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Section>
+                            <form action={withdrawFreeAgentOfferAction}>
+                              <input
+                                type="hidden"
+                                name="saveId"
+                                value={saveId}
+                              />
+                              <input
+                                type="hidden"
+                                name="offerId"
+                                value={offer.offerId}
+                              />
+                              <input
+                                type="hidden"
+                                name="returnPath"
+                                value={returnPath}
+                              />
+                              <button
+                                type="submit"
+                                className={buttonClass({ variant: "danger" })}
+                              >
+                                Confirm withdraw
+                              </button>
+                            </form>
+                          </ConfirmDialog>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+          )}
 
           {hub.rfa.enabled && hub.rfa.outgoingSheets.length > 0 ? (
             <Section title="Your offer sheets">
@@ -351,50 +381,6 @@ export default async function FreeAgencyPage({
                   );
                 })}
               </DataTable>
-            )}
-          </Section>
-
-          <Section title="Recent Signings">
-            {hub.recentSignings.length === 0 ? (
-              <EmptyState message="No accepted offers yet." />
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {hub.recentSignings.map((signing) => (
-                  <li
-                    key={signing.offerId}
-                    className="flex flex-wrap justify-between gap-2 rounded-lg border border-zinc-800 px-4 py-2"
-                  >
-                    <span className="flex items-center gap-2">
-                      <PlayerPortrait
-                        playerId={signing.playerId}
-                        portrait={selectPlayerPortrait(
-                          loaded.state,
-                          signing.playerId,
-                        )}
-                        firstName={
-                          splitDisplayName(signing.playerName).firstName
-                        }
-                        lastName={splitDisplayName(signing.playerName).lastName}
-                        size="sm"
-                      />
-                      <PlayerEntityLink
-                        saveId={saveId}
-                        playerId={signing.playerId}
-                      >
-                        {signing.playerName}
-                      </PlayerEntityLink>
-                    </span>
-                    <span className="text-zinc-500">
-                      {signing.years}y ·{" "}
-                      {signing.salary != null ? (
-                        <MoneyDisplay amount={signing.salary} />
-                      ) : (
-                        "—"
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
             )}
           </Section>
 

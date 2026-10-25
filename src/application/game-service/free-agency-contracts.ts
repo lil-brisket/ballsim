@@ -7,6 +7,7 @@ import {
   listFreeAgents,
   makeOffer,
   acceptOffer,
+  validateOfferAcceptable,
   withdrawOffer,
 } from "@/systems/free-agency";
 import {
@@ -124,7 +125,17 @@ export async function signOwnerFreeAgent(
       teamId,
       terms,
     });
+    const stale = validateOfferAcceptable(offered.state, offerId);
+    if (stale !== null) {
+      return fail(stale);
+    }
     const accepted = acceptOffer(offered.state, offerId);
+    // A signing is answered on the spot: if he turns it down, nothing is saved.
+    if (accepted.state.world.players[playerId]?.teamId !== teamId) {
+      const player = state.world.players[playerId];
+      const name = player ? `${player.firstName} ${player.lastName}` : "He";
+      return fail(`${name} turned down the offer.`);
+    }
     const withEvidence = recordOwnershipEvidence(
       accepted.state,
       scoreFreeAgentSigning(state, playerId, salary, years),

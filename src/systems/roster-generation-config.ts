@@ -4,6 +4,15 @@ import type { QualityBand } from "@/systems/player-generation-config";
 /** Default roster size used by roster and league generation. */
 export const DEFAULT_ROSTER_SIZE = 15;
 
+/**
+ * Unsigned players a generated league opens with, per team, so the first
+ * season has a free-agent market before any contract has expired.
+ */
+export const OPENING_FREE_AGENTS_PER_TEAM = 2;
+
+/** Opening free agents are fringe players: bench quality with a little upside. */
+export const OPENING_FREE_AGENT_QUALITY = { min: 40, max: 64 } as const;
+
 const ROSTER_POSITION_CYCLE: readonly PlayerPosition[] = [
   "PG",
   "SG",

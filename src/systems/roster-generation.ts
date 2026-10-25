@@ -6,7 +6,7 @@ import {
 } from "@/domain/ids";
 import { type Player, type PlayerPosition } from "@/domain/entities/player";
 import { createContract, type Contract } from "@/domain/entities/contract";
-import type { Rng } from "@/domain/rng";
+import { createSeededRng, deriveSeed, type Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import {
@@ -23,6 +23,8 @@ import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { generatePlayerWithRng } from "@/systems/player-generation";
 import {
   DEFAULT_ROSTER_SIZE,
+  OPENING_FREE_AGENT_QUALITY,
+  OPENING_FREE_AGENTS_PER_TEAM,
   rosterPositionForSlot,
   rosterQualityBandForSlot,
 } from "@/systems/roster-generation-config";
@@ -32,7 +34,8 @@ import { aiPayrollRoom } from "@/systems/ai-payroll-budget";
 import { isUserControlledTeam } from "@/state/owner-context";
 
 /**
- * Fills empty team rosters with fictional players and starter contracts.
+ * Fills empty team rosters with fictional players and starter contracts, and
+ * opens the league with a small pool of unsigned free agents.
  * Idempotent: no-op when any players already exist.
  *
  * Player identity, attributes, potential, and personality come from
@@ -105,6 +108,26 @@ export function generateRosters(state: GameState, rng: Rng): SystemResult {
       ...teams[teamId]!,
       roster: rosterPlayerIds,
     };
+  }
+
+  // Opening free agents draw from their own stream, so adding them leaves the
+  // team rosters and everything seeded after world generation unchanged.
+  const freeAgentRng = createSeededRng(
+    deriveSeed(rng.getState(), "opening-free-agents"),
+  );
+  const openingFreeAgents = teamIds.length * OPENING_FREE_AGENTS_PER_TEAM;
+  for (let index = 0; index < openingFreeAgents; index += 1) {
+    const playerId = asPlayerId(`player_fa_${index}`);
+    const player = generatePlayerWithRng(freeAgentRng, {
+      id: playerId,
+      teamId: null,
+      contractId: null,
+      position: rosterPositionForSlot(index),
+      occupiedNames,
+      qualityBand: OPENING_FREE_AGENT_QUALITY,
+    });
+    occupiedNames.add(`${player.firstName} ${player.lastName}`);
+    players[playerId] = player;
   }
 
   let stateWithContracts: GameState = {
