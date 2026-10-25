@@ -28,7 +28,7 @@ vi.mock("@/application/actions", () => ({
   offerContractExtensionAction: vi.fn(),
   exerciseTeamOptionAction: vi.fn(),
   declineTeamOptionAction: vi.fn(),
-  setDevelopmentFocusAction: vi.fn(),
+  setDevelopmentFocusesAction: vi.fn(),
   toggleTradeBlockAction: vi.fn(),
   fetchPlayerDrawerViewAction: vi.fn(),
   fetchTeamDrawerViewAction: vi.fn(),
@@ -51,8 +51,8 @@ import { ContractHubHeader } from "@/components/contracts/ContractHubHeader";
 import { ContractOverview } from "@/components/contracts/ContractOverview";
 import { ContractRow } from "@/components/contracts/ContractRow";
 import { ExpiringDeals } from "@/components/contracts/ExpiringDeals";
-import { DevelopmentPlans } from "@/components/development/DevelopmentPlans";
-import { DevelopmentRow } from "@/components/development/DevelopmentRow";
+import { SkillRatingsTable } from "@/components/development/SkillRatingsTable";
+import { TrainingCamps } from "@/components/development/TrainingCamps";
 import { RosterPage } from "@/components/roster/RosterPage";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
 import { toContractHubView } from "@/state/contract-hub-selectors";
@@ -67,7 +67,7 @@ import {
   getTeamCapSpace,
   getTeamPayroll,
 } from "@/systems/salary-cap";
-import { DEVELOPMENT_PLAN_MAX_AGE } from "@/systems/player-development";
+import type { SkillRatingsRow } from "@/state/development-plan-selectors";
 
 const EXTENSION_PHASES: ReadonlySet<string> = new Set([
   "offseason.roster_decisions",
@@ -270,47 +270,100 @@ describe("contracts screen", () => {
   });
 });
 
+function syntheticRating(
+  overrides: Partial<SkillRatingsRow> & { playerId: string },
+): SkillRatingsRow {
+  return {
+    portrait: null,
+    playerName: "Test Player",
+    position: "PG",
+    age: 24,
+    overall: 70,
+    overallDelta: null,
+    potential: 75,
+    onDevelopmentLeague: false,
+    focus: "balanced",
+    injury: null,
+    skills: [
+      { focus: "shooting", label: "Shooting", rating: 70, delta: 3 },
+      { focus: "finishing", label: "Finishing", rating: 65, delta: -2 },
+    ],
+    ...overrides,
+  };
+}
+
 describe("development screen", () => {
-  it.each(phases)("%s: plans and rows render", (phase) => {
+  it.each(phases)("%s: training camps render", (phase) => {
     const state = stateAt(phase);
     const view = toDevelopmentHubView(state);
-    expect(view.rows.length).toBeGreaterThan(0);
+    const roster = state.world.teams[getActiveOwnerTeamId(state)]!.roster;
+    // Camps cover the whole roster; there is no age cap.
+    expect(view.plans.rows.length).toBe(roster.length);
 
-    const plans = render(
+    const camps = render(
       withDrawer(
-        <DevelopmentPlans
-          saveId="save_test"
-          returnPath="/x"
-          plans={view.plans}
-        />,
+        <TrainingCamps saveId="save_test" returnPath="/x" plans={view.plans} />,
       ),
     );
-    expect(plans.container.textContent).toContain("Development plans");
-    // No phase gate exists for plans: the only rule is age.
-    expect(view.plans.maxAge).toBe(DEVELOPMENT_PLAN_MAX_AGE);
+    expect(camps.container.textContent).toContain("Training camps");
+    expect(camps.container.textContent).toContain(
+      `${view.plans.booked} / ${view.plans.slots}`,
+    );
+    for (const camp of view.plans.camps) {
+      expect(camps.container.textContent).toContain(camp.label);
+    }
+    expect(screen.getAllByRole("combobox")).toHaveLength(
+      view.plans.rows.length,
+    );
     for (const row of view.plans.rows) {
-      expect(row.age).toBeLessThanOrEqual(DEVELOPMENT_PLAN_MAX_AGE);
-    }
-    if (view.plans.rows.length > 0) {
-      expect(screen.getAllByRole("button", { name: "Save" })).toHaveLength(
-        view.plans.rows.length,
+      const select = camps.container.querySelector(
+        `select[name="camp:${row.playerId}"]`,
       );
-      expect(screen.getAllByRole("combobox")).toHaveLength(
-        view.plans.rows.length,
-      );
+      expect(select).not.toBeNull();
     }
-    expect(primaryCount(plans.container)).toBeLessThanOrEqual(1);
-    plans.unmount();
+    expect(screen.getAllByRole("button", { name: "Save camps" })).toHaveLength(
+      1,
+    );
+    expect(primaryCount(camps.container)).toBeLessThanOrEqual(1);
+  });
 
-    for (const row of view.rows) {
-      const { container, unmount } = render(
-        inTable(<DevelopmentRow saveId="save_test" row={row} />),
-      );
-      expect(container.textContent).toContain(row.playerName);
-      expect(container.textContent).toContain(String(row.overall));
-      expect(primaryCount(container)).toBeLessThanOrEqual(1);
-      unmount();
+  it.each(phases)("%s: skill ratings render", (phase) => {
+    const view = toDevelopmentHubView(stateAt(phase));
+    expect(view.ratings.length).toBe(view.plans.rows.length);
+    const { container } = render(
+      withDrawer(<SkillRatingsTable saveId="save_test" rows={view.ratings} />),
+    );
+    for (const header of ["Shooting", "Basketball IQ", "POT"]) {
+      expect(screen.getByRole("columnheader", { name: header })).toBeTruthy();
     }
+    for (const row of view.ratings) {
+      expect(container.textContent).toContain(row.playerName);
+    }
+    expect(primaryCount(container)).toBeLessThanOrEqual(1);
+  });
+
+  it("colours improved, declined and injured ratings", () => {
+    const rows = [
+      syntheticRating({ playerId: "p_healthy", playerName: "Healthy Guy" }),
+      syntheticRating({
+        playerId: "p_hurt",
+        playerName: "Hurt Guy",
+        injury: { label: "Sprained Ankle" },
+      }),
+    ];
+    render(withDrawer(<SkillRatingsTable saveId="save_test" rows={rows} />));
+    const [healthy, hurt] = screen.getAllByRole("row").slice(1);
+    const gain = within(healthy!).getByText("+3");
+    expect(gain.className).toContain("text-emerald-300");
+    const drop = within(healthy!).getByText("−2");
+    expect(drop.className).toContain("text-rose-300");
+    expect(within(hurt!).getByText("−2").className).toContain(
+      "text-orange-300",
+    );
+    expect(within(hurt!).getByText("+3").className).toContain(
+      "text-emerald-300",
+    );
+    expect(within(hurt!).getByText("Injured · Sprained Ankle")).toBeTruthy();
   });
 });
 

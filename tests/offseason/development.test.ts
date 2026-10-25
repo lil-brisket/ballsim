@@ -21,7 +21,6 @@ import {
   RATING_MAX,
   RATING_MIN,
   type Player,
-  type PlayerAttributes,
 } from "@/domain/entities/player";
 import type { TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
@@ -31,9 +30,7 @@ import { developmentOpportunityFactor } from "@/systems/injury/injury-effects";
 import { PLAYER_RETIREMENT_MIN_AGE } from "@/systems/league-rules/invariants";
 import {
   developPlayer,
-  DEVELOPMENT_PLAN_MAX_AGE,
-  FOCUS_SHIFT_SHARE,
-  redistributeForFocus,
+  CAMP_ATTRIBUTE_BONUS,
 } from "@/systems/player-development";
 import {
   MAX_ANNUAL_ATTRIBUTE_CHANGE,
@@ -44,10 +41,8 @@ import {
   playerRetirementProbability,
   processPlayerRetirements,
 } from "@/systems/player-retirement";
-import {
-  developmentFocusFor,
-  processSeasonPlayerDevelopment,
-} from "@/systems/season-player-development";
+import { processSeasonPlayerDevelopment } from "@/systems/season-player-development";
+import { campAssignments, campSlotsForTeam } from "@/systems/development-plans";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { TEST_RNG_SEED } from "../helpers/determinism";
 import { createTestGameState } from "../factories/game-state";
@@ -414,57 +409,52 @@ describe("injuries (developmentOpportunityFactor)", () => {
   });
 });
 
-describe("development focus", () => {
-  function rawDeltas(seed: number) {
-    const rng = createSeededRng(seed);
-    const deltas: Partial<Record<keyof PlayerAttributes, number>> = {};
-    for (const key of PLAYER_ATTRIBUTE_KEYS) deltas[key] = rng.nextInt(-2, 4);
-    return deltas;
-  }
-  const total = (deltas: Partial<Record<keyof PlayerAttributes, number>>) =>
-    Object.values(deltas).reduce((sum, value) => sum + (value ?? 0), 0);
-
-  it("balanced is a no-op", () => {
-    const deltas = rawDeltas(1);
-    expect(redistributeForFocus(deltas, "balanced")).toEqual(deltas);
-  });
+describe("training camps", () => {
+  const ages = [20, 24, 28, 32, 36];
 
   it.each(DEVELOPMENT_FOCUSES.filter((focus) => focus !== "balanced"))(
-    "%s moves growth into its attributes without changing the total",
+    "%s never lowers any rating versus no camp and adds at most the bonus",
     (focus) => {
       const targets = DEVELOPMENT_FOCUS_ATTRIBUTES[focus];
-      let moved = 0;
-      for (let seed = 0; seed < 100; seed += 1) {
-        const deltas = rawDeltas(seed);
-        const shifted = redistributeForFocus(deltas, focus);
-        expect(total(shifted)).toBe(total(deltas));
-        for (const key of PLAYER_ATTRIBUTE_KEYS) {
-          const before = deltas[key] ?? 0;
-          const after = shifted[key] ?? 0;
-          expect(after).toBeLessThanOrEqual(MAX_ANNUAL_ATTRIBUTE_CHANGE);
-          if (targets.includes(key)) {
-            expect(after).toBeGreaterThanOrEqual(before);
-          } else {
-            // Non-targets give up at most FOCUS_SHIFT_SHARE of a gain and
-            // never lose anything else.
-            expect(after).toBeLessThanOrEqual(before);
-            if (before <= 0) expect(after).toBe(before);
-            expect(after).toBeGreaterThanOrEqual(
-              before > 0
-                ? before - Math.floor(before * FOCUS_SHIFT_SHARE)
-                : before,
-            );
+      let improved = 0;
+      for (const age of ages) {
+        const player = createPlayer({
+          age,
+          attributes: uniformPlayerAttributes(65),
+          potential: { overall: age < 28 ? 85 : 66 },
+        });
+        for (let seed = 0; seed < 40; seed += 1) {
+          const plain = developPlayer(player, createSeededRng(seed), 1);
+          const camp = developPlayer(player, createSeededRng(seed), 1, focus);
+          for (const key of PLAYER_ATTRIBUTE_KEYS) {
+            const gain = camp.attributes[key] - plain.attributes[key];
+            if (targets.includes(key)) {
+              expect(gain).toBeGreaterThanOrEqual(0);
+              expect(gain).toBeLessThanOrEqual(CAMP_ATTRIBUTE_BONUS);
+              expect(
+                camp.attributes[key] - player.attributes[key],
+              ).toBeLessThanOrEqual(MAX_ANNUAL_ATTRIBUTE_CHANGE);
+              if (gain > 0) improved += 1;
+            } else {
+              expect(gain).toBe(0);
+            }
           }
-        }
-        if (targets.some((key) => (shifted[key] ?? 0) > (deltas[key] ?? 0))) {
-          moved += 1;
+          const overall = calculatePlayerOverall(
+            camp.position,
+            camp.attributes,
+          );
+          expect(overall).toBeLessThanOrEqual(player.potential.overall);
+          expect(
+            overall -
+              calculatePlayerOverall(player.position, player.attributes),
+          ).toBeLessThanOrEqual(MAX_ANNUAL_OVERALL_GAIN);
         }
       }
-      expect(moved).toBeGreaterThan(80);
+      expect(improved).toBeGreaterThan(0);
     },
   );
 
-  it("balanced equals the unfocused output", () => {
+  it("balanced equals the default output", () => {
     const player = createPlayer({
       age: 22,
       attributes: uniformPlayerAttributes(60),
@@ -477,95 +467,78 @@ describe("development focus", () => {
     }
   });
 
-  it("a focus raises its attributes on average, at the same total growth", () => {
+  it("helps a declining veteran hold their camp skills", () => {
     const player = createPlayer({
-      age: 22,
-      attributes: uniformPlayerAttributes(60),
-      potential: { overall: 95 },
+      age: 34,
+      attributes: uniformPlayerAttributes(70),
+      potential: { overall: 70 },
     });
-    const focus: DevelopmentFocus = "shooting";
-    const targets = DEVELOPMENT_FOCUS_ATTRIBUTES[focus];
-    const run = (f: DevelopmentFocus) => {
-      const sums = { target: 0, other: 0 };
-      for (let seed = 0; seed < 300; seed += 1) {
-        const developed = developPlayer(player, createSeededRng(seed), 1, f);
-        for (const key of PLAYER_ATTRIBUTE_KEYS) {
-          const delta = developed.attributes[key] - player.attributes[key];
-          if (targets.includes(key)) sums.target += delta;
-          else sums.other += delta;
+    const targets = DEVELOPMENT_FOCUS_ATTRIBUTES.defense;
+    const campChange = (focus: DevelopmentFocus) => {
+      let sum = 0;
+      for (let seed = 0; seed < 200; seed += 1) {
+        const developed = developPlayer(
+          player,
+          createSeededRng(seed),
+          1,
+          focus,
+        );
+        for (const key of targets) {
+          sum += developed.attributes[key] - player.attributes[key];
         }
       }
-      return sums;
+      return sum;
     };
-    const balanced = run("balanced");
-    const focused = run(focus);
-    expect(focused.target).toBeGreaterThan(balanced.target + 100);
-    expect(focused.other).toBeLessThan(balanced.other);
-    // Same draws, redistributed: the total only differs where a cap peels.
-    const totalBalanced = balanced.target + balanced.other;
-    const totalFocused = focused.target + focused.other;
-    expect(Math.abs(totalFocused - totalBalanced) / totalBalanced).toBeLessThan(
-      0.05,
-    );
+    expect(campChange("defense")).toBeGreaterThan(campChange("balanced"));
   });
 
-  describe("developmentFocusFor", () => {
+  describe("campAssignments", () => {
     const state = world();
     const userTeam = state.user.activeOwnerTeamId;
     const cpuTeam = Object.keys(state.world.teams).find(
       (id) => id !== userTeam,
     ) as TeamId;
-    const young = (teamId: TeamId | null, age = DEVELOPMENT_PLAN_MAX_AGE) =>
-      createPlayer({ id: "focus_p", teamId, age, position: "PG" });
 
-    it("uses the owner's plan on the user team, balanced when none is set", () => {
-      const player = young(userTeam);
-      expect(developmentFocusFor(state, player)).toBe("balanced");
+    it("sends owner picks of any age, up to the trainer's slots", () => {
+      const roster = state.world.teams[userTeam]!.roster;
+      const slots = campSlotsForTeam(state, userTeam);
+      const plans = Object.fromEntries(
+        roster.map((id) => [id, "shooting" as const]),
+      );
+      const veteran = roster[0]!;
       const planned: GameState = {
         ...state,
-        business: {
-          ...state.business,
-          developmentPlans: { [player.id]: "defense" },
+        world: {
+          ...state.world,
+          players: {
+            ...state.world.players,
+            [veteran]: { ...state.world.players[veteran]!, age: 35 },
+          },
         },
+        business: { ...state.business, developmentPlans: plans },
       };
-      expect(developmentFocusFor(planned, player)).toBe("defense");
+      const camps = campAssignments(planned);
+      const mine = roster.filter((id) => camps[id]);
+      expect(mine).toEqual(roster.slice(0, slots));
+      expect(camps[veteran]).toBe("shooting");
     });
 
-    it("gives CPU teams the position default", () => {
-      for (const position of ["PG", "SG", "SF", "PF", "C"] as const) {
-        const player = createPlayer({
-          id: "cpu_p",
-          teamId: cpuTeam,
-          age: 21,
-          position,
-        });
-        expect(developmentFocusFor(state, player)).toBe(
-          DEFAULT_FOCUS_BY_POSITION[position],
+    it("sends CPU players to their position's camp, up to the slots, any age", () => {
+      const camps = campAssignments(state);
+      const roster = state.world.teams[cpuTeam]!.roster;
+      const sent = roster.filter((id) => camps[id]);
+      expect(sent).toHaveLength(
+        Math.min(roster.length, campSlotsForTeam(state, cpuTeam)),
+      );
+      for (const id of sent) {
+        expect(camps[id]).toBe(
+          DEFAULT_FOCUS_BY_POSITION[state.world.players[id]!.position],
         );
       }
-    });
-
-    it("develops older players and free agents balanced", () => {
-      const planned: GameState = {
-        ...state,
-        business: {
-          ...state.business,
-          developmentPlans: { focus_p: "shooting" },
-        },
-      };
-      expect(
-        developmentFocusFor(
-          planned,
-          young(userTeam, DEVELOPMENT_PLAN_MAX_AGE + 1),
-        ),
-      ).toBe("balanced");
-      expect(
-        developmentFocusFor(
-          planned,
-          young(cpuTeam, DEVELOPMENT_PLAN_MAX_AGE + 1),
-        ),
-      ).toBe("balanced");
-      expect(developmentFocusFor(planned, young(null, 20))).toBe("balanced");
+      // Free agents never attend.
+      for (const player of Object.values(state.world.players)) {
+        if (player.teamId == null) expect(camps[player.id]).toBeUndefined();
+      }
     });
   });
 });

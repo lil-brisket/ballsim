@@ -3,11 +3,7 @@ import {
   PLAYER_ATTRIBUTE_KEYS,
   type Player,
 } from "@/domain/entities/player";
-import {
-  DEFAULT_FOCUS_BY_POSITION,
-  type DevelopmentFocus,
-} from "@/domain/entities/development-plan";
-import { isUserControlledTeam } from "@/state/owner-context";
+import { campAssignments } from "@/systems/development-plans";
 import type { DomainEvent } from "@/domain/events";
 import { createDomainEvent } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
@@ -20,7 +16,6 @@ import { FACILITY_LEVEL_MAX } from "@/domain/entities/franchise-ops";
 import {
   developPlayer,
   clampPlayerToPotential,
-  DEVELOPMENT_PLAN_MAX_AGE,
 } from "@/systems/player-development";
 import { developmentStageForAge } from "@/systems/player-generation-config";
 import { trainerDevelopmentMultiplier } from "@/systems/staff-effects";
@@ -96,6 +91,7 @@ export function processSeasonPlayerDevelopment(
   const nextPlayers: Record<string, Player> = { ...state.world.players };
   const playerIds = Object.keys(nextPlayers).sort();
   const reference = leagueDevelopmentReference(state);
+  const camps = campAssignments(state);
 
   for (const playerId of playerIds) {
     const player = nextPlayers[playerId]!;
@@ -118,7 +114,7 @@ export function processSeasonPlayerDevelopment(
       aged,
       rng,
       multiplier,
-      developmentFocusFor(state, aged),
+      camps[playerId] ?? "balanced",
     );
     let withDlBonus = developed;
     if (aged.teamId != null) {
@@ -178,22 +174,4 @@ export function processSeasonPlayerDevelopment(
     },
     events,
   );
-}
-
-/**
- * The focus a player develops with this offseason: the owner's plan for his
- * team's young players, or the CPU default for his position. Older players
- * and free agents develop balanced.
- */
-export function developmentFocusFor(
-  state: GameState,
-  player: Player,
-): DevelopmentFocus {
-  if (player.teamId == null || player.age > DEVELOPMENT_PLAN_MAX_AGE) {
-    return "balanced";
-  }
-  if (isUserControlledTeam(state, player.teamId)) {
-    return state.business.developmentPlans?.[player.id] ?? "balanced";
-  }
-  return DEFAULT_FOCUS_BY_POSITION[player.position];
 }

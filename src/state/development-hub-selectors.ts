@@ -5,7 +5,9 @@
 
 import {
   toDevelopmentPlansView,
+  toSkillRatingsView,
   type DevelopmentPlansView,
+  type SkillRatingsRow,
 } from "@/state/development-plan-selectors";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
@@ -60,6 +62,7 @@ export type DevelopmentHubView = {
   staffContext: DevelopmentStaffContext;
   decisions: ActionCenterItem[];
   plans: DevelopmentPlansView;
+  ratings: SkillRatingsRow[];
 };
 
 /**
@@ -144,6 +147,7 @@ export function toDevelopmentHubView(state: GameState): DevelopmentHubView {
 
   return {
     plans: toDevelopmentPlansView(state),
+    ratings: toSkillRatingsView(state),
     saveId,
     teamName: team ? `${team.city} ${team.name}` : "Team",
     currentDate: owner.currentDate,

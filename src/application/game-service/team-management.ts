@@ -21,7 +21,7 @@ import {
   applyCoachingPresetCommand,
 } from "@/systems/team-management-commands";
 import { asTeamId, asPlayerId } from "@/domain/ids";
-import { setDevelopmentFocus } from "@/systems/development-plans";
+import { setDevelopmentFocuses } from "@/systems/development-plans";
 import {
   getRetireNumberBlockReason,
   retireJerseyNumber,
@@ -558,16 +558,22 @@ export async function applyOwnerCoachingPreset(
   );
 }
 
-/** Set a young player's development focus (owner team only). */
-export async function setOwnerDevelopmentFocus(
+/** Set training camps for owner-team players (all or nothing). */
+export async function setOwnerDevelopmentFocuses(
   saveId: string,
-  input: { playerId: string; focus: string },
+  input: { camps: { playerId: string; focus: string }[] },
   store?: SaveGameStore,
 ): Promise<OwnerCommandResult> {
   return runTeamManagementMutation(
     saveId,
     (state) =>
-      setDevelopmentFocus(state, asPlayerId(input.playerId), input.focus),
+      setDevelopmentFocuses(
+        state,
+        input.camps.map((camp) => ({
+          playerId: asPlayerId(camp.playerId),
+          focus: camp.focus,
+        })),
+      ),
     store,
   );
 }

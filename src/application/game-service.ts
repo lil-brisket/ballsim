@@ -173,7 +173,7 @@ export {
   optimizeOwnerRotation,
   applyOwnerLineupRecommendation,
   updateOwnerCoachingPhilosophy,
-  setOwnerDevelopmentFocus,
+  setOwnerDevelopmentFocuses,
   retireOwnerJerseyNumber,
   applyOwnerCoachingPreset,
 } from "@/application/game-service/team-management";

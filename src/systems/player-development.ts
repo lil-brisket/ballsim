@@ -26,10 +26,11 @@ import {
   type DevelopmentFocus,
 } from "@/domain/entities/development-plan";
 
-/** Share of each positive non-focus gain a development focus moves. */
-export const FOCUS_SHIFT_SHARE = 0.5;
-/** Players this age or younger follow a development plan. */
-export const DEVELOPMENT_PLAN_MAX_AGE = 25;
+/**
+ * Points a training camp adds to each of its attributes, on top of the
+ * player's normal development. Never past potential or the annual caps.
+ */
+export const CAMP_ATTRIBUTE_BONUS = 2;
 
 /**
  * One deterministic annual development step at the player's current age.
@@ -90,10 +91,8 @@ export function developPlayer(
     deltas[key] = delta;
   }
 
-  // A focus moves growth, never adds it: the same draws, redistributed.
-  const focused = redistributeForFocus(deltas, focus);
   for (const key of PLAYER_ATTRIBUTE_KEYS) {
-    const nextRating = nextAttributes[key] + (focused[key] ?? 0);
+    const nextRating = nextAttributes[key] + (deltas[key] ?? 0);
     nextAttributes[key] = Math.min(
       RATING_MAX,
       Math.max(RATING_MIN, nextRating),
@@ -112,6 +111,8 @@ export function developPlayer(
     player.attributes,
     currentOverall,
   );
+  // The camp runs after the caps, so it only ever adds to this result.
+  applyCampBonus(player, nextAttributes, currentOverall, focus);
 
   // Every other field (injuries, Development League profile, retirement,
   // jersey) carries over unchanged.
@@ -123,51 +124,37 @@ export function developPlayer(
 }
 
 /**
- * Moves {@link FOCUS_SHIFT_SHARE} of each positive non-focus gain into the
- * focus attributes (round-robin, within the annual cap); what does not fit
- * goes back where it came from. Total growth is unchanged; balanced is a
- * no-op.
+ * Adds up to {@link CAMP_ATTRIBUTE_BONUS} points to each camp attribute, one
+ * point per attribute per pass. A point is skipped when it would break the
+ * annual attribute cap, the rating max, potential or the annual overall gain
+ * cap. Balanced (no camp) is a no-op. No RNG.
  */
-export function redistributeForFocus(
-  deltas: Partial<Record<keyof PlayerAttributes, number>>,
+export function applyCampBonus(
+  player: Player,
+  attributes: PlayerAttributes,
+  originalOverall: number,
   focus: DevelopmentFocus,
-): Partial<Record<keyof PlayerAttributes, number>> {
+): void {
   const targets = DEVELOPMENT_FOCUS_ATTRIBUTES[focus];
-  if (targets.length === 0) return deltas;
-  const next = { ...deltas };
-  const taken: Array<{ key: keyof PlayerAttributes; amount: number }> = [];
-  let pool = 0;
-  for (const key of PLAYER_ATTRIBUTE_KEYS) {
-    if (targets.includes(key)) continue;
-    const delta = next[key] ?? 0;
-    if (delta <= 0) continue;
-    const amount = Math.floor(delta * FOCUS_SHIFT_SHARE);
-    if (amount <= 0) continue;
-    next[key] = delta - amount;
-    pool += amount;
-    taken.push({ key, amount });
-  }
-  let index = 0;
-  let stalled = 0;
-  while (pool > 0 && stalled < targets.length) {
-    const key = targets[index % targets.length]!;
-    index += 1;
-    if ((next[key] ?? 0) < MAX_ANNUAL_ATTRIBUTE_CHANGE) {
-      next[key] = (next[key] ?? 0) + 1;
-      pool -= 1;
-      stalled = 0;
-    } else {
-      stalled += 1;
+  const ceiling = Math.min(
+    player.potential.overall,
+    originalOverall + MAX_ANNUAL_OVERALL_GAIN,
+  );
+  for (let pass = 0; pass < CAMP_ATTRIBUTE_BONUS; pass += 1) {
+    for (const key of targets) {
+      if (attributes[key] >= RATING_MAX) continue;
+      if (
+        attributes[key] - player.attributes[key] >=
+        MAX_ANNUAL_ATTRIBUTE_CHANGE
+      ) {
+        continue;
+      }
+      attributes[key] += 1;
+      if (calculatePlayerOverall(player.position, attributes) > ceiling) {
+        attributes[key] -= 1;
+      }
     }
   }
-  // Return anything that did not fit, in the order it was taken.
-  for (const { key, amount } of taken) {
-    if (pool <= 0) break;
-    const back = Math.min(pool, amount);
-    next[key] = (next[key] ?? 0) + back;
-    pool -= back;
-  }
-  return next;
 }
 
 /**

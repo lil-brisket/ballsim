@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadDevelopmentHubView } from "@/application/game-service";
-import { DevelopmentRow } from "@/components/development/DevelopmentRow";
-import { DevelopmentPlans } from "@/components/development/DevelopmentPlans";
+import { SkillRatingsTable } from "@/components/development/SkillRatingsTable";
+import { TrainingCamps } from "@/components/development/TrainingCamps";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
-import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
+import { Tabs } from "@/components/ui/Tabs";
 import { StaffEntityLink } from "@/components/entity/StaffEntityLink";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 
@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Development" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; tab?: string }>;
 };
 
 export default async function DevelopmentHubPage({
@@ -24,7 +24,8 @@ export default async function DevelopmentHubPage({
   searchParams,
 }: PageProps) {
   const { saveId } = await params;
-  const { error } = await searchParams;
+  const { error, tab } = await searchParams;
+  const activeTab = tab === "ratings" ? "ratings" : "camps";
   const view = await loadDevelopmentHubView(saveId);
   if (!view) {
     notFound();
@@ -89,64 +90,71 @@ export default async function DevelopmentHubPage({
         </div>
       </div>
 
-      <ManagementDecisionPanel
-        title="Development Decisions"
-        items={view.decisions}
-        saveId={saveId}
-        currentDate={view.currentDate}
-        emptyMessage="No development-related decisions right now."
+      <Tabs
+        aria-label="Development"
+        activeKey={activeTab}
+        items={[
+          {
+            key: "camps",
+            label: "Training camps",
+            href: `/dashboard/${saveId}/development`,
+          },
+          {
+            key: "ratings",
+            label: "Ratings",
+            href: `/dashboard/${saveId}/development?tab=ratings`,
+          },
+        ]}
       />
 
-      <Section title="Players to watch">
-        {view.notableImprovers.length === 0 ? (
-          <EmptyState message="No season-over-season improvement data available yet." />
-        ) : (
-          <ul className="space-y-1.5 text-sm">
-            {view.notableImprovers.map((p) => (
-              <li
-                key={p.playerId}
-                className="flex flex-wrap items-center justify-between gap-2 text-zinc-300"
-              >
-                <PlayerEntityLink saveId={saveId} playerId={p.playerId}>
-                  {p.playerName}
-                </PlayerEntityLink>
-                <span className="tabular-nums text-emerald-300">
-                  {p.changeDelta !== null && p.changeDelta > 0
-                    ? `+${p.changeDelta}`
-                    : p.changeDelta}
-                  {p.changeLabel ? (
-                    <span className="ml-2 text-sm text-zinc-600">
-                      {p.changeLabel}
+      {activeTab === "ratings" ? (
+        <SkillRatingsTable saveId={saveId} rows={view.ratings} />
+      ) : (
+        <>
+          <ManagementDecisionPanel
+            title="Development Decisions"
+            items={view.decisions}
+            saveId={saveId}
+            currentDate={view.currentDate}
+            emptyMessage="No development-related decisions right now."
+          />
+
+          <Section title="Players to watch">
+            {view.notableImprovers.length === 0 ? (
+              <EmptyState message="No season-over-season improvement data available yet." />
+            ) : (
+              <ul className="space-y-1.5 text-sm">
+                {view.notableImprovers.map((p) => (
+                  <li
+                    key={p.playerId}
+                    className="flex flex-wrap items-center justify-between gap-2 text-zinc-300"
+                  >
+                    <PlayerEntityLink saveId={saveId} playerId={p.playerId}>
+                      {p.playerName}
+                    </PlayerEntityLink>
+                    <span className="tabular-nums text-emerald-300">
+                      {p.changeDelta !== null && p.changeDelta > 0
+                        ? `+${p.changeDelta}`
+                        : p.changeDelta}
+                      {p.changeLabel ? (
+                        <span className="ml-2 text-sm text-zinc-600">
+                          {p.changeLabel}
+                        </span>
+                      ) : null}
                     </span>
-                  ) : null}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
 
-      <DevelopmentPlans
-        saveId={saveId}
-        returnPath={`/dashboard/${saveId}/development`}
-        plans={view.plans}
-      />
-
-      <Section title="Roster development">
-        {view.rows.length === 0 ? (
-          <EmptyState message="No players on the roster." />
-        ) : (
-          <div className="overflow-x-auto">
-            <DataTable
-              headers={["Player", "Stage", "OVR", "Change", "POT", "DL"]}
-            >
-              {view.rows.map((row) => (
-                <DevelopmentRow key={row.playerId} saveId={saveId} row={row} />
-              ))}
-            </DataTable>
-          </div>
-        )}
-      </Section>
+          <TrainingCamps
+            saveId={saveId}
+            returnPath={`/dashboard/${saveId}/development`}
+            plans={view.plans}
+          />
+        </>
+      )}
     </div>
   );
 }

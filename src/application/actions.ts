@@ -98,7 +98,7 @@ export {
 } from "@/application/actions/franchise-business";
 export {
   updateLineupAndRotationAction,
-  setDevelopmentFocusAction,
+  setDevelopmentFocusesAction,
   retireJerseyNumberAction,
   updateCoachingPhilosophyAction,
   applyCoachingPresetAction,
