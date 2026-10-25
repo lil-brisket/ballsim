@@ -749,6 +749,7 @@ function simulatePeriod(args: {
         shotSelectionModifiers: tactical.offensiveModifiers.shotSelection,
         foulActionWeightMultiplier:
           tactical.defensiveModifiers.foulActionWeightMultiplier,
+        focalPlayer: tactical.offensiveModifiers.focalPlayer,
         turnoverWeightMultiplier: chemistryTurnoverMultiplier(
           (offensiveTeamId === sim.homeTeamId
             ? args.context.homeChemistry

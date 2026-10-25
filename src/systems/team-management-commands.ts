@@ -3,7 +3,10 @@
  * for user-facing mutations — reject stale/non-active team IDs.
  */
 
-import type { CoachingPhilosophy } from "@/domain/coaching/coaching-philosophy";
+import {
+  type CoachingPhilosophy,
+  isCoachingPhilosophy,
+} from "@/domain/coaching/coaching-philosophy";
 import {
   getCoachingPreset,
   type CoachingPresetId,
@@ -290,6 +293,13 @@ export function updateCoachingPhilosophyCommand(
   if (team == null) {
     return { ok: false, error: "Team not found." };
   }
+  if (!isCoachingPhilosophy(input.philosophy)) {
+    return { ok: false, error: "Invalid coaching philosophy." };
+  }
+  const focalPlayerId = input.philosophy.focalPlayerId;
+  if (focalPlayerId != null && !team.roster.includes(focalPlayerId)) {
+    return { ok: false, error: "Focal player must be on your roster." };
+  }
   return {
     ok: true,
     state: {
@@ -328,6 +338,8 @@ export function applyCoachingPresetCommand(
     return { ok: false, error: "Team not found." };
   }
 
+  // Drop a focal player who has since left the roster.
+  const focalPlayerId = team.coachingPhilosophy.focalPlayerId;
   const management = cloneTeamRosterManagement(team.rosterManagement);
   management.rotationStyle = preset.rotationStyle;
   management.rotationPhilosophy = philosophyFromStyle(preset.rotationStyle);
@@ -344,7 +356,13 @@ export function applyCoachingPresetCommand(
           ...state.world.teams,
           [input.teamId]: {
             ...team,
-            coachingPhilosophy: { ...preset.philosophy },
+            coachingPhilosophy: {
+              ...preset.philosophy,
+              focalPlayerId:
+                focalPlayerId != null && team.roster.includes(focalPlayerId)
+                  ? focalPlayerId
+                  : null,
+            },
             rosterManagement: management,
           },
         },

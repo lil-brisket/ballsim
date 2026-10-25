@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asTeamId } from "@/domain/ids";
+import { asPlayerId, asTeamId } from "@/domain/ids";
 import { GAME_SIMULATION_CONFIG } from "@/systems/game-simulation-config";
 import { choosePossessionDecision } from "@/systems/possession-decision-selection";
 import { createPlayer } from "../factories/player";
@@ -154,5 +154,54 @@ describe("choosePossessionDecision usage weighting", () => {
       createTestRng(99),
     );
     expect(["shot", "pass", "turnover", "foul"]).toContain(decision.action);
+  });
+});
+
+describe("choosePossessionDecision focal player", () => {
+  function shotShare(
+    focalPlayer: Parameters<typeof choosePossessionDecision>[0]["focalPlayer"],
+  ) {
+    const pool = fiveManPool();
+    const rng = createTestRng(77);
+    let shots = 0;
+    let roleShots = 0;
+    for (let index = 0; index < 6000; index += 1) {
+      const decision = choosePossessionDecision(
+        {
+          offensiveTeamId: OFFENSE,
+          defensiveTeamId: DEFENSE,
+          offensivePlayers: pool.offensivePlayers,
+          defensivePlayers: pool.defensivePlayers,
+          config: GAME_SIMULATION_CONFIG,
+          focalPlayer,
+        },
+        rng,
+      );
+      if (decision.action === "shot") {
+        shots += 1;
+        if (decision.shooterId === "role") roleShots += 1;
+      }
+    }
+    return { share: roleShots / shots, nextRoll: rng.next() };
+  }
+
+  it("raises the focal player's shot share", () => {
+    const baseline = shotShare(null);
+    const focused = shotShare({
+      playerId: asPlayerId("role"),
+      shotMultiplier: 1.4,
+      involvementMultiplier: 1.25,
+    });
+    expect(focused.share).toBeGreaterThan(baseline.share * 1.2);
+  });
+
+  it("ignores a focal player who is not on the court", () => {
+    const baseline = shotShare(null);
+    const absent = shotShare({
+      playerId: asPlayerId("not_on_court"),
+      shotMultiplier: 1.4,
+      involvementMultiplier: 1.25,
+    });
+    expect(absent).toEqual(baseline);
   });
 });

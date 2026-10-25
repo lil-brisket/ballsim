@@ -505,3 +505,35 @@ export function migrateV80ToV81(state: GameState): GameState {
     },
   };
 }
+
+/**
+ * Deterministic v81 → v82: add Team.coachingPhilosophy.focalPlayerId (null —
+ * no team plays through anyone until the owner picks a player).
+ */
+export function migrateV81ToV82(state: GameState): GameState {
+  const teams: GameState["world"]["teams"] = {};
+  for (const [teamId, team] of Object.entries(state.world.teams)) {
+    const philosophy = team.coachingPhilosophy as Omit<
+      Team["coachingPhilosophy"],
+      "focalPlayerId"
+    > & { focalPlayerId?: PlayerId | null };
+    teams[teamId] = {
+      ...team,
+      coachingPhilosophy: {
+        ...philosophy,
+        focalPlayerId: philosophy.focalPlayerId ?? null,
+      },
+    };
+  }
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 82,
+    },
+    world: {
+      ...state.world,
+      teams,
+    },
+  };
+}

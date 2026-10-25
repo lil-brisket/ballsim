@@ -1,6 +1,6 @@
 import { createFoul } from "@/domain/entities/foul";
 import type { Player } from "@/domain/entities/player";
-import type { TeamId } from "@/domain/ids";
+import type { PlayerId, TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
 import type { PossessionDecision } from "@/systems/possession-decision";
 import type { GameSimulationConfig } from "@/systems/game-simulation-config";
@@ -41,7 +41,38 @@ export type ChoosePossessionDecisionInput = {
   foulActionWeightMultiplier?: number;
   /** Team chemistry: scales the turnover action weight (1 = neutral). */
   turnoverWeightMultiplier?: number;
+  /** Offensive team's "play through" player; no effect while off the court. */
+  focalPlayer?: FocalPlayerUsage | null;
 };
+
+export type FocalPlayerUsage = {
+  readonly playerId: PlayerId;
+  readonly shotMultiplier: number;
+  readonly involvementMultiplier: number;
+};
+
+/**
+ * Scales the focal player's shot and involvement weights. Changes weights
+ * only, never how many RNG draws a possession takes.
+ */
+export function applyFocalPlayerUsage(
+  profiles: PlayerUsageProfile[],
+  focalPlayer: FocalPlayerUsage | null | undefined,
+): PlayerUsageProfile[] {
+  if (focalPlayer == null) {
+    return profiles;
+  }
+  return profiles.map((profile) =>
+    profile.playerId === focalPlayer.playerId
+      ? {
+          ...profile,
+          shotWeight: profile.shotWeight * focalPlayer.shotMultiplier,
+          involvementWeight:
+            profile.involvementWeight * focalPlayer.involvementMultiplier,
+        }
+      : profile,
+  );
+}
 
 /**
  * Pure shot-selection weights from player attributes and coaching multipliers.
@@ -95,7 +126,10 @@ export function choosePossessionDecision(
   const foulActionWeightMultiplier = input.foulActionWeightMultiplier ?? 1;
   const turnoverWeightMultiplier = input.turnoverWeightMultiplier ?? 1;
 
-  const profiles = buildOffensiveUsageProfiles(input.offensivePlayers);
+  const profiles = applyFocalPlayerUsage(
+    buildOffensiveUsageProfiles(input.offensivePlayers),
+    input.focalPlayer,
+  );
   const primary = pickWeightedPlayer(profiles, "involvementWeight", rng);
   const action = pickWeightedAction(
     primary,

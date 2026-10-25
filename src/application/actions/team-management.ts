@@ -118,6 +118,7 @@ export async function updateCoachingPhilosophyAction(
     pace: String(formData.get("pace") ?? "balanced"),
     offensiveEmphasis: String(formData.get("offensiveEmphasis") ?? "balanced"),
     defensiveApproach: String(formData.get("defensiveApproach") ?? "balanced"),
+    focalPlayerId: String(formData.get("focalPlayerId") ?? ""),
   });
   if (!result.ok) {
     redirectWithError(path, result.error);

@@ -20,7 +20,8 @@ export type CoachingPreset = {
   id: CoachingPresetId;
   label: string;
   description: string;
-  philosophy: CoachingPhilosophy;
+  /** Presets never pick a focal player; applying one keeps the current pick. */
+  philosophy: Omit<CoachingPhilosophy, "focalPlayerId">;
   rotationStyle: RotationStyle;
 };
 
@@ -28,14 +29,19 @@ export const COACHING_PRESETS: readonly CoachingPreset[] = [
   {
     id: "balanced",
     label: "Balanced",
-    description: "Neutral pace, offense, and defense.",
-    philosophy: { ...DEFAULT_COACHING_PHILOSOPHY },
+    description: "No tilt anywhere. A safe default while you learn the roster.",
+    philosophy: {
+      pace: DEFAULT_COACHING_PHILOSOPHY.pace,
+      offensiveEmphasis: DEFAULT_COACHING_PHILOSOPHY.offensiveEmphasis,
+      defensiveApproach: DEFAULT_COACHING_PHILOSOPHY.defensiveApproach,
+    },
     rotationStyle: "balanced",
   },
   {
     id: "fastPace",
     label: "Fast Pace",
-    description: "Push the tempo in transition.",
+    description:
+      "Shorter possessions mean more shots for both teams. Suits young, athletic rosters.",
     philosophy: {
       pace: "fast",
       offensiveEmphasis: "balanced",
@@ -46,7 +52,8 @@ export const COACHING_PRESETS: readonly CoachingPreset[] = [
   {
     id: "defenseFirst",
     label: "Defense First",
-    description: "Aggressive defense with a tighter rotation.",
+    description:
+      "More pressure on shooters but more fouls; starters play heavier minutes.",
     philosophy: {
       pace: "balanced",
       offensiveEmphasis: "balanced",
@@ -57,7 +64,8 @@ export const COACHING_PRESETS: readonly CoachingPreset[] = [
   {
     id: "perimeterHeavy",
     label: "Perimeter Heavy",
-    description: "Fast pace with three-point emphasis.",
+    description:
+      "Fast tempo and more three-point attempts. Needs shooters to pay off.",
     philosophy: {
       pace: "fast",
       offensiveEmphasis: "threePointHeavy",
@@ -68,7 +76,8 @@ export const COACHING_PRESETS: readonly CoachingPreset[] = [
   {
     id: "insideOut",
     label: "Inside Out",
-    description: "Half-court offense featuring the paint.",
+    description:
+      "Slow, half-court sets that hunt shots at the rim. Built for strong finishers and bigs.",
     philosophy: {
       pace: "halfCourt",
       offensiveEmphasis: "inside",
@@ -79,7 +88,8 @@ export const COACHING_PRESETS: readonly CoachingPreset[] = [
   {
     id: "development",
     label: "Development",
-    description: "Conservative defense and a deep rotation.",
+    description:
+      "Safer defense with fewer fouls and a deep bench, so young players get minutes.",
     philosophy: {
       pace: "balanced",
       offensiveEmphasis: "balanced",
@@ -96,7 +106,7 @@ export function getCoachingPreset(
 }
 
 export function matchCoachingPreset(
-  philosophy: CoachingPhilosophy,
+  philosophy: Omit<CoachingPhilosophy, "focalPlayerId">,
   rotationStyle: RotationStyle,
 ): CoachingPresetId | "custom" {
   for (const preset of COACHING_PRESETS) {
