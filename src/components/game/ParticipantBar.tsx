@@ -94,7 +94,7 @@ export function ParticipantBar(props: {
       className="flex flex-col gap-2 border-t border-surface-line pt-2"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm text-zinc-100">
+        <p className="text-sm text-ink">
           {online ? "Signed in as" : "Playing as"}{" "}
           <strong>{active?.displayName ?? "Unknown"}</strong>
           {activeIsHost ? (
@@ -170,7 +170,7 @@ export function ParticipantBar(props: {
         <div
           role="alertdialog"
           aria-label="Confirm advance for everyone"
-          className="flex flex-wrap items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-2 text-sm text-zinc-200"
+          className="flex flex-wrap items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-2 text-sm text-ink"
         >
           <span>
             Other players may not have finished their turn. Mark everyone ready?
@@ -197,7 +197,7 @@ export function ParticipantBar(props: {
       {activeAuto ? (
         <div
           role="status"
-          className="flex flex-wrap items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-2 text-sm text-zinc-200"
+          className="flex flex-wrap items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 p-2 text-sm text-ink"
         >
           <span>
             <strong>The AI is managing your teams</strong> because{" "}
@@ -219,7 +219,7 @@ export function ParticipantBar(props: {
         </div>
       ) : null}
 
-      <div aria-live="polite" className="text-sm text-zinc-400">
+      <div aria-live="polite" className="text-sm text-muted">
         {online ? (
           <div className="space-y-1">
             <p>
@@ -262,9 +262,7 @@ export function ParticipantBar(props: {
         {participation.advanceBlockedReason ? (
           <p
             className={
-              online && !activeIsHost
-                ? "mt-1 text-zinc-400"
-                : "mt-1 text-warning"
+              online && !activeIsHost ? "mt-1 text-muted" : "mt-1 text-warning"
             }
           >
             {participation.advanceBlockedReason}

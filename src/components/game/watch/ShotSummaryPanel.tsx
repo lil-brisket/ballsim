@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { HalfCourtLines } from "@/components/game/court/HalfCourtLines";
 import { teamTokenColor } from "@/components/game/watch/court/team-token-colors";
 import { DataTable, Section } from "@/components/ui";
@@ -33,18 +34,18 @@ function TeamShotCard(props: { team: WatchTeam; line: ShotLine }) {
         caption={`${props.team.abbreviation} shot types`}
       >
         {rows.map(([label, made, attempted]) => (
-          <tr key={label} className="border-t border-zinc-800">
-            <td className="px-3 py-2 text-zinc-300">{label}</td>
-            <td className="px-3 py-2 font-mono tabular-nums text-zinc-100">
+          <tr key={label} className="border-t border-line">
+            <td className="px-3 py-2 text-soft">{label}</td>
+            <td className="px-3 py-2 font-mono tabular-nums text-ink">
               {shotCell(made, attempted)}
             </td>
-            <td className="px-3 py-2 font-mono tabular-nums text-zinc-400">
+            <td className="px-3 py-2 font-mono tabular-nums text-muted">
               {pct(made, attempted)}
             </td>
           </tr>
         ))}
       </DataTable>
-      <p className="text-sm tabular-nums text-zinc-400">
+      <p className="text-sm tabular-nums text-muted">
         Points {line.points} · Assisted{" "}
         {line.fgm === 0
           ? "—"
@@ -64,16 +65,22 @@ function ShotChart(props: {
   const { team, side, line, shots, color } = props;
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-zinc-100">
-        {team.abbreviation}
-        <span className="sr-only"> {team.name}</span>
-      </h3>
+      <SectionHeading
+        as="h3"
+        size="sm"
+        title={
+          <>
+            {team.abbreviation}
+            <span className="sr-only"> {team.name}</span>
+          </>
+        }
+      />
       <div className="grid items-start gap-4 sm:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <svg
           viewBox="0 0 50 47"
           role="img"
           aria-label={`${team.abbreviation} shot chart: ${line.fgm} of ${line.fga} field goals made`}
-          className="aspect-[50/47] w-full max-w-[18rem] rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-600"
+          className="aspect-[50/47] w-full max-w-[18rem] rounded-lg border border-line bg-surface-base text-disabled"
         >
           <HalfCourtLines orientation="basket-top" />
           {shots.map((shot) =>
@@ -127,14 +134,14 @@ export function ShotSummaryPanel(props: {
   return (
     <Section title="Shot summary">
       {shots.length === 0 ? (
-        <p className="text-sm text-zinc-500">No shots yet.</p>
+        <p className="text-sm text-faint">No shots yet.</p>
       ) : (
         <>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-faint">
             Shot spots are illustrative — the simulation records shot types, not
             locations.
           </p>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             <span aria-hidden="true">●</span> made{" "}
             <span aria-hidden="true">○</span> missed
           </p>

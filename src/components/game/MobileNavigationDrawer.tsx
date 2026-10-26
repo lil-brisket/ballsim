@@ -129,7 +129,7 @@ export function MobileNavigationDrawer(props: {
                     onClick={() => setOpen(false)}
                     className={cn(
                       touchTargetTextClass,
-                      "-ml-2 font-display text-xl font-bold uppercase tracking-wider text-zinc-50 hover:text-team-ink",
+                      "-ml-2 font-display text-xl font-bold uppercase tracking-wider text-ink hover:text-team-ink",
                       focusRingClass,
                     )}
                   >
@@ -143,7 +143,7 @@ export function MobileNavigationDrawer(props: {
                   aria-label="Close menu"
                   className={cn(
                     touchTargetClass,
-                    "rounded-md border border-surface-line px-2.5 text-sm text-zinc-300 hover:border-team-ink",
+                    "rounded-md border border-surface-line px-2.5 text-sm text-soft hover:border-team-ink",
                     focusRingClass,
                   )}
                 >
@@ -173,7 +173,7 @@ export function MobileNavigationDrawer(props: {
         type="button"
         className={cn(
           touchTargetClass,
-          "rounded-lg border border-surface-line bg-surface-deep/60 px-3 font-display text-base font-bold uppercase tracking-wide text-zinc-200 hover:border-team-ink hover:text-team-ink",
+          "rounded-lg border border-surface-line bg-surface-deep/60 px-3 font-display text-base font-bold uppercase tracking-wide text-ink hover:border-team-ink hover:text-team-ink",
           !props.compact && "w-full",
           focusRingClass,
         )}

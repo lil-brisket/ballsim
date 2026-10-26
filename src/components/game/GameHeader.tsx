@@ -28,7 +28,7 @@ function NotificationsBell(props: { saveId: string; unreadCount: number }) {
       aria-label={label}
       className={cn(
         touchTargetClass,
-        "relative shrink-0 rounded-lg border border-surface-line bg-surface-deep/60 text-zinc-300 hover:border-team-ink hover:text-team-ink",
+        "relative shrink-0 rounded-lg border border-surface-line bg-surface-deep/60 text-soft hover:border-team-ink hover:text-team-ink",
         focusRingClass,
       )}
     >
@@ -46,7 +46,7 @@ function NotificationsBell(props: { saveId: string; unreadCount: number }) {
         <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
       </svg>
       {props.unreadCount > 0 ? (
-        <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-team-ink px-1 text-xs font-semibold tabular-nums leading-4 text-zinc-950">
+        <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-team-ink px-1 text-xs font-semibold tabular-nums leading-4 text-surface-base">
           {props.unreadCount > 99 ? "99+" : props.unreadCount}
         </span>
       ) : null}
@@ -88,13 +88,13 @@ export function GameHeader(props: {
           href="/home"
           className={cn(
             touchTargetTextClass,
-            "-my-2 -ml-2 font-display text-base font-bold uppercase tracking-wider text-zinc-100 hover:text-team-ink",
+            "-my-2 -ml-2 font-display text-base font-bold uppercase tracking-wider text-ink hover:text-team-ink",
             focusRingClass,
           )}
         >
           BallSim
         </Link>
-        <span className="text-zinc-700" aria-hidden>
+        <span className="text-line-strong" aria-hidden>
           /
         </span>
         <span className="text-sm font-medium text-team-ink">

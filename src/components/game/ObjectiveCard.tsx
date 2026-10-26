@@ -28,10 +28,10 @@ export function ObjectiveCard(props: {
   }
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+    <li className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface-raised/50 px-4 py-3">
       <div>
-        <p className="text-zinc-100">{props.description}</p>
-        <p className="mt-1 text-sm text-zinc-500">{meta.join(" · ")}</p>
+        <p className="text-ink">{props.description}</p>
+        <p className="mt-1 text-sm text-faint">{meta.join(" · ")}</p>
       </div>
       <StatusBadge label={props.status} tone={props.status} />
     </li>

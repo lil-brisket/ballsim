@@ -86,7 +86,7 @@ export function AdvanceTimeControls(props: {
           ⚠ {props.unresolvedWarning}
         </p>
       ) : null}
-      <p className="text-sm text-zinc-400">Secondary advance</p>
+      <p className="text-sm text-muted">Secondary advance</p>
       <div
         className="flex flex-wrap gap-2"
         role="group"
@@ -125,11 +125,11 @@ export function AdvanceTimeControls(props: {
           </button>
         ) : (
           <details className="w-full sm:w-auto">
-            <summary className="cursor-pointer list-none rounded-md border border-zinc-800 px-3 py-2 text-sm text-zinc-500 hover:border-zinc-600 hover:text-zinc-300">
+            <summary className="cursor-pointer list-none rounded-md border border-line px-3 py-2 text-sm text-faint hover:border-disabled hover:text-soft">
               Advanced…
             </summary>
             <div className="mt-2 space-y-1">
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-faint">
                 Prefer the{" "}
                 <a href={calendarHref} className={linkClass}>
                   Calendar
@@ -162,13 +162,13 @@ export function AdvanceTimeControls(props: {
             role="dialog"
             aria-modal="true"
             aria-labelledby="phase-transition-title"
-            className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
+            className="w-full max-w-md rounded-xl border border-line-strong bg-surface-raised p-5 shadow-xl"
           >
             <SectionHeading
               id="phase-transition-title"
               title={props.confirmTitle ?? "Unresolved decisions"}
             />
-            <p className="mt-2 text-sm text-zinc-400">
+            <p className="mt-2 text-sm text-muted">
               {props.confirmDescription ??
                 props.unresolvedWarning ??
                 "This phase still has unresolved decisions."}

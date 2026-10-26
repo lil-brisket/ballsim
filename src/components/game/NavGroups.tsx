@@ -160,10 +160,10 @@ function NavBadge(props: { item: OwnerNavItem }) {
   if (!badge || badge.count <= 0) return null;
   const kindClass =
     badge.kind === "critical"
-      ? "bg-red-500 text-zinc-950"
+      ? "bg-red-500 text-surface-base"
       : badge.kind === "unread"
-        ? "bg-zinc-600 text-zinc-100"
-        : "bg-warning text-zinc-950";
+        ? "bg-disabled text-ink"
+        : "bg-warning text-surface-base";
   return (
     <span
       className={`ml-auto inline-flex min-w-[1.15rem] items-center justify-center rounded-full px-1.5 text-xs font-semibold tabular-nums leading-4 ${kindClass}`}
@@ -200,7 +200,7 @@ function NavLink(props: {
         focusRingClass,
         active
           ? "nav-active font-semibold"
-          : "text-zinc-400 hover:bg-white/5 hover:text-zinc-100",
+          : "text-muted hover:bg-white/5 hover:text-ink",
         collapsed && "justify-center px-2",
       )}
     >

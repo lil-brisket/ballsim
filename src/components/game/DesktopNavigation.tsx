@@ -66,7 +66,7 @@ export function DesktopNavigation(props: {
           aria-pressed={collapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
-            "rounded-md border border-surface-line px-2 py-1 text-sm text-zinc-400 hover:border-team-ink hover:text-team-ink",
+            "rounded-md border border-surface-line px-2 py-1 text-sm text-muted hover:border-team-ink hover:text-team-ink",
             focusRingClass,
           )}
         >

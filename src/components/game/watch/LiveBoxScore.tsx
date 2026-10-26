@@ -63,8 +63,8 @@ function StatTds(props: { stats: StatCells; strong?: boolean }) {
           key={STAT_HEADERS[index]}
           className={cn(
             "whitespace-nowrap px-3 py-2 text-right font-mono tabular-nums",
-            index === 0 ? "font-bold text-zinc-50" : "text-zinc-300",
-            props.strong && "font-bold text-zinc-100",
+            index === 0 ? "font-bold text-ink" : "text-soft",
+            props.strong && "font-bold text-ink",
           )}
         >
           {cell}
@@ -85,8 +85,8 @@ function PlayerRow(props: {
     <tr
       data-selected={selected ? "true" : undefined}
       className={cn(
-        "border-t border-zinc-800",
-        row.fouledOut && "text-zinc-500",
+        "border-t border-line",
+        row.fouledOut && "text-faint",
         selected &&
           "bg-team/15 outline outline-1 -outline-offset-1 outline-team-ink",
       )}
@@ -94,8 +94,8 @@ function PlayerRow(props: {
       <td
         className={cn(
           STICKY_CELL,
-          "whitespace-nowrap px-3 py-2 text-zinc-100",
-          selected ? "bg-zinc-900" : "bg-zinc-950",
+          "whitespace-nowrap px-3 py-2 text-ink",
+          selected ? "bg-surface-raised" : "bg-surface-base",
         )}
       >
         <span className="inline-flex items-center gap-2">
@@ -117,7 +117,7 @@ function PlayerRow(props: {
         </span>
       </td>
       {props.isFinal ? (
-        <td className="whitespace-nowrap px-3 py-2 text-right font-mono tabular-nums text-zinc-300">
+        <td className="whitespace-nowrap px-3 py-2 text-right font-mono tabular-nums text-soft">
           {props.minutes}
         </td>
       ) : null}
@@ -158,12 +158,12 @@ function TeamTable(props: {
     />
   );
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-800">
+    <div className="overflow-x-auto rounded-xl border border-line">
       <table className="min-w-full text-left text-sm">
         <caption className="sr-only">
           {props.team.abbreviation} live box score
         </caption>
-        <thead className="bg-zinc-900 text-zinc-400">
+        <thead className="bg-surface-raised text-muted">
           <tr>
             {headers.map((header, index) => (
               <th
@@ -171,7 +171,9 @@ function TeamTable(props: {
                 scope="col"
                 className={cn(
                   "px-3 py-2 font-medium",
-                  index === 0 ? cn(STICKY_CELL, "bg-zinc-900") : "text-right",
+                  index === 0
+                    ? cn(STICKY_CELL, "bg-surface-raised")
+                    : "text-right",
                 )}
               >
                 {header}
@@ -182,28 +184,28 @@ function TeamTable(props: {
         <tbody>
           {starters.map(renderRow)}
           {bench.length > 0 ? (
-            <tr className="border-t border-zinc-800">
+            <tr className="border-t border-line">
               <th
                 scope="colgroup"
                 colSpan={headers.length}
-                className="bg-zinc-900/60 px-3 py-1 text-left text-sm font-medium text-zinc-400"
+                className="bg-surface-raised/60 px-3 py-1 text-left text-sm font-medium text-muted"
               >
                 Bench
               </th>
             </tr>
           ) : null}
           {bench.map(renderRow)}
-          <tr className="border-t border-zinc-700 bg-zinc-900/60">
+          <tr className="border-t border-line-strong bg-surface-raised/60">
             <td
               className={cn(
                 STICKY_CELL,
-                "bg-zinc-900 px-3 py-2 font-medium text-zinc-200",
+                "bg-surface-raised px-3 py-2 font-medium text-ink",
               )}
             >
               Totals
             </td>
             {props.isFinal ? (
-              <td className="whitespace-nowrap px-3 py-2 text-right font-mono font-bold tabular-nums text-zinc-100">
+              <td className="whitespace-nowrap px-3 py-2 text-right font-mono font-bold tabular-nums text-ink">
                 {totalMinutes}
               </td>
             ) : null}
@@ -264,8 +266,8 @@ export function LiveBoxScore(props: {
               focusRingClass,
               "rounded-md border px-4 text-sm font-semibold",
               side === t.side
-                ? "border-team-ink bg-team/15 text-zinc-50"
-                : "border-zinc-700 text-zinc-300 hover:bg-zinc-800",
+                ? "border-team-ink bg-team/15 text-ink"
+                : "border-line-strong text-soft hover:bg-surface-high",
             )}
           >
             <span>{t.team.abbreviation}</span>

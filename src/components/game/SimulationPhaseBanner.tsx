@@ -25,7 +25,7 @@ export function SimulationPhaseBanner(props: {
 
   return (
     <section
-      className="rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-4"
+      className="rounded-xl border border-line-strong bg-surface-raised/70 px-4 py-4"
       aria-label="Simulation phase"
     >
       <SectionHeading
@@ -33,12 +33,12 @@ export function SimulationPhaseBanner(props: {
         title={phase.primaryLabel}
         action={
           phase.subLabel ? (
-            <span className="text-sm text-zinc-400">{phase.subLabel}</span>
+            <span className="text-sm text-muted">{phase.subLabel}</span>
           ) : null
         }
       />
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-zinc-300">
-        <span className="text-zinc-400">
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-soft">
+        <span className="text-muted">
           {formatGameDate(props.currentDate, { weekday: true })}
         </span>
         <span>·</span>

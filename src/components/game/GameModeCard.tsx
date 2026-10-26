@@ -60,13 +60,13 @@ export function GameModeCard(props: { mode: GameModeDefinition }) {
 
   if (!live) {
     return (
-      <article className="flex items-center gap-4 rounded-xl border border-surface-line bg-surface-deep p-4 text-zinc-400">
-        <ModeIcon id={mode.id} className="h-8 w-8 shrink-0 text-zinc-500" />
+      <article className="flex items-center gap-4 rounded-xl border border-surface-line bg-surface-deep p-4 text-muted">
+        <ModeIcon id={mode.id} className="h-8 w-8 shrink-0 text-faint" />
         <div className="min-w-0">
-          <h2 className="font-display text-xl font-bold uppercase leading-tight tracking-wide text-zinc-400">
+          <h2 className="font-display text-xl font-bold uppercase leading-tight tracking-wide text-muted">
             {mode.name}
           </h2>
-          <p className="text-sm text-zinc-400">{mode.statusLabel}</p>
+          <p className="text-sm text-muted">{mode.statusLabel}</p>
         </div>
       </article>
     );
@@ -88,12 +88,12 @@ export function GameModeCard(props: { mode: GameModeDefinition }) {
 
       <div className="flex-1 space-y-3">
         <div className="space-y-1">
-          <h2 className="font-display text-4xl font-extrabold uppercase leading-none tracking-wide text-zinc-50 md:text-5xl">
+          <h2 className="font-display text-4xl font-extrabold uppercase leading-none tracking-wide text-ink md:text-5xl">
             {mode.name}
           </h2>
           <p className="text-base font-medium text-team-ink">{mode.tagline}</p>
         </div>
-        <ul className="space-y-1 text-sm text-zinc-300">
+        <ul className="space-y-1 text-sm text-soft">
           {mode.features.slice(0, 3).map((feature) => (
             <li key={feature}>{feature}</li>
           ))}

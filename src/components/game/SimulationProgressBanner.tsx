@@ -27,12 +27,12 @@ export function SimulationProgressBanner(props: SimulationProgressBannerProps) {
     <div
       role="status"
       aria-live="polite"
-      className="rounded-lg border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-zinc-100"
+      className="rounded-lg border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-ink"
     >
-      <p className="font-medium text-zinc-50">
+      <p className="font-medium text-ink">
         {props.busy ? "Simulating" : "Last advance"} — Season {props.seasonYear}
       </p>
-      <p className="mt-1 text-zinc-200">
+      <p className="mt-1 text-ink">
         {props.phase} · {formatGameDate(props.currentDate, { weekday: true })}
         {props.daysAdvanced != null && props.daysRequested != null
           ? ` · Day ${props.daysAdvanced} / ${props.daysRequested}`
@@ -44,7 +44,7 @@ export function SimulationProgressBanner(props: SimulationProgressBannerProps) {
       {percent != null ? (
         <div className="mt-2">
           <div
-            className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800"
+            className="h-1.5 w-full overflow-hidden rounded-full bg-surface-high"
             aria-hidden
           >
             <div

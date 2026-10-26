@@ -42,7 +42,7 @@ export default async function WatchGamePage({ params }: WatchGamePageProps) {
         actions={
           <Link
             href={boxScoreHref}
-            className="text-sm text-zinc-300 hover:text-team-ink"
+            className="text-sm text-soft hover:text-team-ink"
           >
             Box score →
           </Link>

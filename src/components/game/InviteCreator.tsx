@@ -7,7 +7,7 @@ import { NumberStepper } from "@/components/ui/NumberStepper";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 const inputClass = cn(
-  "min-h-11 w-24 rounded-lg border border-surface-line bg-surface-deep/60 px-3 text-sm text-zinc-100",
+  "min-h-11 w-24 rounded-lg border border-surface-line bg-surface-deep/60 px-3 text-sm text-ink",
   focusRingClass,
 );
 
@@ -60,7 +60,7 @@ export function InviteCreator(props: {
   return (
     <div className="space-y-3">
       <form onSubmit={create} className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-sm text-zinc-400">
+        <label className="flex flex-col gap-1 text-sm text-muted">
           Max uses (1–{maxUses})
           <NumberStepper
             min={1}
@@ -69,7 +69,7 @@ export function InviteCreator(props: {
             onValueChange={setUses}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-zinc-400">
+        <label className="flex flex-col gap-1 text-sm text-muted">
           Days valid (1–{maxDays})
           <NumberStepper
             min={1}
@@ -113,7 +113,7 @@ export function InviteCreator(props: {
             >
               {copied ? "Copied" : "Copy"}
             </button>
-            <p className="text-sm text-zinc-300">
+            <p className="text-sm text-soft">
               This link is shown once. Anyone with it can join while it has uses
               left.
             </p>

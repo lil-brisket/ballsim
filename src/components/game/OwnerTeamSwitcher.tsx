@@ -57,11 +57,11 @@ function ActiveFranchiseLabel(props: {
     <>
       <FranchiseMark team={active} size="md" />
       <span className="min-w-0">
-        <span className="block truncate font-display text-lg font-bold uppercase leading-tight tracking-wide text-zinc-50 sm:text-2xl">
+        <span className="block truncate font-display text-lg font-bold uppercase leading-tight tracking-wide text-ink sm:text-2xl">
           {active.city} {active.name}
         </span>
         {canSwitchTeams ? (
-          <span className="block text-sm text-zinc-400">Switch franchise</span>
+          <span className="block text-sm text-muted">Switch franchise</span>
         ) : null}
       </span>
     </>
@@ -194,11 +194,11 @@ export function OwnerTeamSwitcher(props: {
                 >
                   <FranchiseMark team={team} size="sm" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm text-zinc-100">
+                    <span className="block truncate text-sm text-ink">
                       <span aria-hidden>{team.isActive ? "● " : "○ "}</span>
                       {team.city} {team.name}
                     </span>
-                    <span className="block text-sm text-zinc-500">
+                    <span className="block text-sm text-faint">
                       {team.wins}-{team.losses}
                       {team.blockingDecisionCount > 0
                         ? ` · ⚠ ${team.blockingDecisionCount}`

@@ -33,8 +33,8 @@ export function OnboardingSteps(props: {
           active
             ? "border-team-ink bg-team font-bold text-on-team"
             : done || select
-              ? `border-surface-line text-zinc-200 hover:border-team-ink hover:text-team-ink ${focusRing}`
-              : "border-transparent text-zinc-500"
+              ? `border-surface-line text-ink hover:border-team-ink hover:text-team-ink ${focusRing}`
+              : "border-transparent text-faint"
         }`;
 
         if (!active && select) {
@@ -95,7 +95,7 @@ export function OnboardingShell(props: {
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <Link
           href="/owner"
-          className={`inline-flex min-h-11 items-center text-sm text-zinc-300 hover:text-team-ink ${focusRing}`}
+          className={`inline-flex min-h-11 items-center text-sm text-soft hover:text-team-ink ${focusRing}`}
         >
           ← Owner Mode
         </Link>
@@ -114,11 +114,7 @@ export function OnboardingShell(props: {
           title={props.title}
         />
         {props.subtitle ? (
-          <p
-            className={`max-w-2xl text-zinc-300 ${
-              fillViewport ? "text-sm" : ""
-            }`}
-          >
+          <p className={`max-w-2xl text-soft ${fillViewport ? "text-sm" : ""}`}>
             {props.subtitle}
           </p>
         ) : null}

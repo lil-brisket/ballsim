@@ -221,7 +221,7 @@ function Scrubber(props: {
         pressed.current = false;
       }}
     >
-      <div className="relative h-1.5 w-full rounded-full bg-zinc-700">
+      <div className="relative h-1.5 w-full rounded-full bg-line-strong">
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-team"
           style={{ width: `${fraction(revealed) * 100}%` }}
@@ -231,7 +231,7 @@ function Scrubber(props: {
             key={`period-${start}`}
             aria-hidden="true"
             data-testid="playback-period-tick"
-            className="absolute -inset-y-1 w-px -translate-x-1/2 bg-zinc-400"
+            className="absolute -inset-y-1 w-px -translate-x-1/2 bg-muted"
             style={{ left: `${fraction(start) * 100}%` }}
           />
         ))}
@@ -240,7 +240,7 @@ function Scrubber(props: {
             key={`moment-${index}`}
             aria-hidden="true"
             data-testid="playback-moment"
-            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full border-2 border-zinc-900 bg-team-ink"
+            className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full border-2 border-surface-raised bg-team-ink"
             style={{ left: `${fraction(moment.revealed) * 100}%` }}
             onMouseEnter={() => setHovered(index)}
             onMouseLeave={() => setHovered(null)}
@@ -253,9 +253,9 @@ function Scrubber(props: {
             {hovered === index ? (
               <span
                 role="presentation"
-                className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 w-56 max-w-[70vw] -translate-x-1/2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-left text-sm font-normal text-zinc-300 shadow-lg"
+                className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 w-56 max-w-[70vw] -translate-x-1/2 rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-left text-sm font-normal text-soft shadow-lg"
               >
-                <span className="block font-medium text-zinc-50">
+                <span className="block font-medium text-ink">
                   {moment.title}
                 </span>
                 <span className="block">{moment.detail}</span>
@@ -265,7 +265,7 @@ function Scrubber(props: {
         ))}
         <span
           aria-hidden="true"
-          className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-50 shadow"
+          className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink shadow"
           style={{ left: `${fraction(revealed) * 100}%` }}
         />
       </div>
@@ -320,7 +320,7 @@ function OverflowMenu(props: {
   };
 
   const itemClass = cn(
-    "flex min-h-11 w-full items-center justify-between gap-4 rounded-md px-3 text-left text-sm text-zinc-100 hover:bg-zinc-800",
+    "flex min-h-11 w-full items-center justify-between gap-4 rounded-md px-3 text-left text-sm text-ink hover:bg-surface-high",
     focusRingClass,
   );
 
@@ -343,7 +343,7 @@ function OverflowMenu(props: {
           id={menuId}
           role="menu"
           aria-label="More playback options"
-          className="absolute bottom-full right-0 z-30 mb-2 w-52 rounded-md border border-zinc-700 bg-zinc-900 p-1 shadow-lg"
+          className="absolute bottom-full right-0 z-30 mb-2 w-52 rounded-md border border-line-strong bg-surface-raised p-1 shadow-lg"
           onKeyDown={onMenuKeyDown}
         >
           <button
@@ -422,12 +422,12 @@ function ShortcutsHelp() {
         <div
           id={tipId}
           role="tooltip"
-          className="absolute bottom-full right-0 z-30 mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-left text-sm text-zinc-300 shadow-lg"
+          className="absolute bottom-full right-0 z-30 mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-left text-sm text-soft shadow-lg"
         >
           <dl className="space-y-1">
             {SHORTCUTS.map(([keys, action]) => (
               <div key={keys} className="flex justify-between gap-3">
-                <dt className="font-medium text-zinc-50">{keys}</dt>
+                <dt className="font-medium text-ink">{keys}</dt>
                 <dd>{action}</dd>
               </div>
             ))}
@@ -471,7 +471,7 @@ export function PlaybackControls(props: {
     <div
       role="group"
       aria-label="Playback controls"
-      className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-b-lg border border-t-0 border-zinc-800 bg-zinc-900 px-3 py-2"
+      className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-b-lg border border-t-0 border-line bg-surface-raised px-3 py-2"
     >
       <button
         type="button"
@@ -503,7 +503,7 @@ export function PlaybackControls(props: {
       </button>
       <span
         aria-hidden="true"
-        className="min-w-16 text-sm tabular-nums text-zinc-300"
+        className="min-w-16 text-sm tabular-nums text-soft"
       >
         {props.clockText}
       </span>

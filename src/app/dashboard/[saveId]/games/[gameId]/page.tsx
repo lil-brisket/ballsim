@@ -38,7 +38,7 @@ export default async function GameBoxScorePage({ params }: GamePageProps) {
             ) : null}
             <Link
               href={`/dashboard/${saveId}/schedule`}
-              className="text-sm text-zinc-300 hover:text-team-ink"
+              className="text-sm text-soft hover:text-team-ink"
             >
               ← Schedule
             </Link>
