@@ -151,6 +151,7 @@ export default async function FranchiseOwnershipPage({
                   {season.objectives.map((objective) => (
                     <ObjectiveCard
                       key={objective.id}
+                      type={objective.type}
                       description={objective.description}
                       seasonYear={objective.seasonYear}
                       status={objective.status}

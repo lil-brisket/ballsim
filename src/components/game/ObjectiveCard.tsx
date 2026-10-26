@@ -1,6 +1,9 @@
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { formatObjectiveValue } from "@/domain/owner-objective-text";
 
 export function ObjectiveCard(props: {
+  /** Objective type; sets the unit of target and progress ($, %). */
+  type: string;
   description: string;
   seasonYear: number;
   status: string;
@@ -18,10 +21,10 @@ export function ObjectiveCard(props: {
     meta.push(props.lifecycle.replaceAll("_", " "));
   }
   if (props.target !== null) {
-    meta.push(`target ${props.target}`);
+    meta.push(`target ${formatObjectiveValue(props.type, props.target)}`);
   }
   if (props.progress !== null) {
-    meta.push(`progress ${props.progress}`);
+    meta.push(`progress ${formatObjectiveValue(props.type, props.progress)}`);
   }
   if (props.consequenceApplied) {
     meta.push("consequence applied");

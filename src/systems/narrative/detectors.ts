@@ -1,3 +1,7 @@
+import {
+  describeOwnerObjective,
+  formatObjectiveValue,
+} from "@/domain/owner-objective-text";
 import type {
   NarrativeContext,
   DetectorCandidate,
@@ -656,10 +660,12 @@ export function detectObjectiveProgress(
       nearHit: Boolean(nearHit) && !materialMiss,
     },
     templateContext: {
-      description: focus.description,
+      description: describeOwnerObjective(focus),
       gap: focus.gap,
       target: focus.target,
       progress: focus.progress ?? 0,
+      targetLabel: formatObjectiveValue(focus.type, focus.target),
+      progressLabel: formatObjectiveValue(focus.type, focus.progress ?? 0),
       failing: Boolean(materialMiss),
       nearHit: Boolean(nearHit) && !materialMiss,
     },

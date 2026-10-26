@@ -1,3 +1,4 @@
+import { situationText } from "@/state/situation-text";
 import type { CalendarContext } from "@/systems/simulation/calendar-context";
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
@@ -288,8 +289,8 @@ function buildNarrativeActionItems(
       category: "narrative",
       severity,
       title: situation.title,
-      what: situation.summary,
-      why: situation.body,
+      what: situationText(situation).summary,
+      why: situationText(situation).body,
       evidence,
       href,
       hrefLabel: primaryAction?.label ?? "Review situation",
@@ -315,8 +316,7 @@ export function buildSituationsView(
       severity: situation.severity,
       status: situation.status,
       title: situation.title,
-      summary: situation.summary,
-      body: situation.body,
+      ...situationText(situation),
       updatedOn: situation.updatedOn,
       evidence: { ...situation.evidence },
       actions: (situation.actions ?? []).map((action) => ({

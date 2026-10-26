@@ -1,3 +1,4 @@
+import { describeOwnerObjective } from "@/domain/owner-objective-text";
 import type { GameMode, GameState } from "@/state/game-state";
 import {
   type TeamBrandingView,
@@ -236,7 +237,7 @@ export function toObjectivesView(state: GameState): ObjectiveView[] {
   return getActiveOwnedFranchise(state).objectives.map((objective) => ({
     id: objective.id,
     type: objective.type,
-    description: objective.description,
+    description: describeOwnerObjective(objective),
     status: objective.status,
     seasonYear: objective.seasonYear,
     category: objective.category,

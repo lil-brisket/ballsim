@@ -229,7 +229,11 @@ export function CommandPalette(props: {
         player,
         run: () => {
           close();
-          drawer.openPlayer(player.id);
+          if (player.prospect) {
+            router.push(`/dashboard/${saveId}/draft`);
+          } else {
+            drawer.openPlayer(player.id);
+          }
         },
       })),
       tokens,
@@ -253,7 +257,17 @@ export function CommandPalette(props: {
       LIMIT.teams,
     );
     return [...pages, ...actions, ...players, ...teams];
-  }, [query, pageItems, actionItems, currentHubId, index, close, drawer]);
+  }, [
+    query,
+    pageItems,
+    actionItems,
+    currentHubId,
+    index,
+    close,
+    drawer,
+    router,
+    saveId,
+  ]);
 
   const safeActive =
     results.length === 0 ? -1 : Math.min(activeIndex, results.length - 1);
@@ -330,7 +344,11 @@ export function CommandPalette(props: {
             >
               {item.player ? (
                 <>
-                  <OvrBadge overall={item.player.overall} size="sm" />
+                  {item.player.overall !== null ? (
+                    <OvrBadge overall={item.player.overall} size="sm" />
+                  ) : (
+                    <span aria-hidden className="w-7 shrink-0" />
+                  )}
                   <span className="min-w-0 flex-1 truncate">
                     {item.player.name}
                   </span>
