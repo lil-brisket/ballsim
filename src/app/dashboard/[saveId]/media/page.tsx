@@ -101,7 +101,7 @@ export default async function MediaPage({
           ) : null}
 
           {view.emptyMessage ? (
-            <p className="py-6 text-sm text-zinc-400">{view.emptyMessage}</p>
+            <p className="py-6 text-sm text-muted">{view.emptyMessage}</p>
           ) : (
             <TimelineFeed>
               {view.posts.flatMap((post, index) => {

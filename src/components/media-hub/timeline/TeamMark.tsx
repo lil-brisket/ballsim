@@ -19,7 +19,7 @@ export function TeamMark(props: {
       <span
         aria-hidden="true"
         className={cn(
-          "inline-block shrink-0 rounded-full bg-zinc-700",
+          "inline-block shrink-0 rounded-full bg-line-strong",
           PLACEHOLDER_SIZE[props.size],
         )}
       />

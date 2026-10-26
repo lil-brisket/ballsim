@@ -119,7 +119,7 @@ describe("award trophy card", () => {
       }),
     );
     expect(screen.getByText("+9.1").className).toContain("text-win");
-    expect(screen.getByText("21.3").className).toContain("text-zinc-50");
+    expect(screen.getByText("21.3").className).toContain("text-ink");
     expect(screen.getByText("Record")).toBeTruthy();
     expect(screen.getByText("44–38")).toBeTruthy();
   });

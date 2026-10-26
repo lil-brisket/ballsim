@@ -54,7 +54,7 @@ export function TimelineEngagement(props: {
     <div
       role="group"
       aria-label={props.label}
-      className="flex items-center gap-6 text-sm text-zinc-400"
+      className="flex items-center gap-6 text-sm text-muted"
     >
       {items.map(({ Icon, value }, index) => (
         <span key={index} className="inline-flex items-center gap-1.5">

@@ -175,7 +175,7 @@ describe("trade wire", () => {
       />,
     );
     const header = container.querySelector("[data-trade-header]")!;
-    expect(header.className).toContain("bg-zinc-800");
+    expect(header.className).toContain("bg-surface-high");
     expect(container.querySelectorAll("[data-team-band]")).toHaveLength(1);
   });
 });

@@ -68,7 +68,7 @@ export function InjuryAttachmentCard(props: {
               />
             ) : null}
             {team ? (
-              <p className="flex items-center gap-2 text-sm text-zinc-400">
+              <p className="flex items-center gap-2 text-sm text-muted">
                 {player ? <TeamMark branding={branding} size="sm" /> : null}
                 <span>{player ? team.abbreviation : team.displayName}</span>
               </p>
@@ -87,12 +87,12 @@ export function InjuryAttachmentCard(props: {
             </span>
           ) : null}
           {bodyPart ? (
-            <span className="text-sm text-zinc-400">{bodyPart}</span>
+            <span className="text-sm text-muted">{bodyPart}</span>
           ) : null}
         </div>
       ) : null}
       {returnText ? (
-        <p className="mt-2 text-sm text-zinc-400">{returnText}</p>
+        <p className="mt-2 text-sm text-muted">{returnText}</p>
       ) : null}
     </TeamSurface>
   );

@@ -254,7 +254,7 @@ describe("StatLine", () => {
     }
     expect(container.innerHTML).not.toContain("justify-between");
     expect(container.innerHTML).not.toContain("font-mono");
-    expect(screen.getByText("31").className).toContain("text-zinc-50");
+    expect(screen.getByText("31").className).toContain("text-ink");
     expect(screen.getByText("+11").className).toContain("text-win");
     expect(screen.getByText("-4").className).toContain("text-loss");
     expect(screen.getByText("31").className).toContain("text-3xl");

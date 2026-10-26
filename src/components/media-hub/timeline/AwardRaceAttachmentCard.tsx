@@ -15,22 +15,22 @@ export function AwardRaceAttachmentCard(props: {
 
   return (
     <TeamSurface branding={branding} band="top">
-      <p className="font-display text-xl font-bold leading-tight text-zinc-50">
+      <p className="font-display text-xl font-bold leading-tight text-ink">
         {race.awardName} race
       </p>
-      <p className="mt-0.5 text-sm text-zinc-400">
+      <p className="mt-0.5 text-sm text-muted">
         {formatSeasonLabel(race.seasonYear)} season · through{" "}
         {formatGameDate(race.throughDate)}
       </p>
 
-      <ol className="mt-3 divide-y divide-zinc-800" data-award-race="">
+      <ol className="mt-3 divide-y divide-line" data-award-race="">
         {race.contenders.map((contender) => (
           <li
             key={contender.rank}
             className="flex items-center gap-3 py-0.5"
             data-race-rank={contender.rank}
           >
-            <span className="w-5 shrink-0 text-right font-display text-lg text-zinc-400">
+            <span className="w-5 shrink-0 text-right font-display text-lg text-muted">
               {contender.rank}
             </span>
             <span className="min-w-0 flex-1 truncate">
@@ -40,11 +40,11 @@ export function AwardRaceAttachmentCard(props: {
                   player={contender.player}
                 />
               ) : (
-                <span className="text-zinc-50">{contender.coachName}</span>
+                <span className="text-ink">{contender.coachName}</span>
               )}
             </span>
             {contender.team ? (
-              <span className="shrink-0 text-sm uppercase tracking-wide text-zinc-400">
+              <span className="shrink-0 text-sm uppercase tracking-wide text-muted">
                 {contender.team.abbreviation}
               </span>
             ) : null}
@@ -53,7 +53,7 @@ export function AwardRaceAttachmentCard(props: {
       </ol>
 
       {race.previousLeaderName ? (
-        <p className="mt-3 text-sm text-zinc-400">
+        <p className="mt-3 text-sm text-muted">
           Previous leader: {race.previousLeaderName}
         </p>
       ) : null}

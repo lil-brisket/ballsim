@@ -49,7 +49,7 @@ function Tile(props: {
         "inline-flex shrink-0 select-none items-center justify-center rounded-full font-semibold",
         BOX_CLASS[props.size],
         TILE_TEXT[props.size],
-        !props.background && "bg-zinc-800 text-zinc-100",
+        !props.background && "bg-surface-high text-ink",
       )}
       style={style}
     >
