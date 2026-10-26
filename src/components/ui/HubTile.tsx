@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   clipCornerClass,
@@ -5,6 +7,7 @@ import {
   consoleFocusClass,
   displayClass,
 } from "@/components/ui/styles";
+import { playUiSound } from "@/components/ui/sound/ui-sound";
 
 export type HubTileSize = "hero" | "wide" | "square";
 
@@ -156,6 +159,7 @@ export function HubTile(props: HubTileProps) {
       <Link
         href={props.href}
         aria-label={props["aria-label"]}
+        onClick={() => playUiSound("select")}
         data-shape="corner"
         data-focus-item=""
         className={className}
@@ -168,7 +172,10 @@ export function HubTile(props: HubTileProps) {
   return (
     <button
       type="button"
-      onClick={props.onSelect}
+      onClick={() => {
+        playUiSound("select");
+        props.onSelect();
+      }}
       aria-label={props["aria-label"]}
       data-shape="corner"
       data-focus-item=""

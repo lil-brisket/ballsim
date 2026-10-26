@@ -6,6 +6,7 @@ import {
   nearestInDirection,
 } from "@/components/ui/focus/geometry";
 import { isKeyboardMode } from "@/components/ui/focus/input-mode";
+import { playUiSound } from "@/components/ui/sound/ui-sound";
 
 const ITEM_SELECTOR = "[data-focus-item]";
 const STORAGE_PREFIX = "ballsim:focus:";
@@ -76,6 +77,7 @@ export function FocusGrid(props: {
     if (next === undefined) return;
     event.preventDefault();
     list[next]!.focus();
+    if (document.activeElement === list[next]) playUiSound("move");
   }
 
   function onFocus(event: React.FocusEvent<HTMLDivElement>) {

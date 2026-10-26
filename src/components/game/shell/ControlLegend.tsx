@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { KeyHint } from "@/components/ui/KeyHint";
+import { SoundToggle, SoundVolume } from "@/components/ui/sound/SoundControls";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 /** Every global control, for the Controls popover. */
@@ -67,6 +68,7 @@ export function ControlLegend(props: { hubCount: number }) {
         <KeyHint keys="Space" label="Sim" />
         <KeyHint keys="Esc" label="Back" />
         <KeyHint keys="/" label="Search" />
+        <SoundToggle className="ml-auto" />
         <button
           ref={buttonRef}
           type="button"
@@ -74,7 +76,7 @@ export function ControlLegend(props: { hubCount: number }) {
           aria-controls={panelId}
           onClick={() => setOpen((value) => !value)}
           className={cn(
-            "ml-auto rounded-md px-2 py-1 text-sm text-muted hover:text-ink",
+            "rounded-md px-2 py-1 text-sm text-muted hover:text-ink",
             focusRingClass,
           )}
         >
@@ -100,6 +102,7 @@ export function ControlLegend(props: { hubCount: number }) {
                 </li>
               ))}
             </ul>
+            <SoundVolume className="mt-4 border-t border-surface-line pt-3" />
           </div>
         ) : null}
       </div>

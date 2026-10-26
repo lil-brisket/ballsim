@@ -6,10 +6,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { useFormStatus } from "react-dom";
+import { playUiSound } from "@/components/ui/sound/ui-sound";
 
 export type SimulationActivityProgress = {
   currentDate: string;
@@ -39,6 +41,13 @@ export function SimulationActivityProvider(props: {
   );
   const [simulationProgress, setSimulationProgressState] =
     useState<SimulationActivityProgress>(null);
+  // Cues on the pending edge only; the first render never plays.
+  const wasPending = useRef(simulationPending);
+  useEffect(() => {
+    if (wasPending.current === simulationPending) return;
+    wasPending.current = simulationPending;
+    playUiSound(simulationPending ? "simStart" : "simDone");
+  }, [simulationPending]);
   const setSimulationPending = useCallback((pending: boolean) => {
     setSimulationPendingState(pending);
   }, []);

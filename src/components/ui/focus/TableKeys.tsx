@@ -5,6 +5,7 @@ import {
   nextSortIndex,
   ROW_CONTROL_SELECTOR,
 } from "@/components/ui/focus/table-keys";
+import { playUiSound } from "@/components/ui/sound/ui-sound";
 
 /** Class for wrapped tables that don't style the focused row themselves. */
 export const tableRowFocusClass = "[&_tbody_tr:focus-within]:bg-surface-high";
@@ -78,6 +79,7 @@ export function TableKeys(props: {
         if (!control) return;
         event.preventDefault();
         control.focus();
+        if (document.activeElement === control) playUiSound("move");
         return;
       }
       if (!inBody) return;
@@ -91,6 +93,7 @@ export function TableKeys(props: {
       if (!destination) return;
       event.preventDefault();
       destination.focus();
+      if (document.activeElement === destination) playUiSound("move");
       return;
     }
 

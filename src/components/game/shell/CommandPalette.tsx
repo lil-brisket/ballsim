@@ -26,6 +26,7 @@ import {
   acquireDrawerScrollLock,
   releaseDrawerScrollLock,
 } from "@/components/ui/drawer-scroll-lock";
+import { playUiSound } from "@/components/ui/sound/ui-sound";
 import { OvrBadge } from "@/components/ui/OvrBadge";
 import { cn } from "@/components/ui/styles";
 
@@ -288,6 +289,12 @@ export function CommandPalette(props: {
   const listboxId = `${baseId}-listbox`;
   const searching = query.trim().length > 0;
 
+  function runItem(item: PaletteItem | undefined) {
+    if (!item) return;
+    playUiSound("select");
+    item.run();
+  }
+
   function onKeyDown(event: React.KeyboardEvent) {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -301,7 +308,7 @@ export function CommandPalette(props: {
     } else if (event.key === "Enter") {
       if (event.nativeEvent.isComposing) return;
       event.preventDefault();
-      results[safeActive]?.run();
+      runItem(results[safeActive]);
     } else if (event.key === "Tab") {
       event.preventDefault();
       inputRef.current?.focus();
@@ -336,7 +343,7 @@ export function CommandPalette(props: {
                 if (!isActive) setActiveIndex(i);
               }}
               onMouseDown={(event) => event.preventDefault()}
-              onClick={item.run}
+              onClick={() => runItem(item)}
               className={cn(
                 "flex min-h-11 cursor-pointer items-center gap-3 border-l-2 px-4 py-1.5 text-base text-ink",
                 isActive

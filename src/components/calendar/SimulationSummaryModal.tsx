@@ -3,11 +3,12 @@
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { CalendarPageMediaHighlight } from "@/application/game-service";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
-import { CountUp } from "@/components/ui/CountUp";
+import { CountUp, prefersReducedMotion } from "@/components/ui/CountUp";
+import { playUiSound } from "@/components/ui/sound/ui-sound";
 import { focusRingClass } from "@/components/ui/styles";
 import { formatGameDate } from "@/presentation/game-date";
 import { parseGameResultHeadline } from "@/presentation/game-result-headline";
@@ -80,6 +81,49 @@ function ResultReveal(props: {
         content
       )}
     </section>
+  );
+}
+
+const SIM_MOMENT_MS = 700;
+
+function subscribeNever(): () => void {
+  return () => {};
+}
+
+/**
+ * Full-screen WIN / LOSS flash when the summary opens on a result. Purely
+ * decorative: aria-hidden, no pointer events, and never takes focus. Under
+ * reduced motion nothing is drawn (the static stamp in the modal remains).
+ * The sting plays once whenever sound is on.
+ */
+function SimMoment(props: { result: "W" | "L" }) {
+  const [done, setDone] = useState(false);
+  // Server snapshot is "reduced" so nothing flashes before hydration.
+  const reduced = useSyncExternalStore(
+    subscribeNever,
+    prefersReducedMotion,
+    () => true,
+  );
+
+  useEffect(() => {
+    playUiSound("sting");
+    const timer = window.setTimeout(() => setDone(true), SIM_MOMENT_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const shown = !reduced && !done;
+  if (!shown) return null;
+  return (
+    <div
+      aria-hidden="true"
+      data-testid="sim-moment"
+      data-tone={props.result === "W" ? "win" : "loss"}
+      className="sim-moment"
+    >
+      <span className="sim-moment__word">
+        {props.result === "W" ? "Win" : "Loss"}
+      </span>
+    </div>
   );
 }
 
@@ -163,6 +207,9 @@ export function SimulationSummaryModal(props: {
   const latestGame = allGames.length > 0 ? allGames[allGames.length - 1] : null;
   const revealed =
     latestGame != null && parseGameResultHeadline(latestGame.headline) != null;
+  const latestResult = latestGame
+    ? parseGameResultHeadline(latestGame.headline)?.result
+    : undefined;
   const otherGames = revealed ? allGames.slice(0, -1) : allGames;
 
   return (
@@ -413,6 +460,12 @@ export function SimulationSummaryModal(props: {
           </button>
         </div>
       </div>
+      {latestGame && (latestResult === "W" || latestResult === "L") ? (
+        <SimMoment
+          key={`${latestGame.date}-${latestGame.gameId ?? latestGame.headline}`}
+          result={latestResult}
+        />
+      ) : null}
     </div>
   );
 }

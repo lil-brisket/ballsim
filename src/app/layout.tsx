@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./atmosphere.css";
+import "./sim-moments.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

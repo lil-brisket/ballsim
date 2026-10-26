@@ -8,6 +8,7 @@ import { NavIcon } from "@/components/game/shell/NavIcon";
 import { hubTransitionTypes } from "@/components/game/shell/transition-direction";
 import { useActiveNav } from "@/components/game/shell/use-active-nav";
 import { Drawer } from "@/components/ui/Drawer";
+import { SoundToggle, SoundVolume } from "@/components/ui/sound/SoundControls";
 import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 
 const PINNED = ["home", "team", "league", "front-office"] as const;
@@ -125,7 +126,11 @@ export function MobileHubBar(props: {
             </li>
           ))}
         </ul>
-        <p className="mt-6 border-t border-surface-line pt-4 text-sm">
+        <div className="mt-6 space-y-2 border-t border-surface-line pt-4">
+          <SoundToggle className="-ml-2 min-h-11" />
+          <SoundVolume />
+        </div>
+        <p className="mt-4 border-t border-surface-line pt-4 text-sm">
           <Link href="/home" className={cn(linkClass, focusRingClass)}>
             Back to BallSim home
           </Link>

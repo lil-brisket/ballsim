@@ -16,6 +16,7 @@ import { hubTransitionTypes } from "@/components/game/shell/transition-direction
 import { useActiveNav } from "@/components/game/shell/use-active-nav";
 import { useSimulationActivity } from "@/components/game/simulation-activity";
 import { setInputMode } from "@/components/ui/focus/input-mode";
+import { playUiSound } from "@/components/ui/sound/ui-sound";
 
 /**
  * Global keys for the save: Q/E step between hubs and 1–n jump; Esc goes up a
@@ -72,6 +73,7 @@ export function ShellKeys(props: {
         const parent = parentPathFor(groups, activeId, path);
         if (parent === undefined) return;
         event.preventDefault();
+        playUiSound("back");
         // Up to Home slides back; tab to hub stays in the hub (crossfade).
         pushWithTypes(
           `${base}${parent}`,
@@ -91,6 +93,7 @@ export function ShellKeys(props: {
       const hub = hubForKey(event.key, groups, activeId);
       if (!hub || hub.id === activeId) return;
       event.preventDefault();
+      playUiSound("move");
       pushWithTypes(
         `${base}${hub.href}`,
         hubTransitionTypes(groups, activeId, hub.id),
