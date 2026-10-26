@@ -72,3 +72,8 @@ next-env.d.ts
 /portraits/
 # Temporary worktrees from scripts/generate-golden-saves.ts
 /.golden-worktrees/
+
+# UI screenshots (npm run ui:shots)
+/screenshots
+/test-results/
+/playwright-report/
