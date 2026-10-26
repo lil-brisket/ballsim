@@ -63,7 +63,7 @@ export function LeagueTransactionsBriefing(props: {
   saveId: string;
   rows: LeagueTransactionBrief[];
 }) {
-  const href = `/dashboard/${props.saveId}/transactions`;
+  const href = `/dashboard/${props.saveId}/league/transactions`;
   return (
     <Section
       title="Transactions"

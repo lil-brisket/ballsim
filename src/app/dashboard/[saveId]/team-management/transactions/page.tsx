@@ -97,7 +97,7 @@ export default async function TeamManagementTransactionsPage({
       <p className="mb-3 text-sm text-zinc-400">
         Prefer the league ledger?{" "}
         <Link
-          href={`/dashboard/${saveId}/transactions`}
+          href={`/dashboard/${saveId}/league/transactions`}
           className="text-team-ink underline-offset-4 hover:underline"
         >
           Open Transactions Hub

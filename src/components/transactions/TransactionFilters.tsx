@@ -18,7 +18,7 @@ import {
   type TeamFilterOption,
   type TeamFilterValue,
 } from "@/components/league/TeamFilter";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, panelClass } from "@/components/ui/styles";
 
 const TYPE_OPTIONS: Array<{
   id: TransactionFilterGroup;
@@ -125,37 +125,79 @@ export function TransactionFilters(props: {
     Boolean(props.start) ||
     Boolean(props.end);
 
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Activity">
-        <Link
-          href={href({ activity: undefined, limit: undefined })}
-          className={cn(
-            "rounded-full border px-3 py-1 text-sm",
-            props.activityMode === "league"
-              ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
-            focusRingClass,
-          )}
-        >
-          League Activity
-        </Link>
-        <Link
-          href={href({ activity: "myTeam", limit: undefined })}
-          className={cn(
-            "rounded-full border px-3 py-1 text-sm",
-            props.activityMode === "myTeam"
-              ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
-            focusRingClass,
-          )}
-        >
-          My Team
-        </Link>
-      </div>
+  const fieldClass = "flex min-w-0 flex-col gap-1 text-sm text-zinc-400";
 
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
+  return (
+    <div className={cn(panelClass, "space-y-4 p-4")}>
+      <form
+        method="get"
+        action={props.basePath}
+        className="flex flex-wrap items-center gap-2"
+      >
+        {props.group !== "all" ? (
+          <input type="hidden" name="type" value={props.group} />
+        ) : null}
+        {props.range !== "season" ? (
+          <input type="hidden" name="range" value={props.range} />
+        ) : null}
+        {props.range === "custom" && props.start ? (
+          <input type="hidden" name="start" value={props.start} />
+        ) : null}
+        {props.range === "custom" && props.end ? (
+          <input type="hidden" name="end" value={props.end} />
+        ) : null}
+        {props.teamValue !== "all" ? (
+          <input type="hidden" name="team" value={String(props.teamValue)} />
+        ) : null}
+        {props.sort !== "newest" ? (
+          <input type="hidden" name="sort" value={props.sort} />
+        ) : null}
+        {props.activityMode !== "league" ? (
+          <input type="hidden" name="activity" value={props.activityMode} />
+        ) : null}
+        <label className="min-w-[12rem] flex-1">
+          <span className="sr-only">Search</span>
+          <input
+            id="transaction-search"
+            type="search"
+            name="q"
+            defaultValue={props.search}
+            placeholder="Search players or teams…"
+            className={cn(selectClass, "w-full placeholder:text-zinc-600")}
+          />
+        </label>
+        <button type="submit" className={buttonClass({ variant: "secondary" })}>
+          Search
+        </button>
+        {filtersActive ? (
+          <Link
+            href={props.basePath}
+            className={cn(
+              "inline-flex items-center px-1 text-sm text-team-ink underline-offset-4 hover:underline",
+              focusRingClass,
+            )}
+          >
+            Clear filters
+          </Link>
+        ) : null}
+      </form>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div
+          className={cn(fieldClass, "sm:col-span-2")}
+          role="group"
+          aria-label="Team"
+        >
+          <span>Team</span>
+          <TeamFilter
+            teams={props.teams}
+            myTeamId={props.myTeamId}
+            value={props.teamValue}
+            paramsToDelete={["limit"]}
+          />
+        </div>
+
+        <label className={fieldClass}>
           Transaction Type
           <Select
             aria-label="Transaction Type"
@@ -180,20 +222,7 @@ export function TransactionFilters(props: {
           </Select>
         </label>
 
-        <div
-          className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400"
-          aria-label="Team"
-        >
-          <span>Team</span>
-          <TeamFilter
-            teams={props.teams}
-            myTeamId={props.myTeamId}
-            value={props.teamValue}
-            paramsToDelete={["limit"]}
-          />
-        </div>
-
-        <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
+        <label className={fieldClass}>
           Time
           <Select
             aria-label="Time"
@@ -224,7 +253,7 @@ export function TransactionFilters(props: {
           </Select>
         </label>
 
-        <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
+        <label className={fieldClass}>
           Sort By
           <Select
             aria-label="Sort By"
@@ -289,59 +318,6 @@ export function TransactionFilters(props: {
           ) : null}
         </div>
       ) : null}
-
-      <form
-        method="get"
-        action={props.basePath}
-        className="flex flex-wrap gap-2"
-      >
-        {props.group !== "all" ? (
-          <input type="hidden" name="type" value={props.group} />
-        ) : null}
-        {props.range !== "season" ? (
-          <input type="hidden" name="range" value={props.range} />
-        ) : null}
-        {props.range === "custom" && props.start ? (
-          <input type="hidden" name="start" value={props.start} />
-        ) : null}
-        {props.range === "custom" && props.end ? (
-          <input type="hidden" name="end" value={props.end} />
-        ) : null}
-        {props.teamValue !== "all" ? (
-          <input type="hidden" name="team" value={String(props.teamValue)} />
-        ) : null}
-        {props.sort !== "newest" ? (
-          <input type="hidden" name="sort" value={props.sort} />
-        ) : null}
-        {props.activityMode !== "league" ? (
-          <input type="hidden" name="activity" value={props.activityMode} />
-        ) : null}
-        <label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
-          Search
-          <input
-            id="transaction-search"
-            type="search"
-            name="q"
-            defaultValue={props.search}
-            placeholder="Search players…"
-            className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-600"
-          />
-        </label>
-        <button type="submit" className={buttonClass({ variant: "secondary" })}>
-          Search
-        </button>
-        {filtersActive ? (
-          <Link
-            href={props.basePath}
-            className={cn(
-              "inline-flex items-center text-sm text-team-ink underline-offset-4 hover:underline",
-              focusRingClass,
-            )}
-          >
-            Clear filters
-          </Link>
-        ) : null}
-      </form>
     </div>
   );
 }

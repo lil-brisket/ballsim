@@ -69,7 +69,6 @@ describe("owner nav config invariants", () => {
     expect(hrefs).toContain("/media");
     expect(hrefs).toContain("/franchise");
     expect(hrefs).toContain("/finances");
-    expect(hrefs).toContain("/transactions");
     expect(hrefs).not.toContain("/team-management");
     expect(hrefs).not.toContain("/relocation");
     expect(hrefs).not.toContain("/staff");
@@ -107,10 +106,10 @@ describe("owner nav config invariants", () => {
 
   it("league group has evergreen League destinations including Awards and Fan Voting", () => {
     const league = OWNER_NAV_GROUPS.find((g) => g.id === "league");
-    expect(league?.items).toHaveLength(5);
-    // Standings is a League tab since Issue #184.
+    expect(league?.items).toHaveLength(4);
+    // Standings (#184) and Transactions (#186) are League tabs.
     expect(league?.items.some((i) => i.href === "/standings")).toBe(false);
-    expect(league?.items.some((i) => i.href === "/transactions")).toBe(true);
+    expect(league?.items.some((i) => i.href === "/transactions")).toBe(false);
     expect(league?.items.some((i) => i.href === "/awards")).toBe(true);
     expect(
       league?.items.some((i) => i.href === "/season-events/fan-voting"),

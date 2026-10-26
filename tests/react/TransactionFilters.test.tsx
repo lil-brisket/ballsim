@@ -12,7 +12,7 @@ const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, refresh: vi.fn() }),
-  usePathname: () => "/dashboard/s1/transactions",
+  usePathname: () => "/dashboard/s1/league/transactions",
   useSearchParams: () => new URLSearchParams("limit=50&type=trades"),
 }));
 
@@ -21,7 +21,7 @@ import type { ComponentProps } from "react";
 
 const defaultProps: ComponentProps<typeof TransactionFilters> = {
   saveId: "s1",
-  basePath: "/dashboard/s1/transactions",
+  basePath: "/dashboard/s1/league/transactions",
   group: "trades",
   range: "7d",
   teamValue: "my",
@@ -43,15 +43,20 @@ describe("TransactionFilters", () => {
     cleanup();
   });
 
-  it("renders type, team, time, sort, activity, and search controls", () => {
+  it("renders type, team, time, sort, and search controls", () => {
     render(<TransactionFilters {...defaultProps} />);
     expect(screen.getByLabelText("Transaction Type")).toBeTruthy();
     expect(screen.getByRole("button", { name: "All Teams" })).toBeTruthy();
     expect(screen.getByLabelText("Time")).toBeTruthy();
     expect(screen.getByLabelText("Sort By")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "League Activity" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "My Team" })).toBeTruthy();
     expect(screen.getByLabelText("Search")).toBeTruthy();
+  });
+
+  it("has a single My Team control (the team filter, not an activity toggle)", () => {
+    render(<TransactionFilters {...defaultProps} />);
+    expect(screen.getAllByText("My Team")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "My Team" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "League Activity" })).toBeNull();
   });
 
   it("offers waivers and extensions options", () => {
@@ -78,9 +83,6 @@ describe("TransactionFilters", () => {
     expect((screen.getByLabelText("Sort By") as HTMLSelectElement).value).toBe(
       "contract",
     );
-    expect(
-      screen.getByRole("link", { name: "My Team" }).getAttribute("href"),
-    ).toContain("activity=myTeam");
   });
 
   it("shows custom date inputs only for a custom range", () => {
@@ -181,6 +183,6 @@ describe("TransactionFilters", () => {
     render(<TransactionFilters {...defaultProps} />);
     expect(
       screen.getByRole("link", { name: "Clear filters" }).getAttribute("href"),
-    ).toBe("/dashboard/s1/transactions");
+    ).toBe("/dashboard/s1/league/transactions");
   });
 });

@@ -76,11 +76,6 @@ export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
     items: [
       { href: "/league", label: "League", icon: "league" },
       { href: "/schedule", label: "Schedule", icon: "schedule" },
-      {
-        href: "/transactions",
-        label: "Transactions",
-        icon: "transactions",
-      },
       { href: "/awards", label: "Awards", icon: "awards" },
       {
         href: "/season-events/fan-voting",
