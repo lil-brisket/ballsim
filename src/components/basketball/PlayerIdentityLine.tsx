@@ -41,6 +41,7 @@ export function PlayerIdentityLine(props: {
   position?: string;
   age?: number;
   heightInches?: number;
+  weightPounds?: number;
   contractSummary?: string | null;
   className?: string;
 }) {
@@ -58,6 +59,12 @@ export function PlayerIdentityLine(props: {
   }
   if (props.heightInches != null) {
     parts.push({ key: "height", node: formatHeight(props.heightInches) });
+  }
+  if (props.weightPounds != null) {
+    parts.push({
+      key: "weight",
+      node: <span className="tabular-nums">{props.weightPounds} lbs</span>,
+    });
   }
   if (props.contractSummary) {
     parts.push({ key: "contract", node: props.contractSummary });

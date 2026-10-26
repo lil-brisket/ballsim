@@ -30,6 +30,7 @@ export function PlayerProfileHero(props: {
   potential?: number;
   archetypeLabel?: string;
   heightInches?: number;
+  weightPounds?: number;
   /** Pre-formatted "$12.4M · 3y"; omitted when the screen shows it elsewhere. */
   contractSummary?: string | null;
   teamName: string | null;
@@ -77,13 +78,24 @@ export function PlayerProfileHero(props: {
             ) : null}
             <PlayerIdentityLine
               className="mt-1 text-ink/80"
-              lead={props.teamAbbreviation ?? "FA"}
               jerseyNumber={props.jerseyNumber}
               position={props.position}
               age={props.age}
               heightInches={props.heightInches}
+              weightPounds={props.weightPounds}
               contractSummary={props.contractSummary}
             />
+            <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-ink">
+              {props.branding ? (
+                <TeamBadge
+                  branding={props.branding}
+                  name={teamLabel}
+                  size="sm"
+                  decorative
+                />
+              ) : null}
+              {props.teamAbbreviation ?? "Free agent"}
+            </p>
           </div>
           <OvrWithPotential
             overall={props.overall}
@@ -143,7 +155,8 @@ export function PlayerProfileHero(props: {
           </div>
 
           <div className="order-3 col-span-2 min-w-0 pb-4 sm:order-2 sm:col-span-1 sm:pb-5">
-            <p className={cn(displayClass, "text-base text-ink")}>
+            {/* The one small eyebrow allowed above a hero title. */}
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-ink">
               {props.firstName}
             </p>
             <h3 className="font-display break-words text-4xl font-extrabold uppercase leading-none tracking-wide text-white [text-shadow:0_2px_12px_rgb(0_0_0_/_0.5)] sm:text-6xl">
@@ -160,6 +173,7 @@ export function PlayerProfileHero(props: {
               position={props.position}
               age={props.age}
               heightInches={props.heightInches}
+              weightPounds={props.weightPounds}
               contractSummary={props.contractSummary}
             />
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink">

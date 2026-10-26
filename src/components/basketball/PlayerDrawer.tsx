@@ -71,6 +71,7 @@ function PlayerCardBody(props: {
           potential={view.identity.potential}
           archetypeLabel={view.identity.archetypeLabel}
           heightInches={view.identity.heightInches}
+          weightPounds={view.identity.weightPounds}
           teamName={view.team.teamName}
           teamAbbreviation={view.team.abbreviation}
           branding={view.team.branding}
