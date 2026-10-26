@@ -22,7 +22,7 @@ export function TeamIdentityPreview(props: {
 
   return (
     <div
-      className="flex flex-col items-center gap-4 rounded-xl border border-zinc-700/80 p-6 shadow-lg"
+      className="flex flex-col items-center gap-4 rounded-xl border border-line-strong/80 p-6 shadow-lg"
       style={{ backgroundColor: props.primaryColor }}
       data-testid="team-identity-preview"
     >

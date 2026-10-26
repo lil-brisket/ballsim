@@ -52,7 +52,7 @@ export default async function DevelopmentLeaguePage({
               abbreviation={view.abbreviation}
               branding={view.branding}
             />
-            <span className="text-zinc-500">· developmental pipeline</span>
+            <span className="text-faint">· developmental pipeline</span>
           </span>
         }
         actions={
@@ -116,7 +116,7 @@ export default async function DevelopmentLeaguePage({
               {view.improvers.map((p) => (
                 <li
                   key={p.playerId}
-                  className="flex flex-wrap items-center justify-between gap-2 text-zinc-300"
+                  className="flex flex-wrap items-center justify-between gap-2 text-soft"
                 >
                   <PlayerEntityLink saveId={saveId} playerId={p.playerId}>
                     {p.name}
@@ -126,7 +126,7 @@ export default async function DevelopmentLeaguePage({
                       ? `+${p.changeDelta}`
                       : p.changeDelta}
                     {p.changeLabel ? (
-                      <span className="ml-2 text-sm text-zinc-600">
+                      <span className="ml-2 text-sm text-disabled">
                         {p.changeLabel}
                       </span>
                     ) : null}
@@ -136,7 +136,7 @@ export default async function DevelopmentLeaguePage({
             </ul>
           ) : null}
           {view.notablePerformance.length > 0 ? (
-            <ul className="mt-3 space-y-1.5 text-sm text-zinc-400">
+            <ul className="mt-3 space-y-1.5 text-sm text-muted">
               {view.notablePerformance.map((p) => (
                 <li
                   key={p.playerId}
@@ -165,7 +165,7 @@ export default async function DevelopmentLeaguePage({
 
       <DlAssignSection>
         <Section title="Assign from roster">
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-disabled">
             Assignment is optional. Use this list when a prospect needs
             Development League minutes; day-to-day management is not required
             here.

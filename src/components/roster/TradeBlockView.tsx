@@ -26,7 +26,7 @@ export function TradeBlockRosterView(props: {
         {players.length === 0 ? (
           <EmptyState message="No players on the trade block." />
         ) : (
-          <ul className={cn(panelClass, "divide-y divide-zinc-800")}>
+          <ul className={cn(panelClass, "divide-y divide-line")}>
             {players.map((player) => (
               <li
                 key={player.playerId}
@@ -39,7 +39,7 @@ export function TradeBlockRosterView(props: {
                   >
                     {player.firstName} {player.lastName}
                   </PlayerEntityLink>
-                  <p className="mt-0.5 text-sm text-zinc-500">
+                  <p className="mt-0.5 text-sm text-faint">
                     {player.position} · {player.overall} OVR · {player.status}
                   </p>
                 </div>
@@ -73,15 +73,15 @@ export function TradeBlockRosterView(props: {
         {picks.length === 0 ? (
           <EmptyState message="No draft picks on the trade block." />
         ) : (
-          <ul className={cn(panelClass, "divide-y divide-zinc-800")}>
+          <ul className={cn(panelClass, "divide-y divide-line")}>
             {picks.map((pick) => (
               <li
                 key={pick.draftPickId}
                 className="flex items-center justify-between gap-2 px-4 py-3"
               >
                 <div>
-                  <p className="text-sm text-zinc-100">{pick.label}</p>
-                  <p className="text-sm text-zinc-500">{pick.status}</p>
+                  <p className="text-sm text-ink">{pick.label}</p>
+                  <p className="text-sm text-faint">{pick.status}</p>
                 </div>
               </li>
             ))}

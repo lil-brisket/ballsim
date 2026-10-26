@@ -95,7 +95,7 @@ export function LineupRotationEditor(props: {
       {dirty ? (
         <form
           action={updateLineupAndRotationAction}
-          className="sticky bottom-0 z-10 border-t border-zinc-800 bg-zinc-950/95 py-3 backdrop-blur"
+          className="sticky bottom-0 z-10 border-t border-line bg-surface-base/95 py-3 backdrop-blur"
         >
           <input type="hidden" name="saveId" value={props.saveId} />
           <input type="hidden" name="teamId" value={props.rotation.teamId} />

@@ -7,7 +7,7 @@ import { cn, panelClass } from "@/components/ui/styles";
 
 const LEVEL_TONE: Record<RosterNeedLevel, string> = {
   strong: "text-emerald-400",
-  adequate: "text-zinc-300",
+  adequate: "text-soft",
   weak: "text-warning",
   critical: "text-rose-400",
 };

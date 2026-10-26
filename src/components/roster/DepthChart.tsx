@@ -29,11 +29,9 @@ export function DepthChart(props: {
               className={cn(panelClass, "px-3 py-3")}
               aria-label={`${position} depth`}
             >
-              <h3 className="text-sm font-semibold text-team-ink">
-                {position}
-              </h3>
+              <SectionHeading as="h3" size="sm" tone="team" title={position} />
               {entries.length === 0 ? (
-                <p className="mt-2 text-sm text-zinc-600">—</p>
+                <p className="mt-2 text-sm text-disabled">—</p>
               ) : (
                 <ol className="mt-2 space-y-2">
                   {entries.slice(0, 5).map((entry, index) => (
@@ -43,7 +41,7 @@ export function DepthChart(props: {
                     >
                       <div className="flex items-baseline justify-between gap-1">
                         <span className="min-w-0 truncate">
-                          <span className="mr-1 tabular-nums text-sm text-zinc-500">
+                          <span className="mr-1 tabular-nums text-sm text-faint">
                             {index + 1}.
                           </span>
                           <PlayerEntityLink
@@ -53,11 +51,11 @@ export function DepthChart(props: {
                             {entry.firstName} {entry.lastName}
                           </PlayerEntityLink>
                         </span>
-                        <span className="shrink-0 text-sm tabular-nums text-zinc-400">
+                        <span className="shrink-0 text-sm tabular-nums text-muted">
                           {entry.overall}
                         </span>
                       </div>
-                      <div className="mt-0.5 flex flex-wrap gap-2 text-sm text-zinc-500">
+                      <div className="mt-0.5 flex flex-wrap gap-2 text-sm text-faint">
                         <span>{entry.label}</span>
                         {!entry.canPlay ? (
                           <span className="text-rose-400">

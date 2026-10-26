@@ -11,36 +11,36 @@ export function ContractOverview(props: {
   return (
     <Section title="Overview">
       <div className="grid gap-4 sm:grid-cols-2">
-        <ul className="space-y-1.5 text-sm text-zinc-300">
+        <ul className="space-y-1.5 text-sm text-soft">
           <li className="flex justify-between gap-4">
-            <span className="text-zinc-500">Players under contract</span>
+            <span className="text-faint">Players under contract</span>
             <span>{overview.playerCount}</span>
           </li>
           <li className="flex justify-between gap-4">
-            <span className="text-zinc-500">Total payroll</span>
+            <span className="text-faint">Total payroll</span>
             <MoneyDisplay amount={overview.totalPayroll} />
           </li>
           <li className="flex justify-between gap-4">
-            <span className="text-zinc-500">Expiring within next season</span>
+            <span className="text-faint">Expiring within next season</span>
             <span>{overview.expiringCount}</span>
           </li>
           <li className="flex justify-between gap-4">
-            <span className="text-zinc-500">Pending options</span>
+            <span className="text-faint">Pending options</span>
             <span>{overview.pendingOptionCount}</span>
           </li>
         </ul>
         <div>
-          <p className="mb-2 text-sm font-medium text-zinc-300">
+          <p className="mb-2 text-sm font-medium text-soft">
             Largest annual salaries
           </p>
           {overview.largestContracts.length === 0 ? (
-            <p className="text-sm text-zinc-600">—</p>
+            <p className="text-sm text-disabled">—</p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {overview.largestContracts.map((c) => (
                 <li
                   key={c.playerId}
-                  className="flex justify-between gap-4 text-zinc-300"
+                  className="flex justify-between gap-4 text-soft"
                 >
                   <PlayerEntityLink saveId={saveId} playerId={c.playerId}>
                     {c.playerName}

@@ -35,7 +35,7 @@ const POSITION_ORDER = Object.fromEntries(
 ) as Record<string, number>;
 
 const controlClass = cn(
-  "min-h-11 rounded-md border border-surface-line bg-surface-arena px-3 text-sm text-zinc-100",
+  "min-h-11 rounded-md border border-surface-line bg-surface-arena px-3 text-sm text-ink",
   focusRingClass,
 );
 
@@ -176,7 +176,7 @@ export function RosterManagementTable(props: {
                 focusRingClass,
                 chip === entry.id
                   ? "bg-team text-on-team font-semibold"
-                  : "border border-surface-line text-zinc-300 hover:border-team-ink",
+                  : "border border-surface-line text-soft hover:border-team-ink",
               )}
             >
               {entry.label}
@@ -243,7 +243,7 @@ export function RosterManagementTable(props: {
                   focusRingClass,
                   view === option.id
                     ? "bg-team text-on-team font-semibold"
-                    : "text-zinc-300 hover:text-team-ink",
+                    : "text-soft hover:text-team-ink",
                 )}
               >
                 {option.label}
@@ -331,8 +331,8 @@ export function RosterManagementTable(props: {
         </ul>
       ) : (
         <div className="hidden overflow-x-auto md:block">
-          <table className="min-w-full overflow-hidden rounded-xl border border-zinc-800 text-left text-sm">
-            <thead className="bg-zinc-900 text-zinc-400">
+          <table className="min-w-full overflow-hidden rounded-xl border border-line text-left text-sm">
+            <thead className="bg-surface-raised text-muted">
               <tr>
                 <th scope="col" className="px-3 py-2 text-right font-medium">
                   <span aria-hidden>#</span>
@@ -389,9 +389,9 @@ export function RosterManagementTable(props: {
                   <tr
                     key={player.playerId}
                     data-tier={ratingTier(player.overall).id}
-                    className="border-t border-zinc-800"
+                    className="border-t border-line"
                   >
-                    <td className="px-3 py-2 text-right font-mono text-sm tabular-nums text-zinc-400">
+                    <td className="px-3 py-2 text-right font-mono text-sm tabular-nums text-muted">
                       {player.jerseyNumber}
                     </td>
                     <td className="px-3 py-2">
@@ -414,19 +414,17 @@ export function RosterManagementTable(props: {
                         <span className="ml-2 text-sm team-ink">Block</span>
                       ) : null}
                     </td>
-                    <td className="px-3 py-2 text-zinc-400">
-                      {player.position}
-                    </td>
+                    <td className="px-3 py-2 text-muted">{player.position}</td>
                     <td className="px-3 py-2 text-right font-display text-lg font-bold tabular-nums text-tier">
                       {player.overall}
                     </td>
-                    <td className="hidden px-3 py-2 text-right tabular-nums text-zinc-400 sm:table-cell">
+                    <td className="hidden px-3 py-2 text-right tabular-nums text-muted sm:table-cell">
                       {player.age}
                     </td>
-                    <td className="hidden px-3 py-2 text-zinc-400 md:table-cell">
+                    <td className="hidden px-3 py-2 text-muted md:table-cell">
                       {player.roleDisplayLabel}
                       {player.depthSlot ? (
-                        <span className="ml-1 text-sm text-zinc-600">
+                        <span className="ml-1 text-sm text-disabled">
                           ({player.depthSlot})
                         </span>
                       ) : null}
@@ -443,7 +441,7 @@ export function RosterManagementTable(props: {
                         </span>
                       ) : null}
                     </td>
-                    <td className="hidden px-3 py-2 text-right tabular-nums text-zinc-400 xl:table-cell">
+                    <td className="hidden px-3 py-2 text-right tabular-nums text-muted xl:table-cell">
                       {player.contractYearsRemaining ?? "—"}
                     </td>
                     <td className="px-3 py-2">

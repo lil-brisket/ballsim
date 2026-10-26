@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useState, useTransition } from "react";
 import { findTradeOffersAction } from "@/application/actions";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
@@ -23,8 +24,8 @@ const itemClass = (selected: boolean) =>
   cn(
     "flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40",
     selected
-      ? "border-team-ink bg-zinc-800 text-zinc-100"
-      : "border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:border-zinc-600",
+      ? "border-team-ink bg-surface-high text-ink"
+      : "border-line bg-surface-raised/60 text-soft hover:border-disabled",
     focusRingClass,
   );
 
@@ -113,9 +114,17 @@ export function TradeFinderView(props: {
     return (
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-base font-semibold text-zinc-100">
-            {offers.length} {offers.length === 1 ? "team" : "teams"} interested
-          </h3>
+          <SectionHeading
+            as="h3"
+            size="sm"
+            titleClassName="text-base!"
+            title={
+              <>
+                {offers.length} {offers.length === 1 ? "team" : "teams"}{" "}
+                interested
+              </>
+            }
+          />
           {back}
         </div>
         <div
@@ -133,13 +142,13 @@ export function TradeFinderView(props: {
               className={cn(
                 "shrink-0 rounded-full border px-3 py-1 text-xs",
                 i === active
-                  ? "border-team-ink bg-zinc-800 text-zinc-100"
-                  : "border-zinc-800 text-zinc-400 hover:border-zinc-600",
+                  ? "border-team-ink bg-surface-high text-ink"
+                  : "border-line text-muted hover:border-disabled",
                 focusRingClass,
               )}
             >
               {offer.counterpartyAbbreviation}{" "}
-              <span className="tabular-nums text-zinc-500">
+              <span className="tabular-nums text-faint">
                 {Math.round(offer.interest)}
               </span>
             </button>
@@ -153,7 +162,7 @@ export function TradeFinderView(props: {
           >
             Previous team
           </button>
-          <span className="text-sm tabular-nums text-zinc-400">
+          <span className="text-sm tabular-nums text-muted">
             {active + 1} of {offers.length}
           </span>
           <button
@@ -171,7 +180,7 @@ export function TradeFinderView(props: {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-muted">
         Put up to {max} of your players and draft picks on the table and see
         which teams are interested.
       </p>
@@ -182,11 +191,11 @@ export function TradeFinderView(props: {
           return (
             <li
               key={slot}
-              className="flex min-h-14 items-center justify-between gap-2 rounded-lg border border-dashed border-zinc-700 px-3 py-2 text-sm"
+              className="flex min-h-14 items-center justify-between gap-2 rounded-lg border border-dashed border-line-strong px-3 py-2 text-sm"
             >
               {asset ? (
                 <>
-                  <span className="min-w-0 truncate text-zinc-100">
+                  <span className="min-w-0 truncate text-ink">
                     {slotLabel(asset)}
                   </span>
                   <button
@@ -194,7 +203,7 @@ export function TradeFinderView(props: {
                     aria-label={`Remove ${slotLabel(asset)}`}
                     onClick={() => toggle(asset)}
                     className={cn(
-                      "shrink-0 text-zinc-500 hover:text-rose-400",
+                      "shrink-0 text-faint hover:text-rose-400",
                       focusRingClass,
                     )}
                   >
@@ -202,7 +211,7 @@ export function TradeFinderView(props: {
                   </button>
                 </>
               ) : (
-                <span className="text-zinc-500">Empty slot</span>
+                <span className="text-faint">Empty slot</span>
               )}
             </li>
           );
@@ -211,7 +220,7 @@ export function TradeFinderView(props: {
 
       <div className="grid gap-4 md:grid-cols-2">
         <section aria-label="Players" className="space-y-2">
-          <h3 className="text-sm font-semibold text-zinc-300">Players</h3>
+          <SectionHeading as="h3" size="sm" tone="soft" title="Players" />
           {sortedPlayers.length === 0 ? (
             <EmptyState message="No roster players to trade." />
           ) : (
@@ -231,12 +240,12 @@ export function TradeFinderView(props: {
                       <span className="min-w-0 truncate">
                         {player.firstName} {player.lastName}
                         {player.onTradeBlock ? (
-                          <span className="ml-2 rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-400">
+                          <span className="ml-2 rounded bg-surface-high px-1.5 py-0.5 text-xs text-muted">
                             on block
                           </span>
                         ) : null}
                       </span>
-                      <span className="shrink-0 text-xs tabular-nums text-zinc-500">
+                      <span className="shrink-0 text-xs tabular-nums text-faint">
                         {player.position} · {player.overall} OVR · Age{" "}
                         {player.age}
                         {player.contractSalary !== null
@@ -252,9 +261,9 @@ export function TradeFinderView(props: {
         </section>
 
         <section aria-label="Draft picks" className="space-y-2">
-          <h3 className="text-sm font-semibold text-zinc-300">Draft picks</h3>
+          <SectionHeading as="h3" size="sm" tone="soft" title="Draft picks" />
           {picks.length === 0 ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-faint">
               No tradable picks (picks can be traded up to 2 drafts ahead)
             </p>
           ) : (
@@ -273,7 +282,7 @@ export function TradeFinderView(props: {
                     >
                       <span>{pick.name}</span>
                       {pick.viaAbbreviation ? (
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-faint">
                           via {pick.viaAbbreviation}
                         </span>
                       ) : null}
@@ -287,7 +296,7 @@ export function TradeFinderView(props: {
       </div>
 
       {pending ? (
-        <p className="text-sm text-zinc-500">Searching for offers…</p>
+        <p className="text-sm text-faint">Searching for offers…</p>
       ) : null}
       {error ? (
         <p className="text-sm text-rose-400" role="alert">

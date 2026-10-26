@@ -42,7 +42,7 @@ export function RosterManagementHeader(props: { view: RosterPageView }) {
           eyebrow="Roster Management"
           title={`${team.city} ${team.name}`}
         />
-        <p className="mt-1 text-sm text-zinc-300">{team.abbreviation}</p>
+        <p className="mt-1 text-sm text-soft">{team.abbreviation}</p>
       </div>
       <TickerBar aria-label="Roster summary" items={items} />
     </ArenaPanel>

@@ -33,7 +33,7 @@ export default async function StaffDetailPage({ params }: PageProps) {
         title={`${staff.firstName} ${staff.lastName}`}
         subtitle={STAFF_ROLE_DISPLAY[role]}
       />
-      <p className="mb-4 text-sm text-zinc-400">
+      <p className="mb-4 text-sm text-muted">
         <Link
           href={`/dashboard/${saveId}/staff-coaching/staff`}
           className="hover:text-team-ink"
@@ -45,46 +45,42 @@ export default async function StaffDetailPage({ params }: PageProps) {
       <Section title="Overview">
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div>
-            <dt className="text-zinc-500">Overall</dt>
-            <dd className="text-lg font-semibold text-zinc-100">
-              {staff.overall}
-            </dd>
+            <dt className="text-faint">Overall</dt>
+            <dd className="text-lg font-semibold text-ink">{staff.overall}</dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Potential</dt>
-            <dd className="text-lg font-semibold text-zinc-100">
+            <dt className="text-faint">Potential</dt>
+            <dd className="text-lg font-semibold text-ink">
               {staff.potential}
             </dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Age</dt>
-            <dd className="text-lg font-semibold text-zinc-100">{staff.age}</dd>
+            <dt className="text-faint">Age</dt>
+            <dd className="text-lg font-semibold text-ink">{staff.age}</dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Experience</dt>
-            <dd className="text-lg font-semibold text-zinc-100">
+            <dt className="text-faint">Experience</dt>
+            <dd className="text-lg font-semibold text-ink">
               {staff.experience} yrs
             </dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Trend</dt>
-            <dd className="text-zinc-100 capitalize">
-              {staff.development.trend}
-            </dd>
+            <dt className="text-faint">Trend</dt>
+            <dd className="text-ink capitalize">{staff.development.trend}</dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Morale</dt>
-            <dd className="text-zinc-100">{staff.morale}</dd>
+            <dt className="text-faint">Morale</dt>
+            <dd className="text-ink">{staff.morale}</dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Desired salary</dt>
-            <dd className="text-zinc-100">
+            <dt className="text-faint">Desired salary</dt>
+            <dd className="text-ink">
               <MoneyDisplay amount={staff.preferences.desiredSalary} />
             </dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Min salary</dt>
-            <dd className="text-zinc-100">
+            <dt className="text-faint">Min salary</dt>
+            <dd className="text-ink">
               <MoneyDisplay amount={staff.preferences.minimumSalary} />
             </dd>
           </div>
@@ -96,21 +92,21 @@ export default async function StaffDetailPage({ params }: PageProps) {
           {keys.map((key) => (
             <li
               key={key}
-              className="flex justify-between border-b border-zinc-900 py-1"
+              className="flex justify-between border-b border-surface-raised py-1"
             >
-              <span className="text-zinc-400">
+              <span className="text-muted">
                 {key
                   .replace(/([A-Z])/g, " $1")
                   .replace(/^./, (c) => c.toUpperCase())}
               </span>
-              <span className="font-medium text-zinc-100">{attrs[key]}</span>
+              <span className="font-medium text-ink">{attrs[key]}</span>
             </li>
           ))}
         </ul>
       </Section>
 
       <Section title="Preferences">
-        <ul className="space-y-1 text-sm text-zinc-300">
+        <ul className="space-y-1 text-sm text-soft">
           <li>Salary focus: {staff.preferences.salaryWeight}/100</li>
           <li>Security focus: {staff.preferences.securityWeight}/100</li>
           <li>Winning focus: {staff.preferences.winningWeight}/100</li>
@@ -127,11 +123,9 @@ export default async function StaffDetailPage({ params }: PageProps) {
 
       <Section title="Career history">
         {staff.careerHistory.length === 0 ? (
-          <p className="text-sm text-zinc-500">
-            No major career events recorded.
-          </p>
+          <p className="text-sm text-faint">No major career events recorded.</p>
         ) : (
-          <ul className="space-y-1 text-sm text-zinc-300">
+          <ul className="space-y-1 text-sm text-soft">
             {[...staff.careerHistory].reverse().map((entry, i) => (
               <li key={`${entry.seasonYear}-${entry.kind}-${i}`}>
                 {entry.seasonYear}: {entry.kind}

@@ -93,7 +93,7 @@ function StaffPayrollCard(props: { view: StaffHubView }) {
       className={`flex flex-wrap gap-x-6 gap-y-3 rounded-xl border px-4 py-3 ${
         over
           ? "border-rose-800/80 bg-rose-950/20"
-          : "border-zinc-800 bg-zinc-900/40"
+          : "border-line bg-surface-raised/40"
       }`}
       aria-label="Staff payroll and budget"
     >

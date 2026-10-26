@@ -94,7 +94,7 @@ export function ReleasePlayerDialog(props: {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="relative z-10 max-h-full w-full max-w-lg overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-5 text-left shadow-xl"
+            className="relative z-10 max-h-full w-full max-w-lg overflow-y-auto rounded-xl border border-line-strong bg-surface-raised p-5 text-left shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <SectionHeading
@@ -139,7 +139,7 @@ export function ReleasePlayerDialog(props: {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[18rem] text-sm">
                   <thead>
-                    <tr className="text-left text-zinc-400">
+                    <tr className="text-left text-muted">
                       <th className="py-1 pr-3 font-medium">Season</th>
                       <th className="py-1 pr-3 font-medium">Cap hit</th>
                       <th className="py-1 font-medium">Cash still due</th>
@@ -149,7 +149,7 @@ export function ReleasePlayerDialog(props: {
                     {option.seasons.map((season) => (
                       <tr
                         key={season.seasonYear}
-                        className="border-t border-zinc-800"
+                        className="border-t border-line"
                       >
                         <td className="py-1 pr-3">{season.seasonYear}</td>
                         <td className="py-1 pr-3">
@@ -157,7 +157,7 @@ export function ReleasePlayerDialog(props: {
                         </td>
                         <td className="py-1">
                           {mode === "buyout" ? (
-                            <span className="text-zinc-400">Paid now</span>
+                            <span className="text-muted">Paid now</span>
                           ) : (
                             <MoneyDisplay amount={season.cashDue} />
                           )}
@@ -168,7 +168,7 @@ export function ReleasePlayerDialog(props: {
                 </table>
               </div>
 
-              <p className="text-sm text-zinc-300">
+              <p className="text-sm text-soft">
                 Cap space after: <MoneyDisplay amount={option.capSpaceAfter} />
               </p>
 
@@ -209,8 +209,8 @@ function ModeChoice(props: {
       className={cn(
         "flex cursor-pointer items-start gap-3 rounded-md border p-3 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-team",
         props.checked
-          ? "border-team bg-zinc-800/60"
-          : "border-zinc-700 hover:border-zinc-500",
+          ? "border-team bg-surface-high/60"
+          : "border-line-strong hover:border-faint",
       )}
     >
       <input
@@ -222,11 +222,11 @@ function ModeChoice(props: {
         className={cn("mt-1", focusRingClass)}
       />
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-zinc-100">
+        <span className="block text-sm font-medium text-ink">
           {props.label}
         </span>
-        <span className="block text-sm text-zinc-400">{props.detail}</span>
-        <span className="block text-sm text-zinc-300">
+        <span className="block text-sm text-muted">{props.detail}</span>
+        <span className="block text-sm text-soft">
           {props.amountLabel}: <MoneyDisplay amount={props.amount} />
         </span>
       </span>

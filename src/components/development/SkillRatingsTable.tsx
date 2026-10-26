@@ -48,7 +48,7 @@ export function SkillRatingsTable(props: {
   const { saveId, rows } = props;
   return (
     <Section title="Skill ratings">
-      <p className="mb-3 text-sm text-zinc-400">
+      <p className="mb-3 text-sm text-muted">
         Change since last season:{" "}
         <span className="text-emerald-300">green</span> improved,{" "}
         <span className="text-rose-300">red</span> declined,{" "}
@@ -63,7 +63,7 @@ export function SkillRatingsTable(props: {
               const injured = row.injury !== null;
               const nameParts = splitDisplayName(row.playerName);
               return (
-                <tr key={row.playerId} className="border-t border-zinc-800">
+                <tr key={row.playerId} className="border-t border-line">
                   <td className="px-3 py-2">
                     <span className="flex items-center gap-2">
                       <PlayerPortrait
@@ -77,11 +77,11 @@ export function SkillRatingsTable(props: {
                         {row.playerName}
                       </PlayerEntityLink>
                     </span>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-faint">
                       {row.position} · {row.age}
                     </p>
                     {row.focus !== "balanced" ? (
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-xs text-faint">
                         {DEVELOPMENT_FOCUS_LABELS[row.focus]} camp
                       </p>
                     ) : null}
@@ -91,20 +91,20 @@ export function SkillRatingsTable(props: {
                       </span>
                     ) : null}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2 tabular-nums text-zinc-300">
+                  <td className="whitespace-nowrap px-3 py-2 tabular-nums text-soft">
                     {row.overall}
                     <Delta delta={row.overallDelta} injured={injured} />
                   </td>
                   {row.skills.map((skill) => (
                     <td
                       key={skill.focus}
-                      className="whitespace-nowrap px-3 py-2 tabular-nums text-zinc-300"
+                      className="whitespace-nowrap px-3 py-2 tabular-nums text-soft"
                     >
                       {skill.rating}
                       <Delta delta={skill.delta} injured={injured} />
                     </td>
                   ))}
-                  <td className="px-3 py-2 tabular-nums text-zinc-400">
+                  <td className="px-3 py-2 tabular-nums text-muted">
                     {row.potential}
                   </td>
                   <td className="px-3 py-2">
@@ -116,7 +116,7 @@ export function SkillRatingsTable(props: {
                         Yes
                       </Link>
                     ) : (
-                      <span className="text-sm text-zinc-600">No</span>
+                      <span className="text-sm text-disabled">No</span>
                     )}
                   </td>
                 </tr>

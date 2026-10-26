@@ -26,7 +26,7 @@ export function FreeAgentRosterView(props: {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           Roster shortcut — open Free Agency to sign or make offers.
         </p>
         <Link
@@ -39,7 +39,7 @@ export function FreeAgentRosterView(props: {
       <div className="overflow-x-auto">
         <DataTable headers={["Player", "Pos", "OVR", "Age", "Action"]}>
           {props.freeAgents.slice(0, 40).map((agent) => (
-            <tr key={agent.playerId} className="border-t border-zinc-800">
+            <tr key={agent.playerId} className="border-t border-line">
               <td className="px-3 py-2">
                 <span className="flex items-center gap-2">
                   <PlayerPortrait
@@ -57,9 +57,9 @@ export function FreeAgentRosterView(props: {
                   </PlayerEntityLink>
                 </span>
               </td>
-              <td className="px-3 py-2 text-zinc-400">{agent.position}</td>
-              <td className="px-3 py-2 text-zinc-200">{agent.overall}</td>
-              <td className="px-3 py-2 text-zinc-400">{agent.age}</td>
+              <td className="px-3 py-2 text-muted">{agent.position}</td>
+              <td className="px-3 py-2 text-ink">{agent.overall}</td>
+              <td className="px-3 py-2 text-muted">{agent.age}</td>
               <td className="px-3 py-2">
                 <Link
                   href={props.freeAgencyHubHref}
@@ -73,7 +73,7 @@ export function FreeAgentRosterView(props: {
         </DataTable>
       </div>
       {props.freeAgents.length > 40 ? (
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-disabled">
           Showing top 40 by overall.{" "}
           <Link
             href={props.freeAgencyHubHref}

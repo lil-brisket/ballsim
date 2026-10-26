@@ -57,13 +57,13 @@ export function RecentHistoryItem(props: RecentHistoryItemProps) {
   }
 
   return (
-    <li className="rounded-lg border border-zinc-800 px-3 py-2 text-sm">
-      <p className="text-sm text-zinc-500">
+    <li className="rounded-lg border border-line px-3 py-2 text-sm">
+      <p className="text-sm text-faint">
         {formatGameDate(item.occurredOn)} · {item.categoryLabel}
       </p>
-      <p className="mt-0.5 min-w-0 truncate text-zinc-200">{item.title}</p>
+      <p className="mt-0.5 min-w-0 truncate text-ink">{item.title}</p>
       {item.description ? (
-        <p className="mt-0.5 text-sm text-zinc-500">{item.description}</p>
+        <p className="mt-0.5 text-sm text-faint">{item.description}</p>
       ) : null}
     </li>
   );

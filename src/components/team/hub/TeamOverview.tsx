@@ -48,41 +48,41 @@ export function TeamOverview(props: { hub: TeamHubView }) {
         )}
       >
         <div>
-          <dt className="text-sm text-zinc-400">Record</dt>
-          <dd className="tabular-nums text-zinc-100">
+          <dt className="text-sm text-muted">Record</dt>
+          <dd className="tabular-nums text-ink">
             {hub.wins}–{hub.losses}
           </dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-400">Conference</dt>
-          <dd className="min-w-0 truncate text-zinc-100">{conferenceLine}</dd>
+          <dt className="text-sm text-muted">Conference</dt>
+          <dd className="min-w-0 truncate text-ink">{conferenceLine}</dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-400">Games back</dt>
-          <dd className="tabular-nums text-zinc-100">
+          <dt className="text-sm text-muted">Games back</dt>
+          <dd className="tabular-nums text-ink">
             {hub.standings.gamesBack != null ? hub.standings.gamesBack : "—"}
           </dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-400">Playoff status</dt>
-          <dd className="text-zinc-100">
+          <dt className="text-sm text-muted">Playoff status</dt>
+          <dd className="text-ink">
             {playoffStatusLabel(hub.standings.playoffLabel)}
           </dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-400">Form (L5)</dt>
-          <dd className="tabular-nums text-zinc-100">
+          <dt className="text-sm text-muted">Form (L5)</dt>
+          <dd className="tabular-nums text-ink">
             {hub.recentForm.marks || "—"}
             {hub.recentForm.streak ? (
-              <span className="ml-2 text-sm text-zinc-500">
+              <span className="ml-2 text-sm text-faint">
                 {hub.recentForm.streak}
               </span>
             ) : null}
           </dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-400">Roster health</dt>
-          <dd className="text-zinc-100">
+          <dt className="text-sm text-muted">Roster health</dt>
+          <dd className="text-ink">
             {hub.healthyCount} healthy
             {hub.injuredCount > 0 ? (
               <span className="text-rose-400">

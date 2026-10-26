@@ -44,7 +44,7 @@ export function ManagementDecisionPanel(props: {
       {items.length === 0 ? (
         <EmptyState message={emptyMessage} />
       ) : (
-        <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800">
+        <ul className="divide-y divide-line rounded-lg border border-line">
           {items.map((item) => (
             <li
               key={item.id}
@@ -52,16 +52,14 @@ export function ManagementDecisionPanel(props: {
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium text-zinc-100">
-                    {item.title}
-                  </p>
+                  <p className="text-sm font-medium text-ink">{item.title}</p>
                   <StatusBadge label={item.severity} tone={item.severity} />
                 </div>
-                <p className="mt-0.5 truncate text-sm text-zinc-500">
+                <p className="mt-0.5 truncate text-sm text-faint">
                   {item.description}
                 </p>
                 {item.entity ? (
-                  <p className="mt-0.5 text-sm text-zinc-400">
+                  <p className="mt-0.5 text-sm text-muted">
                     {item.entity.label}
                   </p>
                 ) : null}

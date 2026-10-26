@@ -18,7 +18,7 @@ export function ContractHubHeader(props: { view: ContractHubView }) {
           eyebrow="Contract management"
           title={view.teamName}
         />
-        <p className="text-sm text-zinc-300">Season {view.seasonYear}</p>
+        <p className="text-sm text-soft">Season {view.seasonYear}</p>
         <TaxLineNote rules={view.payrollRules} />
       </div>
       <TickerBar

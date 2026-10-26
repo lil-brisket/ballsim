@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { useEffect, useId, useRef } from "react";
 
@@ -99,7 +100,7 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
         <p className="text-sm font-medium text-emerald-300">
           {emoji} Available
         </p>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-muted">
           No medical restrictions on minutes.
         </p>
       </div>
@@ -110,10 +111,10 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
     return (
       <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-3">
         <p className="text-sm font-medium text-warning">{emoji} Questionable</p>
-        <dl className="mt-2 space-y-1 text-sm text-zinc-300">
+        <dl className="mt-2 space-y-1 text-sm text-soft">
           {player.injuryType ? (
             <div>
-              <dt className="inline text-zinc-500">Injury: </dt>
+              <dt className="inline text-faint">Injury: </dt>
               <dd className="inline">
                 {player.isLegacyUndisclosed ? "Undisclosed" : player.injuryType}
                 {player.injurySeverity ? ` (${player.injurySeverity})` : ""}
@@ -122,12 +123,12 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
           ) : null}
           {gamesText ? (
             <div>
-              <dt className="inline text-zinc-500">Timeline: </dt>
+              <dt className="inline text-faint">Timeline: </dt>
               <dd className="inline">{gamesText}</dd>
             </div>
           ) : null}
           <div>
-            <dt className="inline text-zinc-500">Workload: </dt>
+            <dt className="inline text-faint">Workload: </dt>
             <dd className="inline">
               Monitor — may play limited minutes game-to-game.
             </dd>
@@ -141,10 +142,10 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
     return (
       <div className="rounded-lg border border-orange-800/60 bg-orange-950/30 px-4 py-3">
         <p className="text-sm font-medium text-orange-300">{emoji} Limited</p>
-        <dl className="mt-2 space-y-1 text-sm text-zinc-300">
+        <dl className="mt-2 space-y-1 text-sm text-soft">
           {player.injuryType ? (
             <div>
-              <dt className="inline text-zinc-500">Injury: </dt>
+              <dt className="inline text-faint">Injury: </dt>
               <dd className="inline">
                 {player.isLegacyUndisclosed ? "Undisclosed" : player.injuryType}
                 {player.injurySeverity ? ` (${player.injurySeverity})` : ""}
@@ -153,12 +154,12 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
           ) : null}
           {gamesText ? (
             <div>
-              <dt className="inline text-zinc-500">Timeline: </dt>
+              <dt className="inline text-faint">Timeline: </dt>
               <dd className="inline">{gamesText}</dd>
             </div>
           ) : null}
           <div>
-            <dt className="inline text-zinc-500">Recommended: </dt>
+            <dt className="inline text-faint">Recommended: </dt>
             <dd className="inline">
               {player.recommendedWorkloadMpg != null
                 ? `${player.recommendedWorkloadMpg} MPG`
@@ -166,7 +167,7 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
             </dd>
           </div>
           <div>
-            <dt className="inline text-zinc-500">Maximum: </dt>
+            <dt className="inline text-faint">Maximum: </dt>
             <dd className="inline">
               {player.maximumWorkloadMpg != null
                 ? `${player.maximumWorkloadMpg} MPG`
@@ -183,10 +184,10 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
       <p className="text-sm font-medium text-rose-300">
         {emoji} {label}
       </p>
-      <dl className="mt-2 space-y-1 text-sm text-zinc-300">
+      <dl className="mt-2 space-y-1 text-sm text-soft">
         {player.injuryType ? (
           <div>
-            <dt className="inline text-zinc-500">Injury: </dt>
+            <dt className="inline text-faint">Injury: </dt>
             <dd className="inline">
               {player.isLegacyUndisclosed ? "Undisclosed" : player.injuryType}
               {player.injurySeverity ? ` (${player.injurySeverity})` : ""}
@@ -195,12 +196,12 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
         ) : null}
         {gamesText ? (
           <div>
-            <dt className="inline text-zinc-500">Timeline: </dt>
+            <dt className="inline text-faint">Timeline: </dt>
             <dd className="inline">{gamesText}</dd>
           </div>
         ) : null}
         <div>
-          <dt className="inline text-zinc-500">Workload: </dt>
+          <dt className="inline text-faint">Workload: </dt>
           <dd className="inline">0 MPG — unavailable</dd>
         </div>
       </dl>
@@ -235,19 +236,27 @@ export function RotationPlayerCard(props: {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-line-strong bg-surface-raised shadow-xl"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-zinc-800 px-5 py-4">
+        <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
           <div>
-            <h3 id={titleId} className="text-lg font-semibold text-zinc-50">
-              {player.firstName} {player.lastName}
-            </h3>
-            <p className="mt-1 text-sm text-zinc-400">
+            <SectionHeading
+              as="h3"
+              size="sm"
+              id={titleId}
+              titleClassName="text-lg!"
+              title={
+                <>
+                  {player.firstName} {player.lastName}
+                </>
+              }
+            />
+            <p className="mt-1 text-sm text-muted">
               {player.position}
               {player.age != null ? ` · Age ${player.age}` : ""}
               {player.overall != null ? ` · OVR ${player.overall}` : ""}
             </p>
-            <p className="mt-0.5 text-sm capitalize text-zinc-500">
+            <p className="mt-0.5 text-sm capitalize text-faint">
               {player.role.replaceAll("_", " ")}
               {player.teamName ? ` · ${player.teamName}` : ""}
             </p>
@@ -265,15 +274,13 @@ export function RotationPlayerCard(props: {
 
         <div className="space-y-4 overflow-y-auto px-5 py-4">
           <section>
-            <h4 className="mb-2 text-sm font-medium text-zinc-300">
-              Availability
-            </h4>
+            <h4 className="mb-2 text-sm font-medium text-soft">Availability</h4>
             <AvailabilitySection player={player} />
           </section>
 
           {stats ? (
             <section>
-              <h4 className="mb-2 text-sm font-medium text-zinc-300">
+              <h4 className="mb-2 text-sm font-medium text-soft">
                 Performance
               </h4>
               <div className="grid grid-cols-3 gap-2 text-center sm:grid-cols-4">
@@ -295,12 +302,10 @@ export function RotationPlayerCard(props: {
                 ).map(([label, value]) => (
                   <div
                     key={label}
-                    className="rounded border border-zinc-800 bg-zinc-950/50 px-2 py-2"
+                    className="rounded border border-line bg-surface-base/50 px-2 py-2"
                   >
-                    <p className="text-sm text-zinc-400">{label}</p>
-                    <p className="text-sm tabular-nums text-zinc-100">
-                      {value}
-                    </p>
+                    <p className="text-sm text-muted">{label}</p>
+                    <p className="text-sm tabular-nums text-ink">{value}</p>
                   </div>
                 ))}
               </div>
@@ -308,29 +313,29 @@ export function RotationPlayerCard(props: {
           ) : null}
 
           <section>
-            <h4 className="mb-2 text-sm font-medium text-zinc-300">Rotation</h4>
+            <h4 className="mb-2 text-sm font-medium text-soft">Rotation</h4>
             <dl className="grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-sm text-zinc-400">Target MPG</dt>
+              <div className="rounded border border-line px-3 py-2">
+                <dt className="text-sm text-muted">Target MPG</dt>
                 <dd className="tabular-nums text-team-ink">
                   {player.targetMinutes}
                 </dd>
               </div>
-              <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-sm text-zinc-400">Projected</dt>
-                <dd className="tabular-nums text-zinc-100">
+              <div className="rounded border border-line px-3 py-2">
+                <dt className="text-sm text-muted">Projected</dt>
+                <dd className="tabular-nums text-ink">
                   {player.projectedMinutes ?? player.targetMinutes}
                 </dd>
               </div>
-              <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-sm text-zinc-400">Season MIN</dt>
-                <dd className="tabular-nums text-zinc-100">
+              <div className="rounded border border-line px-3 py-2">
+                <dt className="text-sm text-muted">Season MIN</dt>
+                <dd className="tabular-nums text-ink">
                   {player.actualMinutes}
                 </dd>
               </div>
-              <div className="rounded border border-zinc-800 px-3 py-2">
-                <dt className="text-sm text-zinc-400">Role</dt>
-                <dd className="capitalize text-zinc-100">
+              <div className="rounded border border-line px-3 py-2">
+                <dt className="text-sm text-muted">Role</dt>
+                <dd className="capitalize text-ink">
                   {player.role.replaceAll("_", " ")}
                 </dd>
               </div>

@@ -45,7 +45,7 @@ export function PlayerChip(props: {
     "flex min-h-11 w-24 touch-manipulation flex-col items-center gap-1 rounded-lg border px-1.5 py-2 text-center transition active:opacity-80 disabled:opacity-50 sm:w-28",
     props.pressed
       ? "border-team-ink bg-team text-on-team"
-      : "border-zinc-700 bg-zinc-900/90 text-zinc-100 hover:border-team-ink",
+      : "border-line-strong bg-surface-raised/90 text-ink hover:border-team-ink",
     props.readOnly ? "" : focusRingClass,
     props.className,
   );
@@ -71,10 +71,10 @@ export function PlayerChip(props: {
         </>
       ) : (
         <>
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-dashed border-zinc-600 text-zinc-400">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-dashed border-disabled text-muted">
             +
           </span>
-          <span className="text-sm text-zinc-400">{slot ?? "Empty"}</span>
+          <span className="text-sm text-muted">{slot ?? "Empty"}</span>
         </>
       )}
     </>

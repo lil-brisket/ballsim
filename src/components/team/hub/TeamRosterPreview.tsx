@@ -36,7 +36,7 @@ export function TeamRosterPreview(props: { saveId: string; hub: TeamHubView }) {
           />
         ))}
         {hub.injuredPlayers.length > 0 ? (
-          <div className="mt-3 border-t border-zinc-800 pt-2">
+          <div className="mt-3 border-t border-line pt-2">
             <p className="mb-1 text-sm text-rose-400">Injured</p>
             {hub.injuredPlayers.map((player) => (
               <RosterRow

@@ -94,7 +94,7 @@ export default async function TeamManagementTransactionsPage({
     <>
       <TeamHubSubNav saveId={saveId} active="transactions" />
       <PageHeader title="Transactions" />
-      <p className="mb-3 text-sm text-zinc-400">
+      <p className="mb-3 text-sm text-muted">
         Prefer the league ledger?{" "}
         <Link
           href={`/dashboard/${saveId}/league/transactions`}
@@ -111,7 +111,7 @@ export default async function TeamManagementTransactionsPage({
           className={`rounded-full border px-3 py-1 text-sm ${
             scope === "team"
               ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-400"
+              : "border-line-strong text-muted"
           }`}
         >
           My team
@@ -121,7 +121,7 @@ export default async function TeamManagementTransactionsPage({
           className={`rounded-full border px-3 py-1 text-sm ${
             scope === "league"
               ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-400"
+              : "border-line-strong text-muted"
           }`}
         >
           League-wide
@@ -136,7 +136,7 @@ export default async function TeamManagementTransactionsPage({
             className={`rounded-full border px-3 py-1 text-sm ${
               type === filterType
                 ? "border-team-ink text-team-ink"
-                : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+                : "border-line-strong text-muted hover:border-faint"
             }`}
           >
             {filterType === "all" ? "All" : filterType}
@@ -160,7 +160,7 @@ export default async function TeamManagementTransactionsPage({
             className={`rounded-full border px-3 py-1 ${
               sort === value
                 ? "border-team-ink text-team-ink"
-                : "border-zinc-700 text-zinc-400"
+                : "border-line-strong text-muted"
             }`}
           >
             {label}
@@ -173,18 +173,18 @@ export default async function TeamManagementTransactionsPage({
       ) : (
         <DataTable headers={["Date", "Type", "Details"]}>
           {transactions.rows.map((entry) => (
-            <tr key={entry.id} className="border-t border-zinc-800">
-              <td className="px-3 py-2 text-zinc-500">
+            <tr key={entry.id} className="border-t border-line">
+              <td className="px-3 py-2 text-faint">
                 {formatGameDate(entry.occurredOn)}
               </td>
-              <td className="px-3 py-2 text-zinc-400">{entry.type}</td>
-              <td className="px-3 py-2 text-zinc-100">{entry.description}</td>
+              <td className="px-3 py-2 text-muted">{entry.type}</td>
+              <td className="px-3 py-2 text-ink">{entry.description}</td>
             </tr>
           ))}
         </DataTable>
       )}
 
-      <div className="flex items-center gap-3 text-sm text-zinc-400">
+      <div className="flex items-center gap-3 text-sm text-muted">
         <span>
           Page {transactions.page + 1} of {totalPages} ({transactions.total}{" "}
           total)

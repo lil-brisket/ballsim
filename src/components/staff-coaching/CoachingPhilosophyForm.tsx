@@ -17,7 +17,7 @@ import {
 import type { CoachingView } from "@/state/team-management-selectors";
 
 function Hint(props: { children: React.ReactNode }) {
-  return <span className="text-xs text-zinc-500">{props.children}</span>;
+  return <span className="text-xs text-faint">{props.children}</span>;
 }
 
 export function CoachingPhilosophyForm(props: {
@@ -49,7 +49,7 @@ export function CoachingPhilosophyForm(props: {
       <input type="hidden" name="saveId" value={saveId} />
       <input type="hidden" name="teamId" value={coaching.teamId} />
       <input type="hidden" name="returnPath" value={returnPath} />
-      <label className="flex flex-col gap-1 text-sm text-zinc-500">
+      <label className="flex flex-col gap-1 text-sm text-faint">
         Pace
         <Select
           name="pace"
@@ -65,7 +65,7 @@ export function CoachingPhilosophyForm(props: {
         </Select>
         <Hint>{paceExplanation(pace)}</Hint>
       </label>
-      <label className="flex flex-col gap-1 text-sm text-zinc-500">
+      <label className="flex flex-col gap-1 text-sm text-faint">
         Offensive emphasis
         <Select
           name="offensiveEmphasis"
@@ -81,7 +81,7 @@ export function CoachingPhilosophyForm(props: {
         </Select>
         <Hint>{emphasisExplanation(emphasis)}</Hint>
       </label>
-      <label className="flex flex-col gap-1 text-sm text-zinc-500">
+      <label className="flex flex-col gap-1 text-sm text-faint">
         Defensive approach
         <Select
           name="defensiveApproach"
@@ -97,7 +97,7 @@ export function CoachingPhilosophyForm(props: {
         </Select>
         <Hint>{defenseExplanation(defense)}</Hint>
       </label>
-      <label className="flex flex-col gap-1 text-sm text-zinc-500">
+      <label className="flex flex-col gap-1 text-sm text-faint">
         Play through
         <Select
           name="focalPlayerId"
@@ -115,9 +115,9 @@ export function CoachingPhilosophyForm(props: {
         <Hint>{focalExplanation(focal?.name ?? null)}</Hint>
       </label>
       <div className="sm:col-span-2">
-        <p className="mb-2 text-sm text-zinc-500">
+        <p className="mb-2 text-sm text-faint">
           Rotation style:{" "}
-          <span className="text-zinc-300">{coaching.rotationStyle}</span>.{" "}
+          <span className="text-soft">{coaching.rotationStyle}</span>.{" "}
           {rotationExplanation(coaching.rotationStyle)} Set by the chosen
           preset.
         </p>

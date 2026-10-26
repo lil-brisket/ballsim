@@ -22,7 +22,7 @@ export function TeamIdentityInline(props: TeamIdentityInlineProps) {
     <span className="inline-flex items-center gap-2">
       {props.branding ? (
         <span
-          className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-700 ${monogramClass}`}
+          className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded border border-line-strong ${monogramClass}`}
           style={{ backgroundColor: props.branding.primaryColor }}
         >
           <TeamLogoMark branding={props.branding} size={size} decorative />
@@ -36,7 +36,7 @@ export function TeamIdentityInline(props: TeamIdentityInlineProps) {
       )}
       <span className="min-w-0">
         {props.city} {props.name}{" "}
-        <span className="text-zinc-500">({props.abbreviation})</span>
+        <span className="text-faint">({props.abbreviation})</span>
       </span>
     </span>
   );

@@ -53,24 +53,24 @@ export function StaffTermsDialog(props: {
             role="dialog"
             aria-modal="true"
             aria-labelledby="staff-terms-dialog-title"
-            className="relative z-10 w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
+            className="relative z-10 w-full max-w-md rounded-xl border border-line-strong bg-surface-raised p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <h3
               id="staff-terms-dialog-title"
-              className="text-lg font-medium text-zinc-50"
+              className="text-lg font-medium text-ink"
             >
               {props.title}
             </h3>
             {props.askingSalary !== undefined ? (
-              <p className="mt-2 text-sm text-zinc-400">
+              <p className="mt-2 text-sm text-muted">
                 Requested salary <MoneyDisplay amount={props.askingSalary} />
               </p>
             ) : null}
             {props.interestLevel ? (
-              <p className="mt-1 text-sm text-zinc-400">
+              <p className="mt-1 text-sm text-muted">
                 Staff interest:{" "}
-                <span className="capitalize text-zinc-200">
+                <span className="capitalize text-ink">
                   {props.interestLevel}
                 </span>
               </p>
@@ -81,7 +81,7 @@ export function StaffTermsDialog(props: {
               {Object.entries(props.hiddenFields).map(([name, value]) => (
                 <input key={name} type="hidden" name={name} value={value} />
               ))}
-              <div className="text-sm text-zinc-300">
+              <div className="text-sm text-soft">
                 <label htmlFor="staff-terms-annual-salary">Annual salary</label>
                 <NumberStepper
                   id="staff-terms-annual-salary"
@@ -94,7 +94,7 @@ export function StaffTermsDialog(props: {
                   inputClassName="w-full min-w-28 flex-1"
                 />
               </div>
-              <div className="text-sm text-zinc-300">
+              <div className="text-sm text-soft">
                 <label htmlFor="staff-terms-years">
                   Contract length (years)
                 </label>
@@ -110,7 +110,7 @@ export function StaffTermsDialog(props: {
                 />
               </div>
               {props.showTotalPreview ? (
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-muted">
                   New contract <MoneyDisplay amount={total} /> total
                 </p>
               ) : null}
