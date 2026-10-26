@@ -20,6 +20,8 @@
     "test:regression": "node scripts/vitest.mjs run --project regression",
     "test:simulation": "node scripts/vitest.mjs run --project simulation",
     "test:all": "node scripts/vitest.mjs run",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots",
     "sim": "tsx scripts/sim.ts",
     "test:offseason-soak": "tsx scripts/offseason-soak.ts",
     "offseason:balance": "tsx scripts/offseason-balance.ts",
@@ -56,6 +58,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
