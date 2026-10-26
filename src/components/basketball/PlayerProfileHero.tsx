@@ -17,7 +17,7 @@ function Chip(props: { children: React.ReactNode; accent?: boolean }) {
       className={
         props.accent
           ? "inline-flex items-center rounded bg-team px-2 py-0.5 text-sm font-bold uppercase tracking-wide text-on-team"
-          : "inline-flex items-center rounded border border-white/20 bg-black/30 px-2 py-0.5 text-sm uppercase tracking-wide text-zinc-100"
+          : "inline-flex items-center rounded border border-white/20 bg-black/30 px-2 py-0.5 text-sm uppercase tracking-wide text-ink"
       }
     >
       {props.children}
@@ -191,7 +191,7 @@ export function PlayerProfileHero(props: {
           </div>
 
           <div className="order-3 col-span-2 min-w-0 pb-4 sm:order-2 sm:col-span-1 sm:pb-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-zinc-200">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-ink">
               {props.firstName}
             </p>
             <h3 className="font-display break-words text-4xl font-extrabold uppercase leading-none tracking-wide text-white [text-shadow:0_2px_12px_rgb(0_0_0_/_0.5)] sm:text-6xl">
@@ -215,7 +215,7 @@ export function PlayerProfileHero(props: {
               ) : null}
               <Chip>Age {props.age}</Chip>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-zinc-100">
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink">
               {props.branding ? (
                 <TeamBadge
                   branding={props.branding}

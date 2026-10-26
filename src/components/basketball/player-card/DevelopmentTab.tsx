@@ -35,7 +35,7 @@ function RatingHistoryChart(props: {
       aria-label={`Overall rating by season, ${props.rows
         .map((row) => `${row.label} ${row.overall}`)
         .join(", ")}. Potential estimate ${props.potential}.`}
-      className="h-56 w-full rounded-lg border border-zinc-800 bg-zinc-900/40 p-2"
+      className="h-56 w-full rounded-lg border border-line bg-surface-raised/40 p-2"
     >
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
@@ -129,13 +129,13 @@ export function DevelopmentTab(props: {
           ) : (
             <p
               role="status"
-              className="rounded-lg border border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500"
+              className="rounded-lg border border-line px-4 py-6 text-center text-sm text-faint"
             >
               Rating history begins after the first completed season.
             </p>
           )}
 
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-faint">
             Ratings are actual values at the end of each season, plus today’s
             rating. Potential is a scouting estimate of the player’s ceiling,
             not a projection or a guarantee.
@@ -148,10 +148,10 @@ export function DevelopmentTab(props: {
 
       {hasHistory ? (
         <Section title="Rating history" density="compact">
-          <div className="overflow-x-auto rounded-lg border border-zinc-800">
+          <div className="overflow-x-auto rounded-lg border border-line">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400">
+                <tr className="border-b border-line text-left text-sm text-muted">
                   <th scope="col" className="px-3 py-2 font-normal">
                     Season
                   </th>
@@ -170,18 +170,18 @@ export function DevelopmentTab(props: {
                 {rows.map((row) => (
                   <tr
                     key={row.label}
-                    className="border-b border-zinc-800/60 last:border-0"
+                    className="border-b border-line/60 last:border-0"
                   >
                     <th
                       scope="row"
-                      className="px-3 py-2 text-left font-medium text-zinc-200"
+                      className="px-3 py-2 text-left font-medium text-ink"
                     >
                       {row.label}
                     </th>
-                    <td className="px-3 py-2 text-right font-mono tabular-nums text-zinc-100">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-ink">
                       {row.age ?? EMPTY_VALUE}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono tabular-nums text-zinc-100">
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-ink">
                       {row.overall}
                     </td>
                     <td
@@ -190,7 +190,7 @@ export function DevelopmentTab(props: {
                           ? "px-3 py-2 text-right font-mono tabular-nums text-emerald-400"
                           : row.change != null && row.change < 0
                             ? "px-3 py-2 text-right font-mono tabular-nums text-rose-400"
-                            : "px-3 py-2 text-right font-mono tabular-nums text-zinc-400"
+                            : "px-3 py-2 text-right font-mono tabular-nums text-muted"
                       }
                     >
                       {formatChange(row.change)}

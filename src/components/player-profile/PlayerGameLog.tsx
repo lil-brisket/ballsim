@@ -108,9 +108,9 @@ export function PlayerGameLog(props: {
         </div>
       }
     >
-      <div className="overflow-x-auto rounded-lg border border-zinc-800">
+      <div className="overflow-x-auto rounded-lg border border-line">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-zinc-900/60 text-sm text-zinc-400">
+          <thead className="bg-surface-raised/60 text-sm text-muted">
             <tr>
               {(
                 [
@@ -144,7 +144,7 @@ export function PlayerGameLog(props: {
           </thead>
           <tbody>
             {pageRows.map((row) => (
-              <tr key={row.gameId} className="border-t border-zinc-800">
+              <tr key={row.gameId} className="border-t border-line">
                 <td className="px-3 py-2">
                   <Link
                     href={`/dashboard/${props.saveId}/games/${row.gameId}`}
@@ -153,7 +153,7 @@ export function PlayerGameLog(props: {
                     {formatGameDate(row.date)}
                   </Link>
                 </td>
-                <td className="px-3 py-2 text-zinc-400">
+                <td className="px-3 py-2 text-muted">
                   <span className="inline-flex items-center gap-1.5">
                     <span>{row.home ? "vs" : "@"}</span>
                     {row.opponentBranding ? (
@@ -173,39 +173,33 @@ export function PlayerGameLog(props: {
                     <span>{row.opponentAbbreviation}</span>
                   </span>
                 </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
+                <td className="px-3 py-2 font-mono text-muted">
                   {row.won === null
                     ? "—"
                     : `${row.won ? "W" : "L"} ${row.teamScore}-${row.opponentScore}`}
                 </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
+                <td className="px-3 py-2 font-mono text-muted">
                   {row.minutes}
                 </td>
-                <td className="px-3 py-2 font-mono text-zinc-100">
-                  {row.points}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
+                <td className="px-3 py-2 font-mono text-ink">{row.points}</td>
+                <td className="px-3 py-2 font-mono text-muted">
                   {row.rebounds}
                 </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
+                <td className="px-3 py-2 font-mono text-muted">
                   {row.assists}
                 </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.steals}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.blocks}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
+                <td className="px-3 py-2 font-mono text-muted">{row.steals}</td>
+                <td className="px-3 py-2 font-mono text-muted">{row.blocks}</td>
+                <td className="px-3 py-2 font-mono text-muted">
                   {row.turnovers}
                 </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
+                <td className="px-3 py-2 font-mono text-muted">
                   {row.fgMade}/{row.fgAttempted}
                 </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
+                <td className="px-3 py-2 font-mono text-muted">
                   {row.threeMade}/{row.threeAttempted}
                 </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
+                <td className="px-3 py-2 font-mono text-muted">
                   {row.ftMade}/{row.ftAttempted}
                 </td>
               </tr>
@@ -214,7 +208,7 @@ export function PlayerGameLog(props: {
         </table>
       </div>
       {pageCount > 1 ? (
-        <div className="mt-3 flex items-center justify-between text-sm text-zinc-500">
+        <div className="mt-3 flex items-center justify-between text-sm text-faint">
           <span>
             Page {page + 1} of {pageCount} ({filtered.length} games)
           </span>

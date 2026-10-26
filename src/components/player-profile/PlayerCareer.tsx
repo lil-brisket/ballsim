@@ -59,15 +59,15 @@ export function PlayerCareer(props: {
                 {player.awards.map((award) => (
                   <li
                     key={`${award.awardId}-${award.seasonYear}-${award.period ?? "y"}`}
-                    className="rounded-lg border border-zinc-800 px-4 py-2"
+                    className="rounded-lg border border-line px-4 py-2"
                   >
-                    <span className="text-zinc-100">{award.displayName}</span>
-                    <span className="ml-2 text-zinc-500">—</span>
+                    <span className="text-ink">{award.displayName}</span>
+                    <span className="ml-2 text-faint">—</span>
                     <span className="ml-2 tabular-nums text-team-ink">
                       {award.periodLabel ?? String(award.seasonYear)}
                     </span>
                     {award.teamName ? (
-                      <span className="ml-2 text-zinc-500">
+                      <span className="ml-2 text-faint">
                         ({award.teamName})
                       </span>
                     ) : null}
@@ -84,7 +84,7 @@ export function PlayerCareer(props: {
                 {player.awardCareerTotals.map((total) => (
                   <li
                     key={total.awardId}
-                    className="rounded-full border border-zinc-700 px-3 py-1 text-zinc-200"
+                    className="rounded-full border border-line-strong px-3 py-1 text-ink"
                   >
                     {total.count}× {total.displayName}
                   </li>
@@ -103,15 +103,15 @@ export function PlayerCareer(props: {
             {tenureBlocks.map((block) => (
               <li
                 key={`${block.start}-${block.end}-${block.team}`}
-                className="rounded-lg border border-zinc-800 px-4 py-3 text-sm"
+                className="rounded-lg border border-line px-4 py-3 text-sm"
               >
                 <span className="tabular-nums text-team-ink">
                   {block.start === block.end
                     ? String(block.start)
                     : `${block.start}–${block.end}`}
                 </span>
-                <span className="ml-3 text-zinc-100">{block.team}</span>
-                <span className="ml-2 text-zinc-500">({block.games} GP)</span>
+                <span className="ml-3 text-ink">{block.team}</span>
+                <span className="ml-2 text-faint">({block.games} GP)</span>
               </li>
             ))}
           </ul>
@@ -128,9 +128,9 @@ export function PlayerCareer(props: {
                 key={best.kind}
                 className="rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 px-4 py-3"
               >
-                <p className="text-sm text-zinc-500">{best.label}</p>
-                <p className="mt-1 text-lg text-zinc-100">{best.valueLabel}</p>
-                <p className="text-sm text-zinc-400">{best.seasonYear}</p>
+                <p className="text-sm text-faint">{best.label}</p>
+                <p className="mt-1 text-lg text-ink">{best.valueLabel}</p>
+                <p className="text-sm text-muted">{best.seasonYear}</p>
               </div>
             ))}
           </div>
@@ -143,14 +143,14 @@ export function PlayerCareer(props: {
         ) : (
           <CardTable headers={["Stat", "Value", "Context", "Game"]}>
             {player.careerHighs.map((high) => (
-              <tr key={high.stat} className="border-t border-zinc-800">
-                <td className="px-3 py-2 text-zinc-100">
+              <tr key={high.stat} className="border-t border-line">
+                <td className="px-3 py-2 text-ink">
                   {HIGH_LABELS[high.stat] ?? high.stat}
                 </td>
                 <td className="px-3 py-2 font-mono text-team-ink">
                   {high.value}
                 </td>
-                <td className="px-3 py-2 text-sm text-zinc-400">
+                <td className="px-3 py-2 text-sm text-muted">
                   <span className="inline-flex items-center gap-1.5">
                     <span>vs</span>
                     {high.opponentBranding ? (
@@ -195,16 +195,16 @@ export function PlayerCareer(props: {
             {player.seasonHistory.map((season) => (
               <li
                 key={season.seasonId}
-                className="rounded-lg border border-zinc-800 px-4 py-3 text-sm"
+                className="rounded-lg border border-line px-4 py-3 text-sm"
               >
                 <span className="tabular-nums text-team-ink">
                   {season.seasonYear}
                 </span>
-                <span className="ml-3 text-zinc-100">
+                <span className="ml-3 text-ink">
                   Age {season.age} · OVR {season.overall} ·{" "}
                   {season.developmentStage} · {season.injuryKind}
                 </span>
-                <span className="ml-2 text-zinc-500">
+                <span className="ml-2 text-faint">
                   {season.competition.combined.games} GP
                   {season.competition.combined.games === 0
                     ? " — did not appear"

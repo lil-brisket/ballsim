@@ -44,7 +44,7 @@ export function PlayerRatingGrid(props: {
         const panelId = `${baseId}-${category.key}`;
         const row = (
           <>
-            <span className="w-32 shrink-0 truncate text-left text-sm text-zinc-300 sm:w-36">
+            <span className="w-32 shrink-0 truncate text-left text-sm text-soft sm:w-36">
               {category.label}
             </span>
             <span
@@ -56,7 +56,7 @@ export function PlayerRatingGrid(props: {
                   "block h-full rounded-full transition-[width] motion-reduce:transition-none",
                   emphasis === "best" && "bg-tier",
                   emphasis === "worst" && "bg-loss",
-                  emphasis === null && "bg-zinc-500",
+                  emphasis === null && "bg-faint",
                 )}
                 style={{ width: `${width}%` }}
               />
@@ -66,7 +66,7 @@ export function PlayerRatingGrid(props: {
                 "w-10 shrink-0 text-right font-display text-2xl font-extrabold leading-none tabular-nums",
                 emphasis === "best" && "text-tier",
                 emphasis === "worst" && "text-loss",
-                emphasis === null && "text-zinc-100",
+                emphasis === null && "text-ink",
               )}
             >
               {category.rating}
@@ -108,7 +108,7 @@ export function PlayerRatingGrid(props: {
                 id={panelId}
                 className="mx-2 mb-3 mt-1 rounded-lg bg-surface-deep/60 p-3"
               >
-                <p className="mb-2 text-sm font-medium text-zinc-300">
+                <p className="mb-2 text-sm font-medium text-soft">
                   {category.label} breakdown
                 </p>
                 <RatingBars

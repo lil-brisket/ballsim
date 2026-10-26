@@ -106,7 +106,7 @@ export function StatisticsTab(props: {
         ) : (
           <p
             role="status"
-            className="rounded-lg border border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500"
+            className="rounded-lg border border-line px-4 py-6 text-center text-sm text-faint"
           >
             No games played in this split.
           </p>

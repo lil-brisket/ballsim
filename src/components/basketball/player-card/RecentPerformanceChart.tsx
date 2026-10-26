@@ -20,7 +20,7 @@ export function RecentPerformanceChart(props: {
   const recent = props.games.slice(-RECENT_GAMES);
   if (recent.length === 0) {
     return (
-      <p className="rounded-lg border border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500">
+      <p className="rounded-lg border border-line px-4 py-6 text-center text-sm text-faint">
         No games played this season.
       </p>
     );
@@ -32,7 +32,7 @@ export function RecentPerformanceChart(props: {
   }));
 
   return (
-    <div className="h-48 w-full rounded-lg border border-zinc-800 bg-zinc-900/40 p-2">
+    <div className="h-48 w-full rounded-lg border border-line bg-surface-raised/40 p-2">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={data}

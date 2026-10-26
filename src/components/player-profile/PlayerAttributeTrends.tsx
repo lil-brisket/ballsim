@@ -19,7 +19,7 @@ const NON_ATTRIBUTE_METRICS = new Set([
   "ftPct",
 ]);
 
-const labelClass = "text-sm text-zinc-400";
+const labelClass = "text-sm text-muted";
 
 export function PlayerAttributeTrends(props: { player: PlayerProfileView }) {
   const baseId = useId();

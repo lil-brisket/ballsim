@@ -23,9 +23,9 @@ function DrawerSkeleton() {
       aria-busy="true"
       aria-label="Loading"
     >
-      <div className="h-16 rounded-lg bg-zinc-800" />
-      <div className="h-8 w-2/3 rounded bg-zinc-800" />
-      <div className="h-24 rounded-lg bg-zinc-800" />
+      <div className="h-16 rounded-lg bg-surface-high" />
+      <div className="h-8 w-2/3 rounded bg-surface-high" />
+      <div className="h-24 rounded-lg bg-surface-high" />
     </div>
   );
 }
@@ -65,7 +65,7 @@ export function StaffDrawer(props: {
             <Link
               href={props.view.navigation.staffHubHref}
               className={cn(
-                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500",
+                "rounded-md border border-line-strong px-3 py-1.5 text-sm text-soft hover:border-faint",
                 focusRingClass,
               )}
               onClick={() => props.onOpenChange(false)}
@@ -80,7 +80,7 @@ export function StaffDrawer(props: {
         <DrawerSkeleton />
       ) : null}
       {props.status === "error" ? (
-        <div className="space-y-3 text-sm text-zinc-400">
+        <div className="space-y-3 text-sm text-muted">
           <p>Could not load staff member.</p>
           {props.onRetry ? (
             <Button type="button" variant="secondary" onClick={props.onRetry}>
@@ -90,7 +90,7 @@ export function StaffDrawer(props: {
         </div>
       ) : null}
       {props.status === "missing" ? (
-        <p className="text-sm text-zinc-400">Staff member not found.</p>
+        <p className="text-sm text-muted">Staff member not found.</p>
       ) : null}
       {props.status === "ready" && props.view ? (
         <StaffDrawerBody saveId={props.saveId} view={props.view} />
@@ -105,26 +105,24 @@ function StaffDrawerBody(props: { saveId: string; view: StaffDrawerView }) {
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-zinc-300">
+      <p className="text-sm text-soft">
         {view.identity.overall} OVR · Age {view.identity.age} ·{" "}
         {view.experience} yrs experience
       </p>
 
       <Section title="Profile">
         <div className="space-y-2 text-sm">
-          <p className="text-zinc-300">
-            <span className="text-zinc-500">Strengths </span>
+          <p className="text-soft">
+            <span className="text-faint">Strengths </span>
             {view.strengths.join(", ") || "—"}
           </p>
-          <p className="text-zinc-300">
-            <span className="text-zinc-500">Weaknesses </span>
+          <p className="text-soft">
+            <span className="text-faint">Weaknesses </span>
             {view.weaknesses.join(", ") || "—"}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge label={view.development.trend} />
-            <span className="text-zinc-400">
-              Morale {view.development.morale}
-            </span>
+            <span className="text-muted">Morale {view.development.morale}</span>
           </div>
         </div>
       </Section>
@@ -133,8 +131,8 @@ function StaffDrawerBody(props: { saveId: string; view: StaffDrawerView }) {
         <dl className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
           {view.attributes.map((entry) => (
             <div key={entry.key} className="flex justify-between gap-3 text-sm">
-              <dt className="text-zinc-400">{entry.label}</dt>
-              <dd className="font-medium tabular-nums text-zinc-100">
+              <dt className="text-muted">{entry.label}</dt>
+              <dd className="font-medium tabular-nums text-ink">
                 {entry.value}
               </dd>
             </div>
@@ -148,10 +146,10 @@ function StaffDrawerBody(props: { saveId: string; view: StaffDrawerView }) {
             {view.effects.map((effect) => (
               <div
                 key={effect.label}
-                className="flex justify-between gap-3 text-zinc-300"
+                className="flex justify-between gap-3 text-soft"
               >
                 <dt>{effect.label}</dt>
-                <dd className="tabular-nums text-zinc-100">{effect.value}</dd>
+                <dd className="tabular-nums text-ink">{effect.value}</dd>
               </div>
             ))}
           </dl>
@@ -160,9 +158,9 @@ function StaffDrawerBody(props: { saveId: string; view: StaffDrawerView }) {
 
       <Section title="Contract">
         {view.contractValue === null && view.contract.salary === null ? (
-          <p className="text-sm text-zinc-400">No current contract</p>
+          <p className="text-sm text-muted">No current contract</p>
         ) : (
-          <ul className="space-y-1 text-sm text-zinc-300">
+          <ul className="space-y-1 text-sm text-soft">
             <li className="flex justify-between">
               <span>Salary</span>
               {view.contract.salary !== null ? (

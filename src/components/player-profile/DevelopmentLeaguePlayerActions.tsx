@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import {
   assignToDevelopmentLeagueAction,
@@ -21,18 +22,16 @@ export function DevelopmentLeaguePlayerActions(props: {
   }
 
   return (
-    <section className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
-      <h3 className="text-sm font-semibold text-zinc-100">
-        Development League
-      </h3>
+    <section className="rounded-lg border border-line bg-surface-raised/40 p-4">
+      <SectionHeading as="h3" size="sm" title="Development League" />
       {props.statusLabel ? (
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-muted">
           Status: {props.statusLabel}
           {props.readinessLabel ? ` · ${props.readinessLabel}` : ""}
         </p>
       ) : null}
       {props.whyBullets.length > 0 ? (
-        <ul className="mt-2 list-disc pl-4 text-sm text-zinc-500">
+        <ul className="mt-2 list-disc pl-4 text-sm text-faint">
           {props.whyBullets.map((bullet) => (
             <li key={bullet}>{bullet}</li>
           ))}

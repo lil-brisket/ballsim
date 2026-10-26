@@ -18,7 +18,7 @@ function mood(overrides: Partial<PlayerMoodView>): PlayerMoodView {
 describe("MoodChip", () => {
   it.each([
     ["happy", "Happy", "emerald"],
-    ["content", "Content", "zinc"],
+    ["content", "Content", "text-muted"],
     ["unhappy", "Unhappy", "warning"],
     ["upset", "Upset", "rose"],
   ] as const)("renders %s band with tone", (band, label, toneToken) => {

@@ -1,4 +1,5 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
@@ -80,10 +81,13 @@ export function PlayerCard(props: {
             size="md"
           />
           <div className="min-w-0">
-            <h3 className="truncate text-base font-medium text-zinc-50">
-              {name}
-            </h3>
-            <p className="mt-0.5 text-sm text-zinc-400">
+            <SectionHeading
+              as="h3"
+              size="sm"
+              titleClassName="truncate text-base!"
+              title={name}
+            />
+            <p className="mt-0.5 text-sm text-muted">
               {[
                 fields.position && props.position,
                 fields.age && props.age != null ? `Age ${props.age}` : null,
@@ -112,12 +116,12 @@ export function PlayerCard(props: {
           <InjuryBadge status={props.injuryStatus} />
         ) : null}
         {fields.contract && props.contractLabel ? (
-          <span className="text-sm text-zinc-400">{props.contractLabel}</span>
+          <span className="text-sm text-muted">{props.contractLabel}</span>
         ) : null}
       </div>
 
       {fields.team && props.teamName ? (
-        <p className="mt-3 text-sm text-zinc-400">
+        <p className="mt-3 text-sm text-muted">
           {props.teamAbbreviation
             ? `${props.teamAbbreviation} · ${props.teamName}`
             : props.teamName}

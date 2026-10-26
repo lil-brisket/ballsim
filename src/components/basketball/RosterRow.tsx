@@ -30,7 +30,7 @@ export function RosterRow(props: {
     <div
       data-tier={ratingTier(props.overall).id}
       className={cn(
-        "flex items-center gap-3 border-b border-zinc-800/80",
+        "flex items-center gap-3 border-b border-line/80",
         dense ? "py-1.5" : "py-2.5",
         props.className,
       )}
@@ -44,7 +44,7 @@ export function RosterRow(props: {
       />
       <div className="min-w-0 flex-1">
         {props.jerseyNumber != null ? (
-          <span className="mr-1.5 text-sm tabular-nums text-zinc-500">
+          <span className="mr-1.5 text-sm tabular-nums text-faint">
             #{props.jerseyNumber}
           </span>
         ) : null}
@@ -56,7 +56,7 @@ export function RosterRow(props: {
         >
           {props.firstName} {props.lastName}
         </PlayerEntityLink>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           {props.position}
           {props.age != null ? ` · ${props.age}` : ""}
         </p>

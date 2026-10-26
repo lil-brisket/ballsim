@@ -81,7 +81,7 @@ export default async function PlayerDetailPage({
         actions={
           <Link
             href={`/dashboard/${saveId}/roster`}
-            className="text-sm text-zinc-400 hover:text-team-ink"
+            className="text-sm text-muted hover:text-team-ink"
           >
             ← Roster
           </Link>

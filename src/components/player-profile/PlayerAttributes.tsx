@@ -43,7 +43,7 @@ export function PlayerAttributesPanel(props: { player: PlayerProfileView }) {
           interactive={false}
         />
       </div>
-      <p className="text-sm text-zinc-400">Attribute detail and development</p>
+      <p className="text-sm text-muted">Attribute detail and development</p>
       {RATING_CATEGORIES.map((category) => (
         <Section key={category.key} title={category.label} density="compact">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

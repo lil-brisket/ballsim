@@ -156,7 +156,7 @@ export function PerformanceChart(props: {
         <div
           role="img"
           aria-label={chartLabel}
-          className="h-56 w-full rounded-lg border border-zinc-800 bg-zinc-900/40 p-2"
+          className="h-56 w-full rounded-lg border border-line bg-surface-raised/40 p-2"
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
@@ -298,7 +298,7 @@ export function PerformanceChart(props: {
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-1">
-        <label htmlFor={selectId} className="text-sm text-zinc-400">
+        <label htmlFor={selectId} className="text-sm text-muted">
           Chart metric
         </label>
         <Select
@@ -323,7 +323,7 @@ function EmptyNote(props: { text: string }) {
   return (
     <p
       role="status"
-      className="rounded-lg border border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500"
+      className="rounded-lg border border-line px-4 py-6 text-center text-sm text-faint"
     >
       {props.text}
     </p>

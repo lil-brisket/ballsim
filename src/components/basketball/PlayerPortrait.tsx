@@ -201,7 +201,7 @@ export function PlayerPortrait(props: PlayerPortraitProps) {
   return (
     <span
       className={cn(
-        "relative inline-flex shrink-0 overflow-hidden rounded-xl border border-zinc-700",
+        "relative inline-flex shrink-0 overflow-hidden rounded-xl border border-line-strong",
         SIZE_CLASS[props.size],
         props.className,
       )}
@@ -223,7 +223,7 @@ export function PlayerPortrait(props: PlayerPortraitProps) {
           />
           <span
             className={cn(
-              "relative z-10 flex h-full w-full items-center justify-center font-mono font-semibold text-zinc-50 [text-shadow:0_1px_2px_rgb(0_0_0_/_0.85)]",
+              "relative z-10 flex h-full w-full items-center justify-center font-mono font-semibold text-ink [text-shadow:0_1px_2px_rgb(0_0_0_/_0.85)]",
               INITIALS_CLASS[props.size],
             )}
           >

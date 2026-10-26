@@ -5,13 +5,13 @@ export function CardTable(props: {
   caption?: string;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-800">
+    <div className="overflow-x-auto rounded-lg border border-line">
       <table className="min-w-full text-left text-sm">
         {props.caption ? (
           <caption className="sr-only">{props.caption}</caption>
         ) : null}
-        <thead className="bg-zinc-900/60">
-          <tr className="text-sm text-zinc-400">
+        <thead className="bg-surface-raised/60">
+          <tr className="text-sm text-muted">
             {props.headers.map((header) => (
               <th key={header} scope="col" className="px-3 py-2 font-normal">
                 {header}
