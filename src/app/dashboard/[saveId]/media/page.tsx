@@ -48,7 +48,7 @@ export default async function MediaPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="@container space-y-6">
       <PageHeader
         title="Media Hub"
         actions={
@@ -68,8 +68,9 @@ export default async function MediaPage({
       />
       {error ? <ErrorState message={error} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[12rem_minmax(0,40rem)_minmax(0,1fr)] xl:gap-8">
-        <aside className="hidden xl:block">
+      {/* Three columns need ~70rem of content width (not viewport). */}
+      <div className="grid gap-6 @min-[70rem]:grid-cols-[12rem_minmax(0,40rem)_minmax(14rem,1fr)] @min-[70rem]:gap-8">
+        <aside className="hidden @min-[70rem]:block">
           <div className="sticky top-4">
             <MediaFilterList filters={view.filters} />
           </div>
@@ -85,7 +86,7 @@ export default async function MediaPage({
             <TopStoryHero post={view.topStory} context={view.context} />
           ) : null}
 
-          <div className="space-y-4 xl:hidden">
+          <div className="space-y-4 @min-[70rem]:hidden">
             <MediaScoresStrip
               scores={view.scores}
               dateLabel={view.scoresDateLabel}
@@ -132,7 +133,10 @@ export default async function MediaPage({
           <TimelineLoadMore href={view.loadMoreHref} />
         </div>
 
-        <aside className="hidden xl:block" aria-label="Around the league">
+        <aside
+          className="hidden @min-[70rem]:block"
+          aria-label="Around the league"
+        >
           <MediaSideRail view={view} />
         </aside>
       </div>
