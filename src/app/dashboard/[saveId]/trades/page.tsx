@@ -4,6 +4,7 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { PendingOwnerDecisionPanel } from "@/components/owner/dashboard/PendingOwnerDecisionPanel";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { HubTile } from "@/components/ui/HubTile";
+import { FocusGrid } from "@/components/ui/focus/FocusGrid";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export const metadata: Metadata = { title: "Trades" };
@@ -54,7 +55,10 @@ export default async function TradesPage({ params, searchParams }: PageProps) {
 
       <section aria-labelledby="trade-start" className="space-y-3">
         <SectionHeading id="trade-start" title="Start a trade" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <FocusGrid
+          memoryKey="trades"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
           {shared ? (
             <HubTile title="Propose" href={`${base}/trades/propose`}>
               Offer a deal to another player in this league.
@@ -72,7 +76,7 @@ export default async function TradesPage({ params, searchParams }: PageProps) {
           <HubTile title="Trade log" href={`${base}/league/transactions`}>
             Every trade and signing this season.
           </HubTile>
-        </div>
+        </FocusGrid>
       </section>
     </div>
   );

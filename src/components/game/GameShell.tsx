@@ -6,8 +6,9 @@ import {
   type OwnerNavGroup,
 } from "@/application/owner-nav-config";
 import { RouteTransition } from "@/components/game/RouteTransition";
+import { CommandPalette } from "@/components/game/shell/CommandPalette";
 import { ControlLegend } from "@/components/game/shell/ControlLegend";
-import { HubKeys } from "@/components/game/shell/HubKeys";
+import { ShellKeys } from "@/components/game/shell/ShellKeys";
 import { MobileHubBar } from "@/components/game/shell/MobileHubBar";
 import { ShellOffset } from "@/components/game/shell/ShellOffset";
 import { SubTabBar } from "@/components/game/shell/SubTabBar";
@@ -67,7 +68,8 @@ export function GameShell(props: {
             <MobileHubBar saveId={props.saveId} groups={groups} />
           </SimulationLockRegion>
           <ControlLegend hubCount={numberedHubs(groups).length} />
-          <HubKeys saveId={props.saveId} groups={groups} />
+          <ShellKeys saveId={props.saveId} groups={groups} />
+          <CommandPalette saveId={props.saveId} groups={groups} />
         </div>
       </SimulationActivityProvider>
     </EntityDrawerProvider>

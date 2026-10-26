@@ -5,6 +5,8 @@ import type { DashboardSnapshot } from "@/state/selectors";
 import { formatShortDate } from "@/components/calendar/CalendarDayCell";
 import { ParticipantBar } from "@/components/game/ParticipantBar";
 import { HubBar } from "@/components/game/shell/HubBar";
+import { simHref } from "@/components/game/shell/hub-keys";
+import { SearchButton } from "@/components/game/shell/SearchButton";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { buttonClass } from "@/components/ui/Button";
@@ -108,12 +110,13 @@ export function GameHeader(props: {
           <span className="sr-only">Record </span>
           {record}
         </p>
+        <SearchButton />
         <NotificationsBell
           saveId={saveId}
           unreadCount={dashboard.unreadNotificationCount}
         />
         <Link
-          href={`/dashboard/${saveId}/calendar?focus=next-game`}
+          href={simHref(saveId)}
           aria-label="Sim to next game"
           className={cn(
             buttonClass({ variant: "primary" }),

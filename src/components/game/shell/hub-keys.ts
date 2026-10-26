@@ -37,3 +37,49 @@ export function isTypingOrModal(event: KeyboardEvent): boolean {
   }
   return document.querySelector('[aria-modal="true"]') !== null;
 }
+
+/**
+ * Where Esc goes from a path under the save: a tab returns to its hub's
+ * landing, a hub landing returns to Home, Home stays. Undefined = no move.
+ */
+export function parentPathFor(
+  groups: readonly OwnerNavGroup[],
+  hubId: OwnerHubId | undefined,
+  path: string,
+): string | undefined {
+  if (path === "") return undefined;
+  const hub = groups.find((group) => group.id === hubId);
+  if (!hub || path === hub.href) return "";
+  return hub.href;
+}
+
+/** True when an open menu, listbox or disclosure should get Esc instead. */
+export function hasOpenPopup(): boolean {
+  return (
+    document.querySelector(
+      '[aria-expanded="true"], [role="menu"], [role="listbox"]',
+    ) !== null
+  );
+}
+
+/** True when nothing interactive has focus (Space would not press a control). */
+export function isIdleFocus(): boolean {
+  const active = document.activeElement;
+  return (
+    !active ||
+    active === document.body ||
+    active.tagName === "MAIN" ||
+    active.getAttribute("tabindex") === "-1"
+  );
+}
+
+/** Window event the command palette listens for. */
+export const OPEN_COMMAND_PALETTE = "ballsim:command-palette";
+
+/**
+ * Where Sim goes (header button, Home hero, Space): the calendar's next-game
+ * focus, which owns the confirm and blocking rules.
+ */
+export function simHref(saveId: string): string {
+  return `/dashboard/${saveId}/calendar?focus=next-game`;
+}

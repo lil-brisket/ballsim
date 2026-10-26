@@ -33,7 +33,10 @@ export function HubBar(props: {
 
   return (
     <nav aria-label="Hubs" className="flex min-w-0 items-center gap-1">
-      <KeyHint keys="Q" className="mr-1" />
+      {/* Bar hints only on wide screens; the legend always lists Q/E. */}
+      <span className="hidden 2xl:inline-flex">
+        <KeyHint keys="Q" className="mr-1" />
+      </span>
       <ul className="flex min-w-0 items-center gap-1">
         {hubs.map((hub) => {
           const isActive = active?.hub.id === hub.id;
@@ -60,7 +63,9 @@ export function HubBar(props: {
           );
         })}
       </ul>
-      <KeyHint keys="E" className="ml-1" />
+      <span className="hidden 2xl:inline-flex">
+        <KeyHint keys="E" className="ml-1" />
+      </span>
       {settings ? (
         <Link
           href={`${base}${settings.href}`}

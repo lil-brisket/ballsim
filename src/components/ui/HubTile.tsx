@@ -145,6 +145,7 @@ export function HubTile(props: HubTileProps) {
         href={props.href}
         aria-label={props["aria-label"]}
         data-shape="corner"
+        data-focus-item=""
         className={className}
       >
         {content}
@@ -157,6 +158,7 @@ export function HubTile(props: HubTileProps) {
       onClick={props.onSelect}
       aria-label={props["aria-label"]}
       data-shape="corner"
+      data-focus-item=""
       className={className}
     >
       {content}

@@ -1,6 +1,7 @@
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
 import { HubTile } from "@/components/ui/HubTile";
+import { FocusGrid } from "@/components/ui/focus/FocusGrid";
 import { OvrBadge } from "@/components/ui/OvrBadge";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { cn } from "@/components/ui/styles";
@@ -98,7 +99,11 @@ export function HomeTileBoard(props: {
   const tradeNote = tradesNote(data);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <FocusGrid
+      memoryKey="home"
+      aria-label="Hub tiles"
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
+    >
       <HubTile
         dense
         href={`${base}/roster`}
@@ -235,6 +240,6 @@ export function HomeTileBoard(props: {
       >
         {data.owner.ownership.moodLabel}
       </HubTile>
-    </div>
+    </FocusGrid>
   );
 }

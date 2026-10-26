@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TableKeys } from "@/components/ui/focus/TableKeys";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export type DataTableHeader = {
@@ -71,7 +72,7 @@ export function DataTable(props: {
   maxHeight?: string;
 }) {
   return (
-    <div
+    <TableKeys
       className={cn(
         "rounded-xl border border-line",
         props.maxHeight ? "overflow-auto" : "overflow-x-auto",
@@ -121,6 +122,6 @@ export function DataTable(props: {
         </thead>
         <tbody>{props.children}</tbody>
       </table>
-    </div>
+    </TableKeys>
   );
 }

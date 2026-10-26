@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { simHref } from "@/components/game/shell/hub-keys";
 import { PendingOwnerDecisionPanel } from "@/components/owner/dashboard/PendingOwnerDecisionPanel";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { buttonClass } from "@/components/ui/Button";
@@ -273,7 +274,7 @@ export function HomeHero(props: {
             />
           </div>
           <Actions>
-            <Link href={`${base}/calendar?focus=next-game`} className={PRIMARY}>
+            <Link href={simHref(saveId)} className={PRIMARY}>
               Sim to tip-off
             </Link>
             <Link href={`${base}/team-management/lineups`} className={QUIET}>

@@ -3,6 +3,7 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { TableKeys, tableRowFocusClass } from "@/components/ui/focus/TableKeys";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import {
   buildLeagueStatsSortHref,
@@ -106,7 +107,7 @@ function SortHeader<K extends string>(props: {
           ? props.sort.dir === "asc"
             ? "ascending"
             : "descending"
-          : undefined
+          : "none"
       }
       data-testid={`league-stats-col-${props.column.key}`}
     >
@@ -152,8 +153,13 @@ export function LeagueTeamStatsTable(props: {
   const pathname = `/dashboard/${props.saveId}/league/team-stats`;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[56rem] text-left text-sm">
+    <TableKeys className="overflow-x-auto">
+      <table
+        className={cn(
+          "w-full min-w-[56rem] text-left text-sm",
+          tableRowFocusClass,
+        )}
+      >
         <caption className="sr-only">Team stats</caption>
         <thead className="text-faint">
           <tr>
@@ -212,7 +218,7 @@ export function LeagueTeamStatsTable(props: {
           ))}
         </tbody>
       </table>
-    </div>
+    </TableKeys>
   );
 }
 
@@ -237,8 +243,13 @@ export function LeaguePlayerStatsTable(props: {
 
   return (
     <>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[52rem] text-left text-sm">
+      <TableKeys className="overflow-x-auto">
+        <table
+          className={cn(
+            "w-full min-w-[52rem] text-left text-sm",
+            tableRowFocusClass,
+          )}
+        >
           <caption className="sr-only">Player stats</caption>
           <thead className="text-faint">
             <tr>
@@ -308,7 +319,7 @@ export function LeaguePlayerStatsTable(props: {
             ))}
           </tbody>
         </table>
-      </div>
+      </TableKeys>
       {view.totalQualified > PLAYER_STATS_PAGE_SIZE ? (
         <p className="mt-3 text-sm text-muted">
           {view.showAll

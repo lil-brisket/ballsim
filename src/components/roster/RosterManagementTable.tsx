@@ -14,6 +14,7 @@ import { Select } from "@/components/ui/Select";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PlayerActionMenu } from "@/components/roster/PlayerActionMenu";
 import { RosterCard } from "@/components/roster/RosterCard";
+import { TableKeys, tableRowFocusClass } from "@/components/ui/focus/TableKeys";
 import { MobileListCard } from "@/components/ui/MobileListCard";
 import {
   cn,
@@ -330,8 +331,13 @@ export function RosterManagementTable(props: {
           ))}
         </ul>
       ) : (
-        <div className="hidden overflow-x-auto md:block">
-          <table className="min-w-full overflow-hidden rounded-xl border border-line text-left text-sm">
+        <TableKeys className="hidden overflow-x-auto md:block">
+          <table
+            className={cn(
+              "min-w-full overflow-hidden rounded-xl border border-line text-left text-sm",
+              tableRowFocusClass,
+            )}
+          >
             <thead className="bg-surface-raised text-muted">
               <tr>
                 <th scope="col" className="px-3 py-2 text-right font-medium">
@@ -469,7 +475,7 @@ export function RosterManagementTable(props: {
               })}
             </tbody>
           </table>
-        </div>
+        </TableKeys>
       )}
     </div>
   );

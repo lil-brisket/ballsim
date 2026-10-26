@@ -6,6 +6,7 @@ import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 import { MobileListCard } from "@/components/ui/MobileListCard";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ResultSparkline } from "@/components/ui/Sparkline";
+import { TableKeys, tableRowFocusClass } from "@/components/ui/focus/TableKeys";
 import { cn } from "@/components/ui/styles";
 import {
   formatStreak,
@@ -300,8 +301,14 @@ export function StandingsTable(props: {
           );
         })}
       </ul>
-      <div className="hidden overflow-x-auto md:block">
-        <table className={cn("w-full text-left text-sm", minWidth)}>
+      <TableKeys className="hidden overflow-x-auto md:block">
+        <table
+          className={cn(
+            "w-full text-left text-sm",
+            minWidth,
+            tableRowFocusClass,
+          )}
+        >
           <thead className="text-faint">
             <tr>
               {columns.map((col) => (
@@ -354,7 +361,7 @@ export function StandingsTable(props: {
             })}
           </tbody>
         </table>
-      </div>
+      </TableKeys>
       {showCutoffLine && props.group.cutoffRank != null ? (
         <p className="mt-1 text-xs text-disabled">
           {conferenceSpots != null
