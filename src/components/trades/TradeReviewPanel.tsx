@@ -19,17 +19,14 @@ function AssetColumn(props: {
   assets: TradeReviewView["youReceive"];
 }) {
   return (
-    <div className="rounded-md border border-zinc-700 bg-zinc-950/50 px-4 py-3">
+    <div className="rounded-md border border-line-strong bg-surface-base/50 px-4 py-3">
       <SectionHeading as="h3" title={props.title} />
       <ul className="mt-2 space-y-3">
         {props.assets.length === 0 ? (
-          <li className="text-zinc-500">Nothing</li>
+          <li className="text-faint">Nothing</li>
         ) : (
           props.assets.map((asset) => (
-            <li
-              key={asset.id}
-              className="rounded border border-zinc-800 px-2 py-2"
-            >
+            <li key={asset.id} className="rounded border border-line px-2 py-2">
               {asset.href ? (
                 <Link
                   href={asset.href}
@@ -38,10 +35,10 @@ function AssetColumn(props: {
                   {asset.name}
                 </Link>
               ) : (
-                <p className="font-medium text-zinc-100">{asset.name}</p>
+                <p className="font-medium text-ink">{asset.name}</p>
               )}
               {asset.detail ? (
-                <p className="text-sm text-zinc-400">{asset.detail}</p>
+                <p className="text-sm text-muted">{asset.detail}</p>
               ) : null}
             </li>
           ))
@@ -74,7 +71,7 @@ export function TradeReviewPanel(props: {
     props.extraActions != null;
 
   return (
-    <div className="space-y-6 text-sm text-zinc-200">
+    <div className="space-y-6 text-sm text-ink">
       <div>
         <SectionHeading
           id="owner-interrupt-title"
@@ -88,13 +85,13 @@ export function TradeReviewPanel(props: {
       </div>
 
       {review.motivationLabel ? (
-        <p className="rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-2 text-zinc-300">
+        <p className="rounded-md border border-line-strong bg-surface-raised/60 px-3 py-2 text-soft">
           Why they&apos;re calling: {review.motivationLabel}
         </p>
       ) : null}
 
       {review.bothSidesOwned ? (
-        <p className="text-sm text-zinc-200/90">
+        <p className="text-sm text-ink/90">
           You control both franchises in this trade. Approving applies both
           sides — there is no hidden automatic approval.
         </p>
@@ -105,28 +102,28 @@ export function TradeReviewPanel(props: {
         <AssetColumn title="You send" assets={review.youSend} />
       </div>
 
-      <section className="rounded-md border border-zinc-700 bg-zinc-950/50 px-4 py-3">
+      <section className="rounded-md border border-line-strong bg-surface-base/50 px-4 py-3">
         <SectionHeading as="h3" title="Evaluation" />
-        <p className="mt-1 text-zinc-300">
+        <p className="mt-1 text-soft">
           {recommendationLabel(review.recommendation)} · Net value{" "}
           {review.netValue.toFixed(1)}
         </p>
-        <ul className="mt-2 list-inside list-disc text-zinc-400">
+        <ul className="mt-2 list-inside list-disc text-muted">
           {review.reasons.map((reason) => (
             <li key={reason}>{reason}</li>
           ))}
         </ul>
-        <div className="mt-3 grid grid-cols-3 gap-2 text-sm text-zinc-400">
+        <div className="mt-3 grid grid-cols-3 gap-2 text-sm text-muted">
           <div>Roster fit {review.rosterFitPct}%</div>
           <div>Strategic fit {review.strategicFitPct}%</div>
           <div>Financial {review.financialPct}%</div>
         </div>
       </section>
 
-      <section className="rounded-md border border-zinc-700 bg-zinc-950/50 px-4 py-3">
+      <section className="rounded-md border border-line-strong bg-surface-base/50 px-4 py-3">
         <SectionHeading as="h3" title="Roster impact" />
         <table className="mt-2 w-full text-left text-sm">
-          <thead className="text-zinc-500">
+          <thead className="text-faint">
             <tr>
               <th className="py-1">Position</th>
               <th>Before</th>
@@ -135,7 +132,7 @@ export function TradeReviewPanel(props: {
           </thead>
           <tbody>
             {review.rosterImpact.map((row) => (
-              <tr key={row.position} className="border-t border-zinc-800">
+              <tr key={row.position} className="border-t border-line">
                 <td className="py-1">{row.position}</td>
                 <td>{row.before}</td>
                 <td>{row.after}</td>

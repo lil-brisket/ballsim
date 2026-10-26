@@ -16,7 +16,7 @@ export function LeagueHistoryTable(props: {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[480px] text-left text-sm">
-        <thead className="border-b border-zinc-800 text-sm text-zinc-400">
+        <thead className="border-b border-line text-sm text-muted">
           <tr>
             <th className={TH}>Season</th>
             <th className={TH}>Champion</th>
@@ -25,7 +25,10 @@ export function LeagueHistoryTable(props: {
         </thead>
         <tbody>
           {props.view.seasons.map((row) => (
-            <tr key={row.seasonYear} className="border-b border-zinc-900/80">
+            <tr
+              key={row.seasonYear}
+              className="border-b border-surface-raised/80"
+            >
               <td className={`${TD} font-mono tabular-nums text-team-ink`}>
                 {row.seasonYear}
               </td>
@@ -36,7 +39,7 @@ export function LeagueHistoryTable(props: {
                 >
                   {row.championName}
                 </TeamEntityLink>
-                <span className="ml-2 text-sm text-zinc-500">
+                <span className="ml-2 text-sm text-faint">
                   {row.championRecord}
                 </span>
               </td>
@@ -50,7 +53,7 @@ export function LeagueHistoryTable(props: {
                       {row.runnerUpName}
                     </TeamEntityLink>
                   ) : (
-                    <span className="text-zinc-600">—</span>
+                    <span className="text-disabled">—</span>
                   )}
                 </td>
               ) : null}

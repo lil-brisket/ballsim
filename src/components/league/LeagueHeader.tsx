@@ -77,7 +77,7 @@ export function LeagueHeader(props: {
           {team.streakLabel ? (
             <div className="flex flex-col gap-1">
               <StreakChip label={team.streakLabel} />
-              <span className="text-sm text-zinc-400">Streak</span>
+              <span className="text-sm text-muted">Streak</span>
             </div>
           ) : null}
           <Link

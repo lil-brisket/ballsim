@@ -59,10 +59,10 @@ function SelectionList(props: {
   rows: ReturnType<typeof toAllStarHubView>["selections"];
 }) {
   if (props.rows.length === 0) {
-    return <p className="text-sm text-zinc-500">None yet.</p>;
+    return <p className="text-sm text-faint">None yet.</p>;
   }
   return (
-    <ul className="divide-y divide-zinc-800">
+    <ul className="divide-y divide-line">
       {props.rows.map((row) => (
         <li
           key={row.playerId}
@@ -73,14 +73,14 @@ function SelectionList(props: {
               {row.playerName}
             </PlayerEntityLink>
             {row.teamId && row.teamName ? (
-              <div className="text-sm text-zinc-500">
+              <div className="text-sm text-faint">
                 <TeamEntityLink saveId={props.saveId} teamId={row.teamId}>
                   {row.teamName}
                 </TeamEntityLink>
               </div>
             ) : null}
           </div>
-          <span className="text-zinc-400">
+          <span className="text-muted">
             {row.voteRank != null ? `Vote #${row.voteRank}` : row.role}
           </span>
         </li>

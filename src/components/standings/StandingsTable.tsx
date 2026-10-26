@@ -119,14 +119,14 @@ function columnsFor(
         key: "pct",
         label: "PCT",
         render: (row) => (
-          <span className="text-zinc-400">{formatPct(row.winPercentage)}</span>
+          <span className="text-muted">{formatPct(row.winPercentage)}</span>
         ),
       },
       {
         key: "gb",
         label: "GB",
         render: (row) => (
-          <span className="text-zinc-400">
+          <span className="text-muted">
             {formatGb(displayedGb(row, group.kind))}
           </span>
         ),
@@ -135,7 +135,7 @@ function columnsFor(
         key: "str",
         label: "Str",
         render: (row) => (
-          <span className="text-zinc-500">{formatStreak(row.streak)}</span>
+          <span className="text-faint">{formatStreak(row.streak)}</span>
         ),
       },
       {
@@ -179,7 +179,7 @@ function columnsFor(
       key: "label",
       label: " ",
       render: (row) => (
-        <span className="text-sm text-zinc-500">
+        <span className="text-sm text-faint">
           {playoffLabelText(row.playoffLabel)}
         </span>
       ),
@@ -257,7 +257,7 @@ export function StandingsTable(props: {
                     teamId={row.teamId}
                     className="inline-flex min-h-11 items-center gap-2 hover:text-team-ink"
                   >
-                    <span className="font-mono text-zinc-500">#{rank}</span>
+                    <span className="font-mono text-faint">#{rank}</span>
                     <TeamIdentityInline
                       city={row.city}
                       name={row.name}
@@ -302,7 +302,7 @@ export function StandingsTable(props: {
       </ul>
       <div className="hidden overflow-x-auto md:block">
         <table className={cn("w-full text-left text-sm", minWidth)}>
-          <thead className="text-zinc-500">
+          <thead className="text-faint">
             <tr>
               {columns.map((col) => (
                 <th
@@ -326,7 +326,7 @@ export function StandingsTable(props: {
                 <tr
                   key={row.teamId}
                   className={cn(
-                    "border-t border-zinc-800",
+                    "border-t border-line",
                     row.isUserTeam && "bg-team/15 font-medium text-team-ink",
                     cutoff && "border-t border-dashed border-team-ink/60",
                   )}
@@ -337,7 +337,7 @@ export function StandingsTable(props: {
                       className={cn(
                         "px-3 py-2",
                         col.key === "rank"
-                          ? "font-mono text-zinc-500"
+                          ? "font-mono text-faint"
                           : col.key !== "team" &&
                               col.key !== "label" &&
                               col.key !== "action"
@@ -356,14 +356,14 @@ export function StandingsTable(props: {
         </table>
       </div>
       {showCutoffLine && props.group.cutoffRank != null ? (
-        <p className="mt-1 text-xs text-zinc-600">
+        <p className="mt-1 text-xs text-disabled">
           {conferenceSpots != null
             ? `Playoff cutoff at rank ${props.group.cutoffRank} in the conference.`
             : `Playoff cutoff at rank ${props.group.cutoffRank} (league-wide field of ${props.page.playoffTeamCount}).`}
         </p>
       ) : null}
       {props.group.kind !== "overall" ? (
-        <p className="mt-1 text-xs text-zinc-600">
+        <p className="mt-1 text-xs text-disabled">
           {conferenceSpots != null
             ? `Top ${conferenceSpots} in each conference make the playoffs.`
             : `Playoff qualification is league-wide (top ${props.page.playoffTeamCount}).`}

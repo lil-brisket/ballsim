@@ -53,9 +53,9 @@ export function LeagueExpansionPanel(props: {
       </section>
 
       <Section title="Expansion assessment">
-        <p className="mb-3 text-sm text-zinc-400">
+        <p className="mb-3 text-sm text-muted">
           Status:{" "}
-          <span className="text-zinc-200">
+          <span className="text-ink">
             {assessment.status.replaceAll("_", " ")}
           </span>
           {" · "}
@@ -63,21 +63,21 @@ export function LeagueExpansionPanel(props: {
           {expansion.newTeamId ? ` · New team: ${expansion.newTeamId}` : null}
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border border-zinc-800 p-3 text-sm">
-            <p className="font-medium text-zinc-200">
+          <div className="rounded-lg border border-line p-3 text-sm">
+            <p className="font-medium text-ink">
               League readiness — {assessment.leagueReadiness.status}
             </p>
-            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-zinc-400">
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted">
               {assessment.leagueReadiness.reasons.slice(0, 3).map((reason) => (
                 <li key={reason}>{reason}</li>
               ))}
             </ul>
           </div>
-          <div className="rounded-lg border border-zinc-800 p-3 text-sm">
-            <p className="font-medium text-zinc-200">
+          <div className="rounded-lg border border-line p-3 text-sm">
+            <p className="font-medium text-ink">
               Market opportunity — {assessment.marketOpportunity.status}
             </p>
-            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-zinc-400">
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted">
               {assessment.marketOpportunity.reasons
                 .slice(0, 3)
                 .map((reason) => (
@@ -85,11 +85,11 @@ export function LeagueExpansionPanel(props: {
                 ))}
             </ul>
           </div>
-          <div className="rounded-lg border border-zinc-800 p-3 text-sm">
-            <p className="font-medium text-zinc-200">
+          <div className="rounded-lg border border-line p-3 text-sm">
+            <p className="font-medium text-ink">
               Structural capacity — {assessment.structuralCapacity.status}
             </p>
-            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-zinc-400">
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted">
               {assessment.structuralCapacity.reasons
                 .slice(0, 3)
                 .map((reason) => (
@@ -101,8 +101,8 @@ export function LeagueExpansionPanel(props: {
 
         {assessment.marketOpportunity.destinations.length > 0 ? (
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[28rem] text-left text-sm text-zinc-300">
-              <thead className="text-zinc-500">
+            <table className="w-full min-w-[28rem] text-left text-sm text-soft">
+              <thead className="text-faint">
                 <tr>
                   <th className="py-1 pr-3 font-medium">Market</th>
                   <th className="py-1 pr-3 font-medium">Size</th>
@@ -114,10 +114,7 @@ export function LeagueExpansionPanel(props: {
                 {assessment.marketOpportunity.destinations
                   .slice(0, 5)
                   .map((destination) => (
-                    <tr
-                      key={destination.city}
-                      className="border-t border-zinc-800"
-                    >
+                    <tr key={destination.city} className="border-t border-line">
                       <td className="py-1.5 pr-3">
                         {destination.city} {destination.name}
                       </td>
@@ -136,7 +133,7 @@ export function LeagueExpansionPanel(props: {
 
       <Section title={`Expansion process (${expansion.stage})`}>
         {!canPropose && !inProgress ? (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             Expansion is not an active league opportunity. All three gates must
             open before proposing a new franchise.
           </p>

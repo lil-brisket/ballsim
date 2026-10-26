@@ -50,7 +50,7 @@ export function AwardHistoryPanel(props: {
         <Section title="Season awards">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-zinc-800 text-sm text-zinc-400">
+              <thead className="border-b border-line text-sm text-muted">
                 <tr>
                   <th className={TH}>Season</th>
                   {pivotDefinitions.map((def) => (
@@ -64,7 +64,7 @@ export function AwardHistoryPanel(props: {
                 {view.seasons.map((season) => (
                   <tr
                     key={season.seasonYear}
-                    className="border-b border-zinc-900/80"
+                    className="border-b border-surface-raised/80"
                   >
                     <td
                       className={`${TD} font-mono tabular-nums text-team-ink`}
@@ -89,7 +89,7 @@ export function AwardHistoryPanel(props: {
                               </div>
                             </div>
                           ) : (
-                            <span className="text-zinc-600">—</span>
+                            <span className="text-disabled">—</span>
                           )}
                         </td>
                       );
@@ -106,13 +106,13 @@ export function AwardHistoryPanel(props: {
             {season.winners.length === 0 ? (
               <EmptyState message="No award history available yet." />
             ) : (
-              <ul className="divide-y divide-zinc-900 text-sm">
+              <ul className="divide-y divide-surface-raised text-sm">
                 {season.winners.map((row) => (
                   <li
                     key={row.result.id}
                     className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2"
                   >
-                    <span className="text-zinc-400">
+                    <span className="text-muted">
                       {row.displayName}
                       {row.result.period && row.result.period !== "midseason"
                         ? ` · ${row.result.period}`

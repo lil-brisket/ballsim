@@ -26,7 +26,7 @@ function pillClass(active: boolean): string {
     "rounded-full border px-3 py-1 text-sm",
     active
       ? "border-team-ink text-team-ink"
-      : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
+      : "border-line-strong text-muted hover:border-faint",
     focusRingClass,
   );
 }
@@ -54,7 +54,7 @@ export function StandingsControls(props: {
         className="flex flex-wrap items-center gap-2"
         aria-label="Standings view"
       >
-        <span className="text-sm text-zinc-400">View</span>
+        <span className="text-sm text-muted">View</span>
         {viewModes.map((mode) => {
           const active = props.view === mode;
           return (
@@ -79,7 +79,7 @@ export function StandingsControls(props: {
         className="flex flex-wrap items-center gap-2"
         aria-label="Standings stats"
       >
-        <span className="text-sm text-zinc-400">Stats</span>
+        <span className="text-sm text-muted">Stats</span>
         {STANDINGS_STATS_MODES.map((mode) => {
           const active = props.stats === mode;
           return (
@@ -109,7 +109,7 @@ export function StandingsControls(props: {
             stats: DEFAULT_STANDINGS_STATS,
           })}
           className={cn(
-            "text-sm text-zinc-400 hover:text-team-ink",
+            "text-sm text-muted hover:text-team-ink",
             focusRingClass,
           )}
           data-testid="standings-reset"

@@ -29,6 +29,7 @@ import { InviteCreator } from "@/components/game/InviteCreator";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
+import { Select } from "@/components/ui/Select";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/components/ui/styles";
 
@@ -43,9 +44,6 @@ const memberButtonClass = cn(
   "cursor-pointer",
   buttonClassFn({ variant: "secondary" }),
 );
-
-const selectClass =
-  "rounded-lg border border-surface-line bg-zinc-900 px-2 py-1.5 text-sm text-zinc-100";
 
 function hoursLabel(hours: number): string {
   if (hours < 24) return hours === 1 ? "1 hour" : `${hours} hours`;
@@ -98,7 +96,7 @@ function ConfirmForm(props: {
       </summary>
       <form
         action={props.action}
-        className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-team-ink/50 bg-team/15 p-2 text-sm text-zinc-100"
+        className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-team-ink/50 bg-team/15 p-2 text-sm text-ink"
       >
         <input type="hidden" name="saveId" value={props.saveId} />
         {Object.entries(props.fields ?? {}).map(([name, value]) => (
@@ -151,8 +149,8 @@ export default async function LeagueMembersPage({
 
       <Section title="Players">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-zinc-200">
-            <thead className="text-sm text-zinc-400">
+          <table className="w-full text-left text-sm text-ink">
+            <thead className="text-sm text-muted">
               <tr>
                 <th className="py-2 pr-4">Player</th>
                 <th className="py-2 pr-4">Teams</th>
@@ -172,7 +170,7 @@ export default async function LeagueMembersPage({
                       </span>
                     ) : null}
                     {p.isActive ? (
-                      <span className="ml-2 text-sm text-zinc-400">(You)</span>
+                      <span className="ml-2 text-sm text-muted">(You)</span>
                     ) : null}
                   </td>
                   <td className="py-2 pr-4 align-top">
@@ -263,7 +261,7 @@ export default async function LeagueMembersPage({
       <Section title="Advance approvals">
         {isHost ? (
           <div className="space-y-4">
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted">
               Open an approval window to give members time to press Approve
               advance. Once everyone has approved or the window closes, you can
               advance, and members who did not approve are AI-managed until they
@@ -275,26 +273,25 @@ export default async function LeagueMembersPage({
               className="flex flex-wrap items-end gap-2"
             >
               <input type="hidden" name="saveId" value={saveId} />
-              <label className="flex flex-col gap-1 text-sm text-zinc-300">
+              <label className="flex flex-col gap-1 text-sm text-soft">
                 Approval window length
-                <select
+                <Select
                   name="hours"
                   defaultValue={String(APPROVAL_WINDOW_HOURS_OPTIONS[3])}
-                  className={selectClass}
                 >
                   {APPROVAL_WINDOW_HOURS_OPTIONS.map((h) => (
                     <option key={h} value={h}>
                       {hoursLabel(h)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <button type="submit" className={memberButtonClass}>
                 Open approval window
               </button>
             </form>
             {approvalWindow ? (
-              <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-200">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-ink">
                 <span>
                   {approvalWindow.closed ? (
                     <>
@@ -321,16 +318,15 @@ export default async function LeagueMembersPage({
               className="flex flex-wrap items-end gap-2"
             >
               <input type="hidden" name="saveId" value={saveId} />
-              <label className="flex flex-col gap-1 text-sm text-zinc-300">
+              <label className="flex flex-col gap-1 text-sm text-soft">
                 Auto-manage idle members
-                <select
+                <Select
                   name="days"
                   defaultValue={
                     participation.autoManageAfterDays == null
                       ? "off"
                       : String(participation.autoManageAfterDays)
                   }
-                  className={selectClass}
                 >
                   <option value="off">Off</option>
                   {AUTO_MANAGE_AFTER_DAYS_OPTIONS.map((d) => (
@@ -338,7 +334,7 @@ export default async function LeagueMembersPage({
                       {idleLabel(d)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <button type="submit" className={memberButtonClass}>
                 Save
@@ -346,7 +342,7 @@ export default async function LeagueMembersPage({
             </form>
           </div>
         ) : (
-          <div className="space-y-1 text-sm text-zinc-400">
+          <div className="space-y-1 text-sm text-muted">
             <p>
               {approvalWindow ? (
                 approvalWindow.closed ? (
@@ -383,16 +379,16 @@ export default async function LeagueMembersPage({
             />
             {inviteError ? <ErrorState message={inviteError} /> : null}
             {invites.length === 0 ? (
-              <p className="text-sm text-zinc-400">No invites yet.</p>
+              <p className="text-sm text-muted">No invites yet.</p>
             ) : (
               <ul className="space-y-2">
                 {invites.map((invite) => (
                   <li
                     key={invite.id}
-                    className="flex flex-wrap items-center gap-3 rounded-lg border border-surface-line px-3 py-2 text-sm text-zinc-200"
+                    className="flex flex-wrap items-center gap-3 rounded-lg border border-surface-line px-3 py-2 text-sm text-ink"
                   >
                     <span>{inviteStatus(invite, now)}</span>
-                    <span className="text-sm text-zinc-400">
+                    <span className="text-sm text-muted">
                       {invite.uses}/{invite.maxUses} uses · created{" "}
                       {formatGameDate(invite.createdOn, { year: true })} ·
                       expires{" "}

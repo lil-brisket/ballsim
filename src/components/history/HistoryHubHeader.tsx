@@ -51,7 +51,7 @@ export function HistoryHubHeader(props: {
       {tabs.length > 1 ? (
         <nav
           aria-label={header.navLabel}
-          className="mb-6 flex flex-wrap gap-2 border-b border-zinc-800 pb-3"
+          className="mb-6 flex flex-wrap gap-2 border-b border-line pb-3"
         >
           {tabs.map((id) => {
             const active = id === props.activeTab;
@@ -64,7 +64,7 @@ export function HistoryHubHeader(props: {
                   focusRingClass,
                   active
                     ? "bg-team/15 text-team-ink"
-                    : "text-zinc-400 hover:text-zinc-200",
+                    : "text-muted hover:text-ink",
                 )}
                 aria-current={active ? "page" : undefined}
               >

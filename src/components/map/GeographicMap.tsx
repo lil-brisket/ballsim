@@ -107,8 +107,8 @@ export function GeographicMap(props: {
       <div
         className={
           fill
-            ? "max-h-[36vh] min-h-0 w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 max-lg:aspect-[var(--map-ar)] lg:h-full lg:max-h-none lg:min-h-0 lg:flex-1 lg:aspect-auto"
-            : "overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950"
+            ? "max-h-[36vh] min-h-0 w-full overflow-hidden rounded-lg border border-line bg-surface-base max-lg:aspect-[var(--map-ar)] lg:h-full lg:max-h-none lg:min-h-0 lg:flex-1 lg:aspect-auto"
+            : "overflow-hidden rounded-lg border border-line bg-surface-base"
         }
         style={
           fill
@@ -148,14 +148,14 @@ export function GeographicMap(props: {
             y={0}
             width={viewport.width}
             height={viewport.height}
-            className="fill-zinc-950"
+            className="fill-surface-base"
           />
           <g clipPath="url(#geo-map-frame)">
             {landPaths.map((entry) => (
               <path
                 key={entry.key}
                 d={entry.d}
-                className="pointer-events-none fill-zinc-800/80 stroke-zinc-400/80"
+                className="pointer-events-none fill-surface-high/80 stroke-muted/80"
                 strokeWidth={0.85}
               />
             ))}
@@ -163,7 +163,7 @@ export function GeographicMap(props: {
               <path
                 key={entry.key}
                 d={entry.d}
-                className="pointer-events-none fill-none stroke-zinc-400/75"
+                className="pointer-events-none fill-none stroke-muted/75"
                 strokeWidth={0.55}
               />
             ))}
@@ -176,7 +176,7 @@ export function GeographicMap(props: {
                   y1={entry.originY}
                   x2={entry.x}
                   y2={entry.y}
-                  className="pointer-events-none stroke-zinc-500/80"
+                  className="pointer-events-none stroke-faint/80"
                   strokeWidth={1}
                 />
               ))}

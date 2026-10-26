@@ -120,7 +120,7 @@ function SortHeader<K extends string>(props: {
         title={props.column.title}
         scroll={false}
         className={cn(
-          "inline-flex min-h-8 items-center gap-0.5 hover:text-zinc-100",
+          "inline-flex min-h-8 items-center gap-0.5 hover:text-ink",
           active && "text-team-ink",
           focusRingClass,
         )}
@@ -137,7 +137,7 @@ function SortHeader<K extends string>(props: {
 function statCellClass(active: boolean): string {
   return cn(
     "px-2 py-2 text-right font-mono tabular-nums",
-    active ? "text-zinc-50" : "text-zinc-300",
+    active ? "text-ink" : "text-soft",
   );
 }
 
@@ -155,7 +155,7 @@ export function LeagueTeamStatsTable(props: {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[56rem] text-left text-sm">
         <caption className="sr-only">Team stats</caption>
-        <thead className="text-zinc-500">
+        <thead className="text-faint">
           <tr>
             <th scope="col" className="px-2 py-2 text-right font-medium">
               #
@@ -178,11 +178,11 @@ export function LeagueTeamStatsTable(props: {
             <tr
               key={row.teamId}
               className={cn(
-                "border-t border-zinc-800",
+                "border-t border-line",
                 row.isUserTeam && "bg-team/15 font-medium",
               )}
             >
-              <td className="px-2 py-2 text-right font-mono text-zinc-500">
+              <td className="px-2 py-2 text-right font-mono text-faint">
                 {index + 1}
               </td>
               <td className="px-2 py-2">
@@ -240,7 +240,7 @@ export function LeaguePlayerStatsTable(props: {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[52rem] text-left text-sm">
           <caption className="sr-only">Player stats</caption>
-          <thead className="text-zinc-500">
+          <thead className="text-faint">
             <tr>
               <th scope="col" className="px-2 py-2 text-right font-medium">
                 #
@@ -267,11 +267,11 @@ export function LeaguePlayerStatsTable(props: {
               <tr
                 key={row.playerId}
                 className={cn(
-                  "border-t border-zinc-800",
+                  "border-t border-line",
                   row.isUserTeam && "bg-team/15 font-medium",
                 )}
               >
-                <td className="px-2 py-2 text-right font-mono text-zinc-500">
+                <td className="px-2 py-2 text-right font-mono text-faint">
                   {index + 1}
                 </td>
                 <td className="whitespace-nowrap px-2 py-2">
@@ -283,7 +283,7 @@ export function LeaguePlayerStatsTable(props: {
                     {`${row.firstName} ${row.lastName}`.trim()}
                   </PlayerEntityLink>
                 </td>
-                <td className="px-2 py-2 text-zinc-400">
+                <td className="px-2 py-2 text-muted">
                   {row.teamId && row.teamAbbreviation ? (
                     <TeamEntityLink
                       saveId={props.saveId}
@@ -310,7 +310,7 @@ export function LeaguePlayerStatsTable(props: {
         </table>
       </div>
       {view.totalQualified > PLAYER_STATS_PAGE_SIZE ? (
-        <p className="mt-3 text-sm text-zinc-400">
+        <p className="mt-3 text-sm text-muted">
           {view.showAll
             ? `Showing all ${view.totalQualified} qualified players. `
             : `Showing top ${view.rows.length} of ${view.totalQualified}. `}

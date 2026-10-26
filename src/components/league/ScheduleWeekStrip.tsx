@@ -19,7 +19,7 @@ function dayParts(iso: string): { weekday: string; day: string } {
 }
 
 const arrowClass = cn(
-  "flex w-9 shrink-0 items-center justify-center rounded-lg border border-surface-line text-zinc-400 hover:border-team-ink hover:text-team-ink",
+  "flex w-9 shrink-0 items-center justify-center rounded-lg border border-surface-line text-muted hover:border-team-ink hover:text-team-ink",
   focusRingClass,
 );
 
@@ -62,14 +62,14 @@ export function ScheduleWeekStrip(props: {
                   "flex h-full flex-col items-center gap-0.5 rounded-lg border px-1 py-1.5 text-center",
                   selected
                     ? "border-team-ink bg-team-ink/10"
-                    : "border-surface-line hover:border-zinc-500",
+                    : "border-surface-line hover:border-faint",
                   focusRingClass,
                 )}
               >
                 <span
                   className={cn(
                     "text-xs font-medium uppercase tracking-wide",
-                    isToday ? "text-team-ink" : "text-zinc-500",
+                    isToday ? "text-team-ink" : "text-faint",
                   )}
                 >
                   {isToday ? "Today" : weekday}
@@ -77,12 +77,12 @@ export function ScheduleWeekStrip(props: {
                 <span
                   className={cn(
                     "font-display text-sm",
-                    selected ? "text-zinc-50" : "text-zinc-300",
+                    selected ? "text-ink" : "text-soft",
                   )}
                 >
                   {label}
                 </span>
-                <span className="flex items-center gap-1 text-xs text-zinc-500">
+                <span className="flex items-center gap-1 text-xs text-faint">
                   {day.myTeamPlays ? (
                     <span
                       aria-label="Your team plays"

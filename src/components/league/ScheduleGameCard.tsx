@@ -42,14 +42,14 @@ function TeamLine(props: {
         teamId={props.teamId}
         className={cn(
           "min-w-0 truncate hover:text-team-ink",
-          props.dimmed ? "text-zinc-400" : "text-zinc-100",
+          props.dimmed ? "text-muted" : "text-ink",
           focusRingClass,
         )}
       >
         <span className="font-display uppercase tracking-wide">
           {props.abbreviation}
         </span>
-        <span className="ml-2 hidden text-sm text-zinc-500 xl:inline">
+        <span className="ml-2 hidden text-sm text-faint xl:inline">
           {props.name}
         </span>
       </TeamEntityLink>
@@ -57,7 +57,7 @@ function TeamLine(props: {
         <span
           className={cn(
             "ml-auto font-display text-xl tabular-nums",
-            props.won ? "font-extrabold text-zinc-50" : "text-zinc-400",
+            props.won ? "font-extrabold text-ink" : "text-muted",
           )}
         >
           {props.score}
@@ -93,9 +93,7 @@ export function ScheduleGameCard(props: {
       <div className="flex items-center justify-between gap-2 text-xs font-medium uppercase tracking-wide">
         <span
           className={cn(
-            game.status === "in_progress"
-              ? "text-emerald-400"
-              : "text-zinc-500",
+            game.status === "in_progress" ? "text-emerald-400" : "text-faint",
           )}
         >
           {statusLabel(game)}

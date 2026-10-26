@@ -42,7 +42,7 @@ function TeamRecordsTable(props: {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="border-b border-zinc-800 text-sm text-zinc-400">
+        <thead className="border-b border-line text-sm text-muted">
           <tr>
             <th className={TH}>Team</th>
             <th className={TH}>Titles</th>
@@ -56,7 +56,7 @@ function TeamRecordsTable(props: {
             <tr
               key={row.teamId}
               className={cn(
-                "border-b border-zinc-900/80",
+                "border-b border-surface-raised/80",
                 row.teamId === props.selectedTeamId && "bg-team/15",
               )}
             >
@@ -149,11 +149,11 @@ function TeamHistoryDetail(props: {
               {props.ownerStory.map((item) => (
                 <li
                   key={item.id}
-                  className="rounded-lg border border-zinc-800 px-4 py-3"
+                  className="rounded-lg border border-line px-4 py-3"
                 >
-                  <p className="text-sm text-zinc-400">{item.meta}</p>
-                  <p className="mt-1 font-medium text-zinc-100">{item.title}</p>
-                  <p className="mt-1 text-sm text-zinc-400">{item.summary}</p>
+                  <p className="text-sm text-muted">{item.meta}</p>
+                  <p className="mt-1 font-medium text-ink">{item.title}</p>
+                  <p className="mt-1 text-sm text-muted">{item.summary}</p>
                 </li>
               ))}
             </ul>

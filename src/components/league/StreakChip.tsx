@@ -5,7 +5,7 @@ export function StreakChip(props: { label: string; className?: string }) {
   const isWin = props.label.startsWith("W");
   const isLoss = props.label.startsWith("L");
   if (!isWin && !isLoss) {
-    return <span className="text-zinc-500">{props.label}</span>;
+    return <span className="text-faint">{props.label}</span>;
   }
   return (
     <span

@@ -73,7 +73,7 @@ export function LeagueStandingsSnapshot(props: {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[20rem] text-left text-sm">
-            <thead className="text-zinc-500">
+            <thead className="text-faint">
               <tr>
                 <th className="py-1 pr-2 text-right font-medium">#</th>
                 <th className="py-1 pr-2 font-medium">Team</th>
@@ -87,14 +87,14 @@ export function LeagueStandingsSnapshot(props: {
                 <tr
                   key={row.teamId}
                   className={cn(
-                    "border-t border-zinc-800",
+                    "border-t border-line",
                     row.isUserTeam &&
                       "bg-team/15 shadow-[inset_3px_0_0_0_rgb(var(--team-ink-rgb))]",
                     row.conferenceRank === props.cutoffRank &&
                       "border-t border-dashed border-team-ink/50",
                   )}
                 >
-                  <td className="py-1.5 pr-2 text-right tabular-nums text-zinc-500">
+                  <td className="py-1.5 pr-2 text-right tabular-nums text-faint">
                     {row.leagueRank}
                   </td>
                   <td className="py-1.5 pr-2">
@@ -104,7 +104,7 @@ export function LeagueStandingsSnapshot(props: {
                       className={cn(
                         row.isUserTeam
                           ? "font-medium text-team-ink"
-                          : "text-zinc-100",
+                          : "text-ink",
                         "hover:text-team-ink",
                         focusRingClass,
                       )}

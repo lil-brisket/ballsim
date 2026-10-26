@@ -46,7 +46,7 @@ export default async function LeagueHubPage({
       {error ? <ErrorState message={error} /> : null}
 
       {view.expansionActive ? (
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           Expansion opportunity is available.{" "}
           <Link
             href={`/dashboard/${saveId}/league/expansion`}

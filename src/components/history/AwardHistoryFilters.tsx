@@ -28,7 +28,7 @@ export function AwardHistoryFilters(props: {
 
   return (
     <div className="flex flex-wrap gap-3">
-      <label className="text-sm text-zinc-400">
+      <label className="text-sm text-muted">
         Season
         <Select
           wrapperClassName="ml-2"
@@ -44,7 +44,7 @@ export function AwardHistoryFilters(props: {
           ))}
         </Select>
       </label>
-      <label className="text-sm text-zinc-400">
+      <label className="text-sm text-muted">
         Award
         <Select
           wrapperClassName="ml-2"

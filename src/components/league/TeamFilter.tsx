@@ -80,7 +80,7 @@ export function TeamFilter(props: {
             "rounded-full border px-3 py-1 text-sm",
             props.value === "all"
               ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
+              : "border-line-strong text-muted hover:border-faint",
             focusRingClass,
           )}
         >
@@ -93,7 +93,7 @@ export function TeamFilter(props: {
             "rounded-full border px-3 py-1 text-sm",
             props.value === "my"
               ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
+              : "border-line-strong text-muted hover:border-faint",
             focusRingClass,
           )}
         >
@@ -106,7 +106,7 @@ export function TeamFilter(props: {
             "rounded-full border px-3 py-1 text-sm",
             props.value !== "all" && props.value !== "my"
               ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
+              : "border-line-strong text-muted hover:border-faint",
             focusRingClass,
           )}
         >
@@ -116,13 +116,13 @@ export function TeamFilter(props: {
         </button>
       </div>
       {open ? (
-        <div className="absolute z-20 mt-2 w-64 rounded-lg border border-zinc-700 bg-zinc-950 p-2 shadow-xl">
+        <div className="absolute z-20 mt-2 w-64 rounded-lg border border-line-strong bg-surface-base p-2 shadow-xl">
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search teams…"
-            className="mb-2 w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-600"
+            className="mb-2 w-full rounded-md border border-line-strong bg-surface-raised px-2 py-1.5 text-sm text-ink placeholder:text-disabled"
             autoFocus
           />
           <ul className="max-h-48 overflow-y-auto">
@@ -132,19 +132,19 @@ export function TeamFilter(props: {
                   type="button"
                   onClick={() => setTeam(team.teamId)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm text-zinc-200 hover:bg-zinc-800",
+                    "flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-high",
                     focusRingClass,
                   )}
                 >
                   <span>{team.label}</span>
-                  <span className="text-sm text-zinc-500">
+                  <span className="text-sm text-faint">
                     {team.abbreviation}
                   </span>
                 </button>
               </li>
             ))}
             {filtered.length === 0 ? (
-              <li className="px-2 py-2 text-sm text-zinc-500">No matches</li>
+              <li className="px-2 py-2 text-sm text-faint">No matches</li>
             ) : null}
           </ul>
         </div>

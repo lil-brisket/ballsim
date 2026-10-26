@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
@@ -62,7 +63,7 @@ export default async function PlayoffsPage({
       ) : (
         <>
           <div
-            className="flex flex-wrap gap-x-6 gap-y-3 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3"
+            className="flex flex-wrap gap-x-6 gap-y-3 rounded-xl border border-line bg-surface-raised/40 px-4 py-3"
             aria-label="Playoff summary"
           >
             <Metric
@@ -174,9 +175,14 @@ function RoundGrid(props: {
     <div className={`grid gap-4 md:grid-cols-2 ${props.className ?? ""}`}>
       {props.rounds.map((round) => (
         <div key={round.round}>
-          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-400">
-            {round.label}
-          </h3>
+          <SectionHeading
+            as="h3"
+            size="sm"
+            tone="muted"
+            className="mb-2"
+            titleClassName="uppercase tracking-wide"
+            title={round.label}
+          />
           <ul className="space-y-2">
             {round.series.map((series) => (
               <SeriesCard
@@ -209,35 +215,35 @@ function SeriesCard(props: {
 }) {
   const { series, saveId } = props;
   return (
-    <li className="rounded-lg border border-zinc-800 px-3 py-2 text-sm">
+    <li className="rounded-lg border border-line px-3 py-2 text-sm">
       <div className="mb-1 flex justify-end">
         <StatusBadge label={series.status} />
       </div>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-zinc-200">
+        <span className="text-ink">
           {series.higherSeed != null ? `#${series.higherSeed} ` : ""}
           {series.higherSeedTeamId && series.higherSeedTeamName ? (
             <TeamEntityLink saveId={saveId} teamId={series.higherSeedTeamId}>
               {series.higherSeedTeamName}
             </TeamEntityLink>
           ) : (
-            <span className="text-zinc-600">TBD</span>
+            <span className="text-disabled">TBD</span>
           )}
         </span>
-        <span className="font-mono text-zinc-100">{series.higherWins}</span>
+        <span className="font-mono text-ink">{series.higherWins}</span>
       </div>
       <div className="mt-1 flex items-center justify-between gap-2">
-        <span className="text-zinc-200">
+        <span className="text-ink">
           {series.lowerSeed != null ? `#${series.lowerSeed} ` : ""}
           {series.lowerSeedTeamId && series.lowerSeedTeamName ? (
             <TeamEntityLink saveId={saveId} teamId={series.lowerSeedTeamId}>
               {series.lowerSeedTeamName}
             </TeamEntityLink>
           ) : (
-            <span className="text-zinc-600">TBD</span>
+            <span className="text-disabled">TBD</span>
           )}
         </span>
-        <span className="font-mono text-zinc-100">{series.lowerWins}</span>
+        <span className="font-mono text-ink">{series.lowerWins}</span>
       </div>
     </li>
   );

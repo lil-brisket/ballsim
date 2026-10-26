@@ -106,7 +106,7 @@ export default async function LeagueTransactionsPage({
       {query.error ? <ErrorState message={query.error} /> : null}
 
       <Suspense
-        fallback={<p className="text-sm text-zinc-500">Loading filters…</p>}
+        fallback={<p className="text-sm text-faint">Loading filters…</p>}
       >
         <TransactionFilters
           saveId={saveId}
@@ -146,15 +146,15 @@ export default async function LeagueTransactionsPage({
               parsed.activityMode === "league" && teamValue !== "my"
             }
           />
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-3">
-            <p className="text-sm text-zinc-500">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+            <p className="text-sm text-faint">
               Showing {view.shown} of {view.total}
             </p>
             {view.hasMore ? (
               <Link
                 href={loadMoreHref()}
                 className={cn(
-                  "inline-flex rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
+                  "inline-flex rounded-md border border-line-strong px-3 py-1.5 text-sm text-ink hover:border-team-ink",
                   focusRingClass,
                 )}
               >

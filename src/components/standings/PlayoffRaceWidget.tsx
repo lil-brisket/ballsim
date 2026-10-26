@@ -8,7 +8,7 @@ function WinPctBar(props: { winPercentage: number; label: string }) {
   const pct = Math.min(100, Math.max(0, props.winPercentage * 100));
   return (
     <div
-      className="h-2 w-full overflow-hidden rounded-full bg-zinc-800"
+      className="h-2 w-full overflow-hidden rounded-full bg-surface-high"
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
@@ -57,7 +57,7 @@ function RaceRow(props: {
           label={`${team.abbreviation} win percentage`}
         />
       </div>
-      <span className="shrink-0 font-mono text-sm text-zinc-400">
+      <span className="shrink-0 font-mono text-sm text-muted">
         {team.wins}–{team.losses}
       </span>
     </li>
