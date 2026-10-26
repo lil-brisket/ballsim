@@ -12,6 +12,7 @@ import {
   parentPathFor,
   simHref,
 } from "@/components/game/shell/hub-keys";
+import { hubTransitionTypes } from "@/components/game/shell/transition-direction";
 import { useActiveNav } from "@/components/game/shell/use-active-nav";
 import { useSimulationActivity } from "@/components/game/simulation-activity";
 import { setInputMode } from "@/components/ui/focus/input-mode";
@@ -39,6 +40,12 @@ export function ShellKeys(props: {
     const base = `/dashboard/${saveId}`;
     const path = pathname.startsWith(base) ? pathname.slice(base.length) : "";
 
+    // Slide types only when the hub changes; plain pushes crossfade.
+    function pushWithTypes(href: string, transitionTypes: string[]) {
+      if (transitionTypes.length > 0) router.push(href, { transitionTypes });
+      else router.push(href);
+    }
+
     function onKeyDown(event: KeyboardEvent) {
       setInputMode("keyboard");
       if (simulationPending || event.repeat) return;
@@ -65,7 +72,15 @@ export function ShellKeys(props: {
         const parent = parentPathFor(groups, activeId, path);
         if (parent === undefined) return;
         event.preventDefault();
-        router.push(`${base}${parent}`);
+        // Up to Home slides back; tab to hub stays in the hub (crossfade).
+        pushWithTypes(
+          `${base}${parent}`,
+          hubTransitionTypes(
+            groups,
+            activeId,
+            parent === "" ? "home" : activeId,
+          ),
+        );
         return;
       }
       if (event.key === " " && isIdleFocus()) {
@@ -76,7 +91,10 @@ export function ShellKeys(props: {
       const hub = hubForKey(event.key, groups, activeId);
       if (!hub || hub.id === activeId) return;
       event.preventDefault();
-      router.push(`${base}${hub.href}`);
+      pushWithTypes(
+        `${base}${hub.href}`,
+        hubTransitionTypes(groups, activeId, hub.id),
+      );
     }
     function onPointerDown() {
       setInputMode("pointer");

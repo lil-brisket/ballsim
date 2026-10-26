@@ -902,3 +902,121 @@ body {
     --shell-bottom: 0px;
   }
 }
+
+/*
+ * Page transitions (RouteTransition, shell links and keys).
+ *
+ * Only the in-save page content has its own snapshot ("page-content"). The
+ * sticky header and bottom bars are named so they are captured separately and
+ * kept still above it; everything else is the "root" snapshot, which is not
+ * animated. A hub change slides the content in the direction moved
+ * (hub-forward: in from the right; hub-back: in from the left); any other
+ * path change crossfades (page-fade). 200ms, ease-out.
+ */
+::view-transition {
+  /* Never swallow clicks while a transition runs. */
+  pointer-events: none;
+}
+
+::view-transition-group(root),
+::view-transition-new(root),
+::view-transition-group(page-content) {
+  animation: none;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-group(shell-header),
+::view-transition-group(shell-mobile-bar),
+::view-transition-group(shell-legend) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(shell-header),
+::view-transition-old(shell-mobile-bar),
+::view-transition-old(shell-legend) {
+  display: none;
+}
+
+::view-transition-new(shell-header),
+::view-transition-new(shell-mobile-bar),
+::view-transition-new(shell-legend) {
+  animation: none;
+}
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes page-slide {
+  from {
+    translate: var(--page-slide-offset) 0;
+    opacity: 0;
+  }
+  to {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+::view-transition-old(.page-fade) {
+  animation: 120ms ease-out both page-fade reverse;
+}
+
+::view-transition-new(.page-fade) {
+  animation: 200ms ease-out both page-fade;
+}
+
+::view-transition-old(.hub-forward) {
+  --page-slide-offset: -40px;
+  animation: 200ms ease-out both page-slide reverse;
+}
+
+::view-transition-new(.hub-forward) {
+  --page-slide-offset: 40px;
+  animation: 200ms ease-out both page-slide;
+}
+
+::view-transition-old(.hub-back) {
+  --page-slide-offset: 40px;
+  animation: 200ms ease-out both page-slide reverse;
+}
+
+::view-transition-new(.hub-back) {
+  --page-slide-offset: -40px;
+  animation: 200ms ease-out both page-slide;
+}
+
+/*
+ * Tile entrance: an `.enter-up` with --i capped by the component (0-4, so the
+ * last tile starts at 240ms). Fills backwards only, so once it has played the
+ * focus scale on `.console-focus` is not held down by the final keyframe.
+ */
+.enter-up.tile-enter {
+  animation-duration: 260ms;
+  animation-fill-mode: backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  ::view-transition-old(*) {
+    display: none;
+  }
+
+  .enter-up.tile-enter {
+    animation: none;
+  }
+}

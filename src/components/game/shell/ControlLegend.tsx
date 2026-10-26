@@ -58,7 +58,7 @@ export function ControlLegend(props: { hubCount: number }) {
   return (
     <footer
       aria-label="Keyboard controls"
-      className="fixed inset-x-0 bottom-0 z-30 hidden border-t border-surface-line bg-surface-deep/90 backdrop-blur lg:block pointer-coarse:hidden"
+      className="[view-transition-name:shell-legend] fixed inset-x-0 bottom-0 z-30 hidden border-t border-surface-line bg-surface-deep/90 backdrop-blur lg:block pointer-coarse:hidden"
     >
       <div className="relative mx-auto flex max-w-[100rem] flex-wrap items-center gap-x-6 gap-y-1 px-6 py-2">
         <KeyHint keys={["Q", "E"]} label="Hubs" />

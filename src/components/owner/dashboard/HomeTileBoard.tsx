@@ -105,6 +105,7 @@ export function HomeTileBoard(props: {
       className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
     >
       <HubTile
+        enterIndex={0}
         dense
         href={`${base}/roster`}
         title="Roster"
@@ -115,6 +116,7 @@ export function HomeTileBoard(props: {
       </HubTile>
 
       <HubTile
+        enterIndex={1}
         dense
         href={`${base}/league/standings`}
         title="Standings"
@@ -135,6 +137,7 @@ export function HomeTileBoard(props: {
       </HubTile>
 
       <HubTile
+        enterIndex={2}
         dense
         href={`${base}/media`}
         title="Media"
@@ -153,6 +156,7 @@ export function HomeTileBoard(props: {
       </HubTile>
 
       <HubTile
+        enterIndex={3}
         dense
         href={`${base}/finances`}
         title="Finances"
@@ -177,6 +181,7 @@ export function HomeTileBoard(props: {
       </HubTile>
 
       <HubTile
+        enterIndex={4}
         dense
         href={`${base}/trades`}
         title="Trades"
@@ -188,7 +193,13 @@ export function HomeTileBoard(props: {
         {tradeNote}
       </HubTile>
 
-      <HubTile dense href={`${base}/calendar`} title="Schedule" size="wide">
+      <HubTile
+        enterIndex={5}
+        dense
+        href={`${base}/calendar`}
+        title="Schedule"
+        size="wide"
+      >
         {games.length === 0 ? (
           "No games scheduled"
         ) : (
@@ -217,6 +228,7 @@ export function HomeTileBoard(props: {
       </HubTile>
 
       <HubTile
+        enterIndex={6}
         dense
         href={`${base}/development`}
         title="Development"
@@ -233,6 +245,7 @@ export function HomeTileBoard(props: {
       </HubTile>
 
       <HubTile
+        enterIndex={7}
         dense
         href={`${base}/franchise/ownership`}
         title="Owner"

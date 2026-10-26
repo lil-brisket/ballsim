@@ -42,19 +42,44 @@ describe("ShellKeys", () => {
   it("steps hubs with E and Q, the same hrefs as the hub links", () => {
     renderKeys("/dashboard/save_test/roster");
     fireEvent.keyDown(window, { key: "e" });
-    expect(push).toHaveBeenLastCalledWith("/dashboard/save_test/league");
+    expect(push).toHaveBeenLastCalledWith("/dashboard/save_test/league", {
+      transitionTypes: ["hub-forward"],
+    });
     fireEvent.keyDown(window, { key: "q" });
-    expect(push).toHaveBeenLastCalledWith("/dashboard/save_test");
+    expect(push).toHaveBeenLastCalledWith("/dashboard/save_test", {
+      transitionTypes: ["hub-back"],
+    });
+  });
+
+  it("slides by hub order for number keys, and Settings is after the last hub", () => {
+    renderKeys("/dashboard/save_test/league");
+    fireEvent.keyDown(window, { key: "2" });
+    expect(push).toHaveBeenLastCalledWith("/dashboard/save_test/team", {
+      transitionTypes: ["hub-back"],
+    });
+    fireEvent.keyDown(window, { key: "4" });
+    expect(push).toHaveBeenLastCalledWith("/dashboard/save_test/finances", {
+      transitionTypes: ["hub-forward"],
+    });
+    cleanup();
+    renderKeys("/dashboard/save_test/settings");
+    fireEvent.keyDown(window, { key: "1" });
+    expect(push).toHaveBeenLastCalledWith("/dashboard/save_test", {
+      transitionTypes: ["hub-back"],
+    });
   });
 
   it("goes up a level with Esc: tab to hub, hub to Home", () => {
     renderKeys("/dashboard/save_test/roster");
     fireEvent.keyDown(window, { key: "Escape" });
+    // Same hub: no slide type, the page crossfades.
     expect(push).toHaveBeenLastCalledWith("/dashboard/save_test/team");
     cleanup();
     renderKeys("/dashboard/save_test/team");
     fireEvent.keyDown(window, { key: "Escape" });
-    expect(push).toHaveBeenLastCalledWith("/dashboard/save_test");
+    expect(push).toHaveBeenLastCalledWith("/dashboard/save_test", {
+      transitionTypes: ["hub-back"],
+    });
   });
 
   it("leaves Esc to an open menu", () => {

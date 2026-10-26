@@ -23,11 +23,16 @@ type HubTileBase = {
   /** Tighter padding, gaps and stat size for boards that must fit one screen. */
   dense?: boolean;
   className?: string;
+  /** Position on the board: staggers the entrance (capped at the 5th tile). */
+  enterIndex?: number;
   "aria-label"?: string;
 };
 
 export type HubTileProps = HubTileBase &
   ({ href: string; onSelect?: never } | { onSelect: () => void; href?: never });
+
+/** The 5th tile onward share one delay, so the last starts by ~240ms. */
+const MAX_ENTER_INDEX = 4;
 
 const SPAN: Record<HubTileSize, string> = {
   hero: "min-h-36 sm:col-span-2 sm:row-span-2 sm:min-h-72",
@@ -53,9 +58,16 @@ export function HubTile(props: HubTileProps) {
   const className = cn(
     consoleFocusClass,
     "group block min-h-11 text-left touch-manipulation",
+    props.enterIndex !== undefined && "enter-up tile-enter",
     (dense ? SPAN_DENSE : SPAN)[size],
     props.className,
   );
+  const style =
+    props.enterIndex !== undefined
+      ? ({
+          "--i": Math.min(props.enterIndex, MAX_ENTER_INDEX),
+        } as React.CSSProperties)
+      : undefined;
   const content = (
     <>
       <span
@@ -147,6 +159,7 @@ export function HubTile(props: HubTileProps) {
         data-shape="corner"
         data-focus-item=""
         className={className}
+        style={style}
       >
         {content}
       </Link>
@@ -160,6 +173,7 @@ export function HubTile(props: HubTileProps) {
       data-shape="corner"
       data-focus-item=""
       className={className}
+      style={style}
     >
       {content}
     </button>

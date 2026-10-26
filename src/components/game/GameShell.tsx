@@ -46,7 +46,7 @@ export function GameShell(props: {
             data-testid="shell-spotlight"
             className="shell-spotlight"
           />
-          <ShellOffset className="sticky top-0 z-40 border-b border-surface-line bg-surface-deep/90 pt-[env(safe-area-inset-top)] backdrop-blur">
+          <ShellOffset className="[view-transition-name:shell-header] sticky top-0 z-40 border-b border-surface-line bg-surface-deep/90 pt-[env(safe-area-inset-top)] backdrop-blur">
             <SimulationLockRegion className="mx-auto flex w-full max-w-[100rem] flex-col gap-2 px-4 py-2 sm:px-6 lg:py-3">
               <GameHeader
                 saveId={props.saveId}

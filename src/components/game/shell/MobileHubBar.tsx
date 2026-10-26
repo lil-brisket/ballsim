@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import { NavBadge, badgeLabel } from "@/components/game/shell/NavBadge";
 import { NavIcon } from "@/components/game/shell/NavIcon";
+import { hubTransitionTypes } from "@/components/game/shell/transition-direction";
 import { useActiveNav } from "@/components/game/shell/use-active-nav";
 import { Drawer } from "@/components/ui/Drawer";
 import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
@@ -31,6 +32,12 @@ export function MobileHubBar(props: {
   const moreActive = more.some((group) => group.id === active?.hub.id);
   const moreBadge = more.find((group) => group.badge)?.badge;
 
+  // Slide direction follows the hub order; undefined = plain crossfade.
+  const typesTo = (id: OwnerNavGroup["id"]) => {
+    const types = hubTransitionTypes(props.groups, active?.hub.id, id);
+    return types.length > 0 ? types : undefined;
+  };
+
   const itemClass = (isActive: boolean) =>
     cn(
       "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold touch-manipulation",
@@ -42,7 +49,7 @@ export function MobileHubBar(props: {
     <>
       <nav
         aria-label="Hubs"
-        className="safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t border-surface-line bg-surface-deep/95 backdrop-blur lg:hidden"
+        className="[view-transition-name:shell-mobile-bar] safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t border-surface-line bg-surface-deep/95 backdrop-blur lg:hidden"
       >
         <ul className="flex">
           {bar.map((hub) => {
@@ -51,6 +58,7 @@ export function MobileHubBar(props: {
               <li key={hub.id} className="flex flex-1">
                 <Link
                   href={`${base}${hub.href}`}
+                  transitionTypes={typesTo(hub.id)}
                   aria-current={isActive ? "true" : undefined}
                   className={itemClass(isActive)}
                 >
@@ -98,6 +106,7 @@ export function MobileHubBar(props: {
             <li key={hub.id}>
               <Link
                 href={`${base}${hub.href}`}
+                transitionTypes={typesTo(hub.id)}
                 onClick={() => setMoreOpen(false)}
                 aria-current={active?.hub.id === hub.id ? "true" : undefined}
                 className={cn(

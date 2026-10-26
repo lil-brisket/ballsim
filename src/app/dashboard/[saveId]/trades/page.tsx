@@ -60,20 +60,33 @@ export default async function TradesPage({ params, searchParams }: PageProps) {
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           {shared ? (
-            <HubTile title="Propose" href={`${base}/trades/propose`}>
+            <HubTile
+              enterIndex={0}
+              title="Propose"
+              href={`${base}/trades/propose`}
+            >
               Offer a deal to another player in this league.
             </HubTile>
           ) : null}
           <HubTile
+            enterIndex={shared ? 1 : 0}
             title="Trade finder"
             href={`${base}/roster?tab=trade-finder`}
           >
             Pick a player and see which teams are interested.
           </HubTile>
-          <HubTile title="Trade block" href={`${base}/roster?tab=trade-block`}>
+          <HubTile
+            enterIndex={shared ? 2 : 1}
+            title="Trade block"
+            href={`${base}/roster?tab=trade-block`}
+          >
             List players you are willing to move.
           </HubTile>
-          <HubTile title="Trade log" href={`${base}/league/transactions`}>
+          <HubTile
+            enterIndex={shared ? 3 : 2}
+            title="Trade log"
+            href={`${base}/league/transactions`}
+          >
             Every trade and signing this season.
           </HubTile>
         </FocusGrid>

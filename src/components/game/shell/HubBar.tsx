@@ -7,6 +7,7 @@ import {
 } from "@/application/owner-nav-config";
 import { NavBadge, badgeLabel } from "@/components/game/shell/NavBadge";
 import { NavIcon } from "@/components/game/shell/NavIcon";
+import { hubTransitionTypes } from "@/components/game/shell/transition-direction";
 import { useActiveNav } from "@/components/game/shell/use-active-nav";
 import { KeyHint } from "@/components/ui/KeyHint";
 import {
@@ -30,6 +31,11 @@ export function HubBar(props: {
   const hubs = numberedHubs(props.groups);
   const settings = props.groups.find((group) => group.id === "settings");
   const settingsActive = active?.hub.id === "settings";
+  // Slide direction follows the hub order; undefined = plain crossfade.
+  const typesTo = (id: OwnerNavGroup["id"]) => {
+    const types = hubTransitionTypes(props.groups, active?.hub.id, id);
+    return types.length > 0 ? types : undefined;
+  };
 
   return (
     <nav aria-label="Hubs" className="flex min-w-0 items-center gap-1">
@@ -44,6 +50,7 @@ export function HubBar(props: {
             <li key={hub.id}>
               <Link
                 href={`${base}${hub.href}`}
+                transitionTypes={typesTo(hub.id)}
                 aria-current={isActive ? "true" : undefined}
                 className={cn(
                   displayClass,
@@ -69,6 +76,7 @@ export function HubBar(props: {
       {settings ? (
         <Link
           href={`${base}${settings.href}`}
+          transitionTypes={typesTo(settings.id)}
           aria-current={settingsActive ? "true" : undefined}
           className={cn(
             touchTargetClass,
