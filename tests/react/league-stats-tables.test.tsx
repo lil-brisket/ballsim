@@ -65,6 +65,7 @@ describe("LeagueSubNav", () => {
       "/dashboard/s1/league/standings",
       "/dashboard/s1/league/team-stats",
       "/dashboard/s1/league/player-stats",
+      "/dashboard/s1/league/transactions",
     ]);
     expect(
       screen

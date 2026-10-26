@@ -19,7 +19,11 @@ import {
 } from "@/components/league/LeagueTier1Panels";
 import { LeagueHeader } from "@/components/league/LeagueHeader";
 import { LeagueTransactionsBriefing } from "@/components/league/LeagueTier2Panels";
-import { TransactionRow } from "@/components/transactions/TransactionRow";
+import {
+  TransactionRow,
+  TransactionTimeline,
+} from "@/components/transactions/TransactionRow";
+import type { TransactionRowView } from "@/state/transaction-hub-selectors";
 import type { StandingsRowEnriched } from "@/state/standings-selectors";
 
 const sampleRow: StandingsRowEnriched = {
@@ -130,6 +134,15 @@ describe("League Hub panels", () => {
     render(wrap(<LeagueTransactionsBriefing saveId="s1" rows={[]} />));
     expect(screen.getByText(/No recent transactions/i)).toBeTruthy();
   });
+
+  it("links View All Transactions to the League tab", () => {
+    render(wrap(<LeagueTransactionsBriefing saveId="s1" rows={[]} />));
+    expect(
+      screen
+        .getByRole("link", { name: "View All Transactions" })
+        .getAttribute("href"),
+    ).toBe("/dashboard/s1/league/transactions");
+  });
 });
 
 describe("TransactionRow entity links", () => {
@@ -182,5 +195,44 @@ describe("TransactionRow entity links", () => {
     expect(screen.getByText("Player A")).toBeTruthy();
     expect(screen.getByText("Player B")).toBeTruthy();
     expect(screen.getAllByText(/acquired/i).length).toBe(2);
+  });
+});
+
+function signingRow(id: string, isMyTeam: boolean): TransactionRowView {
+  return {
+    id,
+    type: "FreeAgentSigned",
+    occurredOn: "2026-01-08",
+    description: `Signing ${id}`,
+    players: [],
+    teams: [],
+    tradeSides: null,
+    eventIds: [id],
+    contractValue: null,
+    isMyTeam,
+  };
+}
+
+describe("TransactionTimeline", () => {
+  const groups = [
+    {
+      date: "2026-01-08",
+      rows: [signingRow("mine", true), signingRow("theirs", false)],
+    },
+  ];
+
+  it("shows the date once per group, with a move count", () => {
+    render(wrap(<TransactionTimeline saveId="s1" groups={groups} />));
+    expect(screen.getAllByText(/Jan 8/)).toHaveLength(1);
+    expect(screen.getByText("2 moves")).toBeTruthy();
+  });
+
+  it("marks the user's team rows only when highlighting is on", () => {
+    const { rerender } = render(
+      wrap(<TransactionTimeline saveId="s1" groups={groups} highlightMyTeam />),
+    );
+    expect(screen.getAllByText("Your team")).toHaveLength(1);
+    rerender(wrap(<TransactionTimeline saveId="s1" groups={groups} />));
+    expect(screen.queryByText("Your team")).toBeNull();
   });
 });

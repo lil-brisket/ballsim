@@ -2,7 +2,8 @@ import { Tabs } from "@/components/ui/Tabs";
 
 /**
  * The single sub-navigation row for League pages (Issue #184). Standings
- * moved here from its own sidebar entry; `/standings` redirects to it.
+ * and Transactions (Issue #186) moved here from their own sidebar entries;
+ * `/standings` and `/transactions` redirect to them.
  */
 const LINKS = [
   { key: "overview", suffix: "/league", label: "Overview" },
@@ -12,6 +13,11 @@ const LINKS = [
     key: "playerStats",
     suffix: "/league/player-stats",
     label: "Player Stats",
+  },
+  {
+    key: "transactions",
+    suffix: "/league/transactions",
+    label: "Transactions",
   },
 ] as const;
 
