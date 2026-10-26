@@ -27,6 +27,7 @@ import {
   createDraftFromPackage,
 } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
+import { leagueSettingsAccessError } from "@/systems/league-settings-edit";
 import {
   getCustomStore,
   getStore,
@@ -109,6 +110,11 @@ export async function updateOwnerCustomRosterPlayer(
     if (!loaded) {
       return fail("Save not found.");
     }
+    // Roster edits change other franchises' players: host only online.
+    const accessError = leagueSettingsAccessError(loaded.state);
+    if (accessError) {
+      return fail(accessError);
+    }
     const updated = updateCustomRosterPlayer(
       loaded.state,
       asPlayerId(playerId),
@@ -142,6 +148,11 @@ export async function removeOwnerCustomRosterPlayer(
     if (!loaded) {
       return fail("Save not found.");
     }
+    // Roster edits change other franchises' players: host only online.
+    const accessError = leagueSettingsAccessError(loaded.state);
+    if (accessError) {
+      return fail(accessError);
+    }
     const updated = removeCustomRosterPlayer(
       loaded.state,
       asPlayerId(playerId),
@@ -173,6 +184,11 @@ export async function addOwnerCustomRosterPlayer(
     const loaded = await saveStore.load(saveId);
     if (!loaded) {
       return fail("Save not found.");
+    }
+    // Roster edits change other franchises' players: host only online.
+    const accessError = leagueSettingsAccessError(loaded.state);
+    if (accessError) {
+      return fail(accessError);
     }
     const rng = createSeededRng(loaded.state.meta.rngState);
     const updated = addCustomRosterPlayer(loaded.state, source, rng, saveId);

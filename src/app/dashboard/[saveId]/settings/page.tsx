@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { loadOwnerSaveView } from "@/application/game-service";
-import { ErrorState } from "@/components/ui/EmptyState";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { loadSettingsView } from "@/application/game-service";
 import { Section } from "@/components/ui/Section";
-import { DelegationSummary } from "@/components/owner/ai-management/DelegationSummary";
+import { RenameLeagueForm } from "@/components/settings/RenameLeagueForm";
+import { SeasonFormatForm } from "@/components/settings/SeasonFormatForm";
+import { SettingRow } from "@/components/settings/SettingRow";
 import {
-  countDelegatedVisiblePhases,
-  visibleDelegationPhaseCount,
-} from "@/domain/ai-management-delegation";
-import { INJURY_FREQUENCY_LABELS } from "@/domain/game-settings";
-import { formatMoney } from "@/components/owner/MoneyDisplay";
+  HostOnlyNotice,
+  SettingsPageShell,
+} from "@/components/settings/SettingsPageShell";
+import { settingsTabPath } from "@/components/settings/SettingsSubNav";
+import { LEAGUE_AREA_LABELS } from "@/domain/game-settings";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -19,158 +19,72 @@ type SettingsPageProps = {
   searchParams: Promise<{ error?: string }>;
 };
 
-/**
- * Read-only view of persisted GameState.settings.
- * Does not introduce a second settings store.
- */
+/** League tab: name, structure and season format (Issue #191). */
 export default async function InGameSettingsPage({
   params,
   searchParams,
 }: SettingsPageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const view = await loadOwnerSaveView(saveId);
+  const view = await loadSettingsView(saveId);
   if (!view) {
     notFound();
   }
 
-  const { settings, dashboard } = view;
-  const { league, regularSeason, playoffs, financialRules, injuryFrequency } =
-    settings;
-  const activeFranchiseAi = dashboard.activeFranchiseAi;
+  const { league, regularSeason, playoffs } = view.settings;
+  const returnPath = settingsTabPath(saveId, "league");
 
   return (
-    <>
-      <PageHeader
-        title="Settings"
-        subtitle="Career configuration for this save (read-only)"
-      />
-      {error ? <ErrorState message={error} /> : null}
-
+    <SettingsPageShell saveId={saveId} active="league" error={error}>
       <Section title="League">
+        {view.canEditLeague ? null : (
+          <HostOnlyNotice>
+            Only the league host can change league settings.
+          </HostOnlyNotice>
+        )}
+        <RenameLeagueForm
+          saveId={saveId}
+          returnPath={returnPath}
+          leagueName={view.leagueName}
+          disabled={!view.canEditLeague}
+        />
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <SettingRow label="League name" value={dashboard.leagueName} />
-          <SettingRow label="Mode" value={dashboard.mode} />
+          <SettingRow label="Mode" value={view.mode} />
           <SettingRow
             label="Team count (at create)"
             value={`${league.teamCount}`}
           />
-          <SettingRow
-            label="Live team count"
-            value={`${dashboard.teamCount}`}
-          />
+          <SettingRow label="Live team count" value={`${view.liveTeamCount}`} />
           <SettingRow label="Conferences" value={`${league.conferenceCount}`} />
           <SettingRow
             label="Divisions"
             value={league.divisionsEnabled ? "On" : "Off"}
           />
           <SettingRow
-            label="Games per team"
-            value={`${regularSeason.gamesPerTeam}`}
-          />
-          <SettingRow
-            label="Playoff teams"
-            value={`${playoffs.playoffTeams}`}
-          />
-          <SettingRow
-            label="Series length"
-            value={`${playoffs.seriesLength}`}
+            label="Area"
+            value={league.area ? LEAGUE_AREA_LABELS[league.area] : "—"}
           />
         </dl>
-      </Section>
-
-      <Section title="League rules">
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <SettingRow
-            label="Injury frequency"
-            value={INJURY_FREQUENCY_LABELS[injuryFrequency]}
-            description="Affects how frequently players become injured during simulation."
-          />
-        </dl>
-      </Section>
-
-      <Section title="AI Team Management">
-        <p className="mb-3 text-sm text-zinc-400">
-          Active franchise: {dashboard.controlledTeam.city}{" "}
-          {dashboard.controlledTeam.name}.{" "}
-          {countDelegatedVisiblePhases(activeFranchiseAi.assistance)} of{" "}
-          {visibleDelegationPhaseCount()} phases delegated to AI
+        <p className="text-sm text-zinc-500">
+          League structure is set when the league is created and cannot be
+          changed here.
         </p>
-        <DelegationSummary assistance={activeFranchiseAi.assistance} readOnly />
       </Section>
 
-      <Section title="Financial rules">
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <SettingRow
-            label="Player Salary Cap"
-            value={
-              financialRules.salaryCapEnabled
-                ? formatMoney(financialRules.salaryCap)
-                : "Off"
-            }
-          />
-          <SettingRow
-            label="Staff Budget"
-            value={formatMoney(financialRules.staffBudget)}
-          />
-          <SettingRow
-            label="Luxury tax"
-            value={
-              financialRules.luxuryTaxEnabled
-                ? `On — line at ${financialRules.luxuryTaxThresholdPercent}% over the cap`
-                : "Off"
-            }
-          />
-          <SettingRow
-            label="Salary floor"
-            value={
-              financialRules.salaryFloorEnabled
-                ? `On — ${financialRules.salaryFloorPercent}% of the cap`
-                : "Off"
-            }
-          />
-          <SettingRow
-            label="Veteran rights"
-            value={
-              financialRules.veteranRightsEnabled
-                ? `On — after ${financialRules.veteranRightsSeasons} seasons`
-                : "Off"
-            }
-          />
-          <SettingRow
-            label="Draft lottery"
-            value={
-              settings.draftLottery.enabled
-                ? `On — top ${settings.draftLottery.picksDrawn} picks drawn`
-                : "Off"
-            }
-          />
-          <SettingRow
-            label="Restricted free agency"
-            value={settings.offseason.restrictedFreeAgency ? "On" : "Off"}
-          />
-          <SettingRow
-            label="Revenue sharing"
-            value={financialRules.revenueSharingEnabled ? "On" : "Off"}
-          />
-        </dl>
+      <Section title="Season format">
+        <SeasonFormatForm
+          saveId={saveId}
+          returnPath={returnPath}
+          initial={{
+            gamesPerTeam: regularSeason.gamesPerTeam,
+            playoffTeams: playoffs.playoffTeams,
+            seriesLength: playoffs.seriesLength,
+          }}
+          liveTeamCount={view.liveTeamCount}
+          lockReason={view.seasonFormatLock}
+          canEdit={view.canEditLeague}
+        />
       </Section>
-    </>
-  );
-}
-
-function SettingRow(props: {
-  label: string;
-  value: string;
-  description?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-zinc-800 px-4 py-3">
-      <dt className="text-sm text-zinc-400">{props.label}</dt>
-      <dd className="mt-1 text-zinc-100">{props.value}</dd>
-      {props.description ? (
-        <p className="mt-1 text-sm text-zinc-500">{props.description}</p>
-      ) : null}
-    </div>
+    </SettingsPageShell>
   );
 }

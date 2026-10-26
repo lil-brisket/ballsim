@@ -114,6 +114,7 @@ import {
   toStandingsPageView,
   toPlayoffRaceView,
 } from "@/state/standings-selectors";
+import { toSettingsView, type SettingsView } from "@/state/settings-view";
 import { toLeagueLeadersView } from "@/state/league-leaders-selectors";
 import {
   parseLeagueStatsSort,
@@ -622,4 +623,17 @@ export async function loadMediaPageView(
     return null;
   }
   return toMediaTimelinePageView(loaded.state, saveId, options);
+}
+
+/** In-game Settings pages (Issue #191). */
+export async function loadSettingsView(
+  saveId: string,
+  selection?: { teamId?: string; playerId?: string },
+  store?: SaveGameStore,
+): Promise<SettingsView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toSettingsView(loaded.state, selection);
 }

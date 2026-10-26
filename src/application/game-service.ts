@@ -51,6 +51,11 @@ export {
   exportOwnerDraftClass,
 } from "@/application/game-service/custom-content";
 export {
+  updateOwnerLeagueSettings,
+  renameOwnerLeague,
+  setOwnerFranchiseAiAssistance,
+} from "@/application/game-service/league-settings";
+export {
   loadOwnerSaveView,
   type RosterPageLoadResult,
   loadRosterPageView,
@@ -62,6 +67,7 @@ export {
   loadOwnerGameBoxScoreView,
   loadOwnerWatchGameView,
   loadLeagueHubView,
+  loadSettingsView,
   loadLeagueTeamStatsView,
   loadLeaguePlayerStatsView,
   loadContractHubView,
