@@ -62,6 +62,8 @@ export {
   loadOwnerGameBoxScoreView,
   loadOwnerWatchGameView,
   loadLeagueHubView,
+  loadLeagueTeamStatsView,
+  loadLeaguePlayerStatsView,
   loadContractHubView,
   loadStaffHubView,
   loadStaffHiringMarketView,

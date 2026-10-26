@@ -107,7 +107,9 @@ describe("owner nav config invariants", () => {
 
   it("league group has evergreen League destinations including Awards and Fan Voting", () => {
     const league = OWNER_NAV_GROUPS.find((g) => g.id === "league");
-    expect(league?.items).toHaveLength(6);
+    expect(league?.items).toHaveLength(5);
+    // Standings is a League tab since Issue #184.
+    expect(league?.items.some((i) => i.href === "/standings")).toBe(false);
     expect(league?.items.some((i) => i.href === "/transactions")).toBe(true);
     expect(league?.items.some((i) => i.href === "/awards")).toBe(true);
     expect(

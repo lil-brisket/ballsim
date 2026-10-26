@@ -48,7 +48,7 @@ export default async function PlayoffsPage({
         subtitle={`Season ${hub.seasonYear}`}
         actions={
           <Link
-            href={`/dashboard/${saveId}/standings`}
+            href={`/dashboard/${saveId}/league/standings`}
             className="text-sm text-team-ink underline-offset-4 hover:underline"
           >
             Standings
