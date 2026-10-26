@@ -89,7 +89,7 @@ export function ExportPanel(props: { saveId: string; draftYears: number[] }) {
           </button>
         </div>
       ) : (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           No draft class exists yet to export.
         </p>
       )}

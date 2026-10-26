@@ -44,7 +44,7 @@ export default async function FinancesActivityPage({
         <section className="grid gap-4 sm:grid-cols-2">
           {lastGameDay ? (
             <Section title="Last home game day">
-              <ul className="space-y-1 text-sm text-zinc-300">
+              <ul className="space-y-1 text-sm text-soft">
                 <li className="flex justify-between">
                   <span>Attendance</span>
                   <span>{lastGameDay.attendance.toLocaleString()}</span>
@@ -62,7 +62,7 @@ export default async function FinancesActivityPage({
           ) : null}
           {forecast ? (
             <Section title="Next home game forecast">
-              <ul className="space-y-1 text-sm text-zinc-300">
+              <ul className="space-y-1 text-sm text-soft">
                 <li className="flex justify-between">
                   <span>Projected revenue</span>
                   <MoneyDisplay amount={forecast.totalGameDayRevenue} />

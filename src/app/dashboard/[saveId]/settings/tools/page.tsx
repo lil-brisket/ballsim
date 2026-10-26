@@ -52,7 +52,7 @@ export default async function SettingsToolsPage({
       <Section title="Roster editor">
         {view.canEditLeague ? (
           <>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted">
               Edit a player&apos;s name, age, potential and attributes. Ratings
               run from 1 to 99.
             </p>
@@ -72,7 +72,7 @@ export default async function SettingsToolsPage({
             ) : null}
           </>
         ) : (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             Only the league host can edit rosters.
           </p>
         )}
@@ -83,7 +83,7 @@ export default async function SettingsToolsPage({
       </Section>
 
       <Section title="Draft class import">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           Custom draft classes are imported on the{" "}
           <Link href={`/dashboard/${saveId}/draft`} className={linkClass}>
             Draft page

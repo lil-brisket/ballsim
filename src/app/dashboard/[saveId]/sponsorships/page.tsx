@@ -44,10 +44,10 @@ export default async function SponsorshipsPage({
             {view.sponsorships.map((deal) => (
               <li
                 key={deal.id}
-                className="rounded-lg border border-zinc-800 px-4 py-3"
+                className="rounded-lg border border-line px-4 py-3"
               >
-                <p className="font-medium text-zinc-100">{deal.sponsorName}</p>
-                <p className="text-sm text-zinc-400">
+                <p className="font-medium text-ink">{deal.sponsorName}</p>
+                <p className="text-sm text-muted">
                   <MoneyDisplay amount={deal.annualValue} /> / yr ·{" "}
                   {deal.startYear}–{deal.endYear} · {deal.status}
                 </p>
@@ -65,7 +65,7 @@ export default async function SponsorshipsPage({
             name="sponsorName"
             placeholder="Sponsor name"
             defaultValue="City Trust Bank"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+            className="rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-sm text-ink"
           />
           <NumberStepper
             name="annualValue"

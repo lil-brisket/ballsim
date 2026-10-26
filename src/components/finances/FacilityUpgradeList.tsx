@@ -36,20 +36,18 @@ export function FacilityUpgradeList(props: {
       {sortArenaFirst(props.rows).map((row) => (
         <li
           key={row.category}
-          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 px-4 py-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line px-4 py-3"
         >
           <div>
-            <p className="font-medium capitalize text-zinc-100">
-              {row.category}
-            </p>
-            <p className="text-sm text-zinc-400">
+            <p className="font-medium capitalize text-ink">{row.category}</p>
+            <p className="text-sm text-muted">
               Level {row.level}
               {row.upgradeWeeksRemaining > 0
                 ? ` · upgrading (${row.upgradeWeeksRemaining} weeks left)`
                 : null}
             </p>
             {row.category === "arena" ? (
-              <p className="text-sm text-zinc-500">{arenaDetail(row.level)}</p>
+              <p className="text-sm text-faint">{arenaDetail(row.level)}</p>
             ) : null}
           </div>
           {row.upgradeCost != null ? (
@@ -65,7 +63,7 @@ export function FacilityUpgradeList(props: {
               </button>
             </form>
           ) : (
-            <span className="text-sm text-zinc-500">
+            <span className="text-sm text-faint">
               {row.level >= FACILITY_LEVEL_MAX ? "Max level" : "In progress"}
             </span>
           )}

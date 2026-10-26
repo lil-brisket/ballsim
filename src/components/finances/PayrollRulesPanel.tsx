@@ -32,7 +32,7 @@ export function TaxLineNote(props: {
   }
   const room = rules.threshold - rules.payroll;
   return (
-    <p className={props.className ?? "text-sm text-zinc-400"}>
+    <p className={props.className ?? "text-sm text-muted"}>
       {room >= 0 ? (
         <>
           Tax line {formatMoney(rules.threshold)}: {formatMoney(room)} below
@@ -61,7 +61,7 @@ export function PayrollRulesPanel(props: { rules: PayrollRulesView }) {
 
   return (
     <Section title="Payroll rules">
-      <ul className="space-y-1.5 text-sm text-zinc-300">
+      <ul className="space-y-1.5 text-sm text-soft">
         {rules.projectsNextSeason ? (
           <li className="flex justify-between gap-4">
             <span>Payroll for {rules.seasonYear}</span>
@@ -104,7 +104,7 @@ export function PayrollRulesPanel(props: { rules: PayrollRulesView }) {
         ) : null}
       </ul>
       {last ? (
-        <p className="mt-2 text-sm text-zinc-500">
+        <p className="mt-2 text-sm text-faint">
           {last.seasonYear}:{" "}
           {lastParts.length > 0
             ? lastParts.join(" / ")

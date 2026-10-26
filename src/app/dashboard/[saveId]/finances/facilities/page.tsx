@@ -69,7 +69,7 @@ export default async function FinancesFacilitiesPage({
       </Section>
 
       <Section title="How facilities help">
-        <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-400">
+        <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
           <li>Arena level raises maximum attendance (capacity).</li>
           <li>
             Practice, training, and medical improve the distribution of player

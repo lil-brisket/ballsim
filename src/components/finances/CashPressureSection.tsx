@@ -33,16 +33,16 @@ export function CashPressureSection(props: { cashRunway: CashRunwayView }) {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <ul className="space-y-1.5 text-sm text-zinc-300">
+      <ul className="space-y-1.5 text-sm text-soft">
         <li className="flex justify-between gap-2">
-          <span className="text-zinc-500">Primary pressure</span>
+          <span className="text-faint">Primary pressure</span>
           <span className="capitalize">
             {cashRunway.primaryPressure.replaceAll("_", " ")}
           </span>
         </li>
         {biggestInflow ? (
           <li className="flex justify-between gap-2">
-            <span className="text-zinc-500">Biggest inflow</span>
+            <span className="text-faint">Biggest inflow</span>
             <span>
               {biggestInflow.label}{" "}
               <MoneyDisplay amount={biggestInflow.amount} />
@@ -51,7 +51,7 @@ export function CashPressureSection(props: { cashRunway: CashRunwayView }) {
         ) : null}
         {biggestOutflow ? (
           <li className="flex justify-between gap-2">
-            <span className="text-zinc-500">Biggest outflow</span>
+            <span className="text-faint">Biggest outflow</span>
             <span>
               {biggestOutflow.label}{" "}
               <MoneyDisplay amount={biggestOutflow.amount} />
@@ -59,12 +59,12 @@ export function CashPressureSection(props: { cashRunway: CashRunwayView }) {
           </li>
         ) : null}
         <li className="flex justify-between gap-2">
-          <span className="text-zinc-500">Facility spending</span>
+          <span className="text-faint">Facility spending</span>
           <MoneyDisplay amount={cashRunway.outflowBreakdown.facilities} />
         </li>
       </ul>
-      <ul className="space-y-1.5 text-sm text-zinc-300">
-        <li className="text-sm font-medium text-zinc-300">Weekly outflow</li>
+      <ul className="space-y-1.5 text-sm text-soft">
+        <li className="text-sm font-medium text-soft">Weekly outflow</li>
         {outflows.map((entry) => (
           <li key={entry.label} className="flex justify-between gap-2">
             <span>{entry.label}</span>

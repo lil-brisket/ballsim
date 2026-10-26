@@ -91,7 +91,7 @@ export function SeasonFormatForm(props: {
         />
       </div>
       {props.lockReason ? (
-        <p className="text-sm text-zinc-400">{props.lockReason}</p>
+        <p className="text-sm text-muted">{props.lockReason}</p>
       ) : (
         <button
           type="submit"

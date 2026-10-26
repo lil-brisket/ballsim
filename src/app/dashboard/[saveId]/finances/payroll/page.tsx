@@ -38,10 +38,10 @@ export default async function FinancesPayrollPage({
       {error ? <ErrorState message={error} /> : null}
 
       <Section title="Commitments">
-        <p className="mb-2 text-sm text-zinc-500">
+        <p className="mb-2 text-sm text-faint">
           Commitment limits — these do not draw from Business Funds.
         </p>
-        <ul className="space-y-1.5 text-sm text-zinc-300">
+        <ul className="space-y-1.5 text-sm text-soft">
           <li className="flex justify-between">
             <span>Player payroll</span>
             <MoneyDisplay amount={finances.playerPayroll} />

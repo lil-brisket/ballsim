@@ -62,7 +62,7 @@ export default async function FranchiseRelocationPage({
       <FranchiseSubNav saveId={saveId} active="relocation" />
       {error ? <ErrorState message={error} /> : null}
       {!accessible ? (
-        <p className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-300">
+        <p className="mb-4 rounded-xl border border-line bg-surface-raised/50 px-4 py-3 text-sm text-soft">
           Relocation is not currently available for this franchise. It can only
           begin during the offseason when market conditions make a move
           strategically relevant. The assessment below updates as conditions
@@ -84,7 +84,7 @@ export default async function FranchiseRelocationPage({
       </section>
 
       <Section title="Why this is on the table">
-        <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-300">
+        <ul className="list-disc space-y-1 pl-5 text-sm text-soft">
           {assessment.primaryDrivers.length === 0 ? (
             <li>No active market pressure — relocation is not a priority.</li>
           ) : (
@@ -103,11 +103,11 @@ export default async function FranchiseRelocationPage({
       </Section>
 
       <Section title="Stay strategy">
-        <p className="mb-2 text-sm text-zinc-400">
+        <p className="mb-2 text-sm text-muted">
           Relocation is an opportunity cost. Existing owner actions remain
           available:
         </p>
-        <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-300">
+        <ul className="list-disc space-y-1 pl-5 text-sm text-soft">
           {assessment.stayAdvantages.map((advantage) => (
             <li key={advantage}>{advantage}</li>
           ))}
@@ -115,19 +115,19 @@ export default async function FranchiseRelocationPage({
         <div className="mt-3 flex flex-wrap gap-2 text-sm">
           <Link
             href={`/dashboard/${saveId}/business`}
-            className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-team-ink"
+            className="rounded-md border border-line-strong px-3 py-1.5 text-ink hover:border-team-ink"
           >
             Marketing & tickets
           </Link>
           <Link
             href={`/dashboard/${saveId}/finances/facilities`}
-            className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-team-ink"
+            className="rounded-md border border-line-strong px-3 py-1.5 text-ink hover:border-team-ink"
           >
             Facilities
           </Link>
           <Link
             href={`/dashboard/${saveId}/roster`}
-            className="rounded-md border border-zinc-700 px-3 py-1.5 text-zinc-200 hover:border-team-ink"
+            className="rounded-md border border-line-strong px-3 py-1.5 text-ink hover:border-team-ink"
           >
             Roster
           </Link>
@@ -147,11 +147,11 @@ export default async function FranchiseRelocationPage({
 
       <Section title="Destination opportunity">
         {topDestinations.length === 0 ? (
-          <p className="text-sm text-zinc-400">No open catalog markets.</p>
+          <p className="text-sm text-muted">No open catalog markets.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[32rem] text-left text-sm text-zinc-300">
-              <thead className="text-zinc-500">
+            <table className="w-full min-w-[32rem] text-left text-sm text-soft">
+              <thead className="text-faint">
                 <tr>
                   <th className="py-1 pr-3 font-medium">Market</th>
                   <th className="py-1 pr-3 font-medium">Size</th>
@@ -161,10 +161,7 @@ export default async function FranchiseRelocationPage({
               </thead>
               <tbody>
                 {topDestinations.map((destination) => (
-                  <tr
-                    key={destination.city}
-                    className="border-t border-zinc-800"
-                  >
+                  <tr key={destination.city} className="border-t border-line">
                     <td className="py-1.5 pr-3">
                       {destination.city} {destination.name}
                     </td>
@@ -179,7 +176,7 @@ export default async function FranchiseRelocationPage({
             </table>
           </div>
         )}
-        <p className="mt-2 text-sm text-zinc-500">
+        <p className="mt-2 text-sm text-faint">
           {assessment.estimatedCost.transitionRiskSummary} Estimated fee about{" "}
           <MoneyDisplay amount={assessment.estimatedCost.fee} />.{" "}
           {assessment.estimatedCost.fanDisruptionSummary}
@@ -208,7 +205,7 @@ export default async function FranchiseRelocationPage({
 
       <Section title="Pursue relocation">
         {!canAdvance ? (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             Relocation is not available to start. Improve the stay path, wait
             for tenure or the offseason, or wait until market pressure makes a
             move strategically relevant.

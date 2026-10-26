@@ -65,7 +65,7 @@ export function FranchiseLedgerTable(props: {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-left text-sm">
-        <thead className="border-b border-zinc-800 text-zinc-400">
+        <thead className="border-b border-line text-muted">
           <tr>
             <th className="px-3 py-2">Year</th>
             <th className="px-3 py-2">Franchise</th>
@@ -81,13 +81,13 @@ export function FranchiseLedgerTable(props: {
           {[...props.seasons].reverse().map((season) => (
             <tr
               key={season.seasonId}
-              className="border-b border-zinc-900 text-zinc-200"
+              className="border-b border-surface-raised text-ink"
             >
               <td className="px-3 py-2">{season.seasonYear}</td>
               <td className="px-3 py-2">
                 {identity(season)}
                 {season.relocated ? (
-                  <span className="ml-2 text-zinc-500">relocated</span>
+                  <span className="ml-2 text-faint">relocated</span>
                 ) : null}
               </td>
               <td className="px-3 py-2">

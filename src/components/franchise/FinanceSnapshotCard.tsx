@@ -22,22 +22,22 @@ export function FinanceSnapshotCard(props: {
         <span className="text-sm font-medium text-team-ink">View Finances</span>
       }
     >
-      <dl className="mt-3 space-y-1.5 text-sm text-zinc-400">
+      <dl className="mt-3 space-y-1.5 text-sm text-muted">
         <div className="flex justify-between gap-2">
           <dt>Business funds</dt>
-          <dd className="text-zinc-200">
+          <dd className="text-ink">
             <MoneyDisplay amount={snapshot.cash} />
           </dd>
         </div>
         <div className="flex justify-between gap-2">
           <dt>Projected</dt>
-          <dd className="text-zinc-200">
+          <dd className="text-ink">
             <MoneyDisplay amount={snapshot.projectedCash} />
           </dd>
         </div>
         <div className="flex justify-between gap-2">
           <dt>Runway</dt>
-          <dd className="text-zinc-200">{runwayLabel}</dd>
+          <dd className="text-ink">{runwayLabel}</dd>
         </div>
         <div className="flex items-center justify-between gap-2">
           <dt>Health</dt>

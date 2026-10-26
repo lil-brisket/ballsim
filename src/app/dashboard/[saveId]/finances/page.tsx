@@ -97,16 +97,16 @@ export default async function FinancesPage({
             ]}
           />
         </div>
-        <p className="mt-2 flex flex-wrap items-baseline gap-x-4 text-sm text-zinc-100">
+        <p className="mt-2 flex flex-wrap items-baseline gap-x-4 text-sm text-ink">
           <span>
             Season net income{" "}
             <MoneyDisplay amount={season.profitability.netIncome} />
           </span>
-          <span className="text-zinc-500">
+          <span className="text-faint">
             Capital this month{" "}
             <MoneyDisplay amount={month.investment.capital} />
           </span>
-          <span className="text-zinc-500">
+          <span className="text-faint">
             Current month net change:{" "}
             <MoneyDisplay amount={month.liquidity.netBusinessFundsChange} />
           </span>
@@ -119,10 +119,10 @@ export default async function FinancesPage({
           netWeeklyBurn={cashRunway.netWeeklyBurn}
           runwayWeeks={cashRunway.runwayWeeks}
         />
-        <p className="mt-2 text-sm text-zinc-300">
-          <span className="text-zinc-500">Projected funds</span>{" "}
+        <p className="mt-2 text-sm text-soft">
+          <span className="text-faint">Projected funds</span>{" "}
           <MoneyDisplay amount={cashRunway.projectedCash} />
-          <span className="ml-4 text-zinc-500">Business runway</span>{" "}
+          <span className="ml-4 text-faint">Business runway</span>{" "}
           {cashRunway.runwayWeeks === null
             ? "Positive through horizon"
             : `${cashRunway.runwayWeeks} weeks`}

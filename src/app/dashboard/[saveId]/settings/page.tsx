@@ -65,7 +65,7 @@ export default async function InGameSettingsPage({
             value={league.area ? LEAGUE_AREA_LABELS[league.area] : "—"}
           />
         </dl>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           League structure is set when the league is created and cannot be
           changed here.
         </p>

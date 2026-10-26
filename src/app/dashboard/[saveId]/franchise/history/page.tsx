@@ -64,7 +64,7 @@ export default async function FranchiseHistoryPage({
           </Section>
           <Section title="Relocations & Rebrands">
             {identityChanges.length === 0 ? (
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted">
                 The franchise has always played as {team.city} {team.name}.
               </p>
             ) : (
@@ -72,16 +72,16 @@ export default async function FranchiseHistoryPage({
                 {identityChanges.map((change) => (
                   <li
                     key={change.seasonYear}
-                    className="rounded-lg border border-zinc-800 px-4 py-3"
+                    className="rounded-lg border border-line px-4 py-3"
                   >
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-faint">
                       {change.seasonYear} ·{" "}
                       {change.kind === "relocation" ? "Relocation" : "Rebrand"}
                     </p>
-                    <p className="mt-1 font-medium text-zinc-100">
+                    <p className="mt-1 font-medium text-ink">
                       {change.from} → {change.to}
                     </p>
-                    <p className="mt-1 text-sm text-zinc-400">
+                    <p className="mt-1 text-sm text-muted">
                       Value <MoneyDisplay amount={change.valueBefore} /> →{" "}
                       <MoneyDisplay amount={change.valueAfter} /> · Fan
                       sentiment {change.sentimentBefore} →{" "}
@@ -91,7 +91,7 @@ export default async function FranchiseHistoryPage({
                 ))}
               </ul>
             )}
-            <p className="mt-3 text-sm text-zinc-500">
+            <p className="mt-3 text-sm text-faint">
               Before/after figures are season-end values either side of the
               change.
             </p>
@@ -99,7 +99,7 @@ export default async function FranchiseHistoryPage({
         </>
       )}
 
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-faint">
         Season results, team records, player history and retired jerseys live on{" "}
         <Link
           href={`/dashboard/${saveId}/team/history`}

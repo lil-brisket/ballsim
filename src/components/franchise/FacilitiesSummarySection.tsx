@@ -26,11 +26,11 @@ export function FacilitiesSummarySection(props: {
         </span>
       }
     >
-      <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-zinc-400">
+      <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-muted">
         {summary.levels.map((row) => (
           <li key={row.category} className="flex justify-between gap-2">
             <span className="capitalize">{row.category}</span>
-            <span className="flex items-center gap-1 text-zinc-200">
+            <span className="flex items-center gap-1 text-ink">
               L{row.level}
               {row.upgrading ? (
                 <StatusBadge label="upgrading" tone="warning" />
@@ -39,7 +39,7 @@ export function FacilitiesSummarySection(props: {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-sm text-zinc-500">
+      <p className="mt-3 text-sm text-faint">
         Weekly facility OPEX <MoneyDisplay amount={summary.weeklyOpex} />
       </p>
     </ActionCard>

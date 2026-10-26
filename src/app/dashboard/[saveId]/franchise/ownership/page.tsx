@@ -69,9 +69,9 @@ export default async function FranchiseOwnershipPage({
       </section>
 
       <Section title="Mandate">
-        <p className="text-sm text-zinc-300">{confidence.mandateSummary}</p>
+        <p className="text-sm text-soft">{confidence.mandateSummary}</p>
         {confidence.priorityBullets.length > 0 ? (
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-400">
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
             {confidence.priorityBullets.map((bullet) => (
               <li key={bullet}>{bullet}</li>
             ))}
@@ -90,10 +90,8 @@ export default async function FranchiseOwnershipPage({
       </Section>
 
       <Section title="The Board">
-        <p className="text-sm font-medium text-zinc-100">
-          {confidence.board.label}
-        </p>
-        <p className="mt-1 text-sm text-zinc-400">{confidence.board.detail}</p>
+        <p className="text-sm font-medium text-ink">{confidence.board.label}</p>
+        <p className="mt-1 text-sm text-muted">{confidence.board.detail}</p>
         {confidence.board.decisionPending ? (
           <p className="mt-2 text-sm">
             <Link
@@ -112,7 +110,7 @@ export default async function FranchiseOwnershipPage({
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-zinc-800 text-zinc-400">
+              <thead className="border-b border-line text-muted">
                 <tr>
                   <th className="px-3 py-2">Year</th>
                   <th className="px-3 py-2">Mood</th>
@@ -123,11 +121,11 @@ export default async function FranchiseOwnershipPage({
                 {view.seasonMoods.map((row) => (
                   <tr
                     key={row.seasonYear}
-                    className="border-b border-zinc-900 text-zinc-200"
+                    className="border-b border-surface-raised text-ink"
                   >
                     <td className="px-3 py-2">{row.seasonYear}</td>
                     <td className="px-3 py-2">{row.moodLabel}</td>
-                    <td className="px-3 py-2 text-zinc-400">
+                    <td className="px-3 py-2 text-muted">
                       {row.mandateSummary}
                     </td>
                   </tr>
@@ -145,7 +143,7 @@ export default async function FranchiseOwnershipPage({
           <div className="space-y-4">
             {view.objectiveSeasons.map((season) => (
               <div key={season.seasonYear}>
-                <p className="mb-2 text-sm font-medium text-zinc-300">
+                <p className="mb-2 text-sm font-medium text-soft">
                   {season.seasonYear} · {season.completed} met · {season.failed}{" "}
                   missed
                 </p>

@@ -92,7 +92,7 @@ export default async function FranchiseOverviewPage({
           value={
             <>
               <MoneyDisplay amount={view.snapshot.franchiseValue} />
-              <p className="mt-1 font-sans text-sm font-normal capitalize text-zinc-500">
+              <p className="mt-1 font-sans text-sm font-normal capitalize text-faint">
                 {view.valueExplanation.standing.replaceAll("_", " ")}
               </p>
             </>
@@ -101,12 +101,12 @@ export default async function FranchiseOverviewPage({
         />
       </section>
       {view.snapshot.franchiseHealthSummary ? (
-        <p className="text-sm leading-relaxed text-zinc-500">
+        <p className="text-sm leading-relaxed text-faint">
           {view.snapshot.franchiseHealthSummary}
         </p>
       ) : null}
       {positive || negative ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           {positive ? `Driven by ${positive}` : null}
           {positive && negative ? " · " : null}
           {negative ? `Pressed by ${negative}` : null}
@@ -155,15 +155,15 @@ export default async function FranchiseOverviewPage({
               return (
                 <li
                   key={obj.id}
-                  className="rounded-lg border border-zinc-800 px-4 py-3"
+                  className="rounded-lg border border-line px-4 py-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-zinc-100">
+                    <p className="text-sm font-medium text-ink">
                       {obj.description}
                     </p>
                     <StatusBadge label={obj.status} />
                   </div>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-1 text-sm text-faint">
                     {obj.role.replaceAll("_", " ")}
                     {obj.horizonYears != null
                       ? ` · ${obj.horizonYears}y horizon`

@@ -28,7 +28,7 @@ export default async function SettingsAiPage({
   return (
     <SettingsPageShell saveId={saveId} active="ai" error={error}>
       <Section title="AI Team Management">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           Applies to {view.controlledTeamLabel}. Each franchise you control has
           its own delegation.
         </p>
