@@ -18,14 +18,14 @@ export function AdvancePhaseDialog(props: {
 
   return (
     <section
-      className="rounded-xl border border-zinc-600 bg-zinc-900/70 px-4 py-4"
+      className="rounded-xl border border-disabled bg-surface-raised/70 px-4 py-4"
       aria-label="Advance phase"
     >
       <SectionHeading
         eyebrow="Advance"
         title={`Advance to ${preview.toPhaseName}`}
       />
-      <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-zinc-400">
+      <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted">
         {preview.consequences.map((line) => (
           <li key={line}>{line}</li>
         ))}

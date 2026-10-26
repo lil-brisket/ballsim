@@ -24,7 +24,7 @@ export function FranchiseSituations(props: {
         {props.situations.map((situation) => (
           <li
             key={situation.id}
-            className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-3"
+            className="rounded-xl border border-line bg-surface-base/60 px-4 py-3"
           >
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge
@@ -37,16 +37,19 @@ export function FranchiseSituations(props: {
                       : "info"
                 }
               />
-              <span className="text-sm text-zinc-500">
+              <span className="text-sm text-faint">
                 {situation.category} · {situation.status}
               </span>
             </div>
-            <h3 className="mt-2 text-sm font-semibold text-zinc-100">
-              {situation.title}
-            </h3>
-            <p className="mt-1 text-sm text-zinc-300">{situation.summary}</p>
-            <p className="mt-2 text-sm text-zinc-400">{situation.body}</p>
-            <ul className="mt-2 space-y-0.5 text-sm text-zinc-500">
+            <SectionHeading
+              as="h3"
+              size="sm"
+              className="mt-2"
+              title={situation.title}
+            />
+            <p className="mt-1 text-sm text-soft">{situation.summary}</p>
+            <p className="mt-2 text-sm text-muted">{situation.body}</p>
+            <ul className="mt-2 space-y-0.5 text-sm text-faint">
               {Object.entries(situation.evidence)
                 .slice(0, 5)
                 .map(([key, value]) => (
@@ -84,7 +87,7 @@ export function FranchiseSituations(props: {
                     {action.label}
                   </button>
                   {action.effectSummary ? (
-                    <p className="mt-1 text-sm leading-snug text-zinc-500">
+                    <p className="mt-1 text-sm leading-snug text-faint">
                       {action.effectSummary}
                     </p>
                   ) : null}

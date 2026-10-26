@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
@@ -47,12 +48,15 @@ function SchedulePanel(props: {
     <section
       className={cn(panelClass, "flex min-h-0 flex-col", props.className)}
     >
-      <header className="flex items-baseline justify-between gap-3 border-b border-zinc-800 px-4 py-2.5">
-        <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-zinc-200">
-          {props.title}
-        </h2>
+      <header className="flex items-baseline justify-between gap-3 border-b border-line px-4 py-2.5">
+        <SectionHeading
+          as="h2"
+          size="sm"
+          titleClassName="font-display uppercase tracking-wide"
+          title={props.title}
+        />
         {props.meta ? (
-          <span className="text-sm text-zinc-500">{props.meta}</span>
+          <span className="text-sm text-faint">{props.meta}</span>
         ) : null}
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto p-3">{props.children}</div>
@@ -164,7 +168,7 @@ export default async function SchedulePage({
         subtitle={
           <span>
             {formatGameDate(focusDate, { weekday: true, year: true })}
-            <span className="text-zinc-500">
+            <span className="text-faint">
               {" · "}
               {formatRelativeGameDay(focusDate, currentDate)}
             </span>
@@ -175,7 +179,7 @@ export default async function SchedulePage({
             <Link
               href={href({ date: undefined })}
               className={cn(
-                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-team-ink hover:text-team-ink",
+                "rounded-md border border-line-strong px-3 py-1.5 text-sm text-soft hover:border-team-ink hover:text-team-ink",
                 focusRingClass,
               )}
             >
@@ -197,7 +201,7 @@ export default async function SchedulePage({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Suspense
-          fallback={<p className="text-sm text-zinc-500">Loading filters…</p>}
+          fallback={<p className="text-sm text-faint">Loading filters…</p>}
         >
           <TeamFilter
             teams={view.teams}
@@ -206,7 +210,7 @@ export default async function SchedulePage({
           />
         </Suspense>
         <div
-          className="inline-flex rounded-full border border-zinc-700 p-0.5"
+          className="inline-flex rounded-full border border-line-strong p-0.5"
           aria-label="Status filter"
         >
           {(
@@ -226,7 +230,7 @@ export default async function SchedulePage({
                 "rounded-full px-3 py-1 text-sm",
                 statusFilter === id
                   ? "bg-team-ink/15 text-team-ink"
-                  : "text-zinc-400 hover:text-zinc-200",
+                  : "text-muted hover:text-ink",
                 focusRingClass,
               )}
             >
@@ -256,7 +260,7 @@ export default async function SchedulePage({
             }
           >
             {view.today.length === 0 ? (
-              <p className="py-6 text-center text-sm text-zinc-500">
+              <p className="py-6 text-center text-sm text-faint">
                 No games on this date.
               </p>
             ) : (
@@ -292,9 +296,19 @@ export default async function SchedulePage({
                       {groupLeagueScheduleRowsByDate(view.recent).map(
                         (group) => (
                           <div key={group.date} className="space-y-1.5">
-                            <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                              {formatGameDate(group.date, { weekday: true })}
-                            </h3>
+                            <SectionHeading
+                              as="h3"
+                              size="sm"
+                              tone="muted"
+                              titleClassName="text-xs! uppercase tracking-wide"
+                              title={
+                                <>
+                                  {formatGameDate(group.date, {
+                                    weekday: true,
+                                  })}
+                                </>
+                              }
+                            />
                             <GameList saveId={saveId} games={group.games} />
                           </div>
                         ),

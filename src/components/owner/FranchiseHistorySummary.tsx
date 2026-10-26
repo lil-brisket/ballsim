@@ -32,10 +32,10 @@ function SummaryMetric(props: {
 }) {
   return (
     <div className="min-w-0">
-      <p className="text-sm text-zinc-400">{props.label}</p>
-      <p className="mt-1 text-lg text-zinc-50">{props.value}</p>
+      <p className="text-sm text-muted">{props.label}</p>
+      <p className="mt-1 text-lg text-ink">{props.value}</p>
       {props.detail ? (
-        <p className="mt-0.5 text-sm text-zinc-500">{props.detail}</p>
+        <p className="mt-0.5 text-sm text-faint">{props.detail}</p>
       ) : null}
     </div>
   );
@@ -120,7 +120,7 @@ function SeasonHighlightList(props: { highlights: HistoricalHighlight[] }) {
   return (
     <ul className="mt-1 flex flex-wrap gap-1">
       {props.highlights.map((highlight) => (
-        <li key={highlight} className="text-sm text-zinc-400">
+        <li key={highlight} className="text-sm text-muted">
           {HIGHLIGHT_LABELS[highlight]}
         </li>
       ))}
@@ -138,7 +138,7 @@ export function FranchiseHistorySeasonTable(props: {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-left text-sm">
-        <thead className="border-b border-zinc-800 text-zinc-400">
+        <thead className="border-b border-line text-muted">
           <tr>
             <th className="px-3 py-2">Year</th>
             <th className="px-3 py-2">Record</th>
@@ -154,7 +154,7 @@ export function FranchiseHistorySeasonTable(props: {
           {[...props.seasons].reverse().map((season) => (
             <tr
               key={season.seasonId}
-              className="border-b border-zinc-900 text-zinc-200"
+              className="border-b border-surface-raised text-ink"
             >
               <td className="px-3 py-2 align-top">
                 <div>{season.seasonYear}</div>

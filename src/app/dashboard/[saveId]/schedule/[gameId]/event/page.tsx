@@ -50,7 +50,7 @@ export default async function GameDayEventPage({
         title="Game-Day Event"
         subtitle={`${view.home ? "vs" : "@"} ${view.opponentName} · ${formatGameDate(view.date, { weekday: true })}`}
       />
-      <p className="mb-4 text-sm text-zinc-500">
+      <p className="mb-4 text-sm text-faint">
         <Link
           href={`/dashboard/${saveId}/schedule`}
           className="text-team-ink underline-offset-4 hover:underline"
@@ -61,21 +61,21 @@ export default async function GameDayEventPage({
       {error ? <ErrorState message={error} /> : null}
 
       <section className="mb-6 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-          <div className="text-sm text-zinc-400">Business cash</div>
-          <div className="text-lg text-zinc-100">
+        <div className="rounded-lg border border-line bg-surface-base/60 p-3">
+          <div className="text-sm text-muted">Business cash</div>
+          <div className="text-lg text-ink">
             <MoneyDisplay amount={view.businessFunds} />
           </div>
         </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-          <div className="text-sm text-zinc-400">Committed promotions</div>
-          <div className="text-lg text-zinc-100">
+        <div className="rounded-lg border border-line bg-surface-base/60 p-3">
+          <div className="text-sm text-muted">Committed promotions</div>
+          <div className="text-lg text-ink">
             <MoneyDisplay amount={view.committedSpend} />
           </div>
         </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
-          <div className="text-sm text-zinc-400">Matchup</div>
-          <div className="text-lg text-zinc-100">
+        <div className="rounded-lg border border-line bg-surface-base/60 p-3">
+          <div className="text-sm text-muted">Matchup</div>
+          <div className="text-lg text-ink">
             {view.home ? "Home" : "Away"} · {view.status}
           </div>
         </div>
@@ -85,8 +85,8 @@ export default async function GameDayEventPage({
         <Section title={`${view.result.name} Results`}>
           <dl className="grid gap-2 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-zinc-500">Attendance</dt>
-              <dd className="text-zinc-100">
+              <dt className="text-faint">Attendance</dt>
+              <dd className="text-ink">
                 {view.result.actualAttendance.toLocaleString()} (expected
                 without event: {view.result.baselineAttendance.toLocaleString()}
                 , {view.result.attendanceDifference >= 0 ? "+" : ""}
@@ -94,20 +94,20 @@ export default async function GameDayEventPage({
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500">Projected attendance</dt>
-              <dd className="text-zinc-100">
+              <dt className="text-faint">Projected attendance</dt>
+              <dd className="text-ink">
                 {view.result.projectedAttendanceLow.toLocaleString()} –{" "}
                 {view.result.projectedAttendanceHigh.toLocaleString()}
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500">Event cost</dt>
-              <dd className="text-zinc-100">
+              <dt className="text-faint">Event cost</dt>
+              <dd className="text-ink">
                 <MoneyDisplay amount={view.result.eventCost} />
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500">Net event impact</dt>
+              <dt className="text-faint">Net event impact</dt>
               <dd
                 className={
                   view.result.netFinancialImpact >= 0
@@ -119,8 +119,8 @@ export default async function GameDayEventPage({
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500">Projected net</dt>
-              <dd className="text-zinc-100">
+              <dt className="text-faint">Projected net</dt>
+              <dd className="text-ink">
                 {formatMoneyRange(
                   view.result.projectedNetImpactLow,
                   view.result.projectedNetImpactHigh,
@@ -128,8 +128,8 @@ export default async function GameDayEventPage({
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500">Fan response</dt>
-              <dd className="text-zinc-100 capitalize">
+              <dt className="text-faint">Fan response</dt>
+              <dd className="text-ink capitalize">
                 {view.result.fanResponse.replaceAll("_", " ")}
                 {view.result.underperformed ? (
                   <span className="ml-2 text-warning">(underperformed)</span>
@@ -137,14 +137,14 @@ export default async function GameDayEventPage({
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500">Ticket revenue delta</dt>
-              <dd className="text-zinc-100">
+              <dt className="text-faint">Ticket revenue delta</dt>
+              <dd className="text-ink">
                 <MoneyDisplay amount={view.result.ticketRevenueDifference} />
               </dd>
             </div>
             <div>
-              <dt className="text-zinc-500">Merch / concessions delta</dt>
-              <dd className="text-zinc-100">
+              <dt className="text-faint">Merch / concessions delta</dt>
+              <dd className="text-ink">
                 <MoneyDisplay amount={view.result.merchRevenueDifference} /> /{" "}
                 <MoneyDisplay
                   amount={view.result.concessionsRevenueDifference}
@@ -153,8 +153,8 @@ export default async function GameDayEventPage({
             </div>
             {view.result.giveawaysDistributed != null ? (
               <div>
-                <dt className="text-zinc-500">Giveaways distributed</dt>
-                <dd className="text-zinc-100">
+                <dt className="text-faint">Giveaways distributed</dt>
+                <dd className="text-ink">
                   {view.result.giveawaysDistributed.toLocaleString()}
                   {view.result.giveawaysQuantity != null
                     ? ` / ${view.result.giveawaysQuantity.toLocaleString()}`
@@ -170,18 +170,18 @@ export default async function GameDayEventPage({
       {view.home && view.currentPromotion ? (
         <Section title="Current event">
           <div className="space-y-3 text-sm">
-            <p className="text-zinc-100">
+            <p className="text-ink">
               <span className="font-medium">{view.currentPromotion.name}</span>{" "}
-              <span className="text-zinc-500">
+              <span className="text-faint">
                 ({view.currentPromotion.status})
               </span>
             </p>
-            <p className="text-zinc-400">
+            <p className="text-muted">
               Cost paid:{" "}
               <MoneyDisplay amount={view.currentPromotion.costPaid} />
             </p>
             {view.currentPromotion.projected ? (
-              <p className="text-zinc-400">
+              <p className="text-muted">
                 Projected attendance:{" "}
                 {view.currentPromotion.projected.attendanceLow.toLocaleString()}{" "}
                 –{" "}
@@ -224,20 +224,20 @@ export default async function GameDayEventPage({
             {view.catalog.map((item) => (
               <li
                 key={item.id}
-                className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-3"
+                className="rounded-lg border border-line bg-surface-base/40 p-3"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-zinc-100">{item.name}</div>
-                    <div className="mt-1 text-sm capitalize text-zinc-500">
+                    <div className="font-medium text-ink">{item.name}</div>
+                    <div className="mt-1 text-sm capitalize text-faint">
                       {item.category.replaceAll("_", " ")} · {item.leadTimeDays}
                       d lead · <MoneyDisplay amount={item.cost} />
                     </div>
-                    <p className="mt-2 text-sm text-zinc-400">
+                    <p className="mt-2 text-sm text-muted">
                       {item.description}
                     </p>
                     {item.projected ? (
-                      <p className="mt-2 text-sm text-zinc-300">
+                      <p className="mt-2 text-sm text-soft">
                         Projected attendance:{" "}
                         {item.projected.attendanceLow.toLocaleString()} –{" "}
                         {item.projected.attendanceHigh.toLocaleString()}
@@ -288,7 +288,7 @@ export default async function GameDayEventPage({
 
       {!view.home ? (
         <Section title="Away game">
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             Game-day events can only be scheduled for home games.
           </p>
         </Section>

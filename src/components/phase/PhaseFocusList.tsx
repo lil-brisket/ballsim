@@ -14,10 +14,10 @@ export function PhaseFocusList(props: { focus: PhaseFocus[] }) {
         {props.focus.map((item) => (
           <li
             key={item.focusKey}
-            className="rounded-lg border border-zinc-700 bg-zinc-900/40 px-3 py-2"
+            className="rounded-lg border border-line-strong bg-surface-raised/40 px-3 py-2"
           >
-            <p className="text-sm font-medium text-zinc-100">{item.title}</p>
-            <p className="mt-0.5 text-sm text-zinc-400">{item.explanation}</p>
+            <p className="text-sm font-medium text-ink">{item.title}</p>
+            <p className="mt-0.5 text-sm text-muted">{item.explanation}</p>
           </li>
         ))}
       </ul>
@@ -42,14 +42,14 @@ export function PhaseTaskList(props: {
         {props.tasks.map((task) => (
           <li
             key={task.taskKey}
-            className="rounded-lg border border-zinc-700 bg-zinc-900/50 px-3 py-3"
+            className="rounded-lg border border-line-strong bg-surface-raised/50 px-3 py-3"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p className="text-sm font-medium text-zinc-50">
+                <p className="text-sm font-medium text-ink">
                   <PriorityMark priority={task.priority} /> {task.title}
                 </p>
-                <p className="mt-1 text-sm text-zinc-400">{task.explanation}</p>
+                <p className="mt-1 text-sm text-muted">{task.explanation}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Link

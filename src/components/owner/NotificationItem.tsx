@@ -64,7 +64,7 @@ export function NotificationItem(props: {
       className={cn(
         "flex items-start gap-3 rounded-lg border border-l-4 px-3 py-3",
         props.read
-          ? "border-zinc-800 border-l-zinc-700 bg-zinc-900/40"
+          ? "border-line border-l-line-strong bg-surface-raised/40"
           : "border-team-ink/50 border-l-team-ink bg-team/20",
       )}
     >
@@ -81,19 +81,19 @@ export function NotificationItem(props: {
         className={cn(
           "mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border",
           SEVERITY_ICON_TONE[props.severity] ??
-            "border-zinc-700 bg-zinc-900 text-zinc-300",
+            "border-line-strong bg-surface-raised text-soft",
         )}
       >
         <NavIcon name={notificationIconName(props.type)} className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-sm font-semibold text-zinc-100">{props.title}</p>
-          <span className="shrink-0 text-sm tabular-nums text-zinc-400">
+          <p className="text-sm font-semibold text-ink">{props.title}</p>
+          <span className="shrink-0 text-sm tabular-nums text-muted">
             {formatGameDate(props.occurredOn)}
           </span>
         </div>
-        <p className="mt-1 text-sm text-zinc-400">{props.message}</p>
+        <p className="mt-1 text-sm text-muted">{props.message}</p>
         <div className="mt-2">
           <StatusBadge label={props.severity} tone={props.severity} />
         </div>

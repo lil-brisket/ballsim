@@ -50,7 +50,7 @@ export function PhaseDashboard(props: {
       />
       <section aria-label="Optional shortcuts">
         <SectionHeading title="Optional" />
-        <p className="mt-2 flex flex-wrap gap-2 text-sm text-zinc-400">
+        <p className="mt-2 flex flex-wrap gap-2 text-sm text-muted">
           {props.view.optionalLinks.map((link) => (
             <Link
               key={link.href}

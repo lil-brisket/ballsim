@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { InfoTip } from "@/components/ui/InfoTip";
 import {
   categoryById,
@@ -43,24 +44,27 @@ export function DelegationCategorySection({
   }
 
   return (
-    <section className="space-y-3 rounded-md border border-zinc-800 bg-zinc-950/40 p-3">
+    <section className="space-y-3 rounded-md border border-line bg-surface-base/40 p-3">
       <div className="flex items-center gap-2">
         <span className="text-base" aria-hidden="true">
           {category.icon}
         </span>
-        <h3 className="whitespace-nowrap text-sm font-semibold text-zinc-100">
-          {category.title}
-        </h3>
+        <SectionHeading
+          as="h3"
+          size="sm"
+          titleClassName="whitespace-nowrap"
+          title={category.title}
+        />
         <InfoTip label={category.title} align="start">
           {category.description}
         </InfoTip>
-        <span className="whitespace-nowrap rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-400">
+        <span className="whitespace-nowrap rounded bg-surface-high px-1.5 py-0.5 text-xs text-muted">
           {delegated}/{total} AI
         </span>
         <button
           type="button"
           onClick={onSelectAllCategory}
-          className="ml-auto shrink-0 whitespace-nowrap rounded px-2 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+          className="ml-auto shrink-0 whitespace-nowrap rounded px-2 py-1 text-xs font-medium text-muted hover:bg-surface-high/60 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         >
           Select All
         </button>

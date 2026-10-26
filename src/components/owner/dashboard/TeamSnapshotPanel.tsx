@@ -47,17 +47,17 @@ export function TeamSnapshotPanel(props: {
         {team.rosterProblems.length > 0 ? (
           <div>
             <p className="text-sm font-medium text-rose-400">Health</p>
-            <ul className="mt-1 space-y-1 text-sm text-zinc-300">
+            <ul className="mt-1 space-y-1 text-sm text-soft">
               {team.rosterProblems.slice(0, 4).map((problem) => (
                 <li key={problem.playerId}>
                   <PlayerEntityLink
                     saveId={saveId}
                     playerId={problem.playerId}
-                    className="text-zinc-200 hover:text-team-ink"
+                    className="text-ink hover:text-team-ink"
                   >
                     {problem.name}
                   </PlayerEntityLink>
-                  <span className="text-zinc-500"> — {problem.kind}</span>
+                  <span className="text-faint"> — {problem.kind}</span>
                 </li>
               ))}
             </ul>

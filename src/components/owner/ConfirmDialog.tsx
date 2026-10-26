@@ -36,7 +36,7 @@ export function ConfirmDialog(props: {
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
-            className="relative z-10 w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
+            className="relative z-10 w-full max-w-md rounded-xl border border-line-strong bg-surface-raised p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <SectionHeading
@@ -44,7 +44,7 @@ export function ConfirmDialog(props: {
               id="confirm-dialog-title"
               title={props.title}
             />
-            <p className="mt-2 text-sm text-zinc-400">{props.description}</p>
+            <p className="mt-2 text-sm text-muted">{props.description}</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setOpen(false)}>
                 Cancel

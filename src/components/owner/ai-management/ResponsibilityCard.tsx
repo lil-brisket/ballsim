@@ -23,7 +23,7 @@ export function ResponsibilityCard({
         "flex items-center gap-2 rounded-md border pr-2 transition-colors",
         delegated
           ? "border-team-ink/60 bg-team/20 hover:border-team-ink/80"
-          : "border-zinc-700 bg-zinc-950/60 hover:border-zinc-500",
+          : "border-line-strong bg-surface-base/60 hover:border-faint",
       ].join(" ")}
     >
       <button
@@ -39,13 +39,13 @@ export function ResponsibilityCard({
           className={[
             "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border text-[10px] leading-none",
             delegated
-              ? "border-team-ink bg-team-ink text-zinc-950"
-              : "border-zinc-500",
+              ? "border-team-ink bg-team-ink text-surface-base"
+              : "border-faint",
           ].join(" ")}
         >
           {delegated ? "✓" : null}
         </span>
-        <span className="min-w-0 flex-1 text-sm font-medium text-zinc-100">
+        <span className="min-w-0 flex-1 text-sm font-medium text-ink">
           {meta.label}
         </span>
         <span
@@ -54,7 +54,7 @@ export function ResponsibilityCard({
             "shrink-0 rounded px-1.5 py-0.5 text-xs font-medium",
             delegated
               ? "bg-team/30 text-team-ink"
-              : "bg-zinc-800 text-zinc-400",
+              : "bg-surface-high text-muted",
           ].join(" ")}
         >
           {delegated ? "AI" : "You"}

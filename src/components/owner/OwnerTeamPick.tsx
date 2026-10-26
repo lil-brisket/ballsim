@@ -23,12 +23,12 @@ export function OwnerTeamPick(props: {
         {props.teams.map((team) => (
           <li
             key={team.id}
-            className="flex items-center justify-between gap-4 rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-3"
+            className="flex items-center justify-between gap-4 rounded-lg border border-line bg-surface-raised/50 px-4 py-3"
           >
             <div className="flex min-w-0 items-center gap-3">
               {team.branding ? (
                 <span
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-line-strong"
                   style={{ backgroundColor: team.branding.primaryColor }}
                 >
                   <TeamLogoMark
@@ -43,13 +43,13 @@ export function OwnerTeamPick(props: {
                 </span>
               )}
               <div className="min-w-0">
-                <p className="font-medium text-zinc-100">
+                <p className="font-medium text-ink">
                   {team.city} {team.name}{" "}
-                  <span className="text-sm text-zinc-400">
+                  <span className="text-sm text-muted">
                     ({team.abbreviation})
                   </span>
                 </p>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-faint">
                   {team.conferenceName} · {team.divisionName}
                 </p>
               </div>

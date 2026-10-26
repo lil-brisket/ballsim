@@ -69,7 +69,7 @@ export default async function NotificationsPage({
           className={`rounded-full border px-3 py-1 text-xs ${
             !team
               ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-400"
+              : "border-line-strong text-muted"
           }`}
         >
           All Teams
@@ -81,7 +81,7 @@ export default async function NotificationsPage({
             className={`rounded-full border px-3 py-1 text-xs ${
               team === owned.id
                 ? "border-team-ink text-team-ink"
-                : "border-zinc-700 text-zinc-400"
+                : "border-line-strong text-muted"
             }`}
           >
             {owned.abbreviation}
@@ -99,7 +99,7 @@ export default async function NotificationsPage({
           className={`rounded-full border px-3 py-1 text-xs ${
             !type
               ? "border-team-ink text-team-ink"
-              : "border-zinc-700 text-zinc-400"
+              : "border-line-strong text-muted"
           }`}
         >
           All types
@@ -114,7 +114,7 @@ export default async function NotificationsPage({
             className={`rounded-full border px-3 py-1 text-xs ${
               type === notificationType
                 ? "border-team-ink text-team-ink"
-                : "border-zinc-700 text-zinc-400"
+                : "border-line-strong text-muted"
             }`}
           >
             {notificationType}
@@ -128,7 +128,7 @@ export default async function NotificationsPage({
         <ul className="space-y-2">
           {filtered.map((notification) => (
             <li key={`${notification.teamId}:${notification.id}`}>
-              <div className="mb-1 flex items-center justify-between gap-2 text-sm text-zinc-500">
+              <div className="mb-1 flex items-center justify-between gap-2 text-sm text-faint">
                 <span>{notification.teamName}</span>
                 {notification.teamId !== view.dashboard.controlledTeam.id ? (
                   <form action={switchActiveOwnerTeamAction}>

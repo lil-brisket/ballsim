@@ -111,7 +111,7 @@ export default async function DashboardPage({
       dash.pendingTradeOffer.primaryTeamId !== dashboard.controlledTeam.id ? (
         <div
           role="status"
-          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-zinc-200"
+          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-ink"
         >
           <p className="font-medium text-warning">
             {dash.pendingTradeOffer.receivingTeamName} needs your attention
@@ -160,7 +160,7 @@ export default async function DashboardPage({
       {dash.flags.userOnDraftClock ? (
         <p
           role="status"
-          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-zinc-200"
+          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-ink"
         >
           Your team is on the draft clock. Make a selection on the Draft screen
           before advancing time.{" "}
@@ -179,19 +179,19 @@ export default async function DashboardPage({
       {dash.flags.seasonReviewPending ? (
         <div
           role="status"
-          className="space-y-3 rounded-md border border-zinc-700/60 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-200"
+          className="space-y-3 rounded-md border border-line-strong/60 bg-surface-raised/40 px-4 py-3 text-sm text-ink"
         >
-          <p className="font-medium text-zinc-100">Season Review</p>
+          <p className="font-medium text-ink">Season Review</p>
           {dash.seasonRecap ? (
-            <ul className="list-inside list-disc space-y-1 text-zinc-300">
+            <ul className="list-inside list-disc space-y-1 text-soft">
               <li>Record: {dash.seasonRecap.record}</li>
               <li>Playoffs: {dash.seasonRecap.playoffResult}</li>
             </ul>
           ) : null}
           {dash.seasonStory ? (
-            <p className="text-zinc-400">{dash.seasonStory}</p>
+            <p className="text-muted">{dash.seasonStory}</p>
           ) : null}
-          <p className="text-zinc-400">
+          <p className="text-muted">
             Continue from the Calendar — time advancement is calendar-driven.
           </p>
           <Link
@@ -234,8 +234,8 @@ export default async function DashboardPage({
         saveId={saveId}
       />
 
-      <details className="rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-3">
-        <summary className="cursor-pointer text-sm text-zinc-400">
+      <details className="rounded-xl border border-line bg-surface-raised/30 px-4 py-3">
+        <summary className="cursor-pointer text-sm text-muted">
           Phase details (optional)
         </summary>
         <div className="mt-4">

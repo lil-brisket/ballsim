@@ -51,19 +51,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <footer className="mt-auto flex flex-wrap items-center justify-center gap-x-6 border-t border-surface-line pt-4 sm:justify-between">
           <Link
             href="/settings"
-            className="inline-flex min-h-11 items-center text-sm text-zinc-400 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+            className="inline-flex min-h-11 items-center text-sm text-muted hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
           >
             Settings
           </Link>
           {user ? (
             <form
               action={signOutAction}
-              className="flex items-center gap-2 text-sm text-zinc-400"
+              className="flex items-center gap-2 text-sm text-muted"
             >
               <span>Signed in as {user.username} ·</span>
               <button
                 type="submit"
-                className="inline-flex min-h-11 items-center text-zinc-300 underline hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+                className="inline-flex min-h-11 items-center text-soft underline hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
               >
                 Sign out
               </button>
@@ -71,7 +71,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           ) : (
             <Link
               href="/login"
-              className="inline-flex min-h-11 items-center text-sm text-zinc-400 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+              className="inline-flex min-h-11 items-center text-sm text-muted hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
             >
               Sign in for online leagues
             </Link>

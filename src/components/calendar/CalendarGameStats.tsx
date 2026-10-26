@@ -50,13 +50,13 @@ export function CalendarGameStats(props: {
 
   return (
     <div
-      className="space-y-3 rounded-md border border-surface-line bg-surface-raised px-3 py-3 text-xs text-zinc-300"
+      className="space-y-3 rounded-md border border-surface-line bg-surface-raised px-3 py-3 text-xs text-soft"
       aria-label="Game stats"
     >
       <table className="w-full text-center tabular-nums">
         <caption className="sr-only">Line score</caption>
         <thead>
-          <tr className="text-zinc-500">
+          <tr className="text-faint">
             <th scope="col" className="text-left font-medium">
               <span className="sr-only">Team</span>
             </th>
@@ -75,16 +75,13 @@ export function CalendarGameStats(props: {
             const key = side === stats.home ? "home" : "away";
             return (
               <tr key={side.teamId}>
-                <th
-                  scope="row"
-                  className="text-left font-semibold text-zinc-100"
-                >
+                <th scope="row" className="text-left font-semibold text-ink">
                   {side.abbreviation}
                 </th>
                 {stats.periods.map((period) => (
                   <td key={period.label}>{period[key]}</td>
                 ))}
-                <td className="font-bold text-zinc-50">{side.score}</td>
+                <td className="font-bold text-ink">{side.score}</td>
               </tr>
             );
           })}
@@ -97,18 +94,18 @@ export function CalendarGameStats(props: {
             key={row.label}
             className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 tabular-nums"
           >
-            <dd className="text-left text-zinc-100">{row.away}</dd>
-            <dt className="text-zinc-500">{row.label}</dt>
-            <dd className="text-right text-zinc-100">{row.home}</dd>
+            <dd className="text-left text-ink">{row.away}</dd>
+            <dt className="text-faint">{row.label}</dt>
+            <dd className="text-right text-ink">{row.home}</dd>
           </div>
         ))}
       </dl>
 
       <div className="space-y-2">
-        <h5 className="font-medium text-zinc-400">Top performers</h5>
+        <h5 className="font-medium text-muted">Top performers</h5>
         {sides.map((side) => (
           <div key={side.teamId} className="space-y-1">
-            <p className="font-semibold text-zinc-100">{side.abbreviation}</p>
+            <p className="font-semibold text-ink">{side.abbreviation}</p>
             <ul className="space-y-0.5">
               {side.topPerformers.map((player) => (
                 <li
@@ -121,7 +118,7 @@ export function CalendarGameStats(props: {
                   >
                     {player.playerName}
                   </PlayerEntityLink>
-                  <span className="text-zinc-400">
+                  <span className="text-muted">
                     {player.points} PTS · {player.rebounds} REB ·{" "}
                     {player.assists} AST
                   </span>

@@ -28,27 +28,25 @@ export function OwnerPanel(props: {
     <Section title="Owner">
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
-            <p className="text-sm text-zinc-400">Owner patience</p>
-            <p className="mt-1 text-lg text-zinc-50">{owner.patience}</p>
+          <div className="rounded-xl border border-line bg-surface-raised/50 px-4 py-4">
+            <p className="text-sm text-muted">Owner patience</p>
+            <p className="mt-1 text-lg text-ink">{owner.patience}</p>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
-            <p className="text-sm text-zinc-400">Franchise reputation</p>
-            <p className="mt-1 text-2xl tabular-nums text-zinc-50">
+          <div className="rounded-xl border border-line bg-surface-raised/50 px-4 py-4">
+            <p className="text-sm text-muted">Franchise reputation</p>
+            <p className="mt-1 text-2xl tabular-nums text-ink">
               {owner.franchiseReputation}
             </p>
           </div>
         </div>
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="text-sm text-zinc-400">Current expectation</p>
-          <p className="mt-1 text-sm text-zinc-200">
-            {ownership.mandateSummary}
-          </p>
+        <div className="rounded-xl border border-line bg-surface-raised/40 px-4 py-3">
+          <p className="text-sm text-muted">Current expectation</p>
+          <p className="mt-1 text-sm text-ink">{ownership.mandateSummary}</p>
           {ownership.priorityBullets.length > 0 ? (
             <ul className="mt-2 space-y-1">
               {ownership.priorityBullets.map((bullet) => (
-                <li key={bullet} className="text-sm text-zinc-400">
+                <li key={bullet} className="text-sm text-muted">
                   · {bullet}
                 </li>
               ))}
@@ -60,19 +58,19 @@ export function OwnerPanel(props: {
           <BoardPressureCard board={ownership.board} saveId={saveId} />
         ) : null}
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="text-sm text-zinc-400">Ownership mood</p>
-          <p className="mt-1 text-sm text-zinc-200">{ownership.moodLabel}</p>
+        <div className="rounded-xl border border-line bg-surface-raised/40 px-4 py-3">
+          <p className="text-sm text-muted">Ownership mood</p>
+          <p className="mt-1 text-sm text-ink">{ownership.moodLabel}</p>
         </div>
 
         {ownership.recentDecisions.length > 0 ? (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-            <p className="text-sm text-zinc-400">Recent decisions</p>
+          <div className="rounded-xl border border-line bg-surface-raised/40 px-4 py-3">
+            <p className="text-sm text-muted">Recent decisions</p>
             <ul className="mt-2 space-y-1">
               {ownership.recentDecisions.map((decision, index) => (
                 <li
                   key={`${decision.summary}-${index}`}
-                  className="text-sm text-zinc-300"
+                  className="text-sm text-soft"
                 >
                   {decision.direction === "aligned"
                     ? "🟢"
@@ -86,41 +84,39 @@ export function OwnerPanel(props: {
           </div>
         ) : null}
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="text-sm text-zinc-400">Ownership concern</p>
-          <p className="mt-1 text-sm text-zinc-300">
+        <div className="rounded-xl border border-line bg-surface-raised/40 px-4 py-3">
+          <p className="text-sm text-muted">Ownership concern</p>
+          <p className="mt-1 text-sm text-soft">
             {ownership.concern ?? "None"}
           </p>
         </div>
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
+        <div className="rounded-xl border border-line bg-surface-raised/40 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-zinc-400">Strategic alignment</p>
+            <p className="text-sm text-muted">Strategic alignment</p>
             <button
               type="button"
-              className="text-sm text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
+              className="text-sm text-muted underline-offset-2 hover:text-ink hover:underline"
               onClick={() => setShowWhy((value) => !value)}
             >
               {showWhy ? "Hide why" : "Why?"}
             </button>
           </div>
-          <p className="mt-1 text-sm tabular-nums text-zinc-200">
+          <p className="mt-1 text-sm tabular-nums text-ink">
             {alignmentBar} {ownership.alignmentScore}%
           </p>
           {showWhy ? (
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div>
-                <p className="text-sm font-medium text-zinc-300">
+                <p className="text-sm font-medium text-soft">
                   Helping alignment
                 </p>
                 {ownership.whyHelping.length === 0 ? (
-                  <p className="mt-1 text-sm text-zinc-500">
-                    No recent helpers.
-                  </p>
+                  <p className="mt-1 text-sm text-faint">No recent helpers.</p>
                 ) : (
                   <ul className="mt-1 space-y-1">
                     {ownership.whyHelping.map((line) => (
-                      <li key={line} className="text-sm text-zinc-300">
+                      <li key={line} className="text-sm text-soft">
                         · {line}
                       </li>
                     ))}
@@ -128,17 +124,15 @@ export function OwnerPanel(props: {
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-zinc-300">
+                <p className="text-sm font-medium text-soft">
                   Hurting alignment
                 </p>
                 {ownership.whyHurting.length === 0 ? (
-                  <p className="mt-1 text-sm text-zinc-500">
-                    No recent concerns.
-                  </p>
+                  <p className="mt-1 text-sm text-faint">No recent concerns.</p>
                 ) : (
                   <ul className="mt-1 space-y-1">
                     {ownership.whyHurting.map((line) => (
-                      <li key={line} className="text-sm text-zinc-300">
+                      <li key={line} className="text-sm text-soft">
                         · {line}
                       </li>
                     ))}
@@ -149,10 +143,10 @@ export function OwnerPanel(props: {
           ) : null}
         </div>
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="text-sm text-zinc-400">Ownership evaluation</p>
-          <p className="mt-1 text-sm text-zinc-200">{owner.career.headline}</p>
-          <p className="mt-1 text-sm text-zinc-500">
+        <div className="rounded-xl border border-line bg-surface-raised/40 px-4 py-3">
+          <p className="text-sm text-muted">Ownership evaluation</p>
+          <p className="mt-1 text-sm text-ink">{owner.career.headline}</p>
+          <p className="mt-1 text-sm text-faint">
             {owner.career.band} · alignment {owner.career.alignmentScore} ·{" "}
             {owner.career.championships} titles ·{" "}
             {owner.career.playoffAppearances} playoff years
@@ -193,9 +187,9 @@ function BoardPressureCard(props: {
       }`}
       role={board.decisionPending ? "alert" : undefined}
     >
-      <p className="text-sm text-zinc-400">The board</p>
-      <p className="mt-1 text-sm font-medium text-zinc-100">{board.label}</p>
-      <p className="mt-1 text-sm text-zinc-300">{board.detail}</p>
+      <p className="text-sm text-muted">The board</p>
+      <p className="mt-1 text-sm font-medium text-ink">{board.label}</p>
+      <p className="mt-1 text-sm text-soft">{board.detail}</p>
       {board.decisionPending ? (
         <div className="mt-3 flex flex-wrap gap-2">
           <form action={resolveBoardDirectiveAction}>
@@ -228,7 +222,7 @@ function ObjectiveGroup(props: {
 }) {
   return (
     <div>
-      <p className="mb-2 text-sm font-medium text-zinc-300">{props.title}</p>
+      <p className="mb-2 text-sm font-medium text-soft">{props.title}</p>
       {props.objectives.length === 0 ? (
         <EmptyState message={props.empty} />
       ) : (

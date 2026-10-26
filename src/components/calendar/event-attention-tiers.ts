@@ -21,8 +21,8 @@ const INDICATOR_ORDER: AttentionIndicatorKind[] = [
 export const ATTENTION_INDICATOR_DOT: Record<AttentionIndicatorKind, string> = {
   team_game: "bg-sky-400 ring-1 ring-sky-300/60",
   user_impact: "bg-team-ink",
-  league: "bg-zinc-500",
-  background: "bg-zinc-700",
+  league: "bg-faint",
+  background: "bg-line-strong",
 };
 
 export const ATTENTION_TIER_LABEL: Record<EventAttentionTier, string> = {

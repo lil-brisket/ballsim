@@ -29,7 +29,7 @@ export function AttentionRequiredPanel(props: {
         aria-label="Attention required"
       >
         <SectionHeading title="You're in good shape" />
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-muted">
           No urgent franchise decisions require your attention right now.
         </p>
       </section>
@@ -72,10 +72,10 @@ export function AttentionRequiredPanel(props: {
           {unresolved.map((item) => (
             <li
               key={item.id}
-              className="rounded-lg border border-zinc-700 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-300"
+              className="rounded-lg border border-line-strong bg-surface-raised/50 px-3 py-2 text-sm text-soft"
             >
-              <span className="font-medium text-zinc-100">{item.title}</span>
-              <span className="text-zinc-500"> — {item.detail}</span>
+              <span className="font-medium text-ink">{item.title}</span>
+              <span className="text-faint"> — {item.detail}</span>
             </li>
           ))}
         </ul>
@@ -88,20 +88,16 @@ export function AttentionRequiredPanel(props: {
             className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-4"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-semibold text-zinc-100">
-                {item.title}
-              </h3>
+              <SectionHeading as="h3" size="sm" title={item.title} />
               <StatusBadge label={item.severity} tone={item.severity} />
             </div>
-            <p className="mt-2 text-sm text-zinc-300">{item.what}</p>
-            <p className="mt-2 text-sm text-zinc-400">
-              <span className="font-medium text-zinc-300">
-                Why it matters:{" "}
-              </span>
+            <p className="mt-2 text-sm text-soft">{item.what}</p>
+            <p className="mt-2 text-sm text-muted">
+              <span className="font-medium text-soft">Why it matters: </span>
               {item.why}
             </p>
             {item.evidence.length > 0 ? (
-              <ul className="mt-2 space-y-0.5 text-sm text-zinc-500">
+              <ul className="mt-2 space-y-0.5 text-sm text-faint">
                 {item.evidence.map((line, index) => (
                   <li key={`${index}-${line}`}>· {line}</li>
                 ))}

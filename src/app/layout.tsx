@@ -46,7 +46,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       suppressHydrationWarning
     >
       <body
-        className="min-h-full flex flex-col bg-zinc-950 text-zinc-100"
+        className="min-h-full flex flex-col bg-surface-base text-ink"
         suppressHydrationWarning
       >
         {children}

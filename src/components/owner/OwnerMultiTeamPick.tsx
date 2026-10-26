@@ -155,12 +155,12 @@ function FilterPillRow(props: {
     `inline-flex min-h-11 items-center rounded-full border px-3 py-1 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink ${
       active
         ? "border-team-ink text-team-ink"
-        : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+        : "border-line-strong text-muted hover:border-faint"
     }`;
 
   return (
     <div className="space-y-1.5">
-      <p className="text-sm font-medium text-zinc-300">{props.label}</p>
+      <p className="text-sm font-medium text-soft">{props.label}</p>
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -430,7 +430,7 @@ export function OwnerMultiTeamPick(props: {
       <li
         key={team.id}
         className={`rounded-lg border ${
-          checked ? "border-team-ink/50 bg-zinc-900/40" : "border-zinc-800"
+          checked ? "border-team-ink/50 bg-surface-raised/40" : "border-line"
         }`}
       >
         <div className="flex items-start gap-3 px-3 py-3">
@@ -442,7 +442,7 @@ export function OwnerMultiTeamPick(props: {
               (!checked && selectedIds.length >= controlledTeamCount)
             }
             onChange={() => toggle(team.id)}
-            className="mt-1 h-4 w-4 rounded border-zinc-600"
+            className="mt-1 h-4 w-4 rounded border-disabled"
             aria-label={`Control ${team.city} ${team.name}`}
           />
           <button
@@ -460,7 +460,7 @@ export function OwnerMultiTeamPick(props: {
           >
             {(draft ?? team.branding) ? (
               <span
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-zinc-700"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-line-strong"
                 style={{
                   backgroundColor:
                     draft?.primaryColor ??
@@ -494,11 +494,11 @@ export function OwnerMultiTeamPick(props: {
               </span>
             ) : null}
             <span className="min-w-0 flex-1">
-              <span className="block text-sm text-zinc-400">{team.city}</span>
-              <span className="block text-sm font-semibold text-zinc-100">
+              <span className="block text-sm text-muted">{team.city}</span>
+              <span className="block text-sm font-semibold text-ink">
                 {displayNickname}
                 {isAnchor ? (
-                  <span className="ml-2 text-sm font-normal text-zinc-2000">
+                  <span className="ml-2 text-sm font-normal text-muted">
                     Initial
                   </span>
                 ) : null}
@@ -511,7 +511,7 @@ export function OwnerMultiTeamPick(props: {
               {checked ? (
                 <span
                   className={`mt-1 block text-sm ${
-                    identityComplete ? "text-win" : "text-zinc-500"
+                    identityComplete ? "text-win" : "text-faint"
                   }`}
                 >
                   {identityComplete
@@ -525,7 +525,7 @@ export function OwnerMultiTeamPick(props: {
 
         {checked && participants ? (
           <div className="px-3 pb-3">
-            <label className="flex items-center gap-2 text-sm text-zinc-400">
+            <label className="flex items-center gap-2 text-sm text-muted">
               <span>Managed by</span>
               <Select
                 aria-label={`Managed by for ${team.city} ${team.name}`}
@@ -577,7 +577,7 @@ export function OwnerMultiTeamPick(props: {
               : `Select ${controlledTeamCount} franchises`
           }
         />
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-muted">
           {participants ? (
             <>
               Choose each player&apos;s franchises, then customize each
@@ -595,11 +595,14 @@ export function OwnerMultiTeamPick(props: {
       </div>
 
       {controlledTeamCount > 1 ? (
-        <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-3">
-          <h3 className="text-sm font-medium text-zinc-300">
-            Controlled Franchises
-          </h3>
-          <p className="text-sm text-zinc-300">
+        <div className="space-y-2 rounded-lg border border-line bg-surface-base/40 px-3 py-3">
+          <SectionHeading
+            as="h3"
+            size="sm"
+            tone="soft"
+            title="Controlled Franchises"
+          />
+          <p className="text-sm text-soft">
             {selectedIds.length} of {controlledTeamCount}
           </p>
           <ul className="space-y-2">
@@ -608,7 +611,7 @@ export function OwnerMultiTeamPick(props: {
               const nickname = draft?.nickname ?? team.name;
               return (
                 <li key={`summary-${team.id}`} className="text-sm">
-                  <span className="text-zinc-100">
+                  <span className="text-ink">
                     ✓ {team.city} {nickname}
                   </span>
                   <TeamLeaguePlacement
@@ -629,7 +632,7 @@ export function OwnerMultiTeamPick(props: {
       ) : (
         <>
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-zinc-300">Selected</h3>
+            <SectionHeading as="h3" size="sm" tone="soft" title="Selected" />
             <ul className="space-y-2">
               {pinnedTeams.map(renderFranchiseCard)}
             </ul>
@@ -660,9 +663,9 @@ export function OwnerMultiTeamPick(props: {
           ) : null}
 
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-zinc-300">Franchises</h3>
+            <SectionHeading as="h3" size="sm" tone="soft" title="Franchises" />
             {availableTeams.length === 0 ? (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-faint">
                 {selectedIds.length >= controlledTeamCount
                   ? "Selection limit reached. Deselect a franchise to choose another."
                   : "No franchises match the current filters."}
@@ -677,7 +680,7 @@ export function OwnerMultiTeamPick(props: {
       )}
 
       {participants ? (
-        <p className="text-sm text-zinc-300" data-testid="participant-progress">
+        <p className="text-sm text-soft" data-testid="participant-progress">
           {participants
             .map(
               (p) =>
@@ -688,7 +691,7 @@ export function OwnerMultiTeamPick(props: {
       ) : null}
 
       {participants && exactCount && !assignmentsOk ? (
-        <p role="status" className="text-sm text-zinc-2000">
+        <p role="status" className="text-sm text-muted">
           Each player needs exactly their planned number of franchises:{" "}
           {participants
             .filter((p) => (assignedCounts[p.id] ?? 0) !== p.plannedTeamCount)
@@ -702,7 +705,7 @@ export function OwnerMultiTeamPick(props: {
       ) : null}
 
       {!exactCount ? (
-        <p role="status" className="text-sm text-zinc-2000">
+        <p role="status" className="text-sm text-muted">
           Select {controlledTeamCount} franchise
           {controlledTeamCount === 1 ? "" : "s"} to continue (
           {selectedIds.length} selected).

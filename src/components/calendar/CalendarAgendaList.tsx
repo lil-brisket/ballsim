@@ -47,7 +47,7 @@ export function CalendarAgendaList(props: {
                 "w-full justify-between gap-3 rounded-lg border px-3 text-left",
                 cell.isToday
                   ? "border-warning bg-warning/10"
-                  : "border-zinc-800 bg-zinc-950/50",
+                  : "border-line bg-surface-base/50",
                 cell.isNextTeamGame && !cell.isToday
                   ? "border-sky-700/50 ring-2 ring-sky-500/70"
                   : "",
@@ -56,13 +56,13 @@ export function CalendarAgendaList(props: {
               )}
             >
               <span className="min-w-0">
-                <span className="block text-sm text-zinc-400">
+                <span className="block text-sm text-muted">
                   {formatShortDate(cell.date)}
                 </span>
                 <span
                   className={cn(
                     "block truncate text-sm",
-                    cell.isToday ? "font-medium text-warning" : "text-zinc-100",
+                    cell.isToday ? "font-medium text-warning" : "text-ink",
                   )}
                 >
                   {summary}

@@ -79,7 +79,7 @@ function conditionToneClass(
     return "text-emerald-400";
   }
   if (condition === "adequate") {
-    return "text-zinc-200";
+    return "text-ink";
   }
   if (condition === "concerning") {
     return "text-warning";
@@ -101,15 +101,15 @@ function DimensionRow(props: {
       onClick={props.onSelect}
       className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
         props.selected
-          ? "bg-zinc-800/80 ring-1 ring-team-ink/40"
-          : "hover:bg-zinc-800/40"
+          ? "bg-surface-high/80 ring-1 ring-team-ink/40"
+          : "hover:bg-surface-high/40"
       }`}
     >
-      <span className="text-sm text-zinc-400">
+      <span className="text-sm text-muted">
         {DIMENSION_TITLE[props.dimensionKey]}
       </span>
       <span className="flex items-baseline gap-2 tabular-nums">
-        <span className="text-lg text-zinc-50">{dimension.score}</span>
+        <span className="text-lg text-ink">{dimension.score}</span>
         {symbol ? (
           <span
             className={
@@ -117,14 +117,14 @@ function DimensionRow(props: {
                 ? "text-emerald-400"
                 : symbol === "↓"
                   ? "text-rose-400"
-                  : "text-zinc-500"
+                  : "text-faint"
             }
             aria-label={dimension.trend ?? undefined}
           >
             {symbol}
           </span>
         ) : (
-          <span className="w-3 text-zinc-600" aria-hidden>
+          <span className="w-3 text-disabled" aria-hidden>
             ·
           </span>
         )}
@@ -137,9 +137,7 @@ function DriverList(props: { drivers: HealthDriver[] }) {
   const positive = props.drivers.filter((d) => d.direction === "positive");
   const negative = props.drivers.filter((d) => d.direction === "negative");
   if (props.drivers.length === 0) {
-    return (
-      <p className="text-sm text-zinc-500">No specific drivers available.</p>
-    );
+    return <p className="text-sm text-faint">No specific drivers available.</p>;
   }
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -150,9 +148,9 @@ function DriverList(props: { drivers: HealthDriver[] }) {
           </p>
           <ul className="space-y-2">
             {positive.map((driver) => (
-              <li key={driver.key} className="text-sm text-zinc-300">
-                <span className="text-zinc-100">{driver.label}</span>
-                <span className="mt-0.5 block text-sm text-zinc-500">
+              <li key={driver.key} className="text-sm text-soft">
+                <span className="text-ink">{driver.label}</span>
+                <span className="mt-0.5 block text-sm text-faint">
                   {driver.explanation}
                 </span>
               </li>
@@ -165,9 +163,9 @@ function DriverList(props: { drivers: HealthDriver[] }) {
           <p className="mb-1.5 text-sm font-medium text-rose-400">Negative</p>
           <ul className="space-y-2">
             {negative.map((driver) => (
-              <li key={driver.key} className="text-sm text-zinc-300">
-                <span className="text-zinc-100">{driver.label}</span>
-                <span className="mt-0.5 block text-sm text-zinc-500">
+              <li key={driver.key} className="text-sm text-soft">
+                <span className="text-ink">{driver.label}</span>
+                <span className="mt-0.5 block text-sm text-faint">
                   {driver.explanation}
                 </span>
               </li>
@@ -205,7 +203,7 @@ export function FranchiseHealthPanel(props: {
           >
             {formatDimensionStatus(fh.condition)}
           </p>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">
             {fh.summary}
           </p>
         </div>
@@ -215,14 +213,14 @@ export function FranchiseHealthPanel(props: {
       {health.financialHealth === "critical" ? (
         <p
           role="status"
-          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-zinc-200"
+          className="rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-ink"
         >
           Business funds are low. Major facility investments may be difficult —
           review Finances before large capital decisions.
         </p>
       ) : null}
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3">
+      <div className="rounded-xl border border-line bg-surface-raised/50 p-3">
         <div className="grid gap-1 sm:grid-cols-2">
           {DIMENSION_ORDER.map((key) => (
             <DimensionRow
@@ -237,13 +235,13 @@ export function FranchiseHealthPanel(props: {
           ))}
         </div>
         {selected && selectedDimension ? (
-          <div className="mt-4 border-t border-zinc-800 pt-4">
+          <div className="mt-4 border-t border-line pt-4">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-              <p className="text-sm font-medium text-zinc-300">
+              <p className="text-sm font-medium text-soft">
                 {DIMENSION_TITLE[selected]} — {selectedDimension.score}{" "}
                 {trendSymbol(selectedDimension.trend)}
               </p>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-faint">
                 {formatDimensionStatus(selectedDimension.status)}
               </p>
             </div>
@@ -253,37 +251,37 @@ export function FranchiseHealthPanel(props: {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="text-sm text-zinc-400">Biggest strength</p>
-          <p className="mt-1 text-sm text-zinc-100">
+        <div className="rounded-xl border border-line bg-surface-raised/40 px-4 py-3">
+          <p className="text-sm text-muted">Biggest strength</p>
+          <p className="mt-1 text-sm text-ink">
             {fh.biggestStrength?.label ?? "—"}
           </p>
         </div>
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="text-sm text-zinc-400">Biggest risk</p>
-          <p className="mt-1 text-sm text-zinc-100">
+        <div className="rounded-xl border border-line bg-surface-raised/40 px-4 py-3">
+          <p className="text-sm text-muted">Biggest risk</p>
+          <p className="mt-1 text-sm text-ink">
             {fh.biggestRisk?.label ?? "—"}
           </p>
         </div>
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 sm:col-span-1">
-          <p className="text-sm text-zinc-400">Primary driver</p>
-          <p className="mt-1 text-sm leading-snug text-zinc-300">
+        <div className="rounded-xl border border-line bg-surface-raised/40 px-4 py-3 sm:col-span-1">
+          <p className="text-sm text-muted">Primary driver</p>
+          <p className="mt-1 text-sm leading-snug text-soft">
             {fh.primaryDriver ?? "—"}
           </p>
         </div>
       </div>
 
-      <details className="group rounded-xl border border-zinc-800 bg-zinc-900/30">
-        <summary className="cursor-pointer list-none px-4 py-3 text-sm text-zinc-400 marker:content-none [&::-webkit-details-marker]:hidden">
+      <details className="group rounded-xl border border-line bg-surface-raised/30">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm text-muted marker:content-none [&::-webkit-details-marker]:hidden">
           Supporting metrics
-          <span className="ml-2 text-zinc-600 group-open:hidden">Show</span>
-          <span className="ml-2 hidden text-zinc-600 group-open:inline">
+          <span className="ml-2 text-disabled group-open:hidden">Show</span>
+          <span className="ml-2 hidden text-disabled group-open:inline">
             Hide
           </span>
         </summary>
-        <div className="space-y-4 border-t border-zinc-800 px-4 py-4">
+        <div className="space-y-4 border-t border-line px-4 py-4">
           <div>
-            <p className="mb-2 text-sm font-medium text-zinc-300">Financial</p>
+            <p className="mb-2 text-sm font-medium text-soft">Financial</p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <MoneyMetric
                 label="Cash"
@@ -302,9 +300,7 @@ export function FranchiseHealthPanel(props: {
             </div>
           </div>
           <div>
-            <p className="mb-2 text-sm font-medium text-zinc-300">
-              Demand / fans
-            </p>
+            <p className="mb-2 text-sm font-medium text-soft">Demand / fans</p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <MetricBlock
                 label="Attendance"
@@ -339,11 +335,11 @@ export function FranchiseHealthPanel(props: {
       </details>
 
       {props.insights.length > 0 ? (
-        <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3">
-          <p className="text-sm text-zinc-400">Observations</p>
+        <div className="space-y-2 rounded-xl border border-line bg-surface-raised/40 px-4 py-3">
+          <p className="text-sm text-muted">Observations</p>
           <ul className="space-y-2">
             {props.insights.map((insight) => (
-              <li key={insight.id} className="text-sm text-zinc-300">
+              <li key={insight.id} className="text-sm text-soft">
                 {insight.text}
               </li>
             ))}

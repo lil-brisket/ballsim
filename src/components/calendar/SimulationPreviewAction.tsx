@@ -40,7 +40,7 @@ export function SimulationPreviewAction(props: {
           Time advance is blocked until pending decisions are resolved.
         </p>
       ) : (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           Simulates all games through this date, including yours. CPU games use
           a fast box-score path.
         </p>

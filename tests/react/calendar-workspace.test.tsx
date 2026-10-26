@@ -245,7 +245,7 @@ describe("CalendarWorkspace redesign", () => {
       name: "2026-09-18, next team game, HOME vs Rivermen",
     });
     expect(nextGame.className).toContain("team-pulse");
-    expect(nextGame.className).toContain("ring-zinc-100");
+    expect(nextGame.className).toContain("ring-ink");
     unmount();
   });
 
@@ -609,7 +609,7 @@ describe("CalendarWorkspace redesign", () => {
       expect(cursor.getAttribute("data-sim-cursor")).toBe("true");
       expect(cursor.className).toContain("ring-offset-2");
       expect(cursor.className).not.toContain("team-pulse");
-      expect(cursor.className).not.toContain("ring-zinc-100");
+      expect(cursor.className).not.toContain("ring-ink");
       expect(screen.getByText(/W 110-102/)).toBeTruthy();
       expect(screen.queryByText(/Simulating —/)).toBeNull();
       expect(screen.queryByText(/% complete/)).toBeNull();
@@ -669,7 +669,7 @@ describe("CalendarWorkspace redesign", () => {
       });
       expect(selectedDay.getAttribute("data-sim-cursor")).toBeNull();
       expect(selectedDay.className).not.toContain("team-pulse");
-      expect(selectedDay.className).not.toContain("ring-zinc-100");
+      expect(selectedDay.className).not.toContain("ring-ink");
       expect(selectedDay.className).not.toContain("ring-offset-2");
     });
     unmount();

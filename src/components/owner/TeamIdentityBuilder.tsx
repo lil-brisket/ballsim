@@ -173,7 +173,7 @@ export function TeamIdentityBuilder(props: {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-col gap-5 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-4">
+      <div className="flex min-h-0 flex-col gap-5 overflow-y-auto rounded-lg border border-line bg-surface-raised/50 px-4 py-4">
         <section className="space-y-3">
           <SectionHeading title="Presets" />
           <div className="flex flex-wrap gap-2">
@@ -194,8 +194,8 @@ export function TeamIdentityBuilder(props: {
 
         <section className="space-y-3">
           <SectionHeading title="Name" />
-          <p className="text-sm text-zinc-400">
-            City: <span className="text-zinc-200">{props.city}</span>
+          <p className="text-sm text-muted">
+            City: <span className="text-ink">{props.city}</span>
           </p>
           <TeamNicknameField
             id="team-identity-nickname"
@@ -220,24 +220,24 @@ export function TeamIdentityBuilder(props: {
                   className={`flex items-center gap-2 rounded-md border px-2 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink ${
                     selected
                       ? "border-team-ink bg-team/15"
-                      : "border-zinc-700 bg-zinc-950 hover:border-zinc-500"
+                      : "border-line-strong bg-surface-base hover:border-faint"
                   }`}
                 >
                   <span className="flex gap-0.5" aria-hidden>
                     <span
-                      className="h-6 w-4 rounded-sm border border-zinc-600"
+                      className="h-6 w-4 rounded-sm border border-disabled"
                       style={{ backgroundColor: palette.primaryColor }}
                     />
                     <span
-                      className="h-6 w-4 rounded-sm border border-zinc-600"
+                      className="h-6 w-4 rounded-sm border border-disabled"
                       style={{ backgroundColor: palette.secondaryColor }}
                     />
                     <span
-                      className="h-6 w-4 rounded-sm border border-zinc-600"
+                      className="h-6 w-4 rounded-sm border border-disabled"
                       style={{ backgroundColor: palette.accentColor }}
                     />
                   </span>
-                  <span className="text-sm font-medium text-zinc-200">
+                  <span className="text-sm font-medium text-ink">
                     {palette.label}
                   </span>
                 </button>
@@ -250,24 +250,24 @@ export function TeamIdentityBuilder(props: {
               className={`flex items-center gap-2 rounded-md border px-2 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink ${
                 selectedPaletteId === null
                   ? "border-team-ink bg-team/15"
-                  : "border-zinc-700 bg-zinc-950 hover:border-zinc-500"
+                  : "border-line-strong bg-surface-base hover:border-faint"
               }`}
             >
               <span className="flex gap-0.5" aria-hidden>
                 <span
-                  className="h-6 w-4 rounded-sm border border-zinc-600"
+                  className="h-6 w-4 rounded-sm border border-disabled"
                   style={{ backgroundColor: primaryColor }}
                 />
                 <span
-                  className="h-6 w-4 rounded-sm border border-zinc-600"
+                  className="h-6 w-4 rounded-sm border border-disabled"
                   style={{ backgroundColor: secondaryColor }}
                 />
                 <span
-                  className="h-6 w-4 rounded-sm border border-zinc-600"
+                  className="h-6 w-4 rounded-sm border border-disabled"
                   style={{ backgroundColor: accentColor }}
                 />
               </span>
-              <span className="text-sm font-medium text-zinc-200">Custom</span>
+              <span className="text-sm font-medium text-ink">Custom</span>
             </button>
           </div>
           <TeamColorFields
@@ -278,7 +278,7 @@ export function TeamIdentityBuilder(props: {
           />
           {contrastWarnings.length > 0 ? (
             <ul
-              className="space-y-1 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-zinc-200"
+              className="space-y-1 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-ink"
               role="status"
             >
               {contrastWarnings.map((warning) => (
@@ -301,7 +301,7 @@ export function TeamIdentityBuilder(props: {
             );
             return (
               <div key={category.id} className="space-y-2">
-                <p className="text-sm font-medium text-zinc-300">
+                <p className="text-sm font-medium text-soft">
                   {category.label}
                 </p>
                 <div className="grid grid-cols-5 gap-2">
@@ -318,7 +318,7 @@ export function TeamIdentityBuilder(props: {
                         className={`flex flex-col items-center gap-1 rounded-md border p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink ${
                           selected
                             ? "border-team-ink bg-team/15"
-                            : "border-zinc-700 bg-zinc-950 hover:border-zinc-500"
+                            : "border-line-strong bg-surface-base hover:border-faint"
                         }`}
                       >
                         <TeamLogoMark
@@ -329,9 +329,7 @@ export function TeamIdentityBuilder(props: {
                           className="h-10 w-10"
                           title={logo.label}
                         />
-                        <span className="text-sm text-zinc-400">
-                          {logo.label}
-                        </span>
+                        <span className="text-sm text-muted">{logo.label}</span>
                       </button>
                     );
                   })}

@@ -779,7 +779,7 @@ export function CalendarWorkspace(props: {
                   : "Simulating"}{" "}
               · {formatGameDate(playback.currentDate)}
             </p>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-muted">
               Day {playback.daysAdvanced} of {playback.daysRequested} ·{" "}
               {playback.gamesSimulated} games played
             </p>
@@ -797,7 +797,7 @@ export function CalendarWorkspace(props: {
         <p
           role="status"
           aria-live="polite"
-          className="rounded-md border border-team-ink/50 bg-team/15 px-3 py-2 text-sm text-zinc-100"
+          className="rounded-md border border-team-ink/50 bg-team/15 px-3 py-2 text-sm text-ink"
         >
           Simulation in progress — calendar navigation is locked until it
           finishes.

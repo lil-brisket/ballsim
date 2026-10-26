@@ -12,7 +12,7 @@ export function ActionQueue(props: { items: OwnerDashboardActionItem[] }) {
         aria-label="What needs your attention"
       >
         <SectionHeading title="You're in good shape" />
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-muted">
           No urgent franchise decisions require your attention right now.
         </p>
       </section>
@@ -32,20 +32,16 @@ export function ActionQueue(props: { items: OwnerDashboardActionItem[] }) {
             className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-4"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-semibold text-zinc-100">
-                {item.title}
-              </h3>
+              <SectionHeading as="h3" size="sm" title={item.title} />
               <StatusBadge label={item.severity} tone={item.severity} />
             </div>
-            <p className="mt-2 text-sm text-zinc-300">{item.what}</p>
-            <p className="mt-2 text-sm text-zinc-400">
-              <span className="font-medium text-zinc-300">
-                Why it matters:{" "}
-              </span>
+            <p className="mt-2 text-sm text-soft">{item.what}</p>
+            <p className="mt-2 text-sm text-muted">
+              <span className="font-medium text-soft">Why it matters: </span>
               {item.why}
             </p>
             {item.evidence.length > 0 ? (
-              <ul className="mt-2 space-y-0.5 text-sm text-zinc-500">
+              <ul className="mt-2 space-y-0.5 text-sm text-faint">
                 {item.evidence.map((line, index) => (
                   <li key={`${index}-${line}`}>· {line}</li>
                 ))}

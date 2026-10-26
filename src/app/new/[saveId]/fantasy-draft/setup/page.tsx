@@ -52,7 +52,7 @@ export default async function FantasyDraftSetupPage({
       <Section title="Draft format">
         <form action={configureFantasyDraftSetupAction} className="space-y-4">
           <input type="hidden" name="saveId" value={saveId} />
-          <label className="block text-sm text-zinc-300">
+          <label className="block text-sm text-soft">
             Draft type
             <Select
               name="draftType"
@@ -63,7 +63,7 @@ export default async function FantasyDraftSetupPage({
               <option value="linear">Linear</option>
             </Select>
           </label>
-          <label className="block text-sm text-zinc-300">
+          <label className="block text-sm text-soft">
             Order mode
             <Select
               name="orderMode"
@@ -74,7 +74,7 @@ export default async function FantasyDraftSetupPage({
               <option value="manual">Manual (alphabetical start)</option>
             </Select>
           </label>
-          <label className="block text-sm text-zinc-300">
+          <label className="block text-sm text-soft">
             Timer
             <Select
               name="timerSeconds"

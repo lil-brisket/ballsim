@@ -19,7 +19,7 @@ function FormDots(props: { form: RecentFormView }) {
   const oldestFirst = [...props.form.games].reverse();
   return (
     <p className="flex items-center gap-1.5">
-      <span className="text-sm text-zinc-400">Form</span>
+      <span className="text-sm text-muted">Form</span>
       <span
         className="flex gap-1"
         role="img"
@@ -33,7 +33,7 @@ function FormDots(props: { form: RecentFormView }) {
             key={game.gameId}
             aria-hidden
             className={cn(
-              "inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-zinc-950",
+              "inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-surface-base",
               game.won ? "bg-win" : "bg-loss",
             )}
           >
@@ -42,7 +42,7 @@ function FormDots(props: { form: RecentFormView }) {
         ))}
       </span>
       {props.form.streak ? (
-        <span className="text-sm tabular-nums text-zinc-300">
+        <span className="text-sm tabular-nums text-soft">
           {props.form.streak}
         </span>
       ) : null}
@@ -95,7 +95,7 @@ export function MatchupBanner(props: {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-team-ink">
           Front Office
         </p>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           {props.saveName} · {props.leagueName}
         </p>
       </div>
@@ -114,7 +114,7 @@ export function MatchupBanner(props: {
           <div className="min-w-0">
             <h1
               id="front-office-title"
-              className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-zinc-50 sm:text-4xl"
+              className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-ink sm:text-4xl"
             >
               {teamLabel}
             </h1>
@@ -133,7 +133,7 @@ export function MatchupBanner(props: {
           <>
             <p
               aria-hidden
-              className="font-display text-2xl font-bold uppercase tracking-[0.3em] text-zinc-500 md:text-center"
+              className="font-display text-2xl font-bold uppercase tracking-[0.3em] text-faint md:text-center"
             >
               {nextGame.home ? "vs" : "@"}
             </p>
@@ -145,20 +145,20 @@ export function MatchupBanner(props: {
                 decorative
               />
               <div className="min-w-0">
-                <p className="text-sm text-zinc-400">Next game</p>
+                <p className="text-sm text-muted">Next game</p>
                 <TeamEntityLink
                   saveId={saveId}
                   teamId={nextGame.opponentTeamId}
                   className={cn(
-                    "block rounded text-left font-display text-2xl font-bold uppercase leading-tight tracking-wide text-zinc-50 hover:text-team-ink sm:text-3xl md:text-right",
+                    "block rounded text-left font-display text-2xl font-bold uppercase leading-tight tracking-wide text-ink hover:text-team-ink sm:text-3xl md:text-right",
                     focusRingClass,
                   )}
                 >
                   {nextGame.opponentName}
                 </TeamEntityLink>
-                <p className="mt-0.5 text-sm text-zinc-300">
+                <p className="mt-0.5 text-sm text-soft">
                   {formatGameDate(nextGame.date, { weekday: true })}
-                  <span className="mx-2 text-zinc-600">·</span>
+                  <span className="mx-2 text-disabled">·</span>
                   {nextGame.home ? "Home game" : "Road game"}
                 </p>
               </div>
@@ -225,7 +225,7 @@ export function MatchupBanner(props: {
         <Link href={rotationHref} className={buttonClass({ variant: "quiet" })}>
           Review rotation
         </Link>
-        <p className="text-sm text-zinc-400 sm:ml-auto sm:max-w-xs sm:text-end">
+        <p className="text-sm text-muted sm:ml-auto sm:max-w-xs sm:text-end">
           Advances until the next team game or a blocking decision.
         </p>
       </div>

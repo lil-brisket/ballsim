@@ -33,7 +33,7 @@ export default async function OwnerEntryPage({
       <div>
         <Link
           href="/home"
-          className={`inline-flex min-h-11 items-center text-sm text-zinc-300 hover:text-team-ink ${focusRing}`}
+          className={`inline-flex min-h-11 items-center text-sm text-soft hover:text-team-ink ${focusRing}`}
         >
           ← Choose mode
         </Link>
@@ -46,7 +46,7 @@ export default async function OwnerEntryPage({
           eyebrow={modeDef.name}
           title={modeDef.tagline}
         />
-        <p className="text-zinc-300">What would you like to do?</p>
+        <p className="text-soft">What would you like to do?</p>
       </header>
 
       {error ? <ErrorState message={error} /> : null}
