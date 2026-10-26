@@ -28,20 +28,29 @@ import {
 } from "@/state/owner-context";
 import { createDefaultOwnedFranchiseState } from "@/state/owned-franchise-state";
 import { resolvePendingOwnerDecision } from "@/systems/owner-decisions/enqueue-trade-offer";
+import { MAX_ONLINE_PARTICIPANTS } from "@/domain/participation";
 import {
   type ParticipationResult,
   getParticipantForUser,
   getSharedParticipation,
   isOnlineLeague,
+  withApprovalWindow,
+  withApprovalWindowCancelled,
+  withAutoManageAfterDays,
   withHostTransferred,
   withJoinedParticipant,
+  withParticipantAutoManaged,
+  withParticipantControlRestored,
   withParticipantRemoved,
+  withParticipantSeen,
 } from "@/systems/participation";
 import { persistWorkingState } from "@/application/game-service/internal";
+import { withAutoManagedDecisionsExpired } from "@/application/game-service/shared-advance";
 
 export const INVITE_DEFAULT_DAYS = 7;
 export const INVITE_MAX_DAYS = 30;
-export const INVITE_MAX_USES = 7;
+/** One invite can seat every open spot in a full league. */
+export const INVITE_MAX_USES = MAX_ONLINE_PARTICIPANTS - 1;
 
 export type OnlineLeagueContext = {
   user: AccountUser | null;
@@ -327,11 +336,12 @@ async function applyJoin(
       error: "Wait for the fantasy draft to finish before joining.",
     };
   }
+  const participantId = crypto.randomUUID();
   const joined = withJoinedParticipant(
     state,
     { userId: ctx.user!.id, displayName: ctx.user!.username },
     teamId,
-    () => crypto.randomUUID(),
+    () => participantId,
   );
   if (!joined.ok) {
     return joined;
@@ -345,7 +355,11 @@ async function applyJoin(
     managementPreset: state.settings.ai.managementPreset,
   });
   const withTeam = withAddedOwnedFranchise(joined.state, teamId, franchise);
-  return commit(ctx, loaded, withTeam);
+  return commit(
+    ctx,
+    loaded,
+    withParticipantSeen(withTeam, participantId, ctx.now ?? new Date()),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -451,9 +465,121 @@ export async function transferOnlineHost(
   if (participantId === access.participantId) {
     return { ok: true };
   }
-  const next = withHostTransferred(access.loaded.state, participantId);
+  // The commissioner runs the league, so they take their teams back first.
+  const restored = withParticipantControlRestored(
+    access.loaded.state,
+    participantId,
+  );
+  if (!restored.ok) {
+    return restored;
+  }
+  const next = withHostTransferred(restored.state, participantId);
   if (!next.ok) {
     return next;
   }
   return commit(ctx, access.loaded, next.state);
+}
+
+// ---------------------------------------------------------------------------
+// Advance approvals and auto-management (commissioner)
+// ---------------------------------------------------------------------------
+
+/** Open an approval window: members have `hours` to approve the next advance. */
+export async function openApprovalWindow(
+  ctx: OnlineLeagueContext,
+  saveId: string,
+  hours: number,
+): Promise<OnlineResult> {
+  const access = await loadAsHost(ctx, saveId);
+  if (!access.ok) {
+    return access;
+  }
+  const next = withApprovalWindow(
+    access.loaded.state,
+    Math.trunc(hours),
+    ctx.now ?? new Date(),
+  );
+  if (!next.ok) {
+    return next;
+  }
+  return commit(ctx, access.loaded, next.state);
+}
+
+export async function cancelApprovalWindow(
+  ctx: OnlineLeagueContext,
+  saveId: string,
+): Promise<OnlineResult> {
+  const access = await loadAsHost(ctx, saveId);
+  if (!access.ok) {
+    return access;
+  }
+  return commit(
+    ctx,
+    access.loaded,
+    withApprovalWindowCancelled(access.loaded.state),
+  );
+}
+
+/** Idle days before a member's teams go to the AI; null turns it off. */
+export async function setAutoManageAfterDays(
+  ctx: OnlineLeagueContext,
+  saveId: string,
+  days: number | null,
+): Promise<OnlineResult> {
+  const access = await loadAsHost(ctx, saveId);
+  if (!access.ok) {
+    return access;
+  }
+  const next = withAutoManageAfterDays(access.loaded.state, days);
+  if (!next.ok) {
+    return next;
+  }
+  return commit(ctx, access.loaded, next.state);
+}
+
+/**
+ * Hand a member's franchises to the AI, or give them back. The commissioner
+ * may do this for any member; a member only for themselves. Taking control
+ * back counts as activity.
+ */
+export async function setParticipantAutoManaged(
+  ctx: OnlineLeagueContext,
+  saveId: string,
+  participantId: string,
+  autoManaged: boolean,
+): Promise<OnlineResult> {
+  const access = await loadAsMember(ctx, saveId);
+  if (!access.ok) {
+    return access;
+  }
+  if (!access.isHost && participantId !== access.participantId) {
+    return { ok: false, error: "Only the commissioner can do that." };
+  }
+  const now = ctx.now ?? new Date();
+  const state = access.loaded.state;
+  if (autoManaged) {
+    const next = withParticipantAutoManaged(
+      state,
+      participantId,
+      "manual",
+      now,
+    );
+    if (!next.ok) {
+      return next;
+    }
+    return commit(
+      ctx,
+      access.loaded,
+      withAutoManagedDecisionsExpired(next.state),
+    );
+  }
+  const next = withParticipantControlRestored(state, participantId);
+  if (!next.ok) {
+    return next;
+  }
+  const seen =
+    participantId === access.participantId
+      ? withParticipantSeen(next.state, participantId, now)
+      : next.state;
+  return commit(ctx, access.loaded, seen);
 }

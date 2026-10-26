@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { applyPreset } from "@/domain/ai-management-presets";
 import {
   controlledTeamCountForSetup,
   MAX_LOCAL_PARTICIPANTS,
+  MAX_ONLINE_PARTICIPANTS,
   PARTICIPANT_NAME_MAX_LENGTH,
   parseParticipationSetup,
   participationStateErrors,
@@ -321,5 +323,97 @@ describe("online participation", () => {
     expect(
       participationStateErrors(foreignActive, ["t1", "t2"], "t1").join(" "),
     ).toMatch(/activeTeamId must be one of its teams/);
+  });
+
+  it("allows up to 30 online players", () => {
+    const players = Array.from({ length: MAX_ONLINE_PARTICIPANTS }, (_, i) =>
+      onlineParticipant(`p${i}`, [`t${i}`], i === 0, `u${i}`),
+    );
+    const teams = players.map((p) => p.teamIds[0]!);
+    expect(MAX_ONLINE_PARTICIPANTS).toBe(30);
+    expect(participationStateErrors(online(players), teams, "t0")).toEqual([]);
+    const tooMany = [
+      ...players,
+      onlineParticipant("extra", ["tx"], false, "ux"),
+    ];
+    expect(
+      participationStateErrors(online(tooMany), [...teams, "tx"], "t0").join(
+        " ",
+      ),
+    ).toMatch(/1–30 entries/);
+  });
+
+  it("validates approval windows, idle thresholds and auto-managed members", () => {
+    const host = onlineParticipant("p1", ["t1"], true, "u1");
+    const member = onlineParticipant("p2", ["t2"], false, "u2");
+    const restore = {
+      teamId: "t2",
+      managementPreset: "smart" as const,
+      aiAssistance: applyPreset("smart"),
+    };
+    const valid = {
+      ...online([
+        host,
+        {
+          ...member,
+          lastActiveAt: "2026-10-20T12:00:00.000Z",
+          autoManaged: {
+            since: "2026-10-21T12:00:00.000Z",
+            reason: "missed_approval",
+            restore: [restore],
+          },
+        },
+      ]),
+      approvalWindow: {
+        openedAt: "2026-10-21T12:00:00.000Z",
+        closesAt: "2026-10-22T12:00:00.000Z",
+      },
+      autoManageAfterDays: 3,
+    };
+    expect(participationStateErrors(valid, ["t1", "t2"], "t1")).toEqual([]);
+
+    const errors = (value: unknown) =>
+      participationStateErrors(value, ["t1", "t2"], "t1").join(" ");
+    expect(
+      errors({
+        ...valid,
+        approvalWindow: {
+          openedAt: "2026-10-22T12:00:00.000Z",
+          closesAt: "2026-10-21T12:00:00.000Z",
+        },
+      }),
+    ).toMatch(/openedAt before closesAt/);
+    expect(errors({ ...valid, autoManageAfterDays: 0 })).toMatch(
+      /autoManageAfterDays/,
+    );
+    expect(
+      errors({
+        ...valid,
+        participants: [
+          host,
+          {
+            ...member,
+            autoManaged: {
+              since: "2026-10-21T12:00:00.000Z",
+              reason: "missed_approval",
+              restore: [{ ...restore, teamId: "t1" }],
+            },
+          },
+        ],
+      }),
+    ).toMatch(/only list this participant's teams/);
+    expect(
+      errors({
+        ...valid,
+        participants: [host, { ...member, lastActiveAt: "soon" }],
+      }),
+    ).toMatch(/lastActiveAt must be a timestamp/);
+    expect(
+      errors({
+        ...valid,
+        mode: "local_shared",
+        participants: [host, member].map(({ userId: _u, ...p }) => p),
+      }),
+    ).toMatch(/approvalWindow is only allowed in online leagues/);
   });
 });

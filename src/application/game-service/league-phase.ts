@@ -1,5 +1,6 @@
 import "server-only";
-import { advanceBlockedReason, withReadyReset } from "@/systems/participation";
+import { withReadyReset } from "@/systems/participation";
+import { prepareSharedAdvance } from "@/application/game-service/shared-advance";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import {
   previewAdvance,
@@ -132,14 +133,15 @@ export async function letAiHandlePhaseAndAdvance(
       if (!loaded) {
         return fail("Save not found.");
       }
-      const participantsBlocked = advanceBlockedReason(loaded.state);
-      if (participantsBlocked) {
-        return fail(participantsBlocked);
+      const gate = prepareSharedAdvance(loaded.state);
+      if (!gate.ok) {
+        return fail(gate.error);
       }
+      const prepared = gate.state;
       if (
         isUserAssistCompletelyOff(
-          loaded.state.settings,
-          getOwnedFranchiseAssistance(loaded.state),
+          prepared.settings,
+          getOwnedFranchiseAssistance(prepared),
         )
       ) {
         return fail(
@@ -148,9 +150,9 @@ export async function letAiHandlePhaseAndAdvance(
       }
 
       const commitToken = loaded.updatedAt;
-      const rng = createSeededRng(loaded.state.meta.rngState);
-      const phaseKey = resolveSimulationPhaseKey(loaded.state);
-      const continuity = runAiContinuity(loaded.state, rng, {
+      const rng = createSeededRng(prepared.meta.rngState);
+      const phaseKey = resolveSimulationPhaseKey(prepared);
+      const continuity = runAiContinuity(prepared, rng, {
         forcePhase: `handoff:${phaseKey}`,
       });
       let working = continuity.state;
@@ -200,17 +202,18 @@ export async function continuePastPhaseAnyway(
       if (!loaded) {
         return fail("Save not found.");
       }
-      const participantsBlocked = advanceBlockedReason(loaded.state);
-      if (participantsBlocked) {
-        return fail(participantsBlocked);
+      const gate = prepareSharedAdvance(loaded.state);
+      if (!gate.ok) {
+        return fail(gate.error);
       }
+      const prepared = gate.state;
 
       const commitToken = loaded.updatedAt;
-      const phaseKey = resolveSimulationPhaseKey(loaded.state);
-      const today = loaded.state.world.calendar.currentDate;
-      const activeTeamId = loaded.state.user.activeOwnerTeamId;
+      const phaseKey = resolveSimulationPhaseKey(prepared);
+      const today = prepared.world.calendar.currentDate;
+      const activeTeamId = prepared.user.activeOwnerTeamId;
       let working: GameState = withOwnedFranchise(
-        loaded.state,
+        prepared,
         activeTeamId,
         (f) => ({
           ...f,
@@ -271,20 +274,21 @@ export async function beginOffseason(
       if (!loaded) {
         return fail("Save not found.");
       }
-      const participantsBlocked = advanceBlockedReason(loaded.state);
-      if (participantsBlocked) {
-        return fail(participantsBlocked);
+      const gate = prepareSharedAdvance(loaded.state);
+      if (!gate.ok) {
+        return fail(gate.error);
       }
+      const prepared = gate.state;
 
-      if (loaded.state.competition.season.phase !== "postseason") {
+      if (prepared.competition.season.phase !== "postseason") {
         return fail(
           "Begin offseason requires the Season Review (postseason) phase.",
         );
       }
 
       const commitToken = loaded.updatedAt;
-      const rng = createSeededRng(loaded.state.meta.rngState);
-      const entered = enterOffseasonFromPostseason(loaded.state);
+      const rng = createSeededRng(prepared.meta.rngState);
+      const entered = enterOffseasonFromPostseason(prepared);
       let working = entered.state;
       const emitted = [...entered.events];
       const dayResult = advanceSimulation(working, rng, { days: 1 });

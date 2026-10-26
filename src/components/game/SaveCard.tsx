@@ -63,6 +63,7 @@ export function SaveCard(props: {
 
   const modeDef = getGameModeDefinition(preview.mode);
   const teamLabel = `${preview.controlledTeam.city} ${preview.controlledTeam.name}`;
+  const isOnline = preview.participationMode === "online";
 
   return (
     <li>
@@ -71,7 +72,9 @@ export function SaveCard(props: {
           as="div"
           edge="left"
           raised
-          className="hover-lift flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+          className={`hover-lift flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between${
+            isOnline ? " ring-2 ring-emerald-500/60" : ""
+          }`}
         >
           <div className="flex min-w-0 items-center gap-4">
             <TeamBadge
@@ -86,16 +89,26 @@ export function SaveCard(props: {
                   {preview.name}
                 </p>
                 <StatusBadge label={modeDef.name} tone="info" />
-                {preview.participantCount != null ? (
-                  <StatusBadge
-                    label={`${
-                      preview.participationMode === "online"
-                        ? "Online"
-                        : "Local shared"
-                    } · ${preview.participantCount} players`}
-                    tone="info"
-                  />
-                ) : null}
+                {isOnline ? (
+                  <>
+                    <StatusBadge
+                      label={`Online · ${preview.participantCount ?? 1} players`}
+                      tone="success"
+                    />
+                    <span className="sr-only">Online league</span>
+                  </>
+                ) : (
+                  <>
+                    <StatusBadge label="Offline" tone="neutral" />
+                    {preview.participationMode === "local_shared" &&
+                    preview.participantCount != null ? (
+                      <StatusBadge
+                        label={`Local shared · ${preview.participantCount} players`}
+                        tone="info"
+                      />
+                    ) : null}
+                  </>
+                )}
               </div>
               <p className="text-sm text-zinc-200">{teamLabel}</p>
               <p className="text-sm text-zinc-300">

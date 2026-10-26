@@ -6,14 +6,19 @@
  * and whether the league may advance.
  */
 
+import { applyPreset } from "@/domain/ai-management-presets";
 import {
+  MAX_APPROVAL_WINDOW_HOURS,
+  MAX_AUTO_MANAGE_AFTER_DAYS,
   MAX_ONLINE_PARTICIPANTS,
+  type AutoManageReason,
   type LocalParticipant,
   type LocalParticipantSetup,
   type SharedParticipation,
 } from "@/domain/participation";
-import type { TeamId } from "@/domain/ids";
+import { asTeamId, type TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
+import { isOwnedFranchise, withOwnedFranchise } from "@/state/owner-context";
 
 export type ParticipationResult =
   { ok: true; state: GameState } | { ok: false; error: string };
@@ -208,24 +213,42 @@ export function withAllParticipantsReady(
   };
 }
 
-/** Clear ready flags after the league advances. No-op for single player. */
+/**
+ * Clear ready flags (and close any approval window) after the league
+ * advances. No-op for single player.
+ */
 export function withReadyReset(state: GameState): GameState {
   const local = getLocalParticipation(state);
-  if (!local || local.readyParticipantIds.length === 0) {
+  if (
+    !local ||
+    (local.readyParticipantIds.length === 0 &&
+      local.approvalWindow === undefined)
+  ) {
     return state;
   }
-  return withLocal(state, { ...local, readyParticipantIds: [] });
+  const { approvalWindow: _closed, ...rest } = local;
+  return withLocal(state, { ...rest, readyParticipantIds: [] });
 }
 
-/** Participants who still have to press Ready. Empty for single player. */
+/**
+ * Participants who still have to press Ready. Auto-managed members never
+ * hold the league up. Empty for single player.
+ */
 export function getWaitingParticipants(state: GameState): LocalParticipant[] {
   const local = getLocalParticipation(state);
   if (!local) {
     return [];
   }
   return local.participants.filter(
-    (p) => !local.readyParticipantIds.includes(p.id),
+    (p) =>
+      p.autoManaged === undefined && !local.readyParticipantIds.includes(p.id),
   );
+}
+
+/** True once an online league's approval window has closed. */
+export function isApprovalWindowClosed(state: GameState, now: Date): boolean {
+  const window = getSharedParticipation(state)?.approvalWindow;
+  return window !== undefined && now.getTime() >= Date.parse(window.closesAt);
 }
 
 function joinNames(names: readonly string[]): string {
@@ -235,8 +258,15 @@ function joinNames(names: readonly string[]): string {
   return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-/** Why the league may not advance yet, or null when it may. */
-export function advanceBlockedReason(state: GameState): string | null {
+/**
+ * Why the league may not advance yet, or null when it may. Online leagues
+ * are advanced by the commissioner (host) only; members who missed a closed
+ * approval window or sat idle past the threshold no longer block.
+ */
+export function advanceBlockedReason(
+  state: GameState,
+  now: Date = new Date(),
+): string | null {
   const local = getLocalParticipation(state);
   if (!local) {
     return null;
@@ -244,11 +274,25 @@ export function advanceBlockedReason(state: GameState): string | null {
   if (!local.assignmentsConfirmed) {
     return "Assign every participant's franchises before advancing.";
   }
-  const waiting = getWaitingParticipants(state);
+  if (local.mode === "online" && !getActiveParticipant(state)?.isHost) {
+    const host = local.participants.find((p) => p.isHost);
+    return `Only the commissioner${host ? ` (${host.displayName})` : ""} can advance the league.`;
+  }
+  // Members due for auto-management are handed to the AI by the advance
+  // itself, and the commissioner approves by advancing.
+  const due = new Set(
+    getParticipantsDueForAutoManage(state, now).map((d) => d.participant.id),
+  );
+  const waiting = getWaitingParticipants(state).filter(
+    (p) => !due.has(p.id) && !(local.mode === "online" && p.isHost),
+  );
   if (waiting.length === 0) {
     return null;
   }
-  return `Waiting on ${joinNames(waiting.map((p) => p.displayName))} to press Ready.`;
+  const names = joinNames(waiting.map((p) => p.displayName));
+  return local.approvalWindow
+    ? `Waiting on ${names} to approve before the approval window closes.`
+    : `Waiting on ${names} to press Ready.`;
 }
 
 /**
@@ -603,4 +647,260 @@ export function getActorTeamIds(state: GameState): readonly TeamId[] {
     return state.user.ownedTeamIds;
   }
   return state.user.ownedTeamIds.filter((id) => active.teamIds.includes(id));
+}
+
+// ---------------------------------------------------------------------------
+// Online leagues: activity, approval windows and auto-management
+// ---------------------------------------------------------------------------
+
+function withOnlineParticipants(
+  state: GameState,
+  update: (p: LocalParticipant) => LocalParticipant,
+): GameState {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.mode !== "online") {
+    return state;
+  }
+  return withLocal(state, {
+    ...shared,
+    participants: shared.participants.map(update),
+  });
+}
+
+/** Online leagues: stamp a member's last activity. */
+export function withParticipantSeen(
+  state: GameState,
+  participantId: string,
+  now: Date,
+): GameState {
+  return withOnlineParticipants(state, (p) =>
+    p.id === participantId ? { ...p, lastActiveAt: now.toISOString() } : p,
+  );
+}
+
+/** Online leagues: stamp the acting participant's last activity. */
+export function withActingParticipantSeen(
+  state: GameState,
+  now: Date,
+): GameState {
+  const shared = getSharedParticipation(state);
+  return shared
+    ? withParticipantSeen(state, shared.activeParticipantId, now)
+    : state;
+}
+
+/** Open (or replace) the approval window for the next advance. */
+export function withApprovalWindow(
+  state: GameState,
+  hours: number,
+  now: Date,
+): ParticipationResult {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.mode !== "online") {
+    return { ok: false, error: "This is not an online league." };
+  }
+  if (
+    !Number.isInteger(hours) ||
+    hours < 1 ||
+    hours > MAX_APPROVAL_WINDOW_HOURS
+  ) {
+    return {
+      ok: false,
+      error: `Approval windows last 1–${MAX_APPROVAL_WINDOW_HOURS} hours.`,
+    };
+  }
+  const closesAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
+  return {
+    ok: true,
+    state: withLocal(state, {
+      ...shared,
+      approvalWindow: {
+        openedAt: now.toISOString(),
+        closesAt: closesAt.toISOString(),
+      },
+    }),
+  };
+}
+
+/** Close the approval window without advancing. */
+export function withApprovalWindowCancelled(state: GameState): GameState {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.approvalWindow === undefined) {
+    return state;
+  }
+  const { approvalWindow: _closed, ...rest } = shared;
+  return withLocal(state, rest);
+}
+
+/** Set (or clear with null) the idle days before a member is auto-managed. */
+export function withAutoManageAfterDays(
+  state: GameState,
+  days: number | null,
+): ParticipationResult {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.mode !== "online") {
+    return { ok: false, error: "This is not an online league." };
+  }
+  const { autoManageAfterDays: _previous, ...rest } = shared;
+  if (days === null) {
+    return { ok: true, state: withLocal(state, rest) };
+  }
+  if (
+    !Number.isInteger(days) ||
+    days < 1 ||
+    days > MAX_AUTO_MANAGE_AFTER_DAYS
+  ) {
+    return {
+      ok: false,
+      error: `Choose 1–${MAX_AUTO_MANAGE_AFTER_DAYS} days, or turn it off.`,
+    };
+  }
+  return {
+    ok: true,
+    state: withLocal(state, { ...rest, autoManageAfterDays: days }),
+  };
+}
+
+/**
+ * Hand a member's franchises to the AI (Full Management), keeping their own
+ * settings to restore later. The commissioner is never auto-managed: they
+ * run the league.
+ */
+export function withParticipantAutoManaged(
+  state: GameState,
+  participantId: string,
+  reason: AutoManageReason,
+  now: Date,
+): ParticipationResult {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.mode !== "online") {
+    return { ok: false, error: "This is not an online league." };
+  }
+  const participant = shared.participants.find((p) => p.id === participantId);
+  if (!participant) {
+    return { ok: false, error: "Unknown participant." };
+  }
+  if (participant.isHost) {
+    return {
+      ok: false,
+      error: "The commissioner's teams cannot be auto-managed.",
+    };
+  }
+  if (participant.autoManaged) {
+    return { ok: true, state };
+  }
+  let working = state;
+  const restore = participant.teamIds
+    .map(asTeamId)
+    .filter((teamId) => isOwnedFranchise(working, teamId))
+    .map((teamId) => {
+      const franchise = working.user.ownedFranchises[teamId]!;
+      working = withOwnedFranchise(working, teamId, (f) => ({
+        ...f,
+        managementPreset: "full_management",
+        aiAssistance: applyPreset("full_management"),
+      }));
+      return {
+        teamId: teamId as string,
+        managementPreset: franchise.managementPreset,
+        aiAssistance: { ...franchise.aiAssistance },
+      };
+    });
+  return {
+    ok: true,
+    state: withOnlineParticipants(working, (p) =>
+      p.id === participantId
+        ? { ...p, autoManaged: { since: now.toISOString(), reason, restore } }
+        : p,
+    ),
+  };
+}
+
+/** Give a member their franchises back with the settings they had. */
+export function withParticipantControlRestored(
+  state: GameState,
+  participantId: string,
+): ParticipationResult {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.mode !== "online") {
+    return { ok: false, error: "This is not an online league." };
+  }
+  const participant = shared.participants.find((p) => p.id === participantId);
+  if (!participant) {
+    return { ok: false, error: "Unknown participant." };
+  }
+  if (!participant.autoManaged) {
+    return { ok: true, state };
+  }
+  let working = state;
+  for (const entry of participant.autoManaged.restore) {
+    const teamId = asTeamId(entry.teamId);
+    if (!isOwnedFranchise(working, teamId)) {
+      continue;
+    }
+    working = withOwnedFranchise(working, teamId, (f) => ({
+      ...f,
+      managementPreset: entry.managementPreset,
+      aiAssistance: { ...entry.aiAssistance },
+    }));
+  }
+  return {
+    ok: true,
+    state: withOnlineParticipants(working, (p) => {
+      if (p.id !== participantId) {
+        return p;
+      }
+      const { autoManaged: _done, ...rest } = p;
+      return rest;
+    }),
+  };
+}
+
+export type AutoManageCandidate = {
+  participant: LocalParticipant;
+  reason: AutoManageReason;
+};
+
+/**
+ * Members the AI should take over before the commissioner advances: those
+ * who missed a closed approval window, and those idle past the league's
+ * auto-manage threshold. Members with no recorded activity are not idle.
+ */
+export function getParticipantsDueForAutoManage(
+  state: GameState,
+  now: Date,
+): AutoManageCandidate[] {
+  const shared = getSharedParticipation(state);
+  if (!shared || shared.mode !== "online") {
+    return [];
+  }
+  const windowClosed = isApprovalWindowClosed(state, now);
+  const idleMs =
+    shared.autoManageAfterDays !== undefined
+      ? shared.autoManageAfterDays * 24 * 60 * 60 * 1000
+      : null;
+  const due: AutoManageCandidate[] = [];
+  for (const p of shared.participants) {
+    if (p.isHost || p.autoManaged) {
+      continue;
+    }
+    if (windowClosed && !shared.readyParticipantIds.includes(p.id)) {
+      due.push({ participant: p, reason: "missed_approval" });
+    } else if (
+      idleMs !== null &&
+      p.lastActiveAt !== undefined &&
+      now.getTime() - Date.parse(p.lastActiveAt) >= idleMs
+    ) {
+      due.push({ participant: p, reason: "inactive" });
+    }
+  }
+  return due;
+}
+
+/** Owned teams the AI currently runs for away members. */
+export function getAutoManagedTeamIds(state: GameState): Set<string> {
+  const shared = getSharedParticipation(state);
+  return new Set(
+    shared?.participants.flatMap((p) => (p.autoManaged ? p.teamIds : [])) ?? [],
+  );
 }

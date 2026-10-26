@@ -9,6 +9,7 @@
  * - save(): online states are always written with an optimistic-concurrency
  *   token (the updatedAt this request loaded), so two players acting at once
  *   cannot silently overwrite each other; the loser gets a conflict error.
+ *   Each write stamps the acting member's last-active time.
  * - delete(): only the host may delete an online league.
  *
  * Single-player and local shared saves belong to the account that created
@@ -26,6 +27,7 @@ import type { GameState } from "@/state/game-state";
 import {
   getParticipantForUser,
   isOnlineLeague,
+  withActingParticipantSeen,
   withActingUser,
   withActiveTeamRemembered,
 } from "@/systems/participation";
@@ -35,6 +37,8 @@ export type ResolveUserId = () => Promise<string | null>;
 export type ActingSaveStoreOptions = {
   /** Hide ownerless single-player saves and refuse to create them. */
   requireSignIn?: boolean;
+  /** Wall clock for members' last-active stamps (tests inject one). */
+  now?: () => Date;
 };
 
 export function createActingSaveGameStore(
@@ -44,6 +48,7 @@ export function createActingSaveGameStore(
 ): SaveGameStore {
   const loadedAt = new Map<string, Date>();
   const requireSignIn = options.requireSignIn ?? false;
+  const now = options.now ?? (() => new Date());
 
   /** Single-player and local shared saves: owner, or ownerless when allowed. */
   function ownsSave(
@@ -134,7 +139,10 @@ export function createActingSaveGameStore(
           "Online league writes must follow a load in the same request.",
         );
       }
-      const state: GameState = withActiveTeamRemembered(input.state);
+      const state: GameState = withActingParticipantSeen(
+        withActiveTeamRemembered(input.state),
+        now(),
+      );
       const saved = await base.save({ ...input, state, ifUpdatedAt });
       loadedAt.set(input.id, saved.updatedAt);
       const acting = await actAs(saved);
