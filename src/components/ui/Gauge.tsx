@@ -56,11 +56,11 @@ export function Gauge(props: {
           />
         ) : null}
       </svg>
-      <span className="-mt-5 font-mono text-lg font-semibold tabular-nums text-zinc-100">
+      <span className="-mt-5 font-mono text-lg font-semibold tabular-nums text-ink">
         {Math.round(clamped)}
       </span>
       {props.hideLabel ? null : (
-        <span className="text-sm text-zinc-400">{props.label}</span>
+        <span className="text-sm text-muted">{props.label}</span>
       )}
     </div>
   );

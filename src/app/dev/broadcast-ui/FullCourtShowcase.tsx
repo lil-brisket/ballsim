@@ -77,7 +77,7 @@ export function FullCourtShowcase() {
         >
           Next
         </Button>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           Play {revealed} of {total}: {text}
         </p>
       </div>

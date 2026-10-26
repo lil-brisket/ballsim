@@ -10,7 +10,7 @@ export type TickerItem = {
 };
 
 const TONE: Record<TickerTone, string> = {
-  default: "text-zinc-50",
+  default: "text-ink",
   team: "text-team-ink",
   win: "text-win",
   loss: "text-loss",
@@ -40,7 +40,7 @@ export function TickerBar(props: {
           key={item.label}
           className="flex shrink-0 flex-col justify-center gap-0.5 px-3 py-1 first:pl-0 last:pr-0"
         >
-          <dt className="text-sm text-zinc-400">{item.label}</dt>
+          <dt className="text-sm text-muted">{item.label}</dt>
           <dd
             className={cn(
               "font-display text-lg font-bold uppercase leading-none tabular-nums",

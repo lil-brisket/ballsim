@@ -8,7 +8,6 @@ export { InfoTip } from "@/components/ui/InfoTip";
 export { Metric } from "@/components/ui/Metric";
 export { Overlay } from "@/components/ui/Overlay";
 export { PageHeader } from "@/components/ui/PageHeader";
-export { Panel } from "@/components/ui/Panel";
 export { ProgressBar } from "@/components/ui/ProgressBar";
 export {
   ScoreNumeral,

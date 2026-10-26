@@ -16,7 +16,6 @@ import {
   NumberStepper,
   Overlay,
   PageHeader,
-  Panel,
   ProgressBar,
   RatingBars,
   ResultSparkline,
@@ -161,14 +160,16 @@ export function TeamShowcase(props: {
         />
       </Block>
 
-      <Block title="PageHeader, Section, Panel">
+      <Block title="PageHeader, Section, quiet ArenaPanel">
         <PageHeader
           title="Page title"
           subtitle="Subtitle text"
           actions={<Button variant="primary">Primary</Button>}
         />
         <Section title="Section" action={<Button variant="quiet">More</Button>}>
-          <Panel>Panel content</Panel>
+          <ArenaPanel quiet as="div">
+            Quiet panel content
+          </ArenaPanel>
         </Section>
       </Block>
 
@@ -356,11 +357,11 @@ export function TeamShowcase(props: {
           title={`${fullName} drawer`}
           description="Drawer body"
         >
-          <p className="text-sm text-zinc-300">Drawer content.</p>
+          <p className="text-sm text-soft">Drawer content.</p>
         </Drawer>
         {overlayOpen ? (
           <Overlay onClick={() => setOverlayOpen(false)}>
-            <div className="m-auto rounded-lg bg-zinc-900 p-6 text-sm">
+            <div className="m-auto rounded-lg bg-surface-raised p-6 text-sm">
               Overlay content. Click the backdrop to close.
             </div>
           </Overlay>

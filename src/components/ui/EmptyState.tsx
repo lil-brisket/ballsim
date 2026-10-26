@@ -11,9 +11,9 @@ export function EmptyState(props: {
       className={cn(panelDashedClass, "px-4 py-8 text-center", props.className)}
     >
       {props.title ? (
-        <p className="text-sm font-medium text-zinc-300">{props.title}</p>
+        <p className="text-sm font-medium text-soft">{props.title}</p>
       ) : null}
-      <p className={cn("text-sm text-zinc-500", props.title && "mt-1")}>
+      <p className={cn("text-sm text-faint", props.title && "mt-1")}>
         {props.message}
       </p>
       {props.action ? <div className="mt-4">{props.action}</div> : null}

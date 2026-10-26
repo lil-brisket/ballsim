@@ -76,7 +76,7 @@ describe("Button", () => {
     render(<Button>Save</Button>);
     const button = screen.getByRole("button", { name: "Save" });
     expect(button.getAttribute("type")).toBe("button");
-    expect(button.className).toContain("border-zinc-700");
+    expect(button.className).toContain("border-line-strong");
   });
 
   it("styles primary with the team colour", () => {

@@ -38,8 +38,8 @@ export function Tabs(props: {
           "relative inline-flex min-h-11 shrink-0 items-center gap-2 px-3 font-display text-base font-semibold uppercase tracking-wide transition touch-manipulation",
           "after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full",
           active
-            ? "text-zinc-50 after:bg-team-ink"
-            : "text-zinc-400 after:bg-transparent hover:text-zinc-100",
+            ? "text-ink after:bg-team-ink"
+            : "text-muted after:bg-transparent hover:text-ink",
           focusRingClass,
         );
         const content = (

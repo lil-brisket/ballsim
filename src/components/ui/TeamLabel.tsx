@@ -28,8 +28,8 @@ export function TeamLabel(props: {
         decorative
       />
       <div>
-        <p className="text-sm font-medium text-zinc-100">{fullName}</p>
-        <p className="text-sm text-zinc-400">{props.abbreviation}</p>
+        <p className="text-sm font-medium text-ink">{fullName}</p>
+        <p className="text-sm text-muted">{props.abbreviation}</p>
       </div>
     </div>
   );

@@ -38,14 +38,14 @@ const TEAMS = [
 
 export default function BroadcastUiShowcasePage() {
   return (
-    <main className="min-h-screen bg-surface-deep px-4 py-8 text-zinc-100 sm:px-6">
+    <main className="min-h-screen bg-surface-deep px-4 py-8 text-ink sm:px-6">
       <SectionHeading
         as="h1"
         size="lg"
         eyebrow="Dev / visual QA"
         title="Shared UI primitives"
       />
-      <p className="mt-3 max-w-2xl text-sm text-zinc-400">
+      <p className="mt-3 max-w-2xl text-sm text-muted">
         Every primitive under a very dark and a very light team colour. Toggle
         the OS reduced-motion setting to confirm animations stop.
       </p>

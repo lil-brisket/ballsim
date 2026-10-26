@@ -1,6 +1,6 @@
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ActionCard } from "@/components/ui/ActionCard";
-import { Panel } from "@/components/ui/Panel";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import type {
@@ -21,11 +21,11 @@ export function RelocationSummarySection(props: {
   const { summary } = props;
   const body = (
     <>
-      <p className="mt-3 text-sm text-zinc-400">{STATE_COPY[summary.state]}</p>
-      <ul className="mt-3 space-y-1 text-sm text-zinc-400">
+      <p className="mt-3 text-sm text-muted">{STATE_COPY[summary.state]}</p>
+      <ul className="mt-3 space-y-1 text-sm text-muted">
         <li className="flex justify-between gap-2">
           <span>Market size</span>
-          <span className="text-zinc-200">{summary.marketSize}</span>
+          <span className="text-ink">{summary.marketSize}</span>
         </li>
         <li className="flex justify-between gap-2">
           <span>Estimated fee</span>
@@ -34,7 +34,7 @@ export function RelocationSummarySection(props: {
         {summary.cooldownSeasonsRemaining > 0 ? (
           <li className="flex justify-between gap-2">
             <span>Cooldown</span>
-            <span className="text-zinc-200">
+            <span className="text-ink">
               {summary.cooldownSeasonsRemaining} season
               {summary.cooldownSeasonsRemaining === 1 ? "" : "s"}
             </span>
@@ -42,7 +42,7 @@ export function RelocationSummarySection(props: {
         ) : null}
       </ul>
       {summary.primaryDriver ? (
-        <p className="mt-3 text-sm text-zinc-500">{summary.primaryDriver}</p>
+        <p className="mt-3 text-sm text-faint">{summary.primaryDriver}</p>
       ) : null}
     </>
   );
@@ -80,10 +80,10 @@ export function RelocationSummarySection(props: {
   }
 
   return (
-    <Panel>
+    <ArenaPanel quiet as="div">
       {badge}
       <SectionHeading as="h3" title="Relocation" className="mt-2" />
       {body}
-    </Panel>
+    </ArenaPanel>
   );
 }

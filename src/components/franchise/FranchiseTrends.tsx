@@ -1,5 +1,5 @@
 import { formatMoney } from "@/components/owner/MoneyDisplay";
-import { Panel } from "@/components/ui/Panel";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { Sparkline } from "@/components/ui/Sparkline";
 import type { FranchiseSeasonRecord } from "@/domain/entities/franchise-history";
 
@@ -81,13 +81,13 @@ export function toFranchiseTrends(
 const DIRECTION_CLASS: Record<FranchiseTrend["direction"], string> = {
   up: "text-emerald-400",
   down: "text-rose-400",
-  flat: "text-zinc-500",
+  flat: "text-faint",
 };
 
 export function FranchiseTrends(props: { trends: FranchiseTrend[] }) {
   if (props.trends.length === 0) {
     return (
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-faint">
         Trends appear after the first completed season.
       </p>
     );
@@ -95,11 +95,11 @@ export function FranchiseTrends(props: { trends: FranchiseTrend[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {props.trends.map((item) => (
-        <Panel key={item.label}>
-          <p className="text-sm text-zinc-400">{item.label}</p>
+        <ArenaPanel quiet as="div" key={item.label}>
+          <p className="text-sm text-muted">{item.label}</p>
           <div className="mt-2 flex items-end justify-between gap-3">
             <div>
-              <p className="font-mono text-lg text-zinc-50">{item.latest}</p>
+              <p className="font-mono text-lg text-ink">{item.latest}</p>
               <p className={`text-sm ${DIRECTION_CLASS[item.direction]}`}>
                 {item.change}
               </p>
@@ -109,7 +109,7 @@ export function FranchiseTrends(props: { trends: FranchiseTrend[] }) {
               label={`${item.label} over the last ${item.values.length} points`}
             />
           </div>
-        </Panel>
+        </ArenaPanel>
       ))}
     </div>
   );

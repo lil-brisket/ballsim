@@ -27,7 +27,7 @@
 
 /*
  * Media Hub top story: the lead team's spotlight from the graphic's corner.
- * Same alpha budget as .shell-spotlight so zinc-50 text keeps AA contrast.
+ * Same alpha budget as .shell-spotlight so text-ink keeps AA contrast.
  */
 .media-hero-spotlight {
   position: absolute;

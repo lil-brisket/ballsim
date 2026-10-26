@@ -24,9 +24,24 @@
 
   /* Arena surface scale, deepest to most raised. */
   --surface-deep: #050507;
+  --surface-base: #09090b;
   --surface-arena: #0f0f12;
   --surface-raised: #18181b;
+  --surface-high: #27272a;
   --surface-line: #2a2a30;
+  --row-alt: rgb(24 24 27 / 0.4);
+
+  /*
+   * Neutral ink and line scale. Components use these (text-ink, text-muted,
+   * border-line, bg-surface-raised...) instead of raw zinc-* classes, so a
+   * re-skin is a change of values here. Brightest to dimmest.
+   */
+  --ink: #f4f4f5;
+  --soft: #d4d4d8;
+  --muted: #a1a1aa;
+  --faint: #71717a;
+  --disabled: #52525b;
+  --line-strong: #3f3f46;
 
   /* Semantic broadcast colours. */
   --win: #22c55e;
@@ -56,9 +71,18 @@
   --color-team-ink: var(--team-ink);
   --color-on-team: var(--team-on-primary);
   --color-surface-deep: var(--surface-deep);
+  --color-surface-base: var(--surface-base);
   --color-surface-arena: var(--surface-arena);
   --color-surface-raised: var(--surface-raised);
+  --color-surface-high: var(--surface-high);
   --color-surface-line: var(--surface-line);
+  --color-row-alt: var(--row-alt);
+  --color-ink: var(--ink);
+  --color-soft: var(--soft);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-disabled: var(--disabled);
+  --color-line-strong: var(--line-strong);
   --color-tier: var(--tier);
   --color-win: var(--win);
   --color-loss: var(--loss);

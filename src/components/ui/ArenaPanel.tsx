@@ -1,16 +1,22 @@
 import type { CSSProperties } from "react";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import type { TeamBrandingView } from "@/state/team-branding-view";
-import { cn, densityPadding, type Density } from "@/components/ui/styles";
+import {
+  cn,
+  densityPadding,
+  panelClass,
+  type Density,
+} from "@/components/ui/styles";
 
 /**
- * Broadcast-style surface for hero and primary content. Prefer over `Panel`
- * where a section should carry weight; `Panel` stays for quiet secondary boxes.
+ * The one surface component. Broadcast-style by default, for hero and primary
+ * content.
  *
  * - `edge`: team-colour bar on the left or top edge.
  * - `glow`: team-colour outer glow.
  * - `hero`: team-colour wash with a slow sheen (static under reduced motion).
  * - `raised`: lighter surface for panels nested in an arena background.
+ * - `quiet`: flat secondary box (`panelClass`); ignores the options above.
  */
 export function ArenaPanel(props: {
   children: React.ReactNode;
@@ -19,6 +25,7 @@ export function ArenaPanel(props: {
   glow?: boolean;
   hero?: boolean;
   raised?: boolean;
+  quiet?: boolean;
   /** Subtle hardwood texture. Hero surfaces only. */
   texture?: boolean;
   /** Faded team logo behind the content, clipped by the panel. */
@@ -31,6 +38,17 @@ export function ArenaPanel(props: {
 }) {
   const Tag = props.as ?? "section";
   const density = props.density ?? "default";
+  if (props.quiet) {
+    return (
+      <Tag
+        className={cn(panelClass, densityPadding[density], props.className)}
+        style={props.style}
+        aria-labelledby={props["aria-labelledby"]}
+      >
+        {props.children}
+      </Tag>
+    );
+  }
   return (
     <Tag
       className={cn(

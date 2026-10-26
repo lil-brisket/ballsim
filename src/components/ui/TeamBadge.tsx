@@ -68,7 +68,7 @@ export function TeamBadge(props: {
       <span
         {...labelProps}
         className={cn(
-          "inline-flex shrink-0 items-center justify-center border border-zinc-700 bg-zinc-800 font-display font-bold text-zinc-200",
+          "inline-flex shrink-0 items-center justify-center border border-line-strong bg-surface-high font-display font-bold text-ink",
           PLATE[size],
           INITIALS[size],
           props.className,

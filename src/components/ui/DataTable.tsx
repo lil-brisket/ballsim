@@ -4,12 +4,12 @@ export function DataTable(props: {
   caption?: string;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-800">
+    <div className="overflow-x-auto rounded-xl border border-line">
       <table className="min-w-full text-left text-sm">
         {props.caption ? (
           <caption className="sr-only">{props.caption}</caption>
         ) : null}
-        <thead className="bg-zinc-900 text-zinc-400">
+        <thead className="bg-surface-raised text-muted">
           <tr>
             {props.headers.map((header) => (
               <th key={header} className="px-3 py-2 font-medium">

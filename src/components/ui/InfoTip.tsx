@@ -55,7 +55,7 @@ export function InfoTip({ label, align = "end", children }: InfoTipProps) {
           "inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition-colors",
           open
             ? "border-team-ink text-team-ink"
-            : "border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-200",
+            : "border-disabled text-muted hover:border-muted hover:text-ink",
           focusRingClass,
         )}
       >
@@ -66,7 +66,7 @@ export function InfoTip({ label, align = "end", children }: InfoTipProps) {
           id={tipId}
           role="tooltip"
           className={cn(
-            "absolute top-full z-20 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-left text-sm font-normal leading-relaxed text-zinc-300 shadow-lg",
+            "absolute top-full z-20 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-left text-sm font-normal leading-relaxed text-soft shadow-lg",
             align === "end" ? "right-0" : "left-0",
           )}
         >

@@ -36,9 +36,7 @@ export function RatingBars(props: {
             className="min-w-0"
           >
             <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate text-sm text-zinc-300">
-                {item.label}
-              </span>
+              <span className="truncate text-sm text-soft">{item.label}</span>
               <span className="font-display text-xl font-bold leading-none tabular-nums text-tier">
                 {value ?? "—"}
               </span>

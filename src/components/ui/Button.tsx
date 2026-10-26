@@ -6,8 +6,8 @@ export type ButtonSize = "md" | "lg";
 const VARIANT: Record<ButtonVariant, string> = {
   primary: "bg-team font-semibold text-on-team hover:brightness-110",
   secondary:
-    "border border-zinc-700 bg-zinc-900 font-medium text-zinc-100 hover:border-team-ink",
-  quiet: "font-medium text-zinc-300 hover:bg-zinc-800/60 hover:text-zinc-50",
+    "border border-line-strong bg-surface-raised font-medium text-ink hover:border-team-ink",
+  quiet: "font-medium text-soft hover:bg-surface-high/60 hover:text-ink",
   danger:
     "border border-rose-700/60 bg-rose-950/40 font-medium text-rose-200 hover:bg-rose-900/50",
 };

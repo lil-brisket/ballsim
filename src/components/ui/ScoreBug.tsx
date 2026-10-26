@@ -33,9 +33,7 @@ function TeamSide(props: {
       <span
         className={cn(
           "font-display text-lg uppercase tracking-wide",
-          props.won
-            ? "font-extrabold text-zinc-50"
-            : "font-medium text-zinc-400",
+          props.won ? "font-extrabold text-ink" : "font-medium text-muted",
         )}
       >
         {props.team.abbreviation}
@@ -43,9 +41,7 @@ function TeamSide(props: {
       <span
         className={cn(
           "ml-auto font-display text-2xl tabular-nums",
-          props.won
-            ? "font-extrabold text-zinc-50"
-            : "font-medium text-zinc-400",
+          props.won ? "font-extrabold text-ink" : "font-medium text-muted",
         )}
       >
         {props.team.score}
@@ -80,7 +76,7 @@ export function ScoreBug(props: {
     <>
       <span className="sr-only">{label}</span>
       <span aria-hidden className="flex flex-col gap-1">
-        <span className="flex items-center justify-between gap-3 text-sm text-zinc-400">
+        <span className="flex items-center justify-between gap-3 text-sm text-muted">
           <span className="font-medium uppercase tracking-wide">{tag}</span>
           <span>{shortDate}</span>
         </span>
