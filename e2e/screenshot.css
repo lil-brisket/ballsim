@@ -1,0 +1,9 @@
+/*
+ * Applied only while toHaveScreenshot captures. Full-page captures paint
+ * fixed bars mid-page, and the dev-server badge is not part of the app.
+ */
+footer[aria-label="Keyboard controls"],
+nav.fixed[aria-label="Hubs"],
+nextjs-portal {
+  visibility: hidden !important;
+}

@@ -566,14 +566,14 @@ function describeDomainEvent(
         title: "Staff hired",
         description: teamName ?? undefined,
         teamIds: teamId ? [teamId] : undefined,
-        href: `/dashboard/${saveId}/staff-coaching`,
+        href: `/dashboard/${saveId}/staff-coaching/staff`,
       };
     case "StaffFired":
       return {
         title: "Staff fired",
         description: teamName ?? undefined,
         teamIds: teamId ? [teamId] : undefined,
-        href: `/dashboard/${saveId}/staff-coaching`,
+        href: `/dashboard/${saveId}/staff-coaching/staff`,
       };
     case "PlayerRetired":
       return {
@@ -608,7 +608,7 @@ function describeDomainEvent(
       return {
         title: `Relocation: ${String(payload.stage ?? "update")}`,
         teamIds: teamId ? [teamId] : undefined,
-        href: `/dashboard/${saveId}/relocation`,
+        href: `/dashboard/${saveId}/franchise/relocation`,
       };
     case "ExpansionStageChanged":
       return {

@@ -935,7 +935,7 @@ export function detectRelocationPressure(
       {
         id: "review_relocation",
         label: "Review stay vs move",
-        href: "/relocation",
+        href: "/franchise/relocation",
       },
       { id: "increase_marketing", label: "Increase marketing" },
     ],

@@ -271,7 +271,7 @@ export function toOffseasonHubView(state: GameState): OffseasonHubView {
     { label: "Draft", href: `${base}/draft` },
     { label: "Scouting", href: `${base}/scouting` },
     { label: "Free Agency", href: `${base}/free-agency` },
-    { label: "Staff", href: `${base}/staff-coaching` },
+    { label: "Staff", href: `${base}/staff-coaching/staff` },
     { label: "Development", href: `${base}/development` },
     { label: "Development League", href: `${base}/development-league` },
     { label: "Finances", href: `${base}/finances` },

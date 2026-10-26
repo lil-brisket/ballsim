@@ -11,7 +11,6 @@ export const SAVE_ROUTES: readonly string[] = [
   "/roster",
   "/roster/injuries",
   "/team-management/lineups",
-  "/team-management/transactions",
   "/team/contracts",
   "/team/history",
   "/development",
@@ -42,6 +41,7 @@ export const SAVE_ROUTES: readonly string[] = [
   "/franchise/history",
   "/business",
   "/sponsorships",
+  "/trades",
   "/trades/propose",
   "/free-agency",
   // Offseason
@@ -80,4 +80,5 @@ export const LEGACY_REDIRECTS: ReadonlyArray<[from: string, to: string]> = [
   ["/team-management/coaching", "/staff-coaching/coaching"],
   ["/team-management/injuries", "/roster/injuries"],
   ["/team-management/rotations", "/team-management/lineups"],
+  ["/team-management/transactions", "/league/transactions"],
 ];

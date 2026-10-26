@@ -14,7 +14,11 @@ export default defineConfig({
   timeout: 120_000,
   expect: {
     timeout: 15_000,
-    toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: "disabled" },
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.01,
+      animations: "disabled",
+      stylePath: "e2e/screenshot.css",
+    },
   },
   // The dev server compiles each route on first visit; keep load modest.
   workers: 2,

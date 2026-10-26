@@ -14,6 +14,7 @@ import {
 } from "@/components/league/team-filter-utils";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ScheduleViewSwitch } from "@/components/calendar/ScheduleViewSwitch";
 import {
   formatGameDate,
   formatRelativeGameDay,
@@ -175,17 +176,20 @@ export default async function SchedulePage({
           </span>
         }
         actions={
-          isToday ? null : (
-            <Link
-              href={href({ date: undefined })}
-              className={cn(
-                "rounded-md border border-line-strong px-3 py-1.5 text-sm text-soft hover:border-team-ink hover:text-team-ink",
-                focusRingClass,
-              )}
-            >
-              Back to today
-            </Link>
-          )
+          <>
+            <ScheduleViewSwitch saveId={saveId} active="list" />
+            {isToday ? null : (
+              <Link
+                href={href({ date: undefined })}
+                className={cn(
+                  "rounded-md border border-line-strong px-3 py-1.5 text-sm text-soft hover:border-team-ink hover:text-team-ink",
+                  focusRingClass,
+                )}
+              >
+                Back to today
+              </Link>
+            )}
+          </>
         }
       />
       {query.error ? <ErrorState message={query.error} /> : null}

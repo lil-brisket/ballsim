@@ -5,6 +5,7 @@ import { loadCalendarPageView } from "@/application/game-service";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ScheduleViewSwitch } from "@/components/calendar/ScheduleViewSwitch";
 import { parseCalendarDate } from "@/domain/calendar-date";
 
 export const metadata: Metadata = { title: "Calendar" };
@@ -76,7 +77,8 @@ export default async function CalendarPage({
   return (
     <>
       <PageHeader
-        title="Calendar"
+        title="Schedule"
+        actions={<ScheduleViewSwitch saveId={saveId} active="calendar" />}
         subtitle={`${view.dashboard.controlledTeam.city} ${view.dashboard.controlledTeam.name} · ${formatGameDate(view.currentDate, { weekday: true })}`}
       />
 

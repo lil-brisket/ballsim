@@ -26,7 +26,7 @@ export function PlayerContract(props: {
         title="Current contract"
         action={
           <Link
-            href={`/dashboard/${props.saveId}/contracts`}
+            href={`/dashboard/${props.saveId}/team/contracts`}
             className="text-sm text-team-ink underline-offset-4 hover:underline"
           >
             View contracts

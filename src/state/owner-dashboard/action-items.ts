@@ -182,7 +182,7 @@ export function buildActionItems(
       what: `Vacant starter role${data.vacantStarterRoles.length === 1 ? "" : "s"}: ${data.vacantStarterRoles.join(", ")}.`,
       why: "Missing starter staff can weaken evaluation, development, or operations coverage.",
       evidence: data.vacantStarterRoles.map((role) => `Open: ${role}`),
-      href: `/dashboard/${saveId}/staff-coaching`,
+      href: `/dashboard/${saveId}/staff-coaching/staff`,
       hrefLabel: "Review Staff",
     });
   }

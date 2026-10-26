@@ -212,7 +212,7 @@ export function mapUnresolvedToCenterItem(
     item.domain === "draft"
       ? `/dashboard/${saveId}/draft`
       : item.domain === "staffHiring"
-        ? `/dashboard/${saveId}/staff-coaching`
+        ? `/dashboard/${saveId}/staff-coaching/staff`
         : `/dashboard/${saveId}/calendar`;
   return {
     id: `phase-${item.id}`,
