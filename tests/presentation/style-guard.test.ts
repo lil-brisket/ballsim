@@ -59,6 +59,22 @@ describe("style guard", () => {
   it("uses NumberStepper and Select instead of native number inputs and selects", () => {
     const outsideUi = (entry: (typeof FILES)[number]) => !entry.inUi;
     expect(offenders(/type=["']number["']/, outsideUi)).toEqual([]);
-    expect(offenders(/<select[\s>]/, outsideUi)).toEqual([]);
+    expect(offenders(/<select(\s|>|$)/, outsideUi)).toEqual([]);
+  });
+
+  it("uses surface and ink tokens instead of raw zinc classes", () => {
+    expect(
+      offenders(
+        /(^|[\s"'`:])[a-z-]+-zinc-\d{2,3}\b/,
+        ({ file }) => file.endsWith(".tsx") || file.endsWith(".ts"),
+      ),
+    ).toEqual([]);
+  });
+
+  it("uses ArenaPanel (quiet) instead of the removed Panel component", () => {
+    expect(offenders(/components\/ui\/Panel["']/)).toEqual([]);
+    expect(
+      offenders(/import \{[^}]*\bPanel\b[^}]*\} from "@\/components\/ui["']/),
+    ).toEqual([]);
   });
 });
