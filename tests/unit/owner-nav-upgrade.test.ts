@@ -58,87 +58,104 @@ describe("owner season context", () => {
   });
 });
 
-describe("owner nav config invariants", () => {
-  it("exposes canonical destinations without legacy TM / relocation / staff", () => {
+describe("owner hub config invariants", () => {
+  it("exposes canonical destinations, never legacy redirect routes", () => {
     const hrefs = flattenOwnerNavItems().map((item) => item.href);
-    expect(hrefs).toContain("");
-    expect(hrefs).toContain("/calendar");
-    expect(hrefs).toContain("/roster");
-    expect(hrefs).toContain("/staff-coaching");
-    expect(hrefs).toContain("/development");
-    expect(hrefs).toContain("/media");
-    expect(hrefs).toContain("/franchise");
-    expect(hrefs).toContain("/finances");
-    expect(hrefs).not.toContain("/team-management");
-    expect(hrefs).not.toContain("/relocation");
-    expect(hrefs).not.toContain("/staff");
-    expect(hrefs).not.toContain("/business");
-    expect(hrefs).not.toContain("/facilities");
-    expect(hrefs).not.toContain("/draft");
-    expect(hrefs).not.toContain("/scouting");
-    expect(hrefs).not.toContain("/free-agency");
-    expect(hrefs).not.toContain("/teams");
+    for (const href of [
+      "",
+      "/calendar",
+      "/roster",
+      "/team/contracts",
+      "/trades",
+      "/staff-coaching/staff",
+      "/development",
+      "/media",
+      "/franchise",
+      "/finances",
+      "/business",
+    ]) {
+      expect(hrefs).toContain(href);
+    }
+    for (const legacy of [
+      "/team-management",
+      "/team-management/transactions",
+      "/relocation",
+      "/staff",
+      "/staff-coaching",
+      "/contracts",
+      "/facilities",
+      "/standings",
+      "/transactions",
+      "/schedule",
+      "/teams",
+    ]) {
+      expect(hrefs).not.toContain(legacy);
+    }
   });
 
   it("contains no My Teams nav item or /teams route", () => {
     const items = flattenOwnerNavItems();
     expect(items.some((item) => item.href === "/teams")).toBe(false);
     expect(items.some((item) => item.label === "My Teams")).toBe(false);
-    for (const group of OWNER_NAV_GROUPS) {
-      expect(group.items.some((item) => item.href === "/teams")).toBe(false);
-      expect(group.items.some((item) => item.label === "My Teams")).toBe(false);
-    }
   });
 
-  it("does not expose a standalone Contracts sidebar destination", () => {
+  it("merges Schedule into the calendar tab and Fan Voting into Awards", () => {
     const items = flattenOwnerNavItems();
-    expect(items.some((item) => item.href === "/contracts")).toBe(false);
-    expect(items.some((item) => item.label === "Contracts")).toBe(false);
-    for (const group of OWNER_NAV_GROUPS) {
-      expect(group.items.some((item) => item.href === "/contracts")).toBe(
-        false,
-      );
-      expect(group.items.some((item) => item.label === "Contracts")).toBe(
-        false,
-      );
-    }
+    const schedule = items.find((item) => item.label === "Schedule");
+    expect(schedule?.href).toBe("/calendar");
+    expect(schedule?.also).toContain("/schedule");
+    const awards = items.find((item) => item.href === "/awards");
+    expect(awards?.also).toContain("/season-events/fan-voting");
+    expect(items.some((item) => item.label === "Fan Voting")).toBe(false);
   });
 
-  it("league group has evergreen League destinations including Awards and Fan Voting", () => {
+  it("league hub has its evergreen tabs", () => {
     const league = OWNER_NAV_GROUPS.find((g) => g.id === "league");
-    expect(league?.items).toHaveLength(4);
-    // Standings (#184) and Transactions (#186) are League tabs.
-    expect(league?.items.some((i) => i.href === "/standings")).toBe(false);
-    expect(league?.items.some((i) => i.href === "/transactions")).toBe(false);
-    expect(league?.items.some((i) => i.href === "/awards")).toBe(true);
-    expect(
-      league?.items.some((i) => i.href === "/season-events/fan-voting"),
-    ).toBe(true);
-    expect(league?.items.some((i) => i.href === "/draft")).toBe(false);
+    expect(league?.items.map((i) => i.href)).toEqual([
+      "/league",
+      "/league/standings",
+      "/league/player-stats",
+      "/league/team-stats",
+      "/league/transactions",
+      "/awards",
+      "/history",
+    ]);
   });
 
-  it("injects Offseason group with Draft/Scouting/FA only during offseason", () => {
+  it("settings hub has League, Rules, AI Management and Tools", () => {
+    const settings = OWNER_NAV_GROUPS.find((g) => g.id === "settings");
+    expect(settings?.items.map((i) => [i.label, i.href])).toEqual([
+      ["League", "/settings"],
+      ["Rules", "/settings/rules"],
+      ["AI Management", "/settings/ai"],
+      ["Tools", "/settings/tools"],
+    ]);
+  });
+
+  it("injects the Offseason hub with Draft/Scouting/FA only during offseason", () => {
     const regular = ownerNavGroupsForState(baseState({ phase: "regular" }));
     expect(regular.some((g) => g.id === "offseason")).toBe(false);
     const regularHrefs = regular.flatMap((g) => g.items.map((i) => i.href));
     expect(regularHrefs).not.toContain("/draft");
     expect(regularHrefs).not.toContain("/scouting");
-    // In season, free agents are signed from the Team group.
-    const team = regular.find((g) => g.id === "team");
-    expect(team?.items.map((i) => i.href)).toContain("/free-agency");
+    // In season, free agents are signed from Front Office.
+    const office = regular.find((g) => g.id === "front-office");
+    expect(office?.items.map((i) => i.href)).toContain("/free-agency");
 
     const offseason = ownerNavGroupsForState(baseState({ phase: "offseason" }));
-    expect(offseason.some((g) => g.id === "offseason")).toBe(true);
-    const offGroup = offseason.find((g) => g.id === "offseason");
-    expect(offGroup?.items.map((i) => i.href)).toEqual([
+    const offHub = offseason.find((g) => g.id === "offseason");
+    expect(offHub?.items.map((i) => i.href)).toEqual([
       "/offseason",
       "/draft",
       "/scouting",
       "/free-agency",
     ]);
+    // Free Agency lives in one hub at a time.
+    const officeOff = offseason.find((g) => g.id === "front-office");
+    expect(officeOff?.items.map((i) => i.href)).not.toContain("/free-agency");
   });
 
-  it("injects Playoffs into League nav during playoffs and postseason", () => {
+  it("injects Playoffs into League during playoffs and postseason", () => {
     for (const phase of ["playoffs", "postseason"] as const) {
       const groups = ownerNavGroupsForState(baseState({ phase }));
       const league = groups.find((g) => g.id === "league");
@@ -149,19 +166,26 @@ describe("owner nav config invariants", () => {
     expect(league?.items.some((i) => i.href === "/playoffs")).toBe(false);
   });
 
-  it("never includes relocation in computed nav groups", () => {
+  it("never includes relocation as a tab", () => {
     for (const phase of ["regular", "postseason", "offseason"] as const) {
       const groups = ownerNavGroupsForState(baseState({ phase }));
       const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
       expect(hrefs).not.toContain("/relocation");
+      expect(hrefs).not.toContain("/franchise/relocation");
     }
   });
 
-  it("places Offseason after Simulation", () => {
+  it("orders hubs Home, Team, League, Front Office, Media, Offseason, Settings", () => {
     const groups = ownerNavGroupsForState(baseState({ phase: "offseason" }));
-    const ids = groups.map((g) => g.id);
-    expect(ids.indexOf("simulation")).toBeLessThan(ids.indexOf("offseason"));
-    expect(ids.indexOf("offseason")).toBeLessThan(ids.indexOf("team"));
+    expect(groups.map((g) => g.id)).toEqual([
+      "home",
+      "team",
+      "league",
+      "front-office",
+      "media",
+      "offseason",
+      "settings",
+    ]);
   });
 });
 

@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { loadTransactionHubView } from "@/application/game-service";
 import { parseTeamFilterParam } from "@/components/league/team-filter-utils";
-import { LeagueSubNav } from "@/components/league/LeagueSubNav";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
@@ -98,7 +97,6 @@ export default async function LeagueTransactionsPage({
 
   return (
     <div className="space-y-4">
-      <LeagueSubNav saveId={saveId} active="transactions" />
       <PageHeader
         title="Transactions"
         subtitle="Trades, signings, releases and draft moves around the league"

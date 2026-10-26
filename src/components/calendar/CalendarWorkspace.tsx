@@ -908,7 +908,9 @@ export function CalendarWorkspace(props: {
         <>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
             {monthView}
-            <div className="sticky top-4">{inspector}</div>
+            <div className="sticky top-[calc(var(--shell-offset,0px)+1rem)]">
+              {inspector}
+            </div>
           </div>
           <CalendarLeagueContextPanel context={leagueContext} />
         </>

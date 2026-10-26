@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { InjuriesPageView } from "@/components/roster/InjuriesPageView";
-import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 
 export const metadata: Metadata = { title: "Injuries" };
 
@@ -17,7 +16,6 @@ export default async function RosterInjuriesPage({
   const { error } = await searchParams;
   return (
     <>
-      <TeamHubSubNav saveId={saveId} active="injuries" />
       <InjuriesPageView saveId={saveId} error={error} />
     </>
   );

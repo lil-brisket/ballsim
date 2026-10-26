@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { loadSettingsView } from "@/application/game-service";
 import { AiDelegationForm } from "@/components/settings/AiDelegationForm";
 import { SettingsPageShell } from "@/components/settings/SettingsPageShell";
-import { settingsTabPath } from "@/components/settings/SettingsSubNav";
+import { settingsTabPath } from "@/components/settings/settings-paths";
 import { Section } from "@/components/ui/Section";
 
 export const metadata: Metadata = { title: "Settings" };

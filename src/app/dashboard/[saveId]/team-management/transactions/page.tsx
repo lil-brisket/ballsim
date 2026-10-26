@@ -5,7 +5,6 @@ import { loadTeamManagementView } from "@/application/game-service";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 import { formatGameDate } from "@/presentation/game-date";
 
 export const metadata: Metadata = { title: "Transactions" };
@@ -92,7 +91,6 @@ export default async function TeamManagementTransactionsPage({
 
   return (
     <>
-      <TeamHubSubNav saveId={saveId} active="transactions" />
       <PageHeader title="Transactions" />
       <p className="mb-3 text-sm text-muted">
         Prefer the league ledger?{" "}

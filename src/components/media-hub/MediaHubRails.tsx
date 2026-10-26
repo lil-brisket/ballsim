@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Gauge } from "@/components/ui/Gauge";
-import { NavIcon } from "@/components/game/NavGroups";
+import { NavIcon } from "@/components/game/shell/NavIcon";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Tabs } from "@/components/ui/Tabs";
 import {

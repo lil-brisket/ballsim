@@ -8,7 +8,7 @@ import {
   HostOnlyNotice,
   SettingsPageShell,
 } from "@/components/settings/SettingsPageShell";
-import { settingsTabPath } from "@/components/settings/SettingsSubNav";
+import { settingsTabPath } from "@/components/settings/settings-paths";
 
 export const metadata: Metadata = { title: "Settings" };
 

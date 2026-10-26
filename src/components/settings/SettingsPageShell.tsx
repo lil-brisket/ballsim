@@ -1,14 +1,12 @@
 import type { ReactNode } from "react";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import {
-  SettingsSubNav,
-  type SettingsSubNavKey,
-} from "@/components/settings/SettingsSubNav";
+import type { SettingsTabKey } from "@/components/settings/settings-paths";
 
 export function SettingsPageShell(props: {
   saveId: string;
-  active: SettingsSubNavKey;
+  /** Which Settings tab this page is (the hub sub-tabs show it). */
+  active: SettingsTabKey;
   error?: string;
   children: ReactNode;
 }) {
@@ -18,7 +16,6 @@ export function SettingsPageShell(props: {
         title="Settings"
         subtitle="Career configuration for this save"
       />
-      <SettingsSubNav saveId={props.saveId} active={props.active} />
       {props.error ? <ErrorState message={props.error} /> : null}
       {props.children}
     </>

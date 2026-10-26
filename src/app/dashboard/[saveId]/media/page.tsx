@@ -71,7 +71,7 @@ export default async function MediaPage({
       {/* Three columns need ~70rem of content width (not viewport). */}
       <div className="grid gap-6 @min-[70rem]:grid-cols-[12rem_minmax(0,40rem)_minmax(14rem,1fr)] @min-[70rem]:gap-8">
         <aside className="hidden @min-[70rem]:block">
-          <div className="sticky top-4">
+          <div className="sticky top-[calc(var(--shell-offset,0px)+1rem)]">
             <MediaFilterList filters={view.filters} />
           </div>
         </aside>

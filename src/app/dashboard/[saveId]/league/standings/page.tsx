@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { loadStandingsPageView } from "@/application/game-service";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { LeagueSubNav } from "@/components/league/LeagueSubNav";
 import { LeagueLeaders } from "@/components/standings/LeagueLeaders";
 import { PlayoffRaceWidget } from "@/components/standings/PlayoffRaceWidget";
 import { StandingsControls } from "@/components/standings/StandingsControls";
@@ -44,7 +43,6 @@ export default async function StandingsPage({
 
   return (
     <>
-      <LeagueSubNav saveId={saveId} active="standings" />
       <PageHeader title="Standings" subtitle={subtitle} />
       {query.error ? <ErrorState message={query.error} /> : null}
 

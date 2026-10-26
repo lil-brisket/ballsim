@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadLeagueHubView } from "@/application/game-service";
 import { LeagueHeader } from "@/components/league/LeagueHeader";
-import { LeagueSubNav } from "@/components/league/LeagueSubNav";
 import {
   LeagueSnapshotPanel,
   LeagueStandingsSnapshot,
@@ -36,7 +35,6 @@ export default async function LeagueHubPage({
 
   return (
     <div className="space-y-4">
-      <LeagueSubNav saveId={saveId} active="overview" />
       <LeagueHeader
         saveId={saveId}
         leagueName={view.leagueName}

@@ -6,7 +6,7 @@ import { ExportPanel } from "@/components/settings/ExportPanel";
 import { RosterEditorForm } from "@/components/settings/RosterEditorForm";
 import { RosterPicker } from "@/components/settings/RosterPicker";
 import { SettingsPageShell } from "@/components/settings/SettingsPageShell";
-import { settingsTabPath } from "@/components/settings/SettingsSubNav";
+import { settingsTabPath } from "@/components/settings/settings-paths";
 import { Section } from "@/components/ui/Section";
 import { linkClass } from "@/components/ui/styles";
 

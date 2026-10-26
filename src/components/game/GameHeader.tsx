@@ -1,19 +1,15 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { getGameModeDefinition } from "@/application/game-mode-catalog";
+import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import type { DashboardSnapshot } from "@/state/selectors";
 import { formatShortDate } from "@/components/calendar/CalendarDayCell";
 import { ParticipantBar } from "@/components/game/ParticipantBar";
+import { HubBar } from "@/components/game/shell/HubBar";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { buttonClass } from "@/components/ui/Button";
 import { TickerBar, type TickerItem } from "@/components/ui/TickerBar";
-import { rankNumberLabel } from "@/presentation/rank-label";
-import {
-  cn,
-  focusRingClass,
-  touchTargetClass,
-  touchTargetTextClass,
-} from "@/components/ui/styles";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 function NotificationsBell(props: { saveId: string; unreadCount: number }) {
   const href = `/dashboard/${props.saveId}/notifications`;
@@ -55,25 +51,22 @@ function NotificationsBell(props: { saveId: string; unreadCount: number }) {
 }
 
 /**
- * Global in-save header, styled as a broadcast scoreboard bar: who am I
- * managing (team switcher), and a ticker with date, record and rank.
- * Unread notifications live on the bell. Financial snapshot lives on
- * Dashboard / Finances — not here.
+ * Global in-save top bar, styled as a broadcast scoreboard: who am I managing
+ * (team switcher), the hubs (desktop), date and record, notifications and the
+ * one Sim action. Sim opens the calendar's next-game focus, which owns the
+ * confirm and blocking rules. Sub-tabs render below it (SubTabBar).
  */
 export function GameHeader(props: {
   saveId: string;
   saveName: string;
   dashboard: DashboardSnapshot;
-  menu?: React.ReactNode;
+  groups: readonly OwnerNavGroup[];
 }) {
   const { dashboard, saveId } = props;
-  const modeDef = getGameModeDefinition(dashboard.mode);
   const record = `${dashboard.controlledStanding.wins}–${dashboard.controlledStanding.losses}`;
   const tickerItems: TickerItem[] = [
     { label: "Date", value: formatShortDate(dashboard.currentDate) },
-    { label: "Season", value: dashboard.seasonYear },
     { label: "Record", value: record, tone: "team" },
-    { label: "League", value: rankNumberLabel(dashboard.standingsRank) },
   ];
 
   return (
@@ -81,30 +74,20 @@ export function GameHeader(props: {
       as="header"
       edge="top"
       density="compact"
-      className="flex flex-col gap-2 sm:p-4"
+      className="flex flex-col gap-2 lg:px-4 lg:py-2"
     >
-      <div className="hidden items-center gap-2 sm:flex">
+      <div className="flex min-w-0 items-center gap-3">
         <Link
           href="/home"
           className={cn(
-            touchTargetTextClass,
-            "-my-2 -ml-2 font-display text-base font-bold uppercase tracking-wider text-ink hover:text-team-ink",
+            // Not touchTargetTextClass: its inline-flex would beat `hidden`.
+            "-my-2 -ml-2 hidden min-h-11 items-center px-2 font-display text-base font-bold uppercase tracking-wider text-muted touch-manipulation hover:text-team-ink xl:inline-flex",
             focusRingClass,
           )}
         >
           BallSim
         </Link>
-        <span className="text-line-strong" aria-hidden>
-          /
-        </span>
-        <span className="text-sm font-medium text-team-ink">
-          {modeDef.name}
-        </span>
-      </div>
-
-      <div className="flex min-w-0 items-center gap-3">
-        {props.menu}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 lg:max-w-xs lg:flex-none">
           <Suspense fallback={null}>
             <OwnerTeamSwitcher
               saveId={saveId}
@@ -113,15 +96,32 @@ export function GameHeader(props: {
             />
           </Suspense>
         </div>
+        <div className="hidden min-w-0 flex-1 justify-center lg:flex">
+          <HubBar saveId={saveId} groups={props.groups} />
+        </div>
         <TickerBar
           aria-label="Season status"
           items={tickerItems}
-          className="hidden md:flex"
+          className="hidden xl:flex"
         />
+        <p className="shrink-0 font-display text-xl font-bold tabular-nums text-team-ink xl:hidden">
+          <span className="sr-only">Record </span>
+          {record}
+        </p>
         <NotificationsBell
           saveId={saveId}
           unreadCount={dashboard.unreadNotificationCount}
         />
+        <Link
+          href={`/dashboard/${saveId}/calendar?focus=next-game`}
+          aria-label="Sim to next game"
+          className={cn(
+            buttonClass({ variant: "primary" }),
+            "shrink-0 px-5 font-display text-lg uppercase tracking-wide",
+          )}
+        >
+          Sim
+        </Link>
       </div>
 
       <Suspense fallback={null}>
@@ -130,12 +130,6 @@ export function GameHeader(props: {
           participation={dashboard.participation}
         />
       </Suspense>
-
-      <TickerBar
-        aria-label="Season status"
-        items={tickerItems}
-        className="border-t border-surface-line pt-2 md:hidden"
-      />
     </ArenaPanel>
   );
 }

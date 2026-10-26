@@ -881,3 +881,24 @@ body {
     transform: none;
   }
 }
+
+/*
+ * Height of the in-save bottom chrome: the phone hub bar, or the desktop
+ * control legend (none on touch screens). Sticky-bottom page bars use
+ * `bottom-[var(--shell-bottom,0px)]`.
+ */
+.shell-backdrop {
+  --shell-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 64rem) {
+  .shell-backdrop {
+    --shell-bottom: 2.6rem;
+  }
+}
+
+@media (min-width: 64rem) and (pointer: coarse) {
+  .shell-backdrop {
+    --shell-bottom: 0px;
+  }
+}

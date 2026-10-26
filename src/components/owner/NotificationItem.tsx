@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NavIcon } from "@/components/game/NavGroups";
+import { NavIcon } from "@/components/game/shell/NavIcon";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { cn, focusRingClass } from "@/components/ui/styles";

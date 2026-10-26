@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadLeaguePlayerStatsView } from "@/application/game-service";
 import { LeaguePlayerStatsTable } from "@/components/league/LeagueStatsTables";
-import { LeagueSubNav } from "@/components/league/LeagueSubNav";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 export const metadata: Metadata = { title: "Player Stats" };
@@ -28,7 +27,6 @@ export default async function LeaguePlayerStatsPage({
 
   return (
     <>
-      <LeagueSubNav saveId={saveId} active="playerStats" />
       <PageHeader
         title="Player Stats"
         subtitle={`Regular-season per-game averages · Min ${view.minGames} games${

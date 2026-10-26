@@ -26,7 +26,6 @@ import {
 import { ActionQueue } from "@/components/owner/dashboard/ActionQueue";
 import { GameShell } from "@/components/game/GameShell";
 import { SaveCard } from "@/components/game/SaveCard";
-import { MobileNavigationDrawer } from "@/components/game/MobileNavigationDrawer";
 import { listGameModeDefinitions } from "@/application/game-mode-catalog";
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 import type { DashboardSnapshot } from "@/state/selectors";
@@ -304,8 +303,9 @@ describe("game shell UI", () => {
     expect(hrefs).toContain("/media");
     expect(hrefs).not.toContain("/draft");
     expect(hrefs).not.toContain("/free-agency");
-    expect(hrefs).not.toContain("/trades");
-    expect(hrefs).not.toContain("/business");
+    // Trades and Business are Front Office tabs.
+    expect(hrefs).toContain("/trades");
+    expect(hrefs).toContain("/business");
     expect(hrefs).not.toContain("/team-management");
     expect(hrefs).not.toContain("/relocation");
     expect(hrefs).not.toContain("/teams");
@@ -372,12 +372,29 @@ describe("game shell UI", () => {
     unmount();
   });
 
-  it("mobile menu trigger uses the shared 44px touch target", () => {
+  it("GameShell has a main landmark, hub bars and the control legend", () => {
     const { unmount } = render(
-      <MobileNavigationDrawer saveId="save_test" compact />,
+      <GameShell
+        saveId="save_test"
+        saveName="Test Save"
+        dashboard={baseDashboard()}
+      >
+        <p>page</p>
+      </GameShell>,
     );
-    const menu = screen.getByRole("button", { name: "Menu" });
-    expect(menu.className).toContain("min-h-11");
+    expect(screen.getByRole("main").textContent).toContain("page");
+    // Desktop hub row and phone hub bar.
+    expect(screen.getAllByRole("navigation", { name: "Hubs" })).toHaveLength(2);
+    expect(
+      screen.getByRole("contentinfo", { name: "Keyboard controls" }),
+    ).toBeTruthy();
+    const more = screen.getByRole("button", { name: "More" });
+    expect(more.className).toContain("min-h-14");
+    expect(
+      screen
+        .getByRole("link", { name: "Sim to next game" })
+        .getAttribute("href"),
+    ).toBe("/dashboard/save_test/calendar?focus=next-game");
     unmount();
   });
 });

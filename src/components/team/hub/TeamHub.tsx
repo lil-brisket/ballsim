@@ -1,5 +1,4 @@
 import { ErrorState } from "@/components/ui/EmptyState";
-import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 import { TeamHubHeader } from "@/components/team/hub/TeamHubHeader";
 import { TeamOverview } from "@/components/team/hub/TeamOverview";
 import { TeamChemistryPanel } from "@/components/team/hub/TeamChemistryPanel";
@@ -20,7 +19,6 @@ export function TeamHub(props: {
 
   return (
     <div className="space-y-8">
-      <TeamHubSubNav saveId={saveId} active="team" />
       <TeamHubHeader hub={hub} />
       {error ? <ErrorState message={error} /> : null}
 

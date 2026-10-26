@@ -9,7 +9,7 @@ import {
   HostOnlyNotice,
   SettingsPageShell,
 } from "@/components/settings/SettingsPageShell";
-import { settingsTabPath } from "@/components/settings/SettingsSubNav";
+import { settingsTabPath } from "@/components/settings/settings-paths";
 import { LEAGUE_AREA_LABELS } from "@/domain/game-settings";
 
 export const metadata: Metadata = { title: "Settings" };
