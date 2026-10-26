@@ -12,7 +12,7 @@ export function QualifyingOffers(props: {
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-muted">
         A qualifying offer makes him a restricted free agent: you can match any
         offer sheet he signs.
       </p>
@@ -20,11 +20,11 @@ export function QualifyingOffers(props: {
         {props.rows.map((row) => (
           <li
             key={row.playerId}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 px-4 py-3 text-sm"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line px-4 py-3 text-sm"
           >
             <div>
-              <p className="text-zinc-100">{row.playerName}</p>
-              <p className="text-zinc-500">
+              <p className="text-ink">{row.playerName}</p>
+              <p className="text-faint">
                 {row.position} · {row.age} · OVR {row.overall} · Offer{" "}
                 <MoneyDisplay amount={row.qualifyingOfferSalary} />
               </p>
@@ -52,7 +52,7 @@ export function QualifyingOffers(props: {
                   Issue qualifying offer
                 </Button>
                 {row.blockedReason ? (
-                  <p className="max-w-xs text-right text-xs text-zinc-400">
+                  <p className="max-w-xs text-right text-xs text-muted">
                     {row.blockedReason}
                   </p>
                 ) : null}

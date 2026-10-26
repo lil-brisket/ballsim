@@ -13,26 +13,24 @@ export function ControlledFranchisesPanel(props: {
   const { saveId, draft } = props;
 
   return (
-    <section className="rounded-xl border border-zinc-800 p-4">
+    <section className="rounded-xl border border-line p-4">
       <SectionHeading title="Controlled franchises" className="mb-3" />
       <ul className="space-y-2">
         {draft.controlledFranchises.map((team) => (
           <li
             key={team.teamId}
             className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${
-              team.isActive
-                ? "border-team-ink/50 bg-team/20"
-                : "border-zinc-800"
+              team.isActive ? "border-team-ink/50 bg-team/20" : "border-line"
             }`}
           >
             <div className="min-w-0">
-              <div className="font-medium text-zinc-100">
+              <div className="font-medium text-ink">
                 {team.teamName}
                 {team.isActive ? (
                   <span className="ml-2 text-sm text-team-ink">Active</span>
                 ) : null}
               </div>
-              <div className="mt-0.5 text-sm text-zinc-500">
+              <div className="mt-0.5 text-sm text-faint">
                 {team.isOnClock ? (
                   <span className="font-semibold text-team-ink">ON CLOCK</span>
                 ) : team.nextPickNumber != null ? (
@@ -40,7 +38,7 @@ export function ControlledFranchisesPanel(props: {
                 ) : (
                   "No remaining picks"
                 )}
-                <span className="mx-1.5 text-zinc-700">·</span>
+                <span className="mx-1.5 text-line-strong">·</span>
                 {team.autoPick ? "Auto-pick" : "Manual"}
               </div>
             </div>

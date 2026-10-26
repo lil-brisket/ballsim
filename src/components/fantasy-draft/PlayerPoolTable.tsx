@@ -88,7 +88,7 @@ export function PlayerPoolTable(props: {
     draft.onClockTeamId === draft.activeOwnerTeamId;
 
   return (
-    <section className="rounded-xl border border-zinc-800 p-4">
+    <section className="rounded-xl border border-line p-4">
       <div className="mb-3 flex flex-wrap gap-2">
         <input
           value={query}
@@ -97,7 +97,7 @@ export function PlayerPoolTable(props: {
             setPage(0);
           }}
           placeholder="Search players"
-          className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+          className="rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-sm"
           aria-label="Search players"
         />
         <Select
@@ -131,7 +131,7 @@ export function PlayerPoolTable(props: {
           <option value="height">Height</option>
           <option value="name">Name</option>
         </Select>
-        <label className="flex items-center gap-1.5 text-sm text-zinc-400">
+        <label className="flex items-center gap-1.5 text-sm text-muted">
           <input
             type="checkbox"
             checked={availableOnly}
@@ -142,7 +142,7 @@ export function PlayerPoolTable(props: {
           />
           Available only
         </label>
-        <label className="flex items-center gap-1.5 text-sm text-zinc-400">
+        <label className="flex items-center gap-1.5 text-sm text-muted">
           <input
             type="checkbox"
             checked={myQueueOnly}
@@ -157,7 +157,7 @@ export function PlayerPoolTable(props: {
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="text-zinc-500">
+          <thead className="text-faint">
             <tr>
               <th className="py-2 pr-2">Player</th>
               <th className="pr-2">Pos</th>
@@ -174,7 +174,7 @@ export function PlayerPoolTable(props: {
             {pageRows.map((player) => (
               <tr
                 key={player.playerId}
-                className={`border-t border-zinc-800 ${
+                className={`border-t border-line ${
                   player.isDrafted ? "opacity-50" : ""
                 }`}
               >
@@ -196,7 +196,7 @@ export function PlayerPoolTable(props: {
                     </button>
                   </span>
                   {player.isDrafted ? (
-                    <div className="text-sm text-zinc-500">
+                    <div className="text-sm text-faint">
                       {player.draftedByAbbreviation}
                       {player.pickNumber != null
                         ? ` · #${player.pickNumber}`
@@ -209,8 +209,8 @@ export function PlayerPoolTable(props: {
                 <td className="pr-2">{player.potential}</td>
                 <td className="pr-2">{player.age}</td>
                 <td className="pr-2">{formatHeight(player.heightInches)}</td>
-                <td className="pr-2 text-zinc-400">{player.archetypeLabel}</td>
-                <td className="pr-2 capitalize text-zinc-400">{player.tier}</td>
+                <td className="pr-2 text-muted">{player.archetypeLabel}</td>
+                <td className="pr-2 capitalize text-muted">{player.tier}</td>
                 <td>
                   {canDraft && !player.isDrafted ? (
                     <button
@@ -237,7 +237,7 @@ export function PlayerPoolTable(props: {
         </table>
       </div>
 
-      <div className="mt-3 flex items-center justify-between text-sm text-zinc-500">
+      <div className="mt-3 flex items-center justify-between text-sm text-faint">
         <span>
           Showing {pageRows.length} of {filtered.length} players
         </span>

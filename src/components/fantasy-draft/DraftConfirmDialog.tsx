@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useEffect, useId, useRef } from "react";
 import { fantasyDraftPickAction } from "@/application/actions";
 import { buttonClass } from "@/components/ui/Button";
@@ -37,12 +38,16 @@ export function DraftConfirmDialog(props: {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-6"
+        className="w-full max-w-md rounded-xl border border-line-strong bg-surface-raised p-6"
       >
-        <h3 id={titleId} className="text-lg font-semibold">
-          Draft {props.player.name}?
-        </h3>
-        <p className="mt-2 text-sm text-zinc-300">
+        <SectionHeading
+          as="h3"
+          size="sm"
+          id={titleId}
+          titleClassName="text-lg!"
+          title={<>Draft {props.player.name}?</>}
+        />
+        <p className="mt-2 text-sm text-soft">
           {props.player.position} · {props.player.overall} OVR ·{" "}
           {props.player.potential} POT
         </p>

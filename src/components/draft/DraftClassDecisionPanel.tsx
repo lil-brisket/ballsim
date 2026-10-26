@@ -33,13 +33,13 @@ export function DraftClassDecisionPanel(props: {
   const hasErrors = preview !== null && !preview.ok;
 
   return (
-    <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
+    <div className="space-y-4 rounded-lg border border-line bg-surface-base/60 p-4">
       <header className="space-y-1">
         <SectionHeading
           as="h3"
           title={`Prepare the ${props.draftYear} Draft Class`}
         />
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           The league can generate a fictional rookie class automatically, or you
           can import a custom class.
         </p>
@@ -63,13 +63,13 @@ export function DraftClassDecisionPanel(props: {
           Use Generated Class
         </button>
       </form>
-      <div className="space-y-3 border-t border-zinc-800 pt-4">
-        <label className="block text-sm text-zinc-300">
+      <div className="space-y-3 border-t border-line pt-4">
+        <label className="block text-sm text-soft">
           Import custom class
           <input
             type="file"
             accept="application/json,.json"
-            className="mt-2 block w-full text-sm text-zinc-400 file:mr-3 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-900 file:px-3 file:py-1.5 file:text-zinc-200"
+            className="mt-2 block w-full text-sm text-muted file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-surface-raised file:px-3 file:py-1.5 file:text-ink"
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (!file) {
@@ -131,7 +131,7 @@ export function DraftClassDecisionPanel(props: {
         >
           Choose Community Class
         </button>
-        <p className="text-sm text-zinc-500">Community library coming soon.</p>
+        <p className="text-sm text-faint">Community library coming soon.</p>
       </div>
     </div>
   );

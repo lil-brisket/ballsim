@@ -19,7 +19,7 @@ function movementLabel(movement: number): string {
 function movementClass(movement: number): string {
   if (movement > 0) return "border-win/50 text-win";
   if (movement < 0) return "border-loss/50 text-loss";
-  return "border-zinc-700 text-zinc-500";
+  return "border-line-strong text-faint";
 }
 
 export function LotteryNight(props: { view: DraftLotteryView }) {
@@ -69,7 +69,7 @@ export function LotteryNight(props: { view: DraftLotteryView }) {
       {done && winner ? (
         <p
           role="status"
-          className="rounded-md border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-zinc-50"
+          className="rounded-md border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-ink"
         >
           {winner.teamName} won the lottery and hold the #1 pick.
           {view.biggestJump
@@ -91,7 +91,7 @@ export function LotteryNight(props: { view: DraftLotteryView }) {
               "flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2",
               slot.isUserTeam
                 ? "border-team-ink/60 bg-team/15"
-                : "border-zinc-800 bg-zinc-900/40",
+                : "border-line bg-surface-raised/40",
             )}
           >
             <ScoreNumeral
@@ -107,13 +107,13 @@ export function LotteryNight(props: { view: DraftLotteryView }) {
               decorative
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-zinc-100">
+              <p className="truncate text-sm font-medium text-ink">
                 {slot.teamName}
                 {slot.isUserTeam ? (
                   <span className="ml-2 text-xs text-team-ink">Your pick</span>
                 ) : null}
               </p>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-faint">
                 {(slot.odds * 100).toFixed(1)}% odds
                 {slot.drawn ? "" : " · By record"}
                 {slot.ownerTeamId && slot.ownerTeamId !== slot.teamId

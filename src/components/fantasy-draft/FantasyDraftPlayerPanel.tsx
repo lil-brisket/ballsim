@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useEffect, useId, useRef } from "react";
 import {
   addFantasyDraftQueuePlayerAction,
@@ -57,18 +58,26 @@ export function FantasyDraftPlayerPanel(props: {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-line-strong bg-surface-raised shadow-xl"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-zinc-800 px-5 py-4">
+        <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
           <div>
-            <h3 id={titleId} className="text-lg font-semibold text-zinc-50">
-              {detail.firstName} {detail.lastName}
-            </h3>
-            <p className="mt-1 text-sm text-zinc-400">
+            <SectionHeading
+              as="h3"
+              size="sm"
+              id={titleId}
+              titleClassName="text-lg!"
+              title={
+                <>
+                  {detail.firstName} {detail.lastName}
+                </>
+              }
+            />
+            <p className="mt-1 text-sm text-muted">
               {detail.position} · Age {detail.age} · {detail.heightInches}&quot;
               / {detail.weightPounds} lbs
             </p>
-            <p className="mt-0.5 text-sm capitalize text-zinc-500">
+            <p className="mt-0.5 text-sm capitalize text-faint">
               {detail.archetypeLabel} · {detail.nationality} · {detail.tier}
             </p>
           </div>
@@ -86,18 +95,16 @@ export function FantasyDraftPlayerPanel(props: {
         <div className="space-y-4 overflow-y-auto px-5 py-4">
           <div className="flex flex-wrap gap-3">
             <div className="rounded-lg border border-team-ink/50 bg-team/20 px-4 py-2 text-center">
-              <p className="text-sm text-zinc-400">Overall</p>
+              <p className="text-sm text-muted">Overall</p>
               <p className="font-mono text-2xl text-team-ink">
                 {detail.overall}
               </p>
             </div>
-            <div className="rounded-lg border border-zinc-800 px-4 py-2 text-center">
-              <p className="text-sm text-zinc-400">Potential</p>
-              <p className="font-mono text-xl text-zinc-100">
-                {detail.potential}
-              </p>
+            <div className="rounded-lg border border-line px-4 py-2 text-center">
+              <p className="text-sm text-muted">Potential</p>
+              <p className="font-mono text-xl text-ink">{detail.potential}</p>
             </div>
-            <div className="space-y-1 text-sm text-zinc-400">
+            <div className="space-y-1 text-sm text-muted">
               <div>Dev: {detail.developmentStage}</div>
               <div>Injury: {detail.injuryKind}</div>
             </div>
@@ -114,9 +121,7 @@ export function FantasyDraftPlayerPanel(props: {
 
           {detail.strengths.length > 0 ? (
             <div>
-              <h4 className="mb-1 text-sm font-medium text-zinc-300">
-                Strengths
-              </h4>
+              <h4 className="mb-1 text-sm font-medium text-soft">Strengths</h4>
               <ul className="flex flex-wrap gap-1.5 text-sm text-emerald-300/90">
                 {detail.strengths.map((s) => (
                   <li
@@ -132,14 +137,12 @@ export function FantasyDraftPlayerPanel(props: {
 
           {detail.weaknesses.length > 0 ? (
             <div>
-              <h4 className="mb-1 text-sm font-medium text-zinc-300">
-                Weaknesses
-              </h4>
-              <ul className="flex flex-wrap gap-1.5 text-sm text-zinc-400">
+              <h4 className="mb-1 text-sm font-medium text-soft">Weaknesses</h4>
+              <ul className="flex flex-wrap gap-1.5 text-sm text-muted">
                 {detail.weaknesses.map((w) => (
                   <li
                     key={w.label}
-                    className="rounded border border-zinc-800 px-2 py-0.5"
+                    className="rounded border border-line px-2 py-0.5"
                   >
                     {w.label}
                   </li>
@@ -149,7 +152,7 @@ export function FantasyDraftPlayerPanel(props: {
           ) : null}
 
           <div>
-            <h4 className="mb-2 text-sm font-medium text-zinc-300">
+            <h4 className="mb-2 text-sm font-medium text-soft">
               Key attributes
             </h4>
             <div className="grid grid-cols-2 gap-2">
@@ -164,7 +167,7 @@ export function FantasyDraftPlayerPanel(props: {
           </div>
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2 border-t border-zinc-800 px-5 py-4">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-line px-5 py-4">
           {!detail.isDrafted && !detail.inActiveQueue ? (
             <form action={addFantasyDraftQueuePlayerAction}>
               <input type="hidden" name="saveId" value={saveId} />
@@ -179,7 +182,7 @@ export function FantasyDraftPlayerPanel(props: {
             </form>
           ) : null}
           {detail.inActiveQueue && !detail.isDrafted ? (
-            <span className="self-center text-sm text-zinc-500">In queue</span>
+            <span className="self-center text-sm text-faint">In queue</span>
           ) : null}
           {canDraft && !detail.isDrafted ? (
             confirmPicks ? (

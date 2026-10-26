@@ -199,11 +199,11 @@ export default async function DraftPage({
             </div>
           ) : null}
           {board.userOnClock ? (
-            <p className="mb-4 rounded-md border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-zinc-50">
+            <p className="mb-4 rounded-md border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-ink">
               Your team is on the clock. Select a prospect below.
             </p>
           ) : (
-            <p className="mb-4 text-sm text-zinc-500">
+            <p className="mb-4 text-sm text-faint">
               Waiting for other teams (or advance after AI fills).
             </p>
           )}
@@ -219,12 +219,12 @@ export default async function DraftPage({
                         slot.isUserPick ? "bg-team/15" : ""
                       }`}
                     >
-                      <span className="tabular-nums text-zinc-400">
+                      <span className="tabular-nums text-muted">
                         #{slot.overallPick}
                       </span>
                       {slot.ownerBranding ? (
                         <span
-                          className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                          className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-line-strong"
                           style={{
                             backgroundColor: slot.ownerBranding.primaryColor,
                           }}
@@ -239,7 +239,7 @@ export default async function DraftPage({
                       <TeamEntityLink
                         saveId={saveId}
                         teamId={slot.ownerTeamId}
-                        className="text-zinc-300 hover:underline"
+                        className="text-soft hover:underline"
                       >
                         {slot.ownerAbbreviation}
                       </TeamEntityLink>
@@ -250,9 +250,9 @@ export default async function DraftPage({
               </Section>
               <Section title="Selections">
                 {board.selections.length === 0 ? (
-                  <p className="text-sm text-zinc-500">None yet.</p>
+                  <p className="text-sm text-faint">None yet.</p>
                 ) : (
-                  <ul className="max-h-48 space-y-1 overflow-y-auto text-sm text-zinc-300">
+                  <ul className="max-h-48 space-y-1 overflow-y-auto text-sm text-soft">
                     {board.selections.map((selection) => (
                       <li
                         key={`${selection.overallPick}-${selection.playerId}`}
@@ -367,14 +367,14 @@ export default async function DraftPage({
                             />
                             <button
                               type="submit"
-                              className="text-sm text-zinc-400 hover:underline"
+                              className="text-sm text-muted hover:underline"
                             >
                               {onBoard ? "On board" : "Add to board"}
                             </button>
                           </form>
                         </div>
                         {mock?.availability ? (
-                          <p className="px-1 text-sm text-zinc-400">
+                          <p className="px-1 text-sm text-muted">
                             {mock.availability}
                           </p>
                         ) : null}
@@ -394,7 +394,7 @@ export default async function DraftPage({
                       .map((n) => (
                         <li
                           key={n.position}
-                          className="flex justify-between text-zinc-300"
+                          className="flex justify-between text-soft"
                         >
                           <span>{n.position}</span>
                           <span className="capitalize text-team-ink/90">
@@ -403,19 +403,17 @@ export default async function DraftPage({
                         </li>
                       ))}
                     {needs.priorityPositions.length === 0 ? (
-                      <li className="text-zinc-500">
-                        No major positional needs.
-                      </li>
+                      <li className="text-faint">No major positional needs.</li>
                     ) : null}
                   </ul>
                 ) : (
-                  <p className="text-sm text-zinc-500">Unavailable.</p>
+                  <p className="text-sm text-faint">Unavailable.</p>
                 )}
               </Section>
 
               <Section title="Recommended">
                 {recommendations.length === 0 ? (
-                  <p className="text-sm text-zinc-500">
+                  <p className="text-sm text-faint">
                     Scout prospects to unlock recommendations.
                   </p>
                 ) : (
@@ -423,17 +421,17 @@ export default async function DraftPage({
                     {recommendations.map((rec, index) => (
                       <li
                         key={rec.prospectPlayerId}
-                        className="rounded-md border border-zinc-800 p-2"
+                        className="rounded-md border border-line p-2"
                       >
-                        <div className="font-medium text-zinc-100">
+                        <div className="font-medium text-ink">
                           {index === 0 ? "Top pick · " : ""}
                           {rec.playerName}
                         </div>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-faint">
                           {rec.position} · Grade {rec.scoutGrade} · Fit{" "}
                           {rec.teamFit} · Need {rec.teamNeed}
                         </p>
-                        <ul className="mt-1 space-y-0.5 text-sm text-zinc-400">
+                        <ul className="mt-1 space-y-0.5 text-sm text-muted">
                           {rec.reasons.slice(0, 2).map((r) => (
                             <li key={r}>• {r}</li>
                           ))}

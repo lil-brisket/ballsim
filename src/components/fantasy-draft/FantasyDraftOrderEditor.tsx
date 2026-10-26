@@ -151,7 +151,7 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-muted">
         Drag a row to move it, or click two teams to swap. Arrow buttons still
         nudge one step.
       </p>
@@ -198,23 +198,23 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                 isSelected
                   ? "border-team-ink bg-team/20"
                   : isDropTarget
-                    ? "border-team-ink/80 bg-zinc-900"
-                    : "border-zinc-800 hover:border-zinc-600",
+                    ? "border-team-ink/80 bg-surface-raised"
+                    : "border-line hover:border-disabled",
                 isDragging ? "opacity-50" : "",
                 pending
                   ? "pointer-events-none opacity-70"
                   : "cursor-grab active:cursor-grabbing",
               ].join(" ")}
             >
-              <span className="flex min-w-0 flex-1 items-center text-sm text-zinc-100">
+              <span className="flex min-w-0 flex-1 items-center text-sm text-ink">
                 <span
-                  className="mr-2 select-none text-zinc-600"
+                  className="mr-2 select-none text-disabled"
                   aria-hidden="true"
                   title="Drag to reorder"
                 >
                   ⠿
                 </span>
-                <span className="mr-3 tabular-nums text-zinc-500">
+                <span className="mr-3 tabular-nums text-faint">
                   {index + 1}.
                 </span>
                 <span className="truncate">{entry.teamName}</span>
@@ -223,7 +223,7 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                     USER
                   </span>
                 ) : (
-                  <span className="ml-2 shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-400">
+                  <span className="ml-2 shrink-0 rounded bg-surface-high px-1.5 py-0.5 text-xs text-muted">
                     CPU
                   </span>
                 )}
@@ -237,7 +237,7 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                   type="button"
                   disabled={pending || index === 0}
                   onClick={() => submitStep(entry.teamId, -1)}
-                  className="rounded border border-zinc-700 px-2 py-1 text-sm text-zinc-300 disabled:opacity-40"
+                  className="rounded border border-line-strong px-2 py-1 text-sm text-soft disabled:opacity-40"
                   aria-label={`Move ${entry.teamName} up`}
                 >
                   ↑
@@ -246,7 +246,7 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                   type="button"
                   disabled={pending || index === entries.length - 1}
                   onClick={() => submitStep(entry.teamId, 1)}
-                  className="rounded border border-zinc-700 px-2 py-1 text-sm text-zinc-300 disabled:opacity-40"
+                  className="rounded border border-line-strong px-2 py-1 text-sm text-soft disabled:opacity-40"
                   aria-label={`Move ${entry.teamName} down`}
                 >
                   ↓

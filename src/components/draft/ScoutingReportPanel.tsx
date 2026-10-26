@@ -18,11 +18,11 @@ export function ScoutingReportPanel({
   onClose,
 }: Props) {
   return (
-    <div className="rounded-xl border border-team-ink/50 bg-zinc-950 p-4 shadow-xl">
+    <div className="rounded-xl border border-team-ink/50 bg-surface-base p-4 shadow-xl">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <SectionHeading title={playerName} />
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-faint">
             Scouting report · {report.knowledgeLevel}
           </p>
         </div>
@@ -38,7 +38,7 @@ export function ScoutingReportPanel({
       </div>
 
       {report.knowledgeLevel === "unknown" ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           Insufficient scouting. Assign scouts or advance days to learn more.
         </p>
       ) : (
@@ -69,7 +69,7 @@ export function ScoutingReportPanel({
           </div>
 
           {report.projectedRank ? (
-            <p className="text-zinc-400">
+            <p className="text-muted">
               Projected rank: {report.projectedRank.min}–
               {report.projectedRank.max}
               {report.positionEstimate ? ` · ${report.positionEstimate}` : ""}
@@ -78,10 +78,14 @@ export function ScoutingReportPanel({
 
           {Object.keys(report.categories).length > 0 ? (
             <div>
-              <h3 className="mb-1 text-sm font-medium text-zinc-300">
-                Categories
-              </h3>
-              <ul className="grid grid-cols-2 gap-1 text-sm text-zinc-300">
+              <SectionHeading
+                as="h3"
+                size="sm"
+                tone="soft"
+                className="mb-1"
+                title="Categories"
+              />
+              <ul className="grid grid-cols-2 gap-1 text-sm text-soft">
                 {Object.entries(report.categories).map(([key, range]) =>
                   range ? (
                     <li key={key}>
@@ -96,16 +100,26 @@ export function ScoutingReportPanel({
           {(report.strengths.length > 0 || report.weaknesses.length > 0) && (
             <div className="grid gap-2 sm:grid-cols-2">
               <div>
-                <h3 className="text-sm font-medium text-win">Strengths</h3>
-                <ul className="mt-1 space-y-0.5 text-sm text-zinc-300">
+                <SectionHeading
+                  as="h3"
+                  size="sm"
+                  tone="win"
+                  title="Strengths"
+                />
+                <ul className="mt-1 space-y-0.5 text-sm text-soft">
                   {report.strengths.map((s) => (
                     <li key={s.label}>{s.label}</li>
                   ))}
                 </ul>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-loss">Weaknesses</h3>
-                <ul className="mt-1 space-y-0.5 text-sm text-zinc-300">
+                <SectionHeading
+                  as="h3"
+                  size="sm"
+                  tone="loss"
+                  title="Weaknesses"
+                />
+                <ul className="mt-1 space-y-0.5 text-sm text-soft">
                   {report.weaknesses.map((w) => (
                     <li key={w.label}>{w.label}</li>
                   ))}
@@ -116,10 +130,14 @@ export function ScoutingReportPanel({
 
           {Object.keys(report.intangibles).length > 0 ? (
             <div>
-              <h3 className="mb-1 text-sm font-medium text-zinc-300">
-                Intangibles
-              </h3>
-              <ul className="grid grid-cols-2 gap-1 text-sm text-zinc-300">
+              <SectionHeading
+                as="h3"
+                size="sm"
+                tone="soft"
+                className="mb-1"
+                title="Intangibles"
+              />
+              <ul className="grid grid-cols-2 gap-1 text-sm text-soft">
                 {Object.entries(report.intangibles).map(([key, range]) =>
                   range ? (
                     <li key={key}>
@@ -133,10 +151,14 @@ export function ScoutingReportPanel({
 
           {interviewQuotes && interviewQuotes.length > 0 ? (
             <div>
-              <h3 className="mb-1 text-sm font-medium text-zinc-300">
-                Interview notes
-              </h3>
-              <ul className="space-y-1 text-sm italic text-zinc-400">
+              <SectionHeading
+                as="h3"
+                size="sm"
+                tone="soft"
+                className="mb-1"
+                title="Interview notes"
+              />
+              <ul className="space-y-1 text-sm italic text-muted">
                 {interviewQuotes.map((q) => (
                   <li key={q}>&ldquo;{q}&rdquo;</li>
                 ))}
@@ -145,7 +167,7 @@ export function ScoutingReportPanel({
           ) : null}
 
           {funFact ? (
-            <p className="border-t border-zinc-800 pt-2 text-sm italic text-zinc-500">
+            <p className="border-t border-line pt-2 text-sm italic text-faint">
               {funFact}
             </p>
           ) : null}
@@ -165,9 +187,9 @@ function Stat({
   capitalize?: boolean;
 }) {
   return (
-    <div className="rounded-md border border-zinc-800 px-2 py-1.5">
-      <div className="text-sm text-zinc-400">{label}</div>
-      <div className={`text-zinc-100 ${capitalize ? "capitalize" : ""}`}>
+    <div className="rounded-md border border-line px-2 py-1.5">
+      <div className="text-sm text-muted">{label}</div>
+      <div className={`text-ink ${capitalize ? "capitalize" : ""}`}>
         {value}
       </div>
     </div>

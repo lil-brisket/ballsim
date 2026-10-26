@@ -21,14 +21,14 @@ export function FreeAgentInterest({
     (f) => Number(Math.abs(f.points).toFixed(1)) > 0,
   );
   return (
-    <div className="mt-1 text-xs text-zinc-500">
+    <div className="mt-1 text-xs text-faint">
       {caresAbout.length > 0 ? (
         <p>Cares about: {caresAbout.join(", ")}</p>
       ) : null}
       <details className="mt-1">
         <summary
           className={cn(
-            "inline-block cursor-pointer rounded text-zinc-400 hover:text-zinc-200",
+            "inline-block cursor-pointer rounded text-muted hover:text-ink",
             focusRingClass,
           )}
         >
@@ -52,7 +52,7 @@ export function FreeAgentInterest({
               ))}
             </ul>
           ) : null}
-          <p className="text-zinc-300">
+          <p className="text-soft">
             {salaryToSign === null
               ? "Not interested in your team right now."
               : `Would sign for about ${formatMoney(salaryToSign)}`}

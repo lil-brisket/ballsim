@@ -15,9 +15,9 @@ export function DraftPickSummary(props: {
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-800">
+    <div className="overflow-x-auto rounded-xl border border-line">
       <table className="min-w-full text-left text-sm">
-        <thead className="border-b border-zinc-800 bg-zinc-900/60 text-sm text-zinc-500">
+        <thead className="border-b border-line bg-surface-raised/60 text-sm text-faint">
           <tr>
             <th className="px-3 py-2 font-medium">Pick</th>
             <th className="px-3 py-2 font-medium">Team</th>
@@ -25,15 +25,15 @@ export function DraftPickSummary(props: {
             <th className="px-3 py-2 font-medium">Status</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-800">
+        <tbody className="divide-y divide-line">
           {props.picks.map((pick) => (
             <tr
               key={pick.draftPickId}
               className={pick.isUserPick ? "bg-team/15" : undefined}
             >
-              <td className="px-3 py-2 font-mono tabular-nums text-zinc-300">
+              <td className="px-3 py-2 font-mono tabular-nums text-soft">
                 #{pick.overallPick}
-                <span className="ml-1 text-zinc-600">R{pick.round}</span>
+                <span className="ml-1 text-disabled">R{pick.round}</span>
               </td>
               <td className="px-3 py-2">
                 <TeamEntityLink saveId={props.saveId} teamId={pick.ownerTeamId}>
@@ -41,7 +41,7 @@ export function DraftPickSummary(props: {
                   {pick.isUserPick ? " (you)" : ""}
                 </TeamEntityLink>
               </td>
-              <td className="px-3 py-2 text-zinc-200">
+              <td className="px-3 py-2 text-ink">
                 {pick.selectedPlayerId && pick.selectedPlayerName ? (
                   <PlayerEntityLink
                     saveId={props.saveId}
@@ -50,7 +50,7 @@ export function DraftPickSummary(props: {
                     {pick.selectedPlayerName}
                   </PlayerEntityLink>
                 ) : (
-                  <span className="text-zinc-600">—</span>
+                  <span className="text-disabled">—</span>
                 )}
               </td>
               <td className="px-3 py-2">

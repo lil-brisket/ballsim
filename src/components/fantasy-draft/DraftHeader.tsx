@@ -1,3 +1,4 @@
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { FantasyDraftView } from "@/state/selectors";
 
 export function DraftHeader(props: { draft: FantasyDraftView }) {
@@ -20,13 +21,16 @@ export function DraftHeader(props: { draft: FantasyDraftView }) {
           <div className="text-sm text-team-ink">
             Round {draft.currentRound ?? "—"} · {pickLabel}
           </div>
-          <h1 className="mt-1 text-2xl font-semibold text-zinc-50">
-            {draft.onClockTeamName ?? "—"}
-          </h1>
+          <SectionHeading
+            as="h1"
+            size="sm"
+            titleClassName="mt-1 text-2xl!"
+            title={draft.onClockTeamName ?? "—"}
+          />
           <p
             className={`mt-1 text-sm font-semibold ${
               draft.paused
-                ? "text-zinc-400"
+                ? "text-muted"
                 : draft.onClockIsUser
                   ? "text-team-ink"
                   : "text-sky-300"
@@ -35,23 +39,23 @@ export function DraftHeader(props: { draft: FantasyDraftView }) {
             {statusLabel}
           </p>
           {draft.nextTeamName ? (
-            <p className="mt-2 text-sm text-zinc-400">
+            <p className="mt-2 text-sm text-muted">
               Next: {draft.nextTeamName}
             </p>
           ) : null}
         </div>
         <div className="min-w-[140px] text-right">
           {draft.timerEnabled ? (
-            <p className="font-mono text-3xl text-zinc-100">
+            <p className="font-mono text-3xl text-ink">
               {draft.paused ? "⏸ " : ""}
               {draft.remainingSeconds ?? "—"}s
             </p>
           ) : null}
           <div className="mt-2">
-            <div className="mb-1 text-sm text-zinc-400">
+            <div className="mb-1 text-sm text-muted">
               Draft progress · {draft.draftProgressPercent}%
             </div>
-            <div className="h-2 w-40 overflow-hidden rounded-full bg-zinc-800">
+            <div className="h-2 w-40 overflow-hidden rounded-full bg-surface-high">
               <div
                 className="h-full rounded-full bg-team-ink"
                 style={{ width: `${draft.draftProgressPercent}%` }}

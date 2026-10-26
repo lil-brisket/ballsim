@@ -24,19 +24,19 @@ export function IncomingOfferSheets(props: {
         return (
           <li
             key={sheet.playerId}
-            className="space-y-3 rounded-lg border border-zinc-800 px-4 py-3 text-sm"
+            className="space-y-3 rounded-lg border border-line px-4 py-3 text-sm"
           >
             <div className="space-y-1">
-              <p className="text-zinc-100">
+              <p className="text-ink">
                 {sheet.playerName} signed an offer sheet with{" "}
                 {sheet.offeringTeamName}: {formatMoney(sheet.salary)} a season
                 for {plural(sheet.years, "season")}.
               </p>
-              <p className="text-zinc-400">
+              <p className="text-muted">
                 Match by {formatGameDate(sheet.matchDeadlineDate)} or he joins
                 them.
               </p>
-              <p className={cn("text-zinc-400", overCap && "text-rose-300")}>
+              <p className={cn("text-muted", overCap && "text-rose-300")}>
                 Payroll if matched {formatMoney(sheet.payrollIfMatched)} of{" "}
                 {formatMoney(sheet.salaryCap)} cap
                 {overCap ? ". Matching may go over the cap." : "."}

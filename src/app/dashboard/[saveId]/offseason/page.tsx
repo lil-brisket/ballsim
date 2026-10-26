@@ -80,7 +80,7 @@ export default async function OffseasonCommandCenterPage({
       <OffseasonHeaderStrip view={view} />
 
       <Section title="Timeline">
-        <p className="mb-3 text-sm text-zinc-400">
+        <p className="mb-3 text-sm text-muted">
           Upcoming offseason events from the Calendar. Advance time only on the
           Calendar — completing workflows here does not move the date.
         </p>

@@ -98,7 +98,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                 </button>
               </form>
             </div>
-            <p className="mt-2 text-sm text-zinc-500">
+            <p className="mt-2 text-sm text-faint">
               Active assignments: {hub.coverage.assignments}. Exposure improves
               when you advance days on the Calendar during draft prep.
             </p>
@@ -108,7 +108,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
             {hub.needsAttention.length === 0 ? (
               <EmptyState message="No prospects currently need more scouting." />
             ) : (
-              <ul className="divide-y divide-zinc-800 rounded-xl border border-zinc-800">
+              <ul className="divide-y divide-line rounded-xl border border-line">
                 {hub.needsAttention.slice(0, 12).map((row) => (
                   <li
                     key={row.playerId}
@@ -118,7 +118,7 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                       <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
                         {row.firstName} {row.lastName}
                       </PlayerEntityLink>
-                      <p className="text-sm text-zinc-500">
+                      <p className="text-sm text-faint">
                         {row.position} · Age {row.age} · {row.region} ·{" "}
                         {row.knowledgeLevel}
                       </p>
@@ -215,14 +215,14 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                           />
                           <button
                             type="submit"
-                            className="text-sm text-zinc-400 hover:underline"
+                            className="text-sm text-muted hover:underline"
                           >
                             {interview ? "Re-interview" : "Interview"}
                           </button>
                         </form>
                       </div>
                       {interview ? (
-                        <ul className="space-y-1 px-3 pb-3 text-sm italic text-zinc-500">
+                        <ul className="space-y-1 px-3 pb-3 text-sm italic text-faint">
                           {interview.answers.slice(0, 2).map((a) => (
                             <li key={a.topic}>&ldquo;{a.quote}&rdquo;</li>
                           ))}
@@ -241,9 +241,9 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
 
 function CoverageStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-zinc-800 px-3 py-2">
-      <div className="text-sm text-zinc-400">{label}</div>
-      <div className="text-zinc-100">{value}</div>
+    <div className="rounded-md border border-line px-3 py-2">
+      <div className="text-sm text-muted">{label}</div>
+      <div className="text-ink">{value}</div>
     </div>
   );
 }

@@ -8,7 +8,7 @@ export function OutgoingOfferSheets(props: {
 }) {
   if (props.sheets.length === 0) return null;
   return (
-    <ul className="space-y-1 text-sm text-zinc-300">
+    <ul className="space-y-1 text-sm text-soft">
       {props.sheets.map((sheet) => (
         <li key={sheet.playerId}>
           {sheet.playerName}: {sheet.originalTeamName} decide by{" "}
