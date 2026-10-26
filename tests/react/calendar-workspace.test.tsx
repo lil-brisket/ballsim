@@ -53,6 +53,8 @@ function makeView(overrides: Partial<CalendarPageView> = {}): CalendarPageView {
 
   return {
     save: { id: "save_cal", name: "Test" } as CalendarPageView["save"],
+    // CalendarWorkspace does not render the phase details.
+    phaseDashboard: {} as CalendarPageView["phaseDashboard"],
     dashboard: {
       controlledTeam: {
         id: "team_1",

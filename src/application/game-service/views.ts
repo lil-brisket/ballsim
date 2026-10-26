@@ -1,3 +1,5 @@
+import { buildSituationsView } from "@/state/owner-dashboard/action-items";
+import type { OwnerDashboardSituationView } from "@/state/owner-dashboard/types";
 import "server-only";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import {
@@ -465,12 +467,18 @@ export async function loadFinanceHubView(
 export async function loadFranchiseHubView(
   saveId: string,
   store?: SaveGameStore,
-): Promise<FranchiseHubView | null> {
+): Promise<
+  (FranchiseHubView & { situations: OwnerDashboardSituationView[] }) | null
+> {
   const loaded = await getStore(store).load(saveId);
   if (!loaded) {
     return null;
   }
-  return toFranchiseHubView(loaded.state);
+  return {
+    ...toFranchiseHubView(loaded.state),
+    // Franchise situations (relocation pressure, objectives at risk) live here.
+    situations: buildSituationsView(loaded.state),
+  };
 }
 
 /**

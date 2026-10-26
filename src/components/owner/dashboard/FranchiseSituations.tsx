@@ -49,15 +49,6 @@ export function FranchiseSituations(props: {
             />
             <p className="mt-1 text-sm text-soft">{situation.summary}</p>
             <p className="mt-2 text-sm text-muted">{situation.body}</p>
-            <ul className="mt-2 space-y-0.5 text-sm text-faint">
-              {Object.entries(situation.evidence)
-                .slice(0, 5)
-                .map(([key, value]) => (
-                  <li key={key}>
-                    {key}: {String(value)}
-                  </li>
-                ))}
-            </ul>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               {situation.actions.map((action) => (
                 <form

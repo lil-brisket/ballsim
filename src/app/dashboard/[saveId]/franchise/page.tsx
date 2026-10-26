@@ -9,6 +9,7 @@ import {
   toFranchiseTrends,
 } from "@/components/franchise/FranchiseTrends";
 import { RelocationSummarySection } from "@/components/franchise/RelocationSummarySection";
+import { FranchiseSituations } from "@/components/owner/dashboard/FranchiseSituations";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -64,6 +65,12 @@ export default async function FranchiseOverviewPage({
       <PageHeader title="Franchise" subtitle={subtitle} />
       <FranchiseSubNav saveId={saveId} active="overview" />
       {error ? <ErrorState message={error} /> : null}
+
+      <FranchiseSituations
+        saveId={saveId}
+        situations={view.situations}
+        returnPath={`/dashboard/${saveId}/franchise`}
+      />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

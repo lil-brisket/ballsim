@@ -1,3 +1,7 @@
+import {
+  toPhaseDashboardView,
+  type PhaseDashboardView,
+} from "@/state/phase-dashboard";
 import "server-only";
 import type {
   SaveGameSummary,
@@ -57,6 +61,8 @@ export type CalendarPageMediaHighlight = {
 
 export type CalendarPageView = {
   save: SaveGameSummary;
+  /** Phase tasks and advance controls ("Season phase details"). */
+  phaseDashboard: PhaseDashboardView;
   dashboard: DashboardSnapshot;
   currentDate: string;
   year: number;
@@ -243,6 +249,7 @@ export async function loadCalendarPageView(
 
   return {
     save: toSaveSummary(loaded),
+    phaseDashboard: toPhaseDashboardView(state),
     dashboard: toDashboardSnapshot(state),
     currentDate,
     year,

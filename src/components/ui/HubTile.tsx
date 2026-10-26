@@ -20,6 +20,8 @@ type HubTileBase = {
   eyebrow?: string;
   /** One line of supporting text. */
   children?: React.ReactNode;
+  /** Tighter padding, gaps and stat size for boards that must fit one screen. */
+  dense?: boolean;
   className?: string;
   "aria-label"?: string;
 };
@@ -33,6 +35,12 @@ const SPAN: Record<HubTileSize, string> = {
   square: "min-h-36",
 };
 
+const SPAN_DENSE: Record<HubTileSize, string> = {
+  ...SPAN,
+  wide: "min-h-28 sm:col-span-2",
+  square: "min-h-28",
+};
+
 /**
  * Big focusable hub tile with a cut corner: a link (`href`) or a button
  * (`onSelect`). Use inside a CSS grid; hero spans 2x2 and wide spans 2 columns
@@ -41,10 +49,11 @@ const SPAN: Record<HubTileSize, string> = {
 export function HubTile(props: HubTileProps) {
   const size = props.size ?? "square";
   const hero = size === "hero";
+  const dense = props.dense === true && !hero;
   const className = cn(
     consoleFocusClass,
     "group block min-h-11 text-left touch-manipulation",
-    SPAN[size],
+    (dense ? SPAN_DENSE : SPAN)[size],
     props.className,
   );
   const content = (
@@ -75,8 +84,9 @@ export function HubTile(props: HubTileProps) {
       ) : null}
       <span
         className={cn(
-          "relative flex h-full min-h-[inherit] flex-col justify-between gap-4",
-          hero ? "p-5 sm:p-6" : "p-4",
+          "relative flex h-full min-h-[inherit] flex-col justify-between",
+          dense ? "gap-1" : "gap-4",
+          hero ? "p-5 sm:p-6" : dense ? "p-3" : "p-4",
         )}
       >
         <span className={cn("block min-w-0", props.badge ? "pr-14" : "pr-6")}>
@@ -100,7 +110,12 @@ export function HubTile(props: HubTileProps) {
             {props.title}
           </span>
           {props.children ? (
-            <span className="mt-2 block text-sm text-muted">
+            <span
+              className={cn(
+                "block text-sm text-muted",
+                dense ? "mt-1" : "mt-2",
+              )}
+            >
               {props.children}
             </span>
           ) : null}
@@ -110,12 +125,12 @@ export function HubTile(props: HubTileProps) {
             <span
               className={cn(
                 "font-display block font-bold tabular-nums leading-none text-ink",
-                hero ? "text-6xl sm:text-7xl" : "text-4xl",
+                hero ? "text-6xl sm:text-7xl" : dense ? "text-3xl" : "text-4xl",
               )}
             >
               {props.stat.value}
             </span>
-            <span className="mt-1 block text-sm text-muted">
+            <span className={cn("block text-sm text-muted", !dense && "mt-1")}>
               {props.stat.label}
             </span>
           </span>
