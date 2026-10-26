@@ -14,8 +14,17 @@
  * Design rules (every screen follows these):
  * - Mono is for numbers in tables, clocks and box scores only. No mono
  *   labels, eyebrows, tabs, buttons or status text.
- * - At most one small uppercase eyebrow per panel, and only above a hero
- *   title. Most labels are sentence case `text-sm text-muted`.
+ * - Two type voices: the display font (`displayClass`, Barlow Condensed
+ *   600–800) for hub names, tab labels, tile titles, OVR and big numbers;
+ *   Geist for everything else. Uppercase is allowed in the display font
+ *   only.
+ * - At most one small uppercase Geist eyebrow per panel, and only above a
+ *   hero title. Most labels are sentence case `text-sm text-muted`.
+ * - Console shapes: `slantClass` (parallelogram, tabs and name slabs) and
+ *   `clipCornerClass` (one cut corner, tiles) shape a background layer only.
+ *   Text never rotates or skews.
+ * - Focusable tiles, cards and rows use `consoleFocusClass`; it is the
+ *   visible focus state (team-ink edge + glow), so do not remove it.
  * - Text floor is `text-sm` for anything a player reads. `text-xs` only for
  *   table footnotes, axis ticks and timestamps.
  * - One heading component: `SectionHeading` (page and section sizes). No
@@ -47,6 +56,28 @@ export const touchTargetClass =
 /** Text links that still need a 44px-tall tap area. */
 export const touchTargetTextClass =
   "inline-flex min-h-11 items-center px-2 touch-manipulation active:opacity-80";
+
+/** Heavy condensed uppercase: hub names, tile titles, OVR, big numbers. */
+export const displayClass =
+  "font-display font-bold uppercase leading-none tracking-wide";
+
+/**
+ * Parallelogram slab behind the content (~8°). Set the fill with
+ * `[--slant-fill:var(--team-primary)]` or similar; see `.slant` in
+ * globals.css.
+ */
+export const slantClass = "slant";
+
+/** One cut corner (top right) for a tile's background layers. */
+export const clipCornerClass = "clip-corner";
+
+/**
+ * Controller-style focus: scale 1.03, team-ink edge, team glow, raised
+ * surface; static (edge + glow only) under reduced motion. Shaped hosts add
+ * `data-shape` and paint their edge from `var(--edge)` and surface from
+ * `var(--tile-surface)`.
+ */
+export const consoleFocusClass = "console-focus";
 
 export const panelClass = "rounded-xl border border-line bg-surface-raised/60";
 

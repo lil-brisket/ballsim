@@ -11,10 +11,15 @@ import {
   EmptyState,
   ErrorState,
   Gauge,
+  HubTile,
+  KeyHint,
   Metric,
   MobileListCard,
   NumberStepper,
+  OvrBadge,
   Overlay,
+  SlantTabs,
+  numericCellClass,
   PageHeader,
   ProgressBar,
   RatingBars,
@@ -67,6 +72,13 @@ const RIVAL: ShowcaseBranding = {
   logoId: "bull",
 };
 
+const LEADERS = [
+  { name: "Leo Drake", ovr: 91, pts: 28.4 },
+  { name: "Mia Voss", ovr: 84, pts: 21.0 },
+  { name: "Theo Marsh", ovr: 77, pts: 16.8 },
+  { name: "Ines Calder", ovr: 68, pts: 11.2 },
+];
+
 function Block(props: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
@@ -85,6 +97,8 @@ export function TeamShowcase(props: {
 }) {
   const { branding, city, name, abbreviation } = props;
   const [tab, setTab] = useState("roster");
+  const [slantTab, setSlantTab] = useState("overview");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [stepper, setStepper] = useState(24);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
@@ -93,6 +107,119 @@ export function TeamShowcase(props: {
 
   return (
     <div className="space-y-8">
+      <Block title="Console primitives">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <HubTile
+            size="hero"
+            href="/dev/broadcast-ui"
+            title={fullName}
+            eyebrow="Franchise"
+            stat={{ value: "9-3", label: "Record" }}
+            art={<TeamBadge branding={branding} name={fullName} size="xl" />}
+          >
+            First in the division
+          </HubTile>
+          <HubTile
+            size="wide"
+            href="/dev/broadcast-ui#roster"
+            title="Roster"
+            stat={{ value: 14, label: "Players under contract" }}
+          />
+          <HubTile
+            href="/dev/broadcast-ui#schedule"
+            title="Schedule"
+            badge={<StatusBadge label="3" tone="active" />}
+          >
+            Next: Sat, Nov 14
+          </HubTile>
+          <HubTile
+            title="Scouting"
+            onSelect={() => setTab("depth")}
+            stat={{ value: 6, label: "Prospects tracked" }}
+          />
+          <HubTile href="/dev/broadcast-ui#finances" title="Finances">
+            $142M payroll
+          </HubTile>
+        </div>
+
+        <div className="flex flex-wrap items-end gap-4">
+          {[97, 91, 84, 74, 63, 48].map((overall) => (
+            <div key={overall} className="flex flex-col items-center gap-2">
+              <OvrBadge overall={overall} size="sm" />
+              <OvrBadge overall={overall} size="md" />
+              <OvrBadge overall={overall} size="lg" />
+            </div>
+          ))}
+          <OvrBadge overall={91} size="xl" />
+          <OvrBadge overall={84} size="xl" ghost label="POT" />
+          <OvrBadge overall={82} size="md" ghost />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <KeyHint keys="Q" />
+          <KeyHint keys="E" />
+          <KeyHint keys="Enter" label="Select" />
+          <KeyHint keys={["Ctrl", "K"]} label="Search" />
+          <KeyHint keys="Esc" label="Back" />
+        </div>
+
+        <SlantTabs
+          aria-label={`Slant tabs ${suffix}`}
+          activeKey={slantTab}
+          items={[
+            {
+              key: "overview",
+              label: "Overview",
+              onSelect: () => setSlantTab("overview"),
+            },
+            {
+              key: "roster",
+              label: "Roster",
+              onSelect: () => setSlantTab("roster"),
+            },
+            {
+              key: "schedule",
+              label: "Schedule",
+              onSelect: () => setSlantTab("schedule"),
+            },
+            {
+              key: "stats",
+              label: "Stats",
+              onSelect: () => setSlantTab("stats"),
+            },
+          ]}
+        />
+
+        <DataTable
+          caption={`${fullName} leaders`}
+          headers={[
+            "Player",
+            { label: "OVR", numeric: true },
+            {
+              label: "PTS",
+              numeric: true,
+              sort: {
+                onSelect: () =>
+                  setSortDir((dir) => (dir === "desc" ? "asc" : "desc")),
+                direction: sortDir,
+              },
+            },
+          ]}
+        >
+          {[...LEADERS]
+            .sort((a, b) => (sortDir === "asc" ? a.pts - b.pts : b.pts - a.pts))
+            .map((row) => (
+              <tr key={row.name} aria-selected={row.name === "Mia Voss"}>
+                <td className="px-3 py-2">{row.name}</td>
+                <td className={`px-3 py-2 ${numericCellClass}`}>{row.ovr}</td>
+                <td className={`px-3 py-2 ${numericCellClass}`}>
+                  {row.pts.toFixed(1)}
+                </td>
+              </tr>
+            ))}
+        </DataTable>
+      </Block>
+
       <Block title="ArenaPanel">
         <ArenaPanel hero glow texture watermark={branding}>
           <SectionHeading

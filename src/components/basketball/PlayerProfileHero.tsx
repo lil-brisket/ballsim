@@ -1,15 +1,12 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
-import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
 import { formatHeight } from "@/presentation/player-rating-categories";
 import { ratingTier } from "@/presentation/rating-tier";
 import type { TeamBrandingView } from "@/state/team-branding-view";
-
-const HEX_CLIP =
-  "polygon(50% 0%, 100% 18%, 100% 78%, 50% 100%, 0% 78%, 0% 18%)";
 
 function Chip(props: { children: React.ReactNode; accent?: boolean }) {
   return (
@@ -159,34 +156,13 @@ export function PlayerProfileHero(props: {
           </span>
 
           <div className="order-2 justify-self-end self-start sm:order-3 sm:self-center sm:pb-5">
-            <div
-              className="relative h-36 w-32 sm:h-40 sm:w-36"
-              style={{
-                filter: "drop-shadow(0 0 14px rgb(var(--tier-rgb) / 0.6))",
-              }}
-            >
-              <div
-                className="absolute inset-0 bg-tier"
-                style={{ clipPath: HEX_CLIP }}
-              />
-              <div
-                className="absolute inset-[3px] flex flex-col items-center justify-center gap-1 bg-surface-deep"
-                style={{ clipPath: HEX_CLIP }}
-              >
-                <ScoreNumeral
-                  value={props.overall}
-                  label="OVR"
-                  labelBelow
-                  size="lg"
-                  tone="tier"
-                  align="center"
-                />
-                {props.potential != null ? (
-                  <span className="rounded-full border border-tier px-2 py-px text-sm font-semibold tabular-nums text-tier">
-                    POT {props.potential}
-                  </span>
-                ) : null}
-              </div>
+            <div className="flex flex-col items-center gap-2">
+              <OvrBadge overall={props.overall} size="xl" />
+              {props.potential != null ? (
+                <span className="rounded-full border border-tier bg-surface-deep px-2 py-px text-sm font-semibold tabular-nums text-tier">
+                  POT {props.potential}
+                </span>
+              ) : null}
             </div>
           </div>
 

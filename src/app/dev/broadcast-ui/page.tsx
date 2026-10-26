@@ -34,6 +34,18 @@ const TEAMS = [
       logoId: "eagle",
     },
   },
+  {
+    label: "Neon primary",
+    city: "Volt",
+    name: "Surge",
+    abbreviation: "VLT",
+    branding: {
+      primaryColor: "#39FF14",
+      secondaryColor: "#0A0A0A",
+      accentColor: "#FF2BD6",
+      logoId: "bull",
+    },
+  },
 ] as const;
 
 export default function BroadcastUiShowcasePage() {
@@ -59,7 +71,7 @@ export default function BroadcastUiShowcasePage() {
         <FullCourtShowcase />
       </TeamThemeScope>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-2">
+      <div className="mt-10 grid gap-10 lg:grid-cols-2 xl:grid-cols-3">
         {TEAMS.map((team) => (
           <TeamThemeScope
             key={team.label}

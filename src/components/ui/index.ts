@@ -1,6 +1,17 @@
 export { ActionCard } from "@/components/ui/ActionCard";
 export { ArenaPanel } from "@/components/ui/ArenaPanel";
-export { DataTable } from "@/components/ui/DataTable";
+export {
+  DataTable,
+  numericCellClass,
+  type DataTableHeader,
+} from "@/components/ui/DataTable";
+export {
+  HubTile,
+  type HubTileProps,
+  type HubTileSize,
+} from "@/components/ui/HubTile";
+export { KeyHint } from "@/components/ui/KeyHint";
+export { OvrBadge, type OvrBadgeSize } from "@/components/ui/OvrBadge";
 export { MobileListCard } from "@/components/ui/MobileListCard";
 export { Drawer, type DrawerSize } from "@/components/ui/Drawer";
 export { EmptyState, ErrorState } from "@/components/ui/EmptyState";
@@ -28,14 +39,18 @@ export {
   type TickerTone,
 } from "@/components/ui/TickerBar";
 export {
+  clipCornerClass,
   cn,
+  consoleFocusClass,
   densityGap,
   densityPadding,
   densitySectionSpace,
+  displayClass,
   focusRingClass,
   linkClass,
   panelClass,
   panelDashedClass,
+  slantClass,
   touchTargetClass,
   touchTargetTextClass,
   type Density,
@@ -48,7 +63,7 @@ export {
 } from "@/components/ui/Button";
 export { NumberStepper } from "@/components/ui/NumberStepper";
 export { Select } from "@/components/ui/Select";
-export { Tabs, type TabItem } from "@/components/ui/Tabs";
+export { SlantTabs, Tabs, type TabItem } from "@/components/ui/Tabs";
 export { ScoreBug } from "@/components/ui/ScoreBug";
 export { CountUp } from "@/components/ui/CountUp";
 export { Gauge } from "@/components/ui/Gauge";
