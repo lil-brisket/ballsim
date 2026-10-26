@@ -4,6 +4,7 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, panelClass } from "@/components/ui/styles";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function DepthChart(props: {
   saveId: string;
@@ -39,7 +40,7 @@ export function DepthChart(props: {
                       key={`${position}-${entry.playerId}`}
                       className={cn("text-sm", !entry.canPlay && "opacity-60")}
                     >
-                      <div className="flex items-baseline justify-between gap-1">
+                      <div className="flex items-center justify-between gap-1">
                         <span className="min-w-0 truncate">
                           <span className="mr-1 tabular-nums text-sm text-faint">
                             {index + 1}.
@@ -51,9 +52,7 @@ export function DepthChart(props: {
                             {entry.firstName} {entry.lastName}
                           </PlayerEntityLink>
                         </span>
-                        <span className="shrink-0 text-sm tabular-nums text-muted">
-                          {entry.overall}
-                        </span>
+                        <OvrBadge overall={entry.overall} size="sm" />
                       </div>
                       <div className="mt-0.5 flex flex-wrap gap-2 text-sm text-faint">
                         <span>{entry.label}</span>

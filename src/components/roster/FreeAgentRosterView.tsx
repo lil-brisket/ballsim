@@ -4,6 +4,7 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function FreeAgentRosterView(props: {
   saveId: string;
@@ -58,7 +59,13 @@ export function FreeAgentRosterView(props: {
                 </span>
               </td>
               <td className="px-3 py-2 text-muted">{agent.position}</td>
-              <td className="px-3 py-2 text-ink">{agent.overall}</td>
+              <td className="px-3 py-2">
+                <OvrBadge
+                  overall={agent.overall}
+                  size="sm"
+                  className="align-middle"
+                />
+              </td>
               <td className="px-3 py-2 text-muted">{agent.age}</td>
               <td className="px-3 py-2">
                 <Link

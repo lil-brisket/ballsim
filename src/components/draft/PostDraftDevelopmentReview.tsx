@@ -2,6 +2,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { assignToDevelopmentLeagueAction } from "@/application/actions";
 import { buttonClass } from "@/components/ui/Button";
 import type { DraftDlRecommendation } from "@/systems/development-league/recommendations";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function PostDraftDevelopmentReview(props: {
   saveId: string;
@@ -37,9 +38,15 @@ export function PostDraftDevelopmentReview(props: {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="font-medium">{row.name}</p>
-                <p className="text-sm text-faint">
-                  {row.overall} OVR / {row.potential} POT · Proj.{" "}
-                  {Math.round(row.projectedMpg)} MPG
+                <p className="flex items-center gap-1.5 text-sm text-faint">
+                  <OvrBadge overall={row.overall} size="sm" />
+                  <OvrBadge
+                    overall={row.potential}
+                    ghost
+                    label="POT"
+                    size="sm"
+                  />
+                  <span>Proj. {Math.round(row.projectedMpg)} MPG</span>
                 </p>
                 <p className="mt-1 text-sm text-muted">
                   {row.recommendation === "development_league"

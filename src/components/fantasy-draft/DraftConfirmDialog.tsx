@@ -4,6 +4,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useEffect, useId, useRef } from "react";
 import { fantasyDraftPickAction } from "@/application/actions";
 import { buttonClass } from "@/components/ui/Button";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function DraftConfirmDialog(props: {
   saveId: string;
@@ -47,9 +48,15 @@ export function DraftConfirmDialog(props: {
           titleClassName="text-lg!"
           title={<>Draft {props.player.name}?</>}
         />
-        <p className="mt-2 text-sm text-soft">
-          {props.player.position} · {props.player.overall} OVR ·{" "}
-          {props.player.potential} POT
+        <p className="mt-2 flex items-center gap-1.5 text-sm text-soft">
+          <span>{props.player.position}</span>
+          <OvrBadge overall={props.player.overall} size="sm" />
+          <OvrBadge
+            overall={props.player.potential}
+            ghost
+            label="POT"
+            size="sm"
+          />
         </p>
         <div className="mt-4 flex justify-end gap-2">
           <button

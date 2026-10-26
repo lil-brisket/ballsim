@@ -77,4 +77,17 @@ describe("style guard", () => {
       offenders(/import \{[^}]*\bPanel\b[^}]*\} from "@\/components\/ui["']/),
     ).toEqual([]);
   });
+
+  it("renders player overalls through OvrBadge, not raw OVR text", () => {
+    // Staff ratings and scouted ranges are not known player overalls; team
+    // averages ("Avg OVR") are aggregates, not a player badge.
+    const allowed = /\/(staff|coaching|hiring|scouting)\/|Staff|Coaching/i;
+    expect(
+      offenders(
+        /(?<!Avg )OVR \{/,
+        ({ file, inUi }) =>
+          file.endsWith(".tsx") && !inUi && !allowed.test(file),
+      ),
+    ).toEqual([]);
+  });
 });

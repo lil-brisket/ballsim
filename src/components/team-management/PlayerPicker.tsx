@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { AvailabilityDot } from "@/components/team-management/availability-dot";
 import { Drawer } from "@/components/ui/Drawer";
 import { cn, focusRingClass } from "@/components/ui/styles";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export type PickerPlayer = {
   playerId: string;
@@ -90,9 +91,7 @@ export function PlayerPicker(props: {
                     {current ? " (current)" : ""}
                   </span>
                   <span className="w-8 text-muted">{player.position}</span>
-                  <span className="w-8 text-right tabular-nums">
-                    {player.overall}
-                  </span>
+                  <OvrBadge overall={player.overall} size="sm" />
                   <span className="flex w-28 items-center gap-1.5 text-muted">
                     <AvailabilityDot status={player.availabilityLabel} />
                     <span className="truncate">{player.availabilityLabel}</span>

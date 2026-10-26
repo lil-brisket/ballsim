@@ -1,38 +1,15 @@
 import { InjuryBadge } from "@/components/basketball/InjuryBadge";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
-import { OvrBadge } from "@/components/ui/OvrBadge";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { TeamThemeScope } from "@/components/ui/TeamThemeScope";
-import { formatHeight } from "@/presentation/player-rating-categories";
+import {
+  OvrWithPotential,
+  PlayerIdentityLine,
+} from "@/components/basketball/PlayerIdentityLine";
+import { cn, displayClass } from "@/components/ui/styles";
 import { ratingTier } from "@/presentation/rating-tier";
 import type { TeamBrandingView } from "@/state/team-branding-view";
-
-function Chip(props: { children: React.ReactNode; accent?: boolean }) {
-  return (
-    <span
-      className={
-        props.accent
-          ? "inline-flex items-center rounded bg-team px-2 py-0.5 text-sm font-bold uppercase tracking-wide text-on-team"
-          : "inline-flex items-center rounded border border-white/20 bg-black/30 px-2 py-0.5 text-sm uppercase tracking-wide text-ink"
-      }
-    >
-      {props.children}
-    </span>
-  );
-}
-
-function JerseyAndPosition(props: { jerseyNumber: number; position: string }) {
-  return (
-    <>
-      <span className="tabular-nums">#{props.jerseyNumber}</span>
-      <span aria-hidden className="mx-1">
-        ·
-      </span>
-      {props.position}
-    </>
-  );
-}
 
 /**
  * Banner: team-colour gradient, a bottom-anchored portrait, the last name as the dominant headline and a
@@ -53,7 +30,8 @@ export function PlayerProfileHero(props: {
   potential?: number;
   archetypeLabel?: string;
   heightInches?: number;
-  weightPounds?: number;
+  /** Pre-formatted "$12.4M · 3y"; omitted when the screen shows it elsewhere. */
+  contractSummary?: string | null;
   teamName: string | null;
   teamAbbreviation: string | null;
   branding: TeamBrandingView | null;
@@ -90,30 +68,30 @@ export function PlayerProfileHero(props: {
             <p className="font-display truncate text-xl font-extrabold uppercase leading-tight tracking-wide text-white sm:text-2xl">
               {props.firstName} {props.lastName}
             </p>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              <Chip accent>
-                <JerseyAndPosition
-                  jerseyNumber={props.jerseyNumber}
-                  position={props.position}
-                />
-              </Chip>
-              <Chip>{props.teamAbbreviation ?? "FA"}</Chip>
-              <Chip>Age {props.age}</Chip>
-              {props.archetypeLabel ? (
-                <Chip>{props.archetypeLabel}</Chip>
-              ) : null}
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <span className="rounded border border-tier bg-surface-deep px-2 py-0.5 text-sm font-bold tabular-nums text-tier">
-              OVR {props.overall}
-            </span>
-            {props.potential != null ? (
-              <span className="rounded-full border border-tier px-2 py-px text-sm font-semibold tabular-nums text-tier">
-                POT {props.potential}
-              </span>
+            {props.archetypeLabel ? (
+              <p
+                className={cn(displayClass, "mt-1 truncate text-base text-ink")}
+              >
+                {props.archetypeLabel}
+              </p>
             ) : null}
+            <PlayerIdentityLine
+              className="mt-1 text-ink/80"
+              lead={props.teamAbbreviation ?? "FA"}
+              jerseyNumber={props.jerseyNumber}
+              position={props.position}
+              age={props.age}
+              heightInches={props.heightInches}
+              contractSummary={props.contractSummary}
+            />
           </div>
+          <OvrWithPotential
+            overall={props.overall}
+            potential={props.potential}
+            age={props.age}
+            size="md"
+            direction="row"
+          />
         </div>
       </TeamThemeScope>
     );
@@ -156,41 +134,34 @@ export function PlayerProfileHero(props: {
           </span>
 
           <div className="order-2 justify-self-end self-start sm:order-3 sm:self-center sm:pb-5">
-            <div className="flex flex-col items-center gap-2">
-              <OvrBadge overall={props.overall} size="xl" />
-              {props.potential != null ? (
-                <span className="rounded-full border border-tier bg-surface-deep px-2 py-px text-sm font-semibold tabular-nums text-tier">
-                  POT {props.potential}
-                </span>
-              ) : null}
-            </div>
+            <OvrWithPotential
+              overall={props.overall}
+              potential={props.potential}
+              age={props.age}
+              size="xl"
+            />
           </div>
 
           <div className="order-3 col-span-2 min-w-0 pb-4 sm:order-2 sm:col-span-1 sm:pb-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-ink">
+            <p className={cn(displayClass, "text-base text-ink")}>
               {props.firstName}
             </p>
             <h3 className="font-display break-words text-4xl font-extrabold uppercase leading-none tracking-wide text-white [text-shadow:0_2px_12px_rgb(0_0_0_/_0.5)] sm:text-6xl">
               {props.lastName}
             </h3>
-            <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <Chip accent>
-                <JerseyAndPosition
-                  jerseyNumber={props.jerseyNumber}
-                  position={props.position}
-                />
-              </Chip>
-              {props.archetypeLabel ? (
-                <Chip>{props.archetypeLabel}</Chip>
-              ) : null}
-              {props.heightInches != null ? (
-                <Chip>{formatHeight(props.heightInches)}</Chip>
-              ) : null}
-              {props.weightPounds != null ? (
-                <Chip>{props.weightPounds} lbs</Chip>
-              ) : null}
-              <Chip>Age {props.age}</Chip>
-            </div>
+            {props.archetypeLabel ? (
+              <p className={cn(displayClass, "mt-2 text-xl text-ink")}>
+                {props.archetypeLabel}
+              </p>
+            ) : null}
+            <PlayerIdentityLine
+              className="mt-2 text-ink/80"
+              jerseyNumber={props.jerseyNumber}
+              position={props.position}
+              age={props.age}
+              heightInches={props.heightInches}
+              contractSummary={props.contractSummary}
+            />
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink">
               {props.branding ? (
                 <TeamBadge

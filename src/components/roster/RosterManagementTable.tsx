@@ -11,6 +11,7 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PlayerActionMenu } from "@/components/roster/PlayerActionMenu";
 import { RosterCard } from "@/components/roster/RosterCard";
@@ -22,7 +23,6 @@ import {
   touchTargetClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
-import { ratingTier } from "@/presentation/rating-tier";
 
 type SortKey =
   "overall" | "age" | "salary" | "years" | "position" | "role" | "name";
@@ -259,7 +259,7 @@ export function RosterManagementTable(props: {
         {filtered.map((player) => {
           const name = `${player.firstName} ${player.lastName}`;
           return (
-            <li key={player.playerId} data-tier={ratingTier(player.overall).id}>
+            <li key={player.playerId}>
               <MobileListCard
                 title={
                   <span className="flex items-center gap-2">
@@ -286,9 +286,7 @@ export function RosterManagementTable(props: {
                 subtitle={`${player.position} · ${player.roleDisplayLabel} · Age ${player.age}`}
                 meta={
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-display text-xl font-bold tabular-nums text-tier">
-                      {player.overall}
-                    </span>
+                    <OvrBadge overall={player.overall} size="sm" />
                     <StatusBadge
                       label={player.availabilityLabel}
                       tone={player.canPlay ? "available" : player.injuryKind}
@@ -392,11 +390,7 @@ export function RosterManagementTable(props: {
                   player.contractYearsRemaining <= 1;
                 const name = `${player.firstName} ${player.lastName}`;
                 return (
-                  <tr
-                    key={player.playerId}
-                    data-tier={ratingTier(player.overall).id}
-                    className="border-t border-line"
-                  >
+                  <tr key={player.playerId} className="border-t border-line">
                     <td className="px-3 py-2 text-right font-mono text-sm tabular-nums text-muted">
                       {player.jerseyNumber}
                     </td>
@@ -421,8 +415,12 @@ export function RosterManagementTable(props: {
                       ) : null}
                     </td>
                     <td className="px-3 py-2 text-muted">{player.position}</td>
-                    <td className="px-3 py-2 text-right font-display text-lg font-bold tabular-nums text-tier">
-                      {player.overall}
+                    <td className="px-3 py-2 text-right">
+                      <OvrBadge
+                        overall={player.overall}
+                        size="sm"
+                        className="align-middle"
+                      />
                     </td>
                     <td className="hidden px-3 py-2 text-right tabular-nums text-muted sm:table-cell">
                       {player.age}

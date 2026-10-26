@@ -2,7 +2,7 @@ import { InjuryBadge } from "@/components/basketball/InjuryBadge";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
-import { ratingTier } from "@/presentation/rating-tier";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 import { cn, type Density } from "@/components/ui/styles";
 
 /**
@@ -28,7 +28,6 @@ export function RosterRow(props: {
   const dense = props.density === "compact" || props.density == null;
   return (
     <div
-      data-tier={ratingTier(props.overall).id}
       className={cn(
         "flex items-center gap-3 border-b border-line/80",
         dense ? "py-1.5" : "py-2.5",
@@ -61,9 +60,7 @@ export function RosterRow(props: {
           {props.age != null ? ` · ${props.age}` : ""}
         </p>
       </div>
-      <span className="shrink-0 font-display text-xl font-bold tabular-nums text-tier">
-        {props.overall}
-      </span>
+      <OvrBadge overall={props.overall} size="sm" />
       {props.injuryStatus ? <InjuryBadge status={props.injuryStatus} /> : null}
     </div>
   );

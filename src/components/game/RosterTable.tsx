@@ -8,6 +8,7 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
 import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 type SortKey = "name" | "position" | "age" | "overall" | "status";
 
@@ -116,7 +117,13 @@ export function RosterTable(props: {
             </td>
             <td className="px-3 py-2 text-muted">{player.position}</td>
             <td className="px-3 py-2 text-muted">{player.age}</td>
-            <td className="px-3 py-2 text-ink">{player.overall}</td>
+            <td className="px-3 py-2">
+              <OvrBadge
+                overall={player.overall}
+                size="sm"
+                className="align-middle"
+              />
+            </td>
             <td className="px-3 py-2">
               <ContractSummary
                 salary={player.contractSalary}

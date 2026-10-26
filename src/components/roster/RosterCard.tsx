@@ -5,7 +5,7 @@ import { ContractSummary } from "@/components/owner/ContractSummary";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PlayerActionMenu } from "@/components/roster/PlayerActionMenu";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
-import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 import {
   cn,
   focusRingClass,
@@ -77,15 +77,7 @@ export function RosterCard(props: {
               ) : null}
             </p>
           </div>
-          <ScoreNumeral
-            value={player.overall}
-            label="OVR"
-            labelBelow
-            size="lg"
-            tone="tier"
-            align="end"
-            className="shrink-0"
-          />
+          <OvrBadge overall={player.overall} size="lg" />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

@@ -11,6 +11,7 @@ import {
   TRAINING_CAMPS,
   type SkillRatingsRow,
 } from "@/state/development-plan-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 const HEADERS = [
   "Player",
@@ -92,8 +93,10 @@ export function SkillRatingsTable(props: {
                     ) : null}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 tabular-nums text-soft">
-                    {row.overall}
-                    <Delta delta={row.overallDelta} injured={injured} />
+                    <span className="inline-flex items-center gap-1.5">
+                      <OvrBadge overall={row.overall} size="sm" />
+                      <Delta delta={row.overallDelta} injured={injured} />
+                    </span>
                   </td>
                   {row.skills.map((skill) => (
                     <td
@@ -104,8 +107,14 @@ export function SkillRatingsTable(props: {
                       <Delta delta={skill.delta} injured={injured} />
                     </td>
                   ))}
-                  <td className="px-3 py-2 tabular-nums text-muted">
-                    {row.potential}
+                  <td className="px-3 py-2">
+                    <OvrBadge
+                      overall={row.potential}
+                      ghost
+                      label="POT"
+                      size="sm"
+                      className="align-middle"
+                    />
                   </td>
                   <td className="px-3 py-2">
                     {row.onDevelopmentLeague ? (

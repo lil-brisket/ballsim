@@ -13,6 +13,7 @@ import type {
   TradeInterestLevel,
   TradeOfferView,
 } from "@/state/trade-offer-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 const INTEREST_LABELS: Record<TradeInterestLevel, string> = {
   very_interested: "Very interested",
@@ -53,11 +54,15 @@ function AssetColumn(props: { title: string; assets: TradeAssetView[] }) {
                   >
                     {asset.name}
                   </Link>
-                  <p className="text-xs text-faint">
-                    {asset.position} · {asset.overall} OVR · Age {asset.age}
-                    {asset.salary !== null
-                      ? ` · ${formatMoney(asset.salary)}`
-                      : ""}
+                  <p className="flex items-center gap-1.5 text-xs text-faint">
+                    <span>{asset.position}</span>
+                    <OvrBadge overall={asset.overall} size="sm" />
+                    <span>
+                      Age {asset.age}
+                      {asset.salary !== null
+                        ? ` · ${formatMoney(asset.salary)}`
+                        : ""}
+                    </span>
                   </p>
                 </>
               ) : (

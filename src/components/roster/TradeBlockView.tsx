@@ -5,6 +5,7 @@ import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { cn, panelClass } from "@/components/ui/styles";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function TradeBlockRosterView(props: {
   saveId: string;
@@ -39,8 +40,10 @@ export function TradeBlockRosterView(props: {
                   >
                     {player.firstName} {player.lastName}
                   </PlayerEntityLink>
-                  <p className="mt-0.5 text-sm text-faint">
-                    {player.position} · {player.overall} OVR · {player.status}
+                  <p className="mt-0.5 flex items-center gap-1.5 text-sm text-faint">
+                    <span>{player.position}</span>
+                    <OvrBadge overall={player.overall} size="sm" />
+                    <span>{player.status}</span>
                   </p>
                 </div>
                 <form action={toggleTradeBlockAction}>

@@ -32,6 +32,7 @@ import { OutgoingOfferSheets } from "@/components/rfa/OutgoingOfferSheets";
 import { RfaBadge } from "@/components/rfa/RfaBadge";
 import { RfaOfferSheetAction } from "@/components/rfa/RfaOfferSheetAction";
 import { toFreeAgencyHubView } from "@/state/free-agency-hub-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export const metadata: Metadata = { title: "Free Agency" };
 
@@ -279,7 +280,13 @@ export default async function FreeAgencyPage({
                       </td>
                       <td className="px-3 py-2 text-muted">{agent.position}</td>
                       <td className="px-3 py-2 text-muted">{agent.age}</td>
-                      <td className="px-3 py-2 text-ink">{agent.overall}</td>
+                      <td className="px-3 py-2">
+                        <OvrBadge
+                          overall={agent.overall}
+                          size="sm"
+                          className="align-middle"
+                        />
+                      </td>
                       <td className="px-3 py-2">
                         {rfaTag ? (
                           <RfaOfferSheetAction

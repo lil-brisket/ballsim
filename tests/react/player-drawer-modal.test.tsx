@@ -144,9 +144,12 @@ describe("PlayerDrawer modal", () => {
     expect(screen.getByText("#23")).toBeTruthy();
     expect(screen.getByText("Floor General")).toBeTruthy();
     expect(screen.getByText(`6'7"`)).toBeTruthy();
-    expect(screen.getByText("205 lbs")).toBeTruthy();
+    // Weight is no longer part of the identity line.
+    expect(screen.queryByText("205 lbs")).toBeNull();
     expect(screen.getByText("Age 24")).toBeTruthy();
-    expect(screen.getByText("POT 88")).toBeTruthy();
+    // Potential is a ghost OvrBadge (age 24 or younger).
+    expect(screen.getByRole("img", { name: "POT 88" })).toBeTruthy();
+    expect(screen.getByRole("img", { name: "Overall 78" })).toBeTruthy();
     expect(screen.getByText("Harbor Waves")).toBeTruthy();
     expect(screen.getByText("78")).toBeTruthy();
     expect(screen.getByText("OVR")).toBeTruthy();

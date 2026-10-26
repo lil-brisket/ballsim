@@ -3,6 +3,7 @@
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { useEffect, useId, useRef } from "react";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export type RotationPlayerCardData = {
   playerId: string;
@@ -251,10 +252,14 @@ export function RotationPlayerCard(props: {
                 </>
               }
             />
-            <p className="mt-1 text-sm text-muted">
-              {player.position}
-              {player.age != null ? ` · Age ${player.age}` : ""}
-              {player.overall != null ? ` · OVR ${player.overall}` : ""}
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+              <span>
+                {player.position}
+                {player.age != null ? ` · Age ${player.age}` : ""}
+              </span>
+              {player.overall != null ? (
+                <OvrBadge overall={player.overall} size="sm" />
+              ) : null}
             </p>
             <p className="mt-0.5 text-sm capitalize text-faint">
               {player.role.replaceAll("_", " ")}

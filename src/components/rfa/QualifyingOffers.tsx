@@ -3,6 +3,7 @@ import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { QualifyingOfferRow } from "@/state/rfa-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 /** Qualifying offer decisions for expiring players. */
 export function QualifyingOffers(props: {
@@ -24,9 +25,14 @@ export function QualifyingOffers(props: {
           >
             <div>
               <p className="text-ink">{row.playerName}</p>
-              <p className="text-faint">
-                {row.position} · {row.age} · OVR {row.overall} · Offer{" "}
-                <MoneyDisplay amount={row.qualifyingOfferSalary} />
+              <p className="flex flex-wrap items-center gap-1.5 text-faint">
+                <span>
+                  {row.position} · {row.age}
+                </span>
+                <OvrBadge overall={row.overall} size="sm" />
+                <span>
+                  Offer <MoneyDisplay amount={row.qualifyingOfferSalary} />
+                </span>
               </p>
             </div>
             {row.issued ? (

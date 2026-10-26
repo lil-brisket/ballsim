@@ -66,7 +66,8 @@ export function resetSearchIndexCacheForTests(): void {
   indexRequests.clear();
 }
 
-function loadSearchIndex(saveId: string): Promise<SearchIndex> {
+/** Fetch (and cache per save) the league search index. */
+export function loadSearchIndex(saveId: string): Promise<SearchIndex> {
   const cached = indexCache.get(saveId);
   if (cached) return Promise.resolve(cached);
   const pending = indexRequests.get(saveId);
@@ -193,6 +194,7 @@ export function CommandPalette(props: {
       ["Sim to next game", sim.startsWith(base) ? sim.slice(base.length) : sim],
       ["Open Free Agency", "/free-agency"],
       ["Find a trade", "/roster?tab=trade-finder"],
+      ["Compare players", "/players/compare"],
       ["Open notifications", "/notifications"],
     ];
     return entries.map(([label, path]) => ({

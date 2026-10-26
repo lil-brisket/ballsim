@@ -1,3 +1,4 @@
+import { OvrBadge } from "@/components/ui/OvrBadge";
 import Link from "next/link";
 import { CardTable } from "@/components/player-profile/CardTable";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -200,8 +201,9 @@ export function PlayerCareer(props: {
                 <span className="tabular-nums text-team-ink">
                   {season.seasonYear}
                 </span>
-                <span className="ml-3 text-ink">
-                  Age {season.age} · OVR {season.overall} ·{" "}
+                <span className="ml-3 inline-flex items-center gap-2 align-middle text-ink">
+                  Age {season.age} ·
+                  <OvrBadge overall={season.overall} size="sm" />·{" "}
                   {season.developmentStage} · {season.injuryKind}
                 </span>
                 <span className="ml-2 text-faint">

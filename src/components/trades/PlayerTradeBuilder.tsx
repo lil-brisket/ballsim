@@ -8,6 +8,7 @@ import {
   declineOwnerDecisionAction,
   proposePlayerTradeAction,
 } from "@/application/actions";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export type TradeBuilderPlayer = {
   id: string;
@@ -206,8 +207,10 @@ function AssetColumn(props: {
               checked={props.selectedPlayers.includes(p.id)}
               onChange={() => props.onPlayer(p.id)}
             />
-            <span>
-              {p.name} ({p.position}) OVR {p.overall} · Age {p.age}
+            <span className="flex items-center gap-1.5">
+              {p.name} ({p.position})
+              <OvrBadge overall={p.overall} size="sm" />
+              <span>· Age {p.age}</span>
             </span>
           </label>
         ))}

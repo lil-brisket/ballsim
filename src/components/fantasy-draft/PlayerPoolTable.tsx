@@ -9,6 +9,7 @@ import type {
 } from "@/state/selectors";
 import { buttonClass } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function PlayerPoolTable(props: {
   draft: FantasyDraftView;
@@ -205,8 +206,17 @@ export function PlayerPoolTable(props: {
                   ) : null}
                 </td>
                 <td className="pr-2">{player.position}</td>
-                <td className="pr-2">{player.overall}</td>
-                <td className="pr-2">{player.potential}</td>
+                <td className="pr-2">
+                  <OvrBadge overall={player.overall} size="sm" />
+                </td>
+                <td className="pr-2">
+                  <OvrBadge
+                    overall={player.potential}
+                    ghost
+                    label="POT"
+                    size="sm"
+                  />
+                </td>
                 <td className="pr-2">{player.age}</td>
                 <td className="pr-2">{formatHeight(player.heightInches)}</td>
                 <td className="pr-2 text-muted">{player.archetypeLabel}</td>

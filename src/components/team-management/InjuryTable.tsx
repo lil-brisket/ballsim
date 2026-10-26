@@ -10,6 +10,7 @@ import type {
 } from "@/state/team-management-selectors";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 type InjuryFilter =
   | "all"
@@ -96,11 +97,12 @@ function InjuryPlayerCard(props: { saveId: string; row: InjuryRowView }) {
           <div className="text-sm font-semibold text-ink">
             {row.firstName} {row.lastName}
           </div>
-          <div className="mt-0.5 text-sm text-faint">
-            {row.position} · OVR {row.overall}
-            {row.activeInjuryCount > 1
-              ? ` · ${row.activeInjuryCount} active injuries`
-              : null}
+          <div className="mt-0.5 flex items-center gap-1.5 text-sm text-faint">
+            <span>{row.position}</span>
+            <OvrBadge overall={row.overall} size="sm" />
+            {row.activeInjuryCount > 1 ? (
+              <span>{row.activeInjuryCount} active injuries</span>
+            ) : null}
           </div>
         </div>
         <StatusBadge label={row.statusLabel} tone={row.status} />

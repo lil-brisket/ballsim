@@ -102,7 +102,6 @@ export default async function PlayerDetailPage({
           potential={player.potentialOverall}
           archetypeLabel={archetypeLabel}
           heightInches={player.heightInches}
-          weightPounds={player.weightPounds}
           teamName={player.teamName}
           teamAbbreviation={player.teamAbbreviation}
           branding={player.teamBranding}

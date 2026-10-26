@@ -71,7 +71,6 @@ function PlayerCardBody(props: {
           potential={view.identity.potential}
           archetypeLabel={view.identity.archetypeLabel}
           heightInches={view.identity.heightInches}
-          weightPounds={view.identity.weightPounds}
           teamName={view.team.teamName}
           teamAbbreviation={view.team.abbreviation}
           branding={view.team.branding}
@@ -139,6 +138,13 @@ export function PlayerDrawer(props: {
               onClick={() => props.onOpenChange(false)}
             >
               View full player
+            </Link>
+            <Link
+              href={`/dashboard/${props.view.saveId}/players/compare?a=${encodeURIComponent(props.view.playerId)}`}
+              className={secondaryActionClass}
+              onClick={() => props.onOpenChange(false)}
+            >
+              Compare
             </Link>
             {props.view.navigation.contractHref ? (
               <Link

@@ -7,6 +7,7 @@ import type { FantasyDraftTeamSummary } from "@/domain/entities/fantasy-draft";
 import { buttonClass } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Tabs } from "@/components/ui/Tabs";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 function Stars(props: { count: number }) {
   return (
@@ -57,9 +58,10 @@ function HighlightCard(props: {
       <div className="mt-1 font-medium text-ink">
         {props.pick.playerName} — Pick #{props.pick.pickNumber}
       </div>
-      <div className="text-muted">
-        {props.pick.position} · {props.pick.overall} OVR /{" "}
-        {props.pick.potential} POT
+      <div className="flex items-center gap-1.5 text-muted">
+        <span>{props.pick.position}</span>
+        <OvrBadge overall={props.pick.overall} size="sm" />
+        <OvrBadge overall={props.pick.potential} ghost label="POT" size="sm" />
       </div>
     </div>
   );
@@ -187,8 +189,17 @@ function TeamSummaryPanel(props: {
                   <td className="py-1.5">{row.pickNumber}</td>
                   <td>{row.playerName}</td>
                   <td>{row.position}</td>
-                  <td>{row.overall}</td>
-                  <td>{row.potential}</td>
+                  <td>
+                    <OvrBadge overall={row.overall} size="sm" />
+                  </td>
+                  <td>
+                    <OvrBadge
+                      overall={row.potential}
+                      ghost
+                      label="POT"
+                      size="sm"
+                    />
+                  </td>
                   <td>{row.age}</td>
                   <td>{row.assessment}</td>
                 </tr>

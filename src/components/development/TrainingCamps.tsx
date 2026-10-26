@@ -10,6 +10,7 @@ import {
   DEVELOPMENT_FOCUS_LABELS,
   type DevelopmentPlansView,
 } from "@/state/development-plan-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 /**
  * Training camps: the camp catalogue plus one form that assigns a camp to
@@ -79,9 +80,11 @@ export function TrainingCamps(props: {
                   <span className="ml-2 text-sm text-faint">
                     {row.position} · {row.age}
                   </span>
-                  <span className="ml-2 text-sm tabular-nums text-soft">
-                    OVR {row.overall}
-                  </span>
+                  <OvrBadge
+                    overall={row.overall}
+                    size="sm"
+                    className="ml-2 align-middle"
+                  />
                   {row.injury ? (
                     <span className="ml-2 rounded-full border border-orange-400/40 bg-orange-500/10 px-2 py-0.5 text-xs text-orange-300">
                       Injured · {row.injury.label}

@@ -1,5 +1,6 @@
 import type { FantasyDraftView } from "@/state/selectors";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 function RecCard(props: {
   label: string;
@@ -18,9 +19,15 @@ function RecCard(props: {
       <div className="mt-1 font-medium text-ink">
         {props.player.firstName} {props.player.lastName}
       </div>
-      <div className="text-faint">
-        {props.player.position} · {props.player.overall} OVR ·{" "}
-        {props.player.potential} POT
+      <div className="flex items-center gap-1.5 text-faint">
+        <span>{props.player.position}</span>
+        <OvrBadge overall={props.player.overall} size="sm" />
+        <OvrBadge
+          overall={props.player.potential}
+          ghost
+          label="POT"
+          size="sm"
+        />
       </div>
     </div>
   );

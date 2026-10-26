@@ -2,11 +2,15 @@ import { InjuryBadge } from "@/components/basketball/InjuryBadge";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
-import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import {
+  OvrWithPotential,
+  PlayerIdentityLine,
+} from "@/components/basketball/PlayerIdentityLine";
 import { ratingTier } from "@/presentation/rating-tier";
 import {
   cn,
   densityPadding,
+  displayClass,
   panelClass,
   type Density,
 } from "@/components/ui/styles";
@@ -44,6 +48,10 @@ export function PlayerCard(props: {
   position?: string;
   overall?: number;
   age?: number;
+  archetypeLabel?: string;
+  heightInches?: number;
+  /** Shown as ghost POT beside OVR for players aged 24 or younger. */
+  potential?: number;
   teamName?: string | null;
   teamAbbreviation?: string | null;
   role?: string | null;
@@ -87,26 +95,27 @@ export function PlayerCard(props: {
               titleClassName="truncate text-base!"
               title={name}
             />
-            <p className="mt-0.5 text-sm text-muted">
-              {[
-                fields.position && props.position,
-                fields.age && props.age != null ? `Age ${props.age}` : null,
-                fields.role && props.role,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
+            {props.archetypeLabel ? (
+              <p className={cn(displayClass, "mt-0.5 truncate text-base")}>
+                {props.archetypeLabel}
+              </p>
+            ) : null}
+            <PlayerIdentityLine
+              className="mt-0.5"
+              position={fields.position ? props.position : undefined}
+              age={fields.age ? props.age : undefined}
+              heightInches={props.heightInches}
+              contractSummary={fields.contract ? props.contractLabel : null}
+              lead={fields.role ? props.role : null}
+            />
           </div>
         </div>
         {fields.overall && props.overall != null ? (
-          <ScoreNumeral
-            value={props.overall}
-            label="OVR"
-            labelBelow
-            size="md"
-            tone="tier"
-            align="end"
-            className="shrink-0"
+          <OvrWithPotential
+            overall={props.overall}
+            potential={props.potential}
+            age={props.age ?? 99}
+            size="lg"
           />
         ) : null}
       </div>
@@ -114,9 +123,6 @@ export function PlayerCard(props: {
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {fields.injury && props.injuryStatus ? (
           <InjuryBadge status={props.injuryStatus} />
-        ) : null}
-        {fields.contract && props.contractLabel ? (
-          <span className="text-sm text-muted">{props.contractLabel}</span>
         ) : null}
       </div>
 

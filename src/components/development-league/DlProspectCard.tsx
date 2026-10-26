@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn, densityPadding, panelClass } from "@/components/ui/styles";
 import { DL_MAX_SEASONS } from "@/domain/entities/development-league";
 import type { DlProspectRowView } from "@/state/development-league-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 function readinessLabel(value: string): string {
   switch (value) {
@@ -141,7 +142,7 @@ export function DlProspectCard(props: {
       <div className="mt-3 flex flex-wrap items-end gap-4">
         <div>
           <p className="text-sm text-muted">OVR</p>
-          <p className="text-lg tabular-nums text-ink">{row.overall}</p>
+          <OvrBadge overall={row.overall} size="md" />
         </div>
         <div>
           <p className="text-sm text-muted">Change</p>
@@ -154,7 +155,7 @@ export function DlProspectCard(props: {
         </div>
         <div>
           <p className="text-sm text-muted">POT</p>
-          <p className="tabular-nums text-soft">{row.potential}</p>
+          <OvrBadge overall={row.potential} ghost label="POT" size="sm" />
           <p className="text-sm text-disabled">
             {row.potentialHeadroom === 0
               ? "At ceiling"
@@ -242,9 +243,10 @@ export function DlEligibleCard(props: {
             <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
               {row.name}
             </PlayerEntityLink>
-            <p className="mt-0.5 text-sm text-disabled">
-              OVR {row.overall} · POT {row.potential} · {row.projectedMpg} proj.
-              MPG
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-disabled">
+              <OvrBadge overall={row.overall} size="sm" />
+              <OvrBadge overall={row.potential} ghost label="POT" size="sm" />
+              <span>{row.projectedMpg} proj. MPG</span>
             </p>
             <p className="mt-1 text-sm text-faint">
               {row.strongCandidate ? "Strong DL candidate" : "Optional"}
@@ -284,8 +286,18 @@ export function DlEligibleRow(props: {
           </PlayerEntityLink>
         </span>
       </td>
-      <td className="px-3 py-2 font-mono text-soft">{row.overall}</td>
-      <td className="px-3 py-2 font-mono">{row.potential}</td>
+      <td className="px-3 py-2">
+        <OvrBadge overall={row.overall} size="sm" className="align-middle" />
+      </td>
+      <td className="px-3 py-2">
+        <OvrBadge
+          overall={row.potential}
+          ghost
+          label="POT"
+          size="sm"
+          className="align-middle"
+        />
+      </td>
       <td className="px-3 py-2 text-sm">
         {row.strongCandidate ? "Strong DL candidate" : "Optional"}
       </td>

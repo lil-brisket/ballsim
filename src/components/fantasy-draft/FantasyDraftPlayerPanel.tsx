@@ -9,6 +9,7 @@ import {
 import { AttributeBar } from "@/components/player-profile/AttributeBar";
 import type { FantasyDraftPlayerDetailView } from "@/state/selectors";
 import { buttonClass } from "@/components/ui/Button";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function FantasyDraftPlayerPanel(props: {
   saveId: string;
@@ -96,13 +97,16 @@ export function FantasyDraftPlayerPanel(props: {
           <div className="flex flex-wrap gap-3">
             <div className="rounded-lg border border-team-ink/50 bg-team/20 px-4 py-2 text-center">
               <p className="text-sm text-muted">Overall</p>
-              <p className="font-mono text-2xl text-team-ink">
-                {detail.overall}
-              </p>
+              <OvrBadge overall={detail.overall} size="md" />
             </div>
             <div className="rounded-lg border border-line px-4 py-2 text-center">
               <p className="text-sm text-muted">Potential</p>
-              <p className="font-mono text-xl text-ink">{detail.potential}</p>
+              <OvrBadge
+                overall={detail.potential}
+                ghost
+                label="POT"
+                size="sm"
+              />
             </div>
             <div className="space-y-1 text-sm text-muted">
               <div>Dev: {detail.developmentStage}</div>

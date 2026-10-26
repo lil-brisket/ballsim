@@ -4,6 +4,7 @@ import {
 } from "@/application/actions";
 import type { FantasyDraftView } from "@/state/selectors";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function DraftQueuePanel(props: {
   saveId: string;
@@ -73,9 +74,15 @@ export function DraftQueuePanel(props: {
                     <div className="truncate font-medium text-ink">
                       {entry.firstName} {entry.lastName}
                     </div>
-                    <div className="text-sm text-faint">
-                      {entry.position} · {entry.overall} OVR · {entry.potential}{" "}
-                      POT
+                    <div className="flex items-center gap-1.5 text-sm text-faint">
+                      <span>{entry.position}</span>
+                      <OvrBadge overall={entry.overall} size="sm" />
+                      <OvrBadge
+                        overall={entry.potential}
+                        ghost
+                        label="POT"
+                        size="sm"
+                      />
                     </div>
                     {!entry.isAvailable ? (
                       <div className="mt-1 text-sm text-faint/90">

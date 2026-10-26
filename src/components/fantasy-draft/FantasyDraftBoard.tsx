@@ -21,6 +21,7 @@ import type {
   FantasyDraftView,
 } from "@/state/selectors";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 type Props = {
   saveId: string;
@@ -134,7 +135,11 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
                 draft.activeRoster.map((p) => (
                   <li key={p.playerId}>
                     <span className="text-faint">{p.position}</span> {p.name}{" "}
-                    <span className="text-faint">({p.overall})</span>
+                    <OvrBadge
+                      overall={p.overall}
+                      size="sm"
+                      className="align-middle"
+                    />
                   </li>
                 ))
               )}
