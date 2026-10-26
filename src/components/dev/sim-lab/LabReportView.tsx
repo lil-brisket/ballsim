@@ -24,19 +24,19 @@ function FailureList(props: { title: string; items: LabFailure[] }) {
     <div className={panelClass + " p-4"}>
       <SectionHeading as="h3" title={props.title} />
       {props.items.length === 0 ? (
-        <p className="mt-2 text-sm text-zinc-500">None</p>
+        <p className="mt-2 text-sm text-faint">None</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {props.items.map((item, index) => (
             <li
               key={`${item.rule}-${index}`}
-              className="rounded-md border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-sm"
+              className="rounded-md border border-line bg-surface-base/60 px-3 py-2 text-sm"
             >
               <p className="font-mono text-team-ink">
                 {item.rule} [{item.scope}]
               </p>
-              <p className="mt-1 text-zinc-300">{item.detail}</p>
-              <p className="mt-1 font-mono text-sm text-zinc-500">
+              <p className="mt-1 text-soft">{item.detail}</p>
+              <p className="mt-1 font-mono text-sm text-faint">
                 {item.reproCommand}
               </p>
             </li>
@@ -49,10 +49,10 @@ function FailureList(props: { title: string; items: LabFailure[] }) {
 
 function StatCheckRow(props: { check: CheckResult }) {
   return (
-    <li className="flex items-start justify-between gap-3 border-b border-zinc-800 py-2 last:border-b-0">
+    <li className="flex items-start justify-between gap-3 border-b border-line py-2 last:border-b-0">
       <div>
-        <p className="text-sm text-zinc-200">{props.check.name}</p>
-        <p className="mt-0.5 text-sm text-zinc-500">{props.check.message}</p>
+        <p className="text-sm text-ink">{props.check.name}</p>
+        <p className="mt-0.5 text-sm text-faint">{props.check.message}</p>
       </div>
       <StatusBadge
         label={props.check.verdict}
@@ -118,7 +118,7 @@ export function LabReportView(props: {
         </div>
       ) : null}
 
-      <p className="font-mono text-sm text-zinc-500">
+      <p className="font-mono text-sm text-faint">
         checksum={props.report.checksum} · nightly=
         {props.channelExitNightly === 0 ? "pass" : "fail"} ·{" "}
         {props.report.reproCommand}
@@ -127,7 +127,7 @@ export function LabReportView(props: {
       <div className={panelClass + " p-4"}>
         <SectionHeading as="h3" title="Statistical checks" />
         {props.report.statChecks.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500">None (low game count)</p>
+          <p className="mt-2 text-sm text-faint">None (low game count)</p>
         ) : (
           <ul className="mt-2">
             {props.report.statChecks.map((check) => (

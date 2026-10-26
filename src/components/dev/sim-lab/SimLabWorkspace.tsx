@@ -20,9 +20,9 @@ export function SimLabWorkspace(props: { config: SimLabPageConfig }) {
   const [tab, setTab] = useState<LabTab>("games");
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-8 text-zinc-100">
+    <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-8 text-ink">
       <SectionHeading as="h1" size="lg" title="Simulation Lab" />
-      <p className="mt-2 max-w-3xl text-sm text-zinc-400">
+      <p className="mt-2 max-w-3xl text-sm text-muted">
         Dev-only QA for production simulateGame and advanceSimulation. Not
         linked from Owner Mode navigation. Multi-season and 82-game schedule
         runs stay on the server and can take minutes — keep this tab open.

@@ -79,13 +79,13 @@ export function ScheduleLabPanel(props: {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-muted">
         Plays the generated league schedule day-by-day. CBL (22 games) is the
         faster path. Standard (82 games) is the long schedule — expect several
         minutes. Use Regular season only unless you also want playoffs.
       </p>
       <div className={`${panelClass} grid gap-3 p-4 sm:grid-cols-3`}>
-        <div className="text-sm text-zinc-400">
+        <div className="text-sm text-muted">
           <span className="block">Seed</span>
           <NumberStepper
             className="mt-1"
@@ -95,7 +95,7 @@ export function ScheduleLabPanel(props: {
             onValueChange={setSeed}
           />
         </div>
-        <label className="text-sm text-zinc-400">
+        <label className="text-sm text-muted">
           League / schedule length
           <Select
             wrapperClassName="mt-1 w-full"
@@ -112,7 +112,7 @@ export function ScheduleLabPanel(props: {
             ))}
           </Select>
         </label>
-        <label className="text-sm text-zinc-400">
+        <label className="text-sm text-muted">
           Stop at
           <Select
             wrapperClassName="mt-1 w-full"
@@ -200,14 +200,14 @@ export function ScheduleLabPanel(props: {
               mono
             />
           </div>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             {schedule.startPhase} {formatGameDate(schedule.startDate)} →{" "}
             {schedule.endPhase} {formatGameDate(schedule.endDate)}
             {schedule.decisionsDeclined > 0
               ? ` · auto-declined ${schedule.decisionsDeclined} owner decisions`
               : null}
           </p>
-          <p className="font-mono text-sm text-zinc-500">
+          <p className="font-mono text-sm text-faint">
             checksum={schedule.checksum} · {schedule.reproCommand}
           </p>
           {schedule.averageGameCost ? (
@@ -215,25 +215,25 @@ export function ScheduleLabPanel(props: {
               <SectionHeading as="h3" title="Average game cost" />
               <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                 <div className="flex justify-between gap-4">
-                  <dt className="text-zinc-400">Possessions</dt>
+                  <dt className="text-muted">Possessions</dt>
                   <dd className="tabular-nums">
                     {schedule.averageGameCost.possessions}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-zinc-400">Events</dt>
+                  <dt className="text-muted">Events</dt>
                   <dd className="tabular-nums">
                     {schedule.averageGameCost.events}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-zinc-400">ms / possession</dt>
+                  <dt className="text-muted">ms / possession</dt>
                   <dd className="tabular-nums">
                     {formatFixed(schedule.averageGameCost.msPerPossession, 3)}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-zinc-400">ms / event</dt>
+                  <dt className="text-muted">ms / event</dt>
                   <dd className="tabular-nums">
                     {formatFixed(schedule.averageGameCost.msPerEvent, 3)}
                   </dd>
@@ -249,13 +249,13 @@ export function ScheduleLabPanel(props: {
                 const pct = totalCost > 0 ? (ms / totalCost) * 100 : 0;
                 return (
                   <li key={row.key}>
-                    <div className="flex justify-between gap-3 text-zinc-300">
+                    <div className="flex justify-between gap-3 text-soft">
                       <span>{row.label}</span>
-                      <span className="tabular-nums text-zinc-400">
+                      <span className="tabular-nums text-muted">
                         {formatDurationMs(ms)} ({formatFixed(pct, 1)}%)
                       </span>
                     </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-high">
                       <div
                         className="h-full rounded-full bg-team-ink"
                         style={{ width: `${Math.min(100, pct)}%` }}

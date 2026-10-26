@@ -81,14 +81,14 @@ function sampleAccounts(teamId: string, name: string): TimelineAccount[] {
 
 export default function MediaShowcasePage() {
   return (
-    <main className="min-h-screen bg-surface-deep px-4 py-8 text-zinc-100 sm:px-6">
+    <main className="min-h-screen bg-surface-deep px-4 py-8 text-ink sm:px-6">
       <SectionHeading
         as="h1"
         size="lg"
         eyebrow="Dev / visual QA"
         title="Media timeline"
       />
-      <p className="mt-3 max-w-2xl text-sm text-zinc-400">
+      <p className="mt-3 max-w-2xl text-sm text-muted">
         Fictional posts for every attachment type and author kind, with HAR
         (very dark primary) and SUM (very light primary) branding.
       </p>
@@ -155,11 +155,11 @@ export default function MediaShowcasePage() {
             const branding = SHOWCASE_CONTEXT.teams[team.id]?.branding ?? null;
             return (
               <div key={team.id} className="space-y-3">
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-muted">
                   {team.name} ({team.note})
                 </p>
                 <TeamSurface branding={branding} band="left">
-                  <p className="text-sm text-zinc-100">Left band surface</p>
+                  <p className="text-sm text-ink">Left band surface</p>
                 </TeamSurface>
                 <TeamSurface branding={branding} band="top" className="p-0">
                   <TeamSurfaceSlab>
@@ -194,7 +194,7 @@ export default function MediaShowcasePage() {
                     )),
                   )}
                 </div>
-                <p className="flex items-center gap-2 text-sm text-zinc-300">
+                <p className="flex items-center gap-2 text-sm text-soft">
                   Verified <VerifiedMark /> Unread <UnreadDot />
                 </p>
               </div>

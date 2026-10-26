@@ -52,7 +52,7 @@ export function GameLabPanel(props: {
       <div
         className={`${panelClass} grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4`}
       >
-        <div className="text-sm text-zinc-400">
+        <div className="text-sm text-muted">
           <span className="block">Seed</span>
           <NumberStepper
             className="mt-1"
@@ -62,7 +62,7 @@ export function GameLabPanel(props: {
             onValueChange={setSeed}
           />
         </div>
-        <div className="text-sm text-zinc-400">
+        <div className="text-sm text-muted">
           <span className="block">Games (max {props.maxGames})</span>
           <NumberStepper
             className="mt-1"
@@ -74,7 +74,7 @@ export function GameLabPanel(props: {
             onValueChange={setGames}
           />
         </div>
-        <label className="text-sm text-zinc-400">
+        <label className="text-sm text-muted">
           Scenario
           <Select
             wrapperClassName="mt-1 w-full"
@@ -89,7 +89,7 @@ export function GameLabPanel(props: {
             ))}
           </Select>
         </label>
-        <label className="text-sm text-zinc-400">
+        <label className="text-sm text-muted">
           Rotation
           <Select
             wrapperClassName="mt-1 w-full"
