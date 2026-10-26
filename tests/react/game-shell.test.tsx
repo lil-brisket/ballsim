@@ -187,6 +187,72 @@ describe("game shell UI", () => {
     unmount();
   });
 
+  it("SaveCard distinguishes online and offline leagues", () => {
+    const base: OwnerSavePreview = {
+      ok: true,
+      id: "save_1",
+      name: "Harbor Franchise",
+      updatedAt: new Date("2026-08-15T12:00:00.000Z"),
+      createdAt: new Date("2026-08-01T12:00:00.000Z"),
+      mode: "owner",
+      controlledTeam: {
+        id: "team_1",
+        city: "Harbor",
+        name: "Waves",
+        abbreviation: "HAR",
+        branding: {
+          primaryColor: "#0B1F3A",
+          secondaryColor: "#C4CED4",
+          accentColor: "#F5B800",
+          logoId: "shield",
+        },
+      },
+      seasonYear: 2026,
+      currentDate: "2026-11-01",
+      seasonPhase: "regular",
+      teamSelectionLocked: true,
+    };
+    const online = render(
+      <ul>
+        <SaveCard
+          preview={{
+            ...base,
+            participationMode: "online",
+            participantCount: 4,
+          }}
+        />
+      </ul>,
+    );
+    expect(screen.getByText("Online · 4 players")).toBeTruthy();
+    expect(screen.getByText("Online league")).toBeTruthy();
+    expect(screen.queryByText("Offline")).toBeNull();
+    online.unmount();
+
+    const shared = render(
+      <ul>
+        <SaveCard
+          preview={{
+            ...base,
+            participationMode: "local_shared",
+            participantCount: 2,
+          }}
+        />
+      </ul>,
+    );
+    expect(screen.getByText("Offline")).toBeTruthy();
+    expect(screen.getByText("Local shared · 2 players")).toBeTruthy();
+    shared.unmount();
+
+    const single = render(
+      <ul>
+        <SaveCard preview={base} />
+      </ul>,
+    );
+    expect(screen.getByText("Offline")).toBeTruthy();
+    expect(screen.queryByText(/players/)).toBeNull();
+    single.unmount();
+  });
+
   it("next action prefers draft clock presentation only", () => {
     const action = resolveNextActionPresentation(
       baseDashboard({ userOnDraftClock: true }),

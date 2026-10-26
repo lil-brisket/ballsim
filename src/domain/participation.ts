@@ -10,6 +10,12 @@
  * never used for permission checks.
  */
 
+import {
+  isAiManagementPreset,
+  type AiAssistancePhases,
+  type AiManagementPreset,
+} from "@/domain/ai-management-presets";
+
 export type ParticipationMode = "single" | "local_shared" | "online";
 
 /** Modes where several people share one league. */
@@ -25,8 +31,15 @@ export const MIN_LOCAL_PARTICIPANTS = 2;
 export const MAX_LOCAL_PARTICIPANTS = 4;
 /** Online leagues start with the host alone; others join by invite. */
 export const MIN_ONLINE_PARTICIPANTS = 1;
-export const MAX_ONLINE_PARTICIPANTS = 8;
+export const MAX_ONLINE_PARTICIPANTS = 30;
 export const PARTICIPANT_NAME_MAX_LENGTH = 24;
+
+/** Commissioner choices for how long an advance approval stays open. */
+export const APPROVAL_WINDOW_HOURS_OPTIONS = [1, 6, 12, 24, 48, 72, 168];
+export const MAX_APPROVAL_WINDOW_HOURS = 168;
+/** Commissioner choices for when an idle member's teams go to the AI. */
+export const AUTO_MANAGE_AFTER_DAYS_OPTIONS = [1, 2, 3, 5, 7, 14];
+export const MAX_AUTO_MANAGE_AFTER_DAYS = 30;
 
 /** Local shared (hotseat) leagues can be created from new-game setup. */
 export const LOCAL_SHARED_LEAGUE_AVAILABLE = true;
@@ -59,6 +72,40 @@ export type LocalParticipant = {
    * user.activeOwnerTeamId cannot remember it per person.
    */
   activeTeamId?: string;
+  /** Online leagues: wall-clock ISO time of this member's last save write. */
+  lastActiveAt?: string;
+  /** Online leagues: set while the AI runs this member's franchises. */
+  autoManaged?: AutoManagedState;
+};
+
+export type AutoManageReason = "missed_approval" | "inactive" | "manual";
+
+export const AUTO_MANAGE_REASONS: readonly AutoManageReason[] = [
+  "missed_approval",
+  "inactive",
+  "manual",
+];
+
+/** A franchise's own AI settings, kept while the AI fully manages it. */
+export type AutoManagedFranchiseRestore = {
+  teamId: string;
+  managementPreset: AiManagementPreset;
+  aiAssistance: AiAssistancePhases;
+};
+
+export type AutoManagedState = {
+  /** Wall-clock ISO time the AI took over. */
+  since: string;
+  reason: AutoManageReason;
+  /** Settings to put back when the member takes control again. */
+  restore: AutoManagedFranchiseRestore[];
+};
+
+/** Online leagues: a commissioner-opened window for approving the next advance. */
+export type ApprovalWindow = {
+  /** Wall-clock ISO times. */
+  openedAt: string;
+  closesAt: string;
 };
 
 export type SharedParticipation = {
@@ -77,6 +124,13 @@ export type SharedParticipation = {
    * their franchises; only the host's anchor team exists until then.
    */
   assignmentsConfirmed: boolean;
+  /**
+   * Online leagues: open approval window. Once it closes, the commissioner
+   * may advance and members who did not approve are auto-managed.
+   */
+  approvalWindow?: ApprovalWindow;
+  /** Online leagues: idle days before a member is auto-managed; unset = off. */
+  autoManageAfterDays?: number;
 };
 
 /** @deprecated Prefer {@link SharedParticipation}. */
@@ -240,6 +294,97 @@ export function controlledTeamCountForSetup(
 // Persisted-state invariants
 // ---------------------------------------------------------------------------
 
+function isIsoTimestamp(value: unknown): value is string {
+  return typeof value === "string" && !Number.isNaN(Date.parse(value));
+}
+
+function autoManagedErrors(
+  value: unknown,
+  teamIds: unknown,
+  at: string,
+): string[] {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return [`${at} must be an object.`];
+  }
+  const record = value as Record<string, unknown>;
+  const errors: string[] = [];
+  if (!isIsoTimestamp(record.since)) {
+    errors.push(`${at}.since must be a timestamp.`);
+  }
+  if (!AUTO_MANAGE_REASONS.includes(record.reason as AutoManageReason)) {
+    errors.push(
+      `${at}.reason must be one of ${AUTO_MANAGE_REASONS.join(", ")}.`,
+    );
+  }
+  if (!Array.isArray(record.restore)) {
+    errors.push(`${at}.restore must be an array.`);
+    return errors;
+  }
+  const owned = Array.isArray(teamIds) ? (teamIds as unknown[]) : [];
+  for (const entry of record.restore as unknown[]) {
+    const item =
+      entry !== null && typeof entry === "object"
+        ? (entry as Record<string, unknown>)
+        : {};
+    if (typeof item.teamId !== "string" || !owned.includes(item.teamId)) {
+      errors.push(`${at}.restore must only list this participant's teams.`);
+      break;
+    }
+    if (
+      !isAiManagementPreset(item.managementPreset) ||
+      item.aiAssistance === null ||
+      typeof item.aiAssistance !== "object"
+    ) {
+      errors.push(`${at}.restore entries need the franchise's AI settings.`);
+      break;
+    }
+  }
+  return errors;
+}
+
+/** Online-only league fields: approval window and auto-manage threshold. */
+function onlineLeagueFieldErrors(
+  record: Record<string, unknown>,
+  online: boolean,
+  path: string,
+): string[] {
+  const errors: string[] = [];
+  if (record.approvalWindow !== undefined) {
+    const window = record.approvalWindow as Record<string, unknown> | null;
+    if (!online) {
+      errors.push(`${path}.approvalWindow is only allowed in online leagues.`);
+    } else if (
+      window === null ||
+      typeof window !== "object" ||
+      !isIsoTimestamp(window.openedAt) ||
+      !isIsoTimestamp(window.closesAt) ||
+      Date.parse(window.closesAt) <= Date.parse(window.openedAt)
+    ) {
+      errors.push(
+        `${path}.approvalWindow needs openedAt before closesAt timestamps.`,
+      );
+    }
+  }
+  if (record.autoManageAfterDays !== undefined) {
+    const days = record.autoManageAfterDays;
+    if (!online) {
+      errors.push(
+        `${path}.autoManageAfterDays is only allowed in online leagues.`,
+      );
+    } else if (
+      typeof days !== "number" ||
+      !Number.isInteger(days) ||
+      days < 1 ||
+      days > MAX_AUTO_MANAGE_AFTER_DAYS
+    ) {
+      errors.push(
+        `${path}.autoManageAfterDays must be an integer from 1 to ${MAX_AUTO_MANAGE_AFTER_DAYS}.`,
+      );
+    }
+  }
+  return errors;
+}
+
 /**
  * Structural + cross-field checks for persisted participation.
  * Returns human-readable errors; empty array means valid.
@@ -261,12 +406,12 @@ export function participationStateErrors(
     return [];
   }
 
-  const errors: string[] = [];
   if (!Array.isArray(record.participants)) {
     return [`${path}.participants must be an array.`];
   }
   const participants = record.participants as unknown[];
   const online = record.mode === "online";
+  const errors = onlineLeagueFieldErrors(record, online, path);
   const limits = participantLimits(record.mode);
   if (participants.length < limits.min || participants.length > limits.max) {
     errors.push(
@@ -312,6 +457,23 @@ export function participationStateErrors(
       }
     } else if (p.userId !== undefined) {
       errors.push(`${at}.userId is only allowed in online leagues.`);
+    }
+    if (
+      p.lastActiveAt !== undefined &&
+      !(online && isIsoTimestamp(p.lastActiveAt))
+    ) {
+      errors.push(
+        `${at}.lastActiveAt must be a timestamp in an online league.`,
+      );
+    }
+    if (p.autoManaged !== undefined) {
+      if (!online) {
+        errors.push(`${at}.autoManaged is only allowed in online leagues.`);
+      } else {
+        errors.push(
+          ...autoManagedErrors(p.autoManaged, p.teamIds, `${at}.autoManaged`),
+        );
+      }
     }
     if (
       p.activeTeamId !== undefined &&

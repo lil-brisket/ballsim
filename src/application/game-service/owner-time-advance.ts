@@ -1,11 +1,11 @@
 import "server-only";
 import { hasPendingBoardDirective } from "@/systems/board-pressure";
 import {
-  advanceBlockedReason,
   getActiveParticipant,
   getParticipantForTeam,
   withReadyReset,
 } from "@/systems/participation";
+import { prepareSharedAdvance } from "@/application/game-service/shared-advance";
 import type {
   SimulationProgress,
   AdvanceSimulationResult,
@@ -95,14 +95,13 @@ export async function advanceOwnerTime(
       }
 
       const commitToken = loaded.updatedAt;
-      let workingState = loaded.state;
+      const gate = prepareSharedAdvance(loaded.state);
+      if (!gate.ok) {
+        return fail(gate.error);
+      }
+      let workingState = gate.state;
       let rngState = loaded.state.meta.rngState;
       const preEvents: DomainEvent[] = [];
-
-      const participantsBlocked = advanceBlockedReason(workingState);
-      if (participantsBlocked) {
-        return fail(participantsBlocked);
-      }
 
       if (hasActiveOwnerDecision(workingState.user)) {
         const blocking = workingState.user.pendingOwnerDecisions.find(

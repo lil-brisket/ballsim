@@ -12,11 +12,19 @@ import {
 } from "@/application/game-service/online-league";
 import { onlineLeagueContext } from "@/application/online/context";
 import {
+  cancelApprovalWindowAction,
   leaveOnlineLeagueAction,
+  openApprovalWindowAction,
   removeOnlineParticipantAction,
   revokeLeagueInviteAction,
+  setAutoManageAfterDaysAction,
+  setParticipantAutoManagedAction,
   transferOnlineHostAction,
 } from "@/application/actions/online-league";
+import {
+  APPROVAL_WINDOW_HOURS_OPTIONS,
+  AUTO_MANAGE_AFTER_DAYS_OPTIONS,
+} from "@/domain/participation";
 import { InviteCreator } from "@/components/game/InviteCreator";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -35,6 +43,37 @@ const memberButtonClass = cn(
   "cursor-pointer",
   buttonClassFn({ variant: "secondary" }),
 );
+
+const selectClass =
+  "rounded-lg border border-surface-line bg-zinc-900 px-2 py-1.5 text-sm text-zinc-100";
+
+function hoursLabel(hours: number): string {
+  if (hours < 24) return hours === 1 ? "1 hour" : `${hours} hours`;
+  if (hours === 168) return "1 week";
+  const days = hours / 24;
+  return days === 1 ? "1 day" : `${days} days`;
+}
+
+function idleLabel(days: number): string {
+  return `After ${days} day${days === 1 ? "" : "s"} idle`;
+}
+
+const AUTO_REASON_LABEL = {
+  missed_approval: "missed approval",
+  inactive: "inactive",
+  manual: "away mode",
+} as const;
+
+function formatDateTime(iso: string) {
+  return (
+    <time dateTime={iso} suppressHydrationWarning>
+      {new Date(iso).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })}
+    </time>
+  );
+}
 
 function inviteStatus(invite: InviteView, now: Date): string {
   if (invite.revoked) return "Revoked";
@@ -91,6 +130,7 @@ export default async function LeagueMembersPage({
   );
   const me = participation.participants.find((p) => p.isActive);
   const isHost = me?.isHost ?? false;
+  const approvalWindow = participation.approvalWindow;
 
   let invites: InviteView[] = [];
   let inviteError: string | null = null;
@@ -117,6 +157,7 @@ export default async function LeagueMembersPage({
                 <th className="py-2 pr-4">Player</th>
                 <th className="py-2 pr-4">Teams</th>
                 <th className="py-2 pr-4">Status</th>
+                <th className="py-2 pr-4">Last active</th>
                 {isHost ? <th className="py-2">Actions</th> : null}
               </tr>
             </thead>
@@ -127,7 +168,7 @@ export default async function LeagueMembersPage({
                     <span className="font-medium">{p.displayName}</span>
                     {p.isHost ? (
                       <span className="ml-2">
-                        <StatusBadge label="Host" tone="info" />
+                        <StatusBadge label="Commissioner" tone="info" />
                       </span>
                     ) : null}
                     {p.isActive ? (
@@ -142,12 +183,56 @@ export default async function LeagueMembersPage({
                       : "—"}
                   </td>
                   <td className="py-2 pr-4 align-top">
-                    {p.isReady ? "✓ ready" : "waiting"}
+                    {p.autoManaged
+                      ? `AI-managed (${AUTO_REASON_LABEL[p.autoManaged.reason]})`
+                      : p.isReady
+                        ? "✓ ready"
+                        : "waiting"}
+                  </td>
+                  <td className="py-2 pr-4 align-top">
+                    {p.lastActiveAt ? formatDateTime(p.lastActiveAt) : "—"}
                   </td>
                   {isHost ? (
                     <td className="py-2 align-top">
                       {p.isActive ? null : (
                         <div className="flex flex-wrap gap-2">
+                          {p.autoManaged ? (
+                            <form action={setParticipantAutoManagedAction}>
+                              <input
+                                type="hidden"
+                                name="saveId"
+                                value={saveId}
+                              />
+                              <input
+                                type="hidden"
+                                name="participantId"
+                                value={p.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="autoManaged"
+                                value="false"
+                              />
+                              <button
+                                type="submit"
+                                className={memberButtonClass}
+                              >
+                                Return control
+                              </button>
+                            </form>
+                          ) : (
+                            <ConfirmForm
+                              action={setParticipantAutoManagedAction}
+                              saveId={saveId}
+                              fields={{
+                                participantId: p.id,
+                                autoManaged: "true",
+                              }}
+                              label="Auto-manage"
+                              warning={`Let the AI manage ${p.displayName}'s teams until they take back control?`}
+                              confirmLabel="Confirm auto-manage"
+                            />
+                          )}
                           <ConfirmForm
                             action={transferOnlineHostAction}
                             saveId={saveId}
@@ -173,6 +258,118 @@ export default async function LeagueMembersPage({
             </tbody>
           </table>
         </div>
+      </Section>
+
+      <Section title="Advance approvals">
+        {isHost ? (
+          <div className="space-y-4">
+            <p className="text-sm text-zinc-400">
+              Open an approval window to give members time to press Approve
+              advance. Once everyone has approved or the window closes, you can
+              advance, and members who did not approve are AI-managed until they
+              take back control. Idle members can also be AI-managed
+              automatically.
+            </p>
+            <form
+              action={openApprovalWindowAction}
+              className="flex flex-wrap items-end gap-2"
+            >
+              <input type="hidden" name="saveId" value={saveId} />
+              <label className="flex flex-col gap-1 text-sm text-zinc-300">
+                Approval window length
+                <select
+                  name="hours"
+                  defaultValue={String(APPROVAL_WINDOW_HOURS_OPTIONS[3])}
+                  className={selectClass}
+                >
+                  {APPROVAL_WINDOW_HOURS_OPTIONS.map((h) => (
+                    <option key={h} value={h}>
+                      {hoursLabel(h)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" className={memberButtonClass}>
+                Open approval window
+              </button>
+            </form>
+            {approvalWindow ? (
+              <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-200">
+                <span>
+                  {approvalWindow.closed ? (
+                    <>
+                      Approval window closed{" "}
+                      {formatDateTime(approvalWindow.closesAt)}.
+                    </>
+                  ) : (
+                    <>
+                      Approval window closes{" "}
+                      {formatDateTime(approvalWindow.closesAt)}.
+                    </>
+                  )}
+                </span>
+                <form action={cancelApprovalWindowAction}>
+                  <input type="hidden" name="saveId" value={saveId} />
+                  <button type="submit" className={memberButtonClass}>
+                    Cancel window
+                  </button>
+                </form>
+              </div>
+            ) : null}
+            <form
+              action={setAutoManageAfterDaysAction}
+              className="flex flex-wrap items-end gap-2"
+            >
+              <input type="hidden" name="saveId" value={saveId} />
+              <label className="flex flex-col gap-1 text-sm text-zinc-300">
+                Auto-manage idle members
+                <select
+                  name="days"
+                  defaultValue={
+                    participation.autoManageAfterDays == null
+                      ? "off"
+                      : String(participation.autoManageAfterDays)
+                  }
+                  className={selectClass}
+                >
+                  <option value="off">Off</option>
+                  {AUTO_MANAGE_AFTER_DAYS_OPTIONS.map((d) => (
+                    <option key={d} value={d}>
+                      {idleLabel(d)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" className={memberButtonClass}>
+                Save
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="space-y-1 text-sm text-zinc-400">
+            <p>
+              {approvalWindow ? (
+                approvalWindow.closed ? (
+                  "The approval window has closed. The commissioner can advance; members who did not approve will be AI-managed."
+                ) : (
+                  <>
+                    Approval window closes{" "}
+                    {formatDateTime(approvalWindow.closesAt)}.
+                  </>
+                )
+              ) : (
+                "No approval window is open."
+              )}
+            </p>
+            <p>
+              {participation.autoManageAfterDays == null
+                ? "Idle members are not auto-managed."
+                : `Members idle for ${participation.autoManageAfterDays} day${
+                    participation.autoManageAfterDays === 1 ? "" : "s"
+                  } are AI-managed.`}
+            </p>
+          </div>
+        )}
       </Section>
 
       {isHost ? (
@@ -221,6 +418,30 @@ export default async function LeagueMembersPage({
               </ul>
             )}
           </div>
+        </Section>
+      ) : null}
+
+      {!isHost && me ? (
+        <Section title="Away mode">
+          {me.autoManaged ? (
+            <form action={setParticipantAutoManagedAction}>
+              <input type="hidden" name="saveId" value={saveId} />
+              <input type="hidden" name="participantId" value={me.id} />
+              <input type="hidden" name="autoManaged" value="false" />
+              <button type="submit" className={memberButtonClass}>
+                Take back control
+              </button>
+            </form>
+          ) : (
+            <ConfirmForm
+              action={setParticipantAutoManagedAction}
+              saveId={saveId}
+              fields={{ participantId: me.id, autoManaged: "true" }}
+              label="Let the AI manage my teams"
+              warning="Let the AI manage your teams until you take back control?"
+              confirmLabel="Confirm away mode"
+            />
+          )}
         </Section>
       ) : null}
 

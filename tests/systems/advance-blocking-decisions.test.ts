@@ -38,6 +38,7 @@ import { draftYearForSeason } from "@/systems/draft";
 import { setActivePhase } from "@/systems/phase-engine";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { advanceSimulation } from "@/systems/simulation/advance-simulation";
+import { shouldStopForDraftClock } from "@/systems/simulation/draft-clock-stop";
 import { remainingSimulateTarget } from "@/components/calendar/calendar-resume-target";
 
 function stubBlockingDecision(
@@ -260,6 +261,33 @@ describe("advance draft clock stop", () => {
       { days: 2 },
     );
     expect(result.stopReason).not.toBe("draft_clock");
+  });
+
+  it("follows the on-clock team's pick assist, not the active team's", () => {
+    const { state, primary, secondary } = multiOwnedState();
+    // Active team: primary with pick assist off.
+    const activeOff = withOwnedFranchise(state, primary, (franchise) => ({
+      ...franchise,
+      managementPreset: "off",
+      aiAssistance: applyPreset("off"),
+    }));
+    expect(activeOff.user.activeOwnerTeamId).toBe(primary);
+    expect(
+      shouldStopForDraftClock(
+        withOwnedTeamOnDraftClock(activeOff, secondary, "full"),
+      ),
+    ).toBe(false);
+
+    const activeFull = withOwnedFranchise(state, primary, (franchise) => ({
+      ...franchise,
+      managementPreset: "full_management",
+      aiAssistance: applyPreset("full_management"),
+    }));
+    expect(
+      shouldStopForDraftClock(
+        withOwnedTeamOnDraftClock(activeFull, secondary, "off"),
+      ),
+    ).toBe(true);
   });
 
   it("prefers a blocking trade over draft clock when both are active", () => {

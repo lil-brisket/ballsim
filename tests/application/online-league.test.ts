@@ -27,14 +27,22 @@ import {
   joinLeagueWithInvite,
   leaveOnlineLeague,
   listLeagueInvites,
+  openApprovalWindow,
   previewLeagueInvite,
   removeOnlineParticipant,
   revokeLeagueInvite,
+  setAutoManageAfterDays,
+  setParticipantAutoManaged,
   transferOnlineHost,
   type OnlineLeagueContext,
 } from "@/application/game-service/online-league";
 import { createActingSaveGameStore } from "@/application/online/acting-save-store";
 import { TEAM_LOGO_CATALOG } from "@/data/team-branding/logo-catalog";
+import {
+  type PendingOwnerDecision,
+  buildTradeOfferPayload,
+} from "@/domain/entities/owner-decision";
+import { asOwnerDecisionId, asTeamId } from "@/domain/ids";
 import { CBL_GAME_SETTINGS, cloneGameSettings } from "@/domain/game-settings";
 import type { SharedParticipation } from "@/domain/participation";
 import { createMemoryAccountStore } from "@/persistence/memory-account-store";
@@ -53,6 +61,10 @@ function shared(state: GameState): SharedParticipation {
     throw new Error("expected an online league");
   }
   return state.user.participation;
+}
+
+function participantOf(state: GameState, userId: string) {
+  return shared(state).participants.find((p) => p.userId === userId)!;
 }
 
 function actingAs(base: SaveGameStore, user: { id: string } | null) {
@@ -238,14 +250,7 @@ describe("online turns and concurrency", () => {
   it("advances only when every member is ready, each from their own session", async () => {
     const { base, saveId } = await withGuest();
     const hostStore = actingAs(base, HOST);
-    const guestStore = actingAs(base, GUEST);
 
-    expect((await advanceOwnerTime(saveId, { days: 1 }, hostStore)).ok).toBe(
-      false,
-    );
-    expect((await setActiveParticipantReady(saveId, true, hostStore)).ok).toBe(
-      true,
-    );
     const waiting = await advanceOwnerTime(saveId, { days: 1 }, hostStore);
     expect(waiting.ok).toBe(false);
     if (!waiting.ok) expect(waiting.error).toMatch(/Waiting on guest/);
@@ -254,15 +259,31 @@ describe("online turns and concurrency", () => {
       (await setActiveParticipantReady(saveId, true, actingAs(base, GUEST))).ok,
     ).toBe(true);
     expect(
-      (await advanceOwnerTime(saveId, { days: 1 }, actingAs(base, GUEST))).ok,
+      (await advanceOwnerTime(saveId, { days: 1 }, actingAs(base, HOST))).ok,
     ).toBe(true);
     expect(
       shared((await base.load(saveId))!.state).readyParticipantIds,
     ).toEqual([]);
     // A retried advance cannot simulate the same window twice.
-    expect((await advanceOwnerTime(saveId, { days: 1 }, guestStore)).ok).toBe(
+    expect((await advanceOwnerTime(saveId, { days: 1 }, hostStore)).ok).toBe(
       false,
     );
+  });
+
+  it("lets only the commissioner advance the league", async () => {
+    const { base, saveId } = await withGuest();
+    expect(
+      (await setActiveParticipantReady(saveId, true, actingAs(base, GUEST))).ok,
+    ).toBe(true);
+    const member = await advanceOwnerTime(
+      saveId,
+      { days: 1 },
+      actingAs(base, GUEST),
+    );
+    expect(member.ok).toBe(false);
+    if (!member.ok) {
+      expect(member.error).toMatch(/Only the commissioner \(hostess\)/);
+    }
   });
 
   it("lets only the host advance for everyone", async () => {
@@ -345,5 +366,222 @@ describe("membership changes", () => {
     );
     state = (await base.load(saveId))!.state;
     expect(shared(state).participants.map((p) => p.userId)).toEqual([GUEST.id]);
+  });
+});
+
+describe("approval windows and auto-management", () => {
+  const HOUR = 60 * 60 * 1000;
+
+  it("lets late members' teams go to the AI once the approval window closes", async () => {
+    const { base, saveId, guestTeamId, ctx } = await withGuest();
+    const before = (await base.load(saveId))!.state;
+    const ownSettings = before.user.ownedFranchises[asTeamId(guestTeamId)]!;
+
+    expect((await openApprovalWindow(ctx(GUEST), saveId, 24)).ok).toBe(false);
+    expect((await openApprovalWindow(ctx(HOST), saveId, 0)).ok).toBe(false);
+    expect((await openApprovalWindow(ctx(HOST), saveId, 24)).ok).toBe(true);
+    const open = await advanceOwnerTime(
+      saveId,
+      { days: 1 },
+      actingAs(base, HOST),
+    );
+    expect(open.ok).toBe(false);
+    if (!open.ok) {
+      expect(open.error).toMatch(/approve before the approval window closes/);
+    }
+
+    // A one-hour window opened two hours ago has already closed.
+    const closed = await openApprovalWindow(
+      { ...ctx(HOST), now: new Date(Date.now() - 2 * HOUR) },
+      saveId,
+      1,
+    );
+    expect(closed.ok).toBe(true);
+    expect(
+      (await advanceOwnerTime(saveId, { days: 1 }, actingAs(base, HOST))).ok,
+    ).toBe(true);
+
+    let state = (await base.load(saveId))!.state;
+    const guest = participantOf(state, GUEST.id);
+    expect(guest.autoManaged?.reason).toBe("missed_approval");
+    expect(shared(state).approvalWindow).toBeUndefined();
+    expect(
+      state.user.ownedFranchises[asTeamId(guestTeamId)]!.managementPreset,
+    ).toBe("full_management");
+
+    // Taking control back restores the member's own settings.
+    expect(
+      (await setParticipantAutoManaged(ctx(GUEST), saveId, guest.id, false)).ok,
+    ).toBe(true);
+    state = (await base.load(saveId))!.state;
+    expect(participantOf(state, GUEST.id).autoManaged).toBeUndefined();
+    expect(participantOf(state, GUEST.id).lastActiveAt).toBeDefined();
+    const restored = state.user.ownedFranchises[asTeamId(guestTeamId)]!;
+    expect(restored.managementPreset).toBe(ownSettings.managementPreset);
+    expect(restored.aiAssistance).toEqual(ownSettings.aiAssistance);
+  });
+
+  it("stops waiting on idle members and hands their teams to the AI", async () => {
+    const { base, saveId, ctx } = await withGuest();
+    expect((await setAutoManageAfterDays(ctx(GUEST), saveId, 2)).ok).toBe(
+      false,
+    );
+    expect((await setAutoManageAfterDays(ctx(HOST), saveId, 0)).ok).toBe(false);
+    expect((await setAutoManageAfterDays(ctx(HOST), saveId, 2)).ok).toBe(true);
+
+    // Recent activity keeps the member in the Ready gate.
+    expect(
+      (await advanceOwnerTime(saveId, { days: 1 }, actingAs(base, HOST))).ok,
+    ).toBe(false);
+
+    const raw = (await base.load(saveId))!.state;
+    const participation = shared(raw);
+    await base.save({
+      id: saveId,
+      state: {
+        ...raw,
+        user: {
+          ...raw.user,
+          participation: {
+            ...participation,
+            participants: participation.participants.map((p) =>
+              p.userId === GUEST.id
+                ? {
+                    ...p,
+                    lastActiveAt: new Date(
+                      Date.now() - 5 * 24 * HOUR,
+                    ).toISOString(),
+                  }
+                : p,
+            ),
+          },
+        },
+      },
+    });
+    expect(
+      (await advanceOwnerTime(saveId, { days: 1 }, actingAs(base, HOST))).ok,
+    ).toBe(true);
+    const state = (await base.load(saveId))!.state;
+    expect(participantOf(state, GUEST.id).autoManaged?.reason).toBe("inactive");
+    expect(shared(state).autoManageAfterDays).toBe(2);
+  });
+
+  it("stamps a member's activity on each of their writes", async () => {
+    const { base, saveId } = await withGuest();
+    const clock = new Date("2030-01-02T03:04:05.000Z");
+    const guestStore = createActingSaveGameStore(base, async () => GUEST.id, {
+      now: () => clock,
+    });
+    expect((await setActiveParticipantReady(saveId, true, guestStore)).ok).toBe(
+      true,
+    );
+    const state = (await base.load(saveId))!.state;
+    expect(participantOf(state, GUEST.id).lastActiveAt).toBe(
+      clock.toISOString(),
+    );
+  });
+
+  it("limits who can switch auto-management on and off", async () => {
+    const { base, saveId, ctx } = await withGuest();
+    const state = (await base.load(saveId))!.state;
+    const hostId = participantOf(state, HOST.id).id;
+    const guestId = participantOf(state, GUEST.id).id;
+
+    expect(
+      (await setParticipantAutoManaged(ctx(GUEST), saveId, hostId, true)).ok,
+    ).toBe(false);
+    const commissioner = await setParticipantAutoManaged(
+      ctx(HOST),
+      saveId,
+      hostId,
+      true,
+    );
+    expect(commissioner.ok).toBe(false);
+    if (!commissioner.ok) {
+      expect(commissioner.error).toMatch(/commissioner's teams/);
+    }
+
+    expect(
+      (await setParticipantAutoManaged(ctx(GUEST), saveId, guestId, true)).ok,
+    ).toBe(true);
+    let after = (await base.load(saveId))!.state;
+    expect(participantOf(after, GUEST.id).autoManaged?.reason).toBe("manual");
+    // An auto-managed member never holds up the commissioner.
+    expect(
+      (await advanceOwnerTime(saveId, { days: 1 }, actingAs(base, HOST))).ok,
+    ).toBe(true);
+
+    // Promoting an auto-managed member gives them their teams back first.
+    expect((await transferOnlineHost(ctx(HOST), saveId, guestId)).ok).toBe(
+      true,
+    );
+    after = (await base.load(saveId))!.state;
+    expect(participantOf(after, GUEST.id)).toMatchObject({ isHost: true });
+    expect(participantOf(after, GUEST.id).autoManaged).toBeUndefined();
+  });
+});
+
+describe("blocking decisions on auto-managed teams", () => {
+  it("expires them instead of freezing the league", async () => {
+    const { base, saveId, guestTeamId, ctx } = await withGuest();
+    const raw = (await base.load(saveId))!.state;
+    const guestTeam = asTeamId(guestTeamId);
+    const aiTeam = asTeamId(
+      Object.keys(raw.world.teams).find(
+        (id) => !raw.user.ownedTeamIds.includes(asTeamId(id)),
+      )!,
+    );
+    const proposal = {
+      sideA: { teamId: aiTeam, playerIds: [], draftPickIds: [] },
+      sideB: { teamId: guestTeam, playerIds: [], draftPickIds: [] },
+    };
+    const decision: PendingOwnerDecision = {
+      id: asOwnerDecisionId("od_away_block"),
+      type: "trade_offer",
+      createdOn: raw.world.calendar.currentDate,
+      blockingLevel: "blocking",
+      primaryTeamId: guestTeam,
+      participantTeamIds: [guestTeam, aiTeam],
+      payload: buildTradeOfferPayload({
+        offeringTeamId: aiTeam,
+        userTeamId: guestTeam,
+        proposal,
+        fingerprint: `${aiTeam}|${guestTeam}|away|`,
+        createdOn: raw.world.calendar.currentDate,
+      }),
+    };
+    await base.save({
+      id: saveId,
+      state: {
+        ...raw,
+        user: { ...raw.user, pendingOwnerDecisions: [decision] },
+      },
+    });
+
+    expect(
+      (await setActiveParticipantReady(saveId, true, actingAs(base, GUEST))).ok,
+    ).toBe(true);
+    const blocked = await advanceOwnerTime(
+      saveId,
+      { days: 1 },
+      actingAs(base, HOST),
+    );
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.error).toMatch(/guest must resolve/);
+
+    const guestId = participantOf(
+      (await base.load(saveId))!.state,
+      GUEST.id,
+    ).id;
+    expect(
+      (await setParticipantAutoManaged(ctx(HOST), saveId, guestId, true)).ok,
+    ).toBe(true);
+    const state = (await base.load(saveId))!.state;
+    expect(
+      state.user.pendingOwnerDecisions.some((d) => d.id === decision.id),
+    ).toBe(false);
+    expect(
+      (await advanceOwnerTime(saveId, { days: 1 }, actingAs(base, HOST))).ok,
+    ).toBe(true);
   });
 });

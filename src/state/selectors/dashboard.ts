@@ -27,7 +27,9 @@ import {
   getActorTeamIds,
   getLocalParticipation,
   getParticipantForTeam,
+  isApprovalWindowClosed,
 } from "@/systems/participation";
+import type { AutoManageReason } from "@/domain/participation";
 
 export type ParticipationView = {
   mode: "local_shared" | "online";
@@ -35,6 +37,14 @@ export type ParticipationView = {
   assignmentsConfirmed: boolean;
   /** Why the league cannot advance yet, or null when it can. */
   advanceBlockedReason: string | null;
+  /** Online: open approval window (ISO wall-clock times), else null. */
+  approvalWindow: {
+    openedAt: string;
+    closesAt: string;
+    closed: boolean;
+  } | null;
+  /** Online: idle days before a member is auto-managed; null = off. */
+  autoManageAfterDays: number | null;
   participants: Array<{
     id: string;
     displayName: string;
@@ -43,10 +53,17 @@ export type ParticipationView = {
     isReady: boolean;
     teamIds: string[];
     plannedTeamCount: number;
+    /** Online: ISO wall-clock time of the member's last write, if known. */
+    lastActiveAt: string | null;
+    /** Online: set while the AI runs this member's franchises. */
+    autoManaged: { since: string; reason: AutoManageReason } | null;
   }>;
 };
 
-function toParticipationView(state: GameState): ParticipationView | null {
+function toParticipationView(
+  state: GameState,
+  now: Date,
+): ParticipationView | null {
   const local = getLocalParticipation(state);
   if (!local) {
     return null;
@@ -55,7 +72,14 @@ function toParticipationView(state: GameState): ParticipationView | null {
     mode: local.mode,
     activeParticipantId: local.activeParticipantId,
     assignmentsConfirmed: local.assignmentsConfirmed,
-    advanceBlockedReason: advanceBlockedReason(state),
+    advanceBlockedReason: advanceBlockedReason(state, now),
+    approvalWindow: local.approvalWindow
+      ? {
+          ...local.approvalWindow,
+          closed: isApprovalWindowClosed(state, now),
+        }
+      : null,
+    autoManageAfterDays: local.autoManageAfterDays ?? null,
     participants: local.participants.map((p) => ({
       id: p.id,
       displayName: p.displayName,
@@ -64,6 +88,10 @@ function toParticipationView(state: GameState): ParticipationView | null {
       isReady: local.readyParticipantIds.includes(p.id),
       teamIds: [...p.teamIds],
       plannedTeamCount: p.plannedTeamCount,
+      lastActiveAt: p.lastActiveAt ?? null,
+      autoManaged: p.autoManaged
+        ? { since: p.autoManaged.since, reason: p.autoManaged.reason }
+        : null,
     })),
   };
 }
@@ -348,7 +376,10 @@ export function toNotificationsView(state: GameState): NotificationView[] {
   return entries;
 }
 
-export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
+export function toDashboardSnapshot(
+  state: GameState,
+  now: Date = new Date(),
+): DashboardSnapshot {
   const team = getControlledTeam(state);
   const standing =
     state.competition.standings.byTeamId[team.id] ??
@@ -441,7 +472,7 @@ export function toDashboardSnapshot(state: GameState): DashboardSnapshot {
         ).length,
       };
     }),
-    participation: toParticipationView(state),
+    participation: toParticipationView(state, now),
     teamCount: Object.keys(state.world.teams).length,
     // Active players: long-retired rows leave the per-action save.
     playerCount: Object.values(state.world.players).filter(

@@ -1,6 +1,9 @@
 import type { GameState } from "@/state/game-state";
 import { getOwnedFranchiseAssistance } from "@/state/owner-context";
-import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
+import {
+  getActiveDraftOnClockSlot,
+  isUserOnDraftClock,
+} from "@/systems/draft/draft-clock";
 import { canAiExecute } from "@/systems/simulation/management-policy";
 
 /**
@@ -16,6 +19,9 @@ export function shouldStopForDraftClock(state: GameState): boolean {
   if (!isUserOnDraftClock(state)) {
     return false;
   }
-  const franchiseAssist = getOwnedFranchiseAssistance(state);
+  // The on-clock team's own delegation decides, not whichever owned team is
+  // active (multi-team and shared leagues).
+  const onClockTeamId = getActiveDraftOnClockSlot(state)!.ownerTeamId;
+  const franchiseAssist = getOwnedFranchiseAssistance(state, onClockTeamId);
   return !canAiExecute(state.settings, "DRAFT_PICK", franchiseAssist);
 }

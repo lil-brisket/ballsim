@@ -1,5 +1,6 @@
 import "server-only";
-import { advanceBlockedReason, withReadyReset } from "@/systems/participation";
+import { withReadyReset } from "@/systems/participation";
+import { prepareSharedAdvance } from "@/application/game-service/shared-advance";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import { getActionBlockReason } from "@/systems/league-rules";
 import { asPlayerId, asOfferId, asContractId } from "@/domain/ids";
@@ -168,14 +169,15 @@ export async function finishFreeAgency(
       if (!isInLeaguePhase(loaded.state, "offseason.free_agency")) {
         return fail("Finish free agency requires offseason free_agency stage.");
       }
-      const participantsBlocked = advanceBlockedReason(loaded.state);
-      if (participantsBlocked) {
-        return fail(participantsBlocked);
+      const gate = prepareSharedAdvance(loaded.state);
+      if (!gate.ok) {
+        return fail(gate.error);
       }
+      const prepared = gate.state;
 
       const commitToken = loaded.updatedAt;
-      const rng = createSeededRng(loaded.state.meta.rngState);
-      const advanced = advanceLeaguePhase(loaded.state, rng);
+      const rng = createSeededRng(prepared.meta.rngState);
+      const advanced = advanceLeaguePhase(prepared, rng);
       let working = advanced.state;
       const emitted = [...advanced.events];
       const dayResult = advanceSimulation(working, rng, { days: 1 });
