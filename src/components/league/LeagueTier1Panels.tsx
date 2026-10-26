@@ -51,7 +51,7 @@ export function LeagueStandingsSnapshot(props: {
   cutoffRank: number;
   includesUserOutsideTop: boolean;
 }) {
-  const standingsHref = `/dashboard/${props.saveId}/standings`;
+  const standingsHref = `/dashboard/${props.saveId}/league/standings`;
 
   return (
     <Section

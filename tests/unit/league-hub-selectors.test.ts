@@ -20,7 +20,6 @@ describe("league-hub-selectors", () => {
     expect(hub.standingsPreview.length).toBeGreaterThan(0);
     expect(hub.transactions.length).toBeLessThanOrEqual(LEAGUE_HUB_TIER2_LIMIT);
     expect(hub.injuries.length).toBeLessThanOrEqual(LEAGUE_HUB_TIER2_LIMIT);
-    expect(hub.media.posts.length).toBeLessThanOrEqual(3);
     // No games played yet, so the team is unranked (see league-rank.test.ts).
     expect(hub.snapshot.userRank).toBeNull();
   });

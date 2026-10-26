@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { GameState } from "@/state/game-state";
-import { toLeagueHubView } from "@/state/league-hub-selectors";
 import { toTimelineHighlights } from "@/state/media-timeline/highlights";
 import { toMediaTimelinePageView } from "@/state/media-timeline/page-view";
 import { computeOwnerNavBadges } from "@/state/owner-nav-badges";
@@ -51,14 +50,6 @@ describe("timeline highlights", () => {
     const highlights = toTimelineHighlights(state, SAVE);
     expect(highlights.posts.map((p) => [p.id, p.text])).toEqual(
       pageLead.map((p) => [p.id, p.text]),
-    );
-  });
-
-  it("feeds the League hub the same posts", () => {
-    const state = playedState();
-    const hub = toLeagueHubView(state);
-    expect(hub.media.posts.map((p) => p.id)).toEqual(
-      toTimelineHighlights(state, SAVE).posts.map((p) => p.id),
     );
   });
 

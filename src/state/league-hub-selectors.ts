@@ -1,7 +1,3 @@
-import {
-  toTimelineHighlights,
-  type TimelineHighlights,
-} from "@/state/media-timeline/highlights";
 /**
  * League Hub view model — single-pass presentation selector.
  * Tier 1 (snapshot, standings, results) + Tier 2 previews (max 3 each).
@@ -93,8 +89,6 @@ export type LeagueHubView = {
   recentResults: LeagueGameResultRow[];
   transactions: LeagueTransactionBrief[];
   injuries: LeagueInjuryRow[];
-  /** Media Hub lead posts (top story first). */
-  media: TimelineHighlights;
   expansionActive: boolean;
   playoffBanner: string | null;
 };
@@ -284,8 +278,6 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
 
   const injuries = toLeagueInjuryBriefing(state, LEAGUE_HUB_TIER2_LIMIT);
 
-  const media = toTimelineHighlights(state, saveId);
-
   const expansion = assessExpansion(state);
   const expansionActive =
     expansion.status === "opportunity" || expansion.status === "in_progress";
@@ -325,7 +317,6 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
     recentResults,
     transactions,
     injuries,
-    media,
     expansionActive,
     playoffBanner,
   };

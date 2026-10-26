@@ -106,12 +106,24 @@ import {
   TRANSACTION_HUB_PAGE_SIZE,
 } from "@/state/transaction-hub-selectors";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
-import { parseStandingsPageParams } from "@/state/standings-page-params";
+import {
+  firstSearchParam,
+  parseStandingsPageParams,
+} from "@/state/standings-page-params";
 import {
   toStandingsPageView,
   toPlayoffRaceView,
 } from "@/state/standings-selectors";
 import { toLeagueLeadersView } from "@/state/league-leaders-selectors";
+import {
+  parseLeagueStatsSort,
+  PLAYER_STAT_KEYS,
+  TEAM_STAT_KEYS,
+  toPlayerStatsView,
+  toTeamStatsView,
+  type PlayerStatsView,
+  type TeamStatsView,
+} from "@/state/league-stats-selectors";
 import {
   type LeagueScheduleFilters,
   type LeagueScheduleView,
@@ -539,6 +551,46 @@ export async function loadStandingsPageView(
     leaders: toLeagueLeadersView(loaded.state),
     playoffRace: toPlayoffRaceView(loaded.state),
   };
+}
+
+/**
+ * League page Team Stats tab: per-team regular-season averages.
+ */
+export async function loadLeagueTeamStatsView(
+  saveId: string,
+  search: { sort?: string | string[]; dir?: string | string[] } = {},
+  store?: SaveGameStore,
+): Promise<TeamStatsView | null> {
+  const loaded = await loadSaveWithHistory(saveId, store);
+  if (!loaded) {
+    return null;
+  }
+  return toTeamStatsView(
+    loaded.state,
+    parseLeagueStatsSort(search, TEAM_STAT_KEYS, "ppg"),
+  );
+}
+
+/**
+ * League page Player Stats tab: qualified players' regular-season averages.
+ */
+export async function loadLeaguePlayerStatsView(
+  saveId: string,
+  search: {
+    sort?: string | string[];
+    dir?: string | string[];
+    show?: string | string[];
+  } = {},
+  store?: SaveGameStore,
+): Promise<PlayerStatsView | null> {
+  const loaded = await loadSaveWithHistory(saveId, store);
+  if (!loaded) {
+    return null;
+  }
+  return toPlayerStatsView(loaded.state, {
+    sort: parseLeagueStatsSort(search, PLAYER_STAT_KEYS, "ppg"),
+    showAll: firstSearchParam(search.show) === "all",
+  });
 }
 
 /**

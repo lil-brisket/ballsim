@@ -39,7 +39,7 @@ export function StandingsControls(props: {
   searchParams?:
     URLSearchParams | Record<string, string | string[] | undefined> | string;
 }) {
-  const pathname = `/dashboard/${props.saveId}/standings`;
+  const pathname = `/dashboard/${props.saveId}/league/standings`;
   const currentSearch = props.searchParams ?? {};
   const viewModes = STANDINGS_VIEW_MODES.filter(
     (mode) => mode !== "division" || props.divisionsEnabled,
