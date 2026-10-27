@@ -53,6 +53,8 @@ export function InfoTip({ label, align = "end", children }: InfoTipProps) {
         }}
         className={cn(
           "inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold transition-colors",
+          // 24px circle, 44px hit area (an invisible ring around it).
+          "relative after:absolute after:-inset-2.5 after:content-['']",
           open
             ? "border-team-ink text-team-ink"
             : "border-disabled text-muted hover:border-muted hover:text-ink",

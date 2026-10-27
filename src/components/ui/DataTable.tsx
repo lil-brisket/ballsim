@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { TableKeys } from "@/components/ui/focus/TableKeys";
+import {
+  TableKeys,
+  tableCellTargetClass,
+} from "@/components/ui/focus/TableKeys";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export type DataTableHeader = {
@@ -84,6 +87,7 @@ export function DataTable(props: {
         className={cn(
           "min-w-full text-left text-sm",
           "[&>tbody>tr:nth-child(even)]:bg-row-alt",
+          tableCellTargetClass,
           "[&>tbody>tr:focus-within]:bg-surface-high [&>tbody>tr[aria-selected=true]]:bg-surface-high",
         )}
       >

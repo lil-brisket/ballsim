@@ -18,7 +18,7 @@ export function SoundToggle(props: { className?: string }) {
         if (!enabled) playUiSound("select");
       }}
       className={cn(
-        "rounded-md px-2 py-1 text-sm text-muted hover:text-ink",
+        "inline-flex min-h-11 items-center rounded-md px-2 text-sm text-muted touch-manipulation hover:text-ink",
         enabled && "text-team-ink",
         focusRingClass,
         props.className,

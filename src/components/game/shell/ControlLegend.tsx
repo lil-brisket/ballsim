@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { useInputMode } from "@/components/ui/focus/input-mode";
 import { KeyHint } from "@/components/ui/KeyHint";
+import { PadHint, type PadGlyphName } from "@/components/ui/PadGlyph";
 import { SoundToggle, SoundVolume } from "@/components/ui/sound/SoundControls";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
@@ -20,12 +22,27 @@ function controls(hubCount: number) {
   ];
 }
 
+/** Gamepad controls (generic glyphs), shown in gamepad mode and the popover. */
+const PAD_CONTROLS: ReadonlyArray<{
+  glyph: PadGlyphName;
+  label: string;
+  short: string;
+}> = [
+  { glyph: "shoulders", label: "Previous / next hub", short: "Hubs" },
+  { glyph: "dpad", label: "Move (or left stick)", short: "Move" },
+  { glyph: "faceBottom", label: "Open or select", short: "Select" },
+  { glyph: "faceRight", label: "Close, or go up a level", short: "Back" },
+  { glyph: "start", label: "Sim to the next game", short: "Sim" },
+  { glyph: "view", label: "Search", short: "Search" },
+];
+
 /**
  * Desktop footer listing the main keys, with a Controls popover for the
  * rest. Hidden on touch screens and below lg. Only lists keys that work.
  */
 export function ControlLegend(props: { hubCount: number }) {
   const [open, setOpen] = useState(false);
+  const padMode = useInputMode() === "gamepad";
   const panelId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -58,17 +75,30 @@ export function ControlLegend(props: { hubCount: number }) {
 
   return (
     <footer
-      aria-label="Keyboard controls"
+      aria-label={padMode ? "Gamepad controls" : "Keyboard controls"}
       className="[view-transition-name:shell-legend] fixed inset-x-0 bottom-0 z-30 hidden border-t border-surface-line bg-surface-deep/90 backdrop-blur lg:block pointer-coarse:hidden"
     >
       <div className="relative mx-auto flex max-w-[100rem] flex-wrap items-center gap-x-6 gap-y-1 px-6 py-2">
-        <KeyHint keys={["Q", "E"]} label="Hubs" />
-        <KeyHint keys={["←", "→"]} label="Move" />
-        <KeyHint keys="Enter" label="Select" />
-        <KeyHint keys="Space" label="Sim" />
-        <KeyHint keys="Esc" label="Back" />
-        <KeyHint keys="/" label="Search" />
-        <SoundToggle className="ml-auto" />
+        {padMode ? (
+          PAD_CONTROLS.map((control) => (
+            <PadHint
+              key={control.glyph}
+              glyph={control.glyph}
+              label={control.short}
+            />
+          ))
+        ) : (
+          <>
+            <KeyHint keys={["Q", "E"]} label="Hubs" />
+            <KeyHint keys={["←", "→"]} label="Move" />
+            <KeyHint keys="Enter" label="Select" />
+            <KeyHint keys="Space" label="Sim" />
+            <KeyHint keys="Esc" label="Back" />
+            <KeyHint keys="/" label="Search" />
+          </>
+        )}
+        {/* 44px targets; -my-2.5 keeps the legend bar at its 40px height. */}
+        <SoundToggle className="-my-2.5 ml-auto" />
         <button
           ref={buttonRef}
           type="button"
@@ -76,7 +106,7 @@ export function ControlLegend(props: { hubCount: number }) {
           aria-controls={panelId}
           onClick={() => setOpen((value) => !value)}
           className={cn(
-            "rounded-md px-2 py-1 text-sm text-muted hover:text-ink",
+            "-my-2.5 inline-flex min-h-11 items-center rounded-md px-2 text-sm text-muted hover:text-ink",
             focusRingClass,
           )}
         >
@@ -99,6 +129,20 @@ export function ControlLegend(props: { hubCount: number }) {
                 >
                   <span className="text-sm text-soft">{control.label}</span>
                   <KeyHint keys={control.keys} />
+                </li>
+              ))}
+            </ul>
+            <p className="mb-2 mt-4 border-t border-surface-line pt-3 text-xs font-semibold uppercase tracking-wide text-muted">
+              Gamepad
+            </p>
+            <ul className="space-y-2" aria-label="Gamepad controls">
+              {PAD_CONTROLS.map((control) => (
+                <li
+                  key={control.glyph}
+                  className="flex items-center justify-between gap-3"
+                >
+                  <span className="text-sm text-soft">{control.label}</span>
+                  <PadHint glyph={control.glyph} />
                 </li>
               ))}
             </ul>

@@ -11,7 +11,15 @@ import {
 import { playUiSound } from "@/components/ui/sound/ui-sound";
 
 /** Class for wrapped tables that don't style the focused row themselves. */
-export const tableRowFocusClass = "[&_tbody_tr:focus-within]:bg-surface-high";
+/**
+ * Links and buttons placed directly in a body cell (player/team/staff names,
+ * row actions) get a 44px hit area that reaches into the cell's py-2 padding,
+ * so rows keep their height. Shared by DataTable and custom tables.
+ */
+export const tableCellTargetClass =
+  "[&_tbody_td>a]:-my-2 [&_tbody_td>a]:inline-flex [&_tbody_td>a]:min-h-11 [&_tbody_td>a]:items-center [&_tbody_td>button]:-my-2 [&_tbody_td>button]:inline-flex [&_tbody_td>button]:min-h-11 [&_tbody_td>button]:items-center";
+
+export const tableRowFocusClass = `[&_tbody_tr:focus-within]:bg-surface-high ${tableCellTargetClass}`;
 
 const SORT_CONTROL_SELECTOR = "a[href], button:not([disabled])";
 

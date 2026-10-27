@@ -8,6 +8,7 @@ import {
 import { RouteTransition } from "@/components/game/RouteTransition";
 import { CommandPalette } from "@/components/game/shell/CommandPalette";
 import { ControlLegend } from "@/components/game/shell/ControlLegend";
+import { GamepadBridge } from "@/components/game/shell/GamepadBridge";
 import { ShellKeys } from "@/components/game/shell/ShellKeys";
 import { MobileHubBar } from "@/components/game/shell/MobileHubBar";
 import { ShellOffset } from "@/components/game/shell/ShellOffset";
@@ -69,6 +70,7 @@ export function GameShell(props: {
           </SimulationLockRegion>
           <ControlLegend hubCount={numberedHubs(groups).length} />
           <ShellKeys saveId={props.saveId} groups={groups} />
+          <GamepadBridge />
           <CommandPalette saveId={props.saveId} groups={groups} />
         </div>
       </SimulationActivityProvider>

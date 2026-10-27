@@ -52,13 +52,24 @@ export default async function CalendarPage({
   const showSimSummary = sp.simSummary === "1";
   let selectedDate = sp.date;
 
-  // Resolve focus=next-game server-side so the workspace stays URL-driven.
-  if (sp.focus === "next-game" && !selectedDate) {
+  // Resolve focus=next-game / focus=trade-deadline server-side so the
+  // workspace stays URL-driven. Focusing only selects the day; simulating
+  // still goes through the inspector's confirm.
+  if (
+    (sp.focus === "next-game" || sp.focus === "trade-deadline") &&
+    !selectedDate
+  ) {
     const probe = await loadCalendarPageView(saveId, {});
-    const nextGameDate = probe?.nextTeamGameDate;
-    if (nextGameDate) {
-      selectedDate = nextGameDate;
-      const parsed = parseCalendarDate(nextGameDate);
+    const deadline = probe?.tradeDeadlineDate;
+    const focusDate =
+      sp.focus === "next-game"
+        ? probe?.nextTeamGameDate
+        : deadline && probe && deadline > probe.currentDate
+          ? deadline
+          : null;
+    if (focusDate) {
+      selectedDate = focusDate;
+      const parsed = parseCalendarDate(focusDate);
       year = parsed.year;
       month = parsed.month;
     }

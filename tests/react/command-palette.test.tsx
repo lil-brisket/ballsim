@@ -201,6 +201,18 @@ describe("CommandPalette", () => {
     );
   });
 
+  it("Sim to trade deadline opens the calendar on the deadline", async () => {
+    renderPalette();
+    await openPalette();
+    await type("trade deadline");
+    await act(async () => {
+      fireEvent.keyDown(input(), { key: "Enter" });
+    });
+    expect(push).toHaveBeenCalledWith(
+      "/dashboard/save_test/calendar?focus=trade-deadline",
+    );
+  });
+
   it("Esc closes, restores focus and releases the scroll lock", async () => {
     renderPalette();
     const trigger = screen.getByRole("button", { name: "trigger" });

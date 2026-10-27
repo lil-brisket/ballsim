@@ -193,6 +193,9 @@ export function CommandPalette(props: {
     const sim = simHref(saveId);
     const entries: Array<[string, string]> = [
       ["Sim to next game", sim.startsWith(base) ? sim.slice(base.length) : sim],
+      // Opens the calendar on the deadline; the day's "Sim to this day" confirm
+      // runs the sim, like every other sim path.
+      ["Sim to trade deadline", "/calendar?focus=trade-deadline"],
       ["Open Free Agency", "/free-agency"],
       ["Find a trade", "/roster?tab=trade-finder"],
       ["Compare players", "/players/compare"],

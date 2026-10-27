@@ -3,7 +3,12 @@
 import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { Overlay } from "@/components/ui/Overlay";
-import { focusRingClass, cn, linkClass } from "@/components/ui/styles";
+import {
+  focusRingClass,
+  cn,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 /**
@@ -23,7 +28,12 @@ export function ConfirmDialog(props: {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={cn(linkClass, "text-sm", focusRingClass)}
+        className={cn(
+          linkClass,
+          touchTargetTextClass,
+          "px-0 text-sm",
+          focusRingClass,
+        )}
       >
         {props.confirmLabel ?? "Confirm"}
       </button>
