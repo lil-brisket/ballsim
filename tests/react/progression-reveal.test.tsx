@@ -269,7 +269,7 @@ describe("DashboardMoments", () => {
   function moments(
     progression: ProgressionRevealView | null,
   ): DashboardMomentsView {
-    return { teamId: "team_1", champion: null, progression };
+    return { teamId: "team_1", awards: null, champion: null, progression };
   }
 
   it("auto-opens when current, and not again after closing", () => {

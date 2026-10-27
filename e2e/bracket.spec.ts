@@ -1,4 +1,13 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
+
+/** The playoffs save has this season's awards: awards night opens first. */
+async function closeAwardsNight(page: Page) {
+  const awards = page.getByRole("dialog", { name: "Awards night" });
+  await expect(awards).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(awards).toHaveCount(0);
+}
 
 /**
  * The playoff bracket in the seeded playoffs save (opening round live): the
@@ -11,6 +20,7 @@ test("desktop: series open their games from the keyboard", async ({
 }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "tree: desktop");
   await page.goto(playoffsSave("/playoffs"), { waitUntil: "networkidle" });
+  await closeAwardsNight(page);
   const bracket = page.getByLabel("Playoff bracket");
   await expect(bracket).toBeVisible();
 
@@ -56,6 +66,7 @@ test("desktop: series open their games from the keyboard", async ({
 test("phone: one round at a time", async ({ page, playoffsSave }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "rounds: phone");
   await page.goto(playoffsSave("/playoffs"), { waitUntil: "networkidle" });
+  await closeAwardsNight(page);
   const tabs = page.getByRole("navigation", { name: "Playoff rounds" });
   await expect(tabs).toBeVisible();
   const buttons = tabs.getByRole("button");

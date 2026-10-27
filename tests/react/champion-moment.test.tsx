@@ -89,6 +89,7 @@ function moments(
 ): DashboardMomentsView {
   return {
     teamId: "team_1",
+    awards: null,
     champion: champion(),
     progression: progression(),
     ...overrides,

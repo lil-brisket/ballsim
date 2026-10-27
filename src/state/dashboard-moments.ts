@@ -5,6 +5,10 @@
 
 import type { GameState } from "@/state/game-state";
 import {
+  toAwardsNightView,
+  type AwardsNightView,
+} from "@/state/awards-night-selectors";
+import {
   toChampionMomentView,
   type ChampionMomentView,
 } from "@/state/champion-moment-selectors";
@@ -17,6 +21,7 @@ import {
 export type DashboardMomentsView = {
   teamId: string;
   /** League-wide: shown to every owner. */
+  awards: AwardsNightView | null;
   champion: ChampionMomentView | null;
   progression: ProgressionRevealView | null;
 };
@@ -25,8 +30,10 @@ export function toDashboardMomentsView(state: GameState): DashboardMomentsView {
   const teamId = getActiveOwnerTeamId(state);
   const progression = toProgressionRevealView(state, teamId);
   const champion = toChampionMomentView(state);
+  const awards = toAwardsNightView(state);
   return {
     teamId,
+    awards: awards?.isCurrent ? awards : null,
     champion: champion?.isCurrent ? champion : null,
     progression: progression?.isCurrent ? progression : null,
   };
