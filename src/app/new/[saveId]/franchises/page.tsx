@@ -34,7 +34,7 @@ export default async function AdditionalFranchisesPage({ params }: PageProps) {
   if (view.dashboard.teamSelectionLocked) {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
-        <p className="text-zinc-300">Team selection is locked for this save.</p>
+        <p className="text-soft">Team selection is locked for this save.</p>
         <Link href={`/dashboard/${saveId}`} className={linkClass}>
           Open dashboard
         </Link>

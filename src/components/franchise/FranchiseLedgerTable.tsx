@@ -1,4 +1,5 @@
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { DataTable, numericCellClass } from "@/components/ui/DataTable";
 import type { FranchiseSeasonRecord } from "@/domain/entities/franchise-history";
 
 export type FranchiseIdentityChange = {
@@ -63,55 +64,47 @@ export function FranchiseLedgerTable(props: {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-left text-sm">
-        <thead className="border-b border-zinc-800 text-zinc-400">
-          <tr>
-            <th className="px-3 py-2">Year</th>
-            <th className="px-3 py-2">Franchise</th>
-            <th className="px-3 py-2">Revenue</th>
-            <th className="px-3 py-2">Expenses</th>
-            <th className="px-3 py-2">Net income</th>
-            <th className="px-3 py-2">Payroll</th>
-            <th className="px-3 py-2">Funds</th>
-            <th className="px-3 py-2">Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {[...props.seasons].reverse().map((season) => (
-            <tr
-              key={season.seasonId}
-              className="border-b border-zinc-900 text-zinc-200"
-            >
-              <td className="px-3 py-2">{season.seasonYear}</td>
-              <td className="px-3 py-2">
-                {identity(season)}
-                {season.relocated ? (
-                  <span className="ml-2 text-zinc-500">relocated</span>
-                ) : null}
-              </td>
-              <td className="px-3 py-2">
-                <MoneyDisplay amount={season.revenue} />
-              </td>
-              <td className="px-3 py-2">
-                <MoneyDisplay amount={season.expenses} />
-              </td>
-              <td className="px-3 py-2">
-                <MoneyDisplay amount={season.netIncome} />
-              </td>
-              <td className="px-3 py-2">
-                <MoneyDisplay amount={season.payroll} />
-              </td>
-              <td className="px-3 py-2">
-                <MoneyDisplay amount={season.businessFunds} />
-              </td>
-              <td className="px-3 py-2">
-                <MoneyDisplay amount={season.franchiseValue} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      headers={[
+        "Year",
+        "Franchise",
+        { label: "Revenue", numeric: true },
+        { label: "Expenses", numeric: true },
+        { label: "Net income", numeric: true },
+        { label: "Payroll", numeric: true },
+        { label: "Funds", numeric: true },
+        { label: "Value", numeric: true },
+      ]}
+    >
+      {[...props.seasons].reverse().map((season) => (
+        <tr key={season.seasonId} className="text-ink">
+          <td className="px-3 py-2">{season.seasonYear}</td>
+          <td className="px-3 py-2">
+            {identity(season)}
+            {season.relocated ? (
+              <span className="ml-2 text-faint">relocated</span>
+            ) : null}
+          </td>
+          <td className={`px-3 py-2 ${numericCellClass}`}>
+            <MoneyDisplay amount={season.revenue} />
+          </td>
+          <td className={`px-3 py-2 ${numericCellClass}`}>
+            <MoneyDisplay amount={season.expenses} />
+          </td>
+          <td className={`px-3 py-2 ${numericCellClass}`}>
+            <MoneyDisplay amount={season.netIncome} />
+          </td>
+          <td className={`px-3 py-2 ${numericCellClass}`}>
+            <MoneyDisplay amount={season.payroll} />
+          </td>
+          <td className={`px-3 py-2 ${numericCellClass}`}>
+            <MoneyDisplay amount={season.businessFunds} />
+          </td>
+          <td className={`px-3 py-2 ${numericCellClass}`}>
+            <MoneyDisplay amount={season.franchiseValue} />
+          </td>
+        </tr>
+      ))}
+    </DataTable>
   );
 }

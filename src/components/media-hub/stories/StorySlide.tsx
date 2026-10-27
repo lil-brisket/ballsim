@@ -44,16 +44,16 @@ export function StorySlide(props: {
         </span>
       ) : null}
 
-      <div className="flex items-center gap-2 px-4 pr-16 pt-[max(2.5rem,calc(env(safe-area-inset-top)+1.75rem))] text-sm text-zinc-300">
+      <div className="flex items-center gap-2 px-4 pr-16 pt-[max(2.5rem,calc(env(safe-area-inset-top)+1.75rem))] text-sm text-soft">
         <AccountAvatar account={post.author} context={context} size="reply" />
-        <span className="min-w-0 truncate font-medium text-zinc-50">
+        <span className="min-w-0 truncate font-medium text-ink">
           {post.author.displayName}
         </span>
         <span aria-hidden="true">·</span>
         <time
           dateTime={post.occurredOn}
           title={post.dateLabel}
-          className="shrink-0 text-xs text-zinc-400"
+          className="shrink-0 text-xs text-muted"
         >
           {post.relativeLabel}
         </time>
@@ -68,13 +68,13 @@ export function StorySlide(props: {
       </div>
 
       <div className="relative z-20 space-y-3 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-        <p className="line-clamp-2 font-display text-xl font-bold leading-tight text-zinc-50">
+        <p className="line-clamp-2 font-display text-xl font-bold leading-tight text-ink">
           {headline}
         </p>
         <Link
           href={`/dashboard/${saveId}/media#${postAnchorId(post.id)}`}
           className={cn(
-            "inline-flex min-h-11 items-center rounded-full border border-zinc-500 px-4 text-sm font-medium text-zinc-50 hover:border-zinc-300 touch-manipulation active:opacity-80",
+            "inline-flex min-h-11 items-center rounded-full border border-faint px-4 text-sm font-medium text-ink hover:border-soft touch-manipulation active:opacity-80",
             focusRingClass,
           )}
         >

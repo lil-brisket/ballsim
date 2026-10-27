@@ -14,7 +14,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export const inputClass =
-  "min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink disabled:cursor-not-allowed disabled:opacity-50";
+  "min-h-11 w-full rounded-md border border-line-strong bg-surface-base px-3 py-2 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink disabled:cursor-not-allowed disabled:opacity-50";
 
 export const secondaryButtonClass = buttonClass({ variant: "secondary" });
 
@@ -34,12 +34,12 @@ export function SetupSection({
   return (
     <section
       aria-labelledby={id}
-      className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-5"
+      className="space-y-4 rounded-xl border border-line bg-surface-raised/40 p-4 sm:p-5"
     >
       <div className="space-y-1">
         <SectionHeading id={id} tabIndex={-1} title={title} />
         {description ? (
-          <p className="text-sm text-zinc-400">{description}</p>
+          <p className="text-sm text-muted">{description}</p>
         ) : null}
       </div>
       {children}
@@ -65,7 +65,7 @@ export function SelectField({
   disabled?: boolean;
 }) {
   return (
-    <label className="block space-y-1 text-sm text-zinc-300">
+    <label className="block space-y-1 text-sm text-soft">
       <span>{label}</span>
       <Select
         value={value}
@@ -99,17 +99,17 @@ export function ToggleField({
 }) {
   return (
     <label
-      className={`flex min-h-11 items-center gap-3 text-sm ${disabled ? "text-zinc-500" : "text-zinc-300"}`}
+      className={`flex min-h-11 items-center gap-3 text-sm ${disabled ? "text-faint" : "text-soft"}`}
     >
       <input
         type="checkbox"
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
-        className="size-5 rounded border-zinc-600 bg-zinc-950 text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+        className="size-5 rounded border-disabled bg-surface-base text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
       />
       {label}
-      {note ? <span className="text-xs text-zinc-500">{note}</span> : null}
+      {note ? <span className="text-xs text-faint">{note}</span> : null}
     </label>
   );
 }
@@ -134,11 +134,11 @@ export function MoneyInputField({
   const millions = value / 1_000_000;
   const inputId = useId();
   return (
-    <div className="block space-y-1 text-sm text-zinc-300 sm:col-span-2">
-      <label htmlFor={inputId} className="block font-medium text-zinc-200">
+    <div className="block space-y-1 text-sm text-soft sm:col-span-2">
+      <label htmlFor={inputId} className="block font-medium text-ink">
         {label} — {formatMoney(value)}
       </label>
-      <span className="block text-sm text-zinc-500">
+      <span className="block text-sm text-faint">
         Range {formatMoney(min)}–{formatMoney(max)}. Default{" "}
         {formatMoney(defaultValue)}.
       </span>
@@ -155,7 +155,7 @@ export function MoneyInputField({
             onChange(Math.min(max, Math.max(min, dollars)));
           }}
         />
-        <span className="text-sm text-zinc-500">million dollars</span>
+        <span className="text-sm text-faint">million dollars</span>
       </span>
     </div>
   );
@@ -179,19 +179,19 @@ export function InjuryFrequencyField({
   }
 
   return (
-    <div className="space-y-2 text-sm text-zinc-300 sm:col-span-2">
+    <div className="space-y-2 text-sm text-soft sm:col-span-2">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <span className="font-medium text-zinc-200">
+        <span className="font-medium text-ink">
           Injury frequency — {selectedLabel}
         </span>
       </div>
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-faint">
         Affects how frequently players become injured during simulation.
       </p>
       <div
         role="radiogroup"
         aria-label={`Injury frequency — ${selectedLabel}`}
-        className="flex rounded-md border border-zinc-700 bg-zinc-950 p-0.5"
+        className="flex rounded-md border border-line-strong bg-surface-base p-0.5"
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
             event.preventDefault();
@@ -223,7 +223,7 @@ export function InjuryFrequencyField({
                 focusRingClass,
                 selected
                   ? "bg-team font-medium text-on-team"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200",
+                  : "text-muted hover:bg-surface-raised hover:text-ink",
               )}
             >
               {INJURY_FREQUENCY_LABELS[frequency]}

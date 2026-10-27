@@ -9,7 +9,7 @@ import {
   HostOnlyNotice,
   SettingsPageShell,
 } from "@/components/settings/SettingsPageShell";
-import { settingsTabPath } from "@/components/settings/SettingsSubNav";
+import { settingsTabPath } from "@/components/settings/settings-paths";
 import { LEAGUE_AREA_LABELS } from "@/domain/game-settings";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -65,7 +65,7 @@ export default async function InGameSettingsPage({
             value={league.area ? LEAGUE_AREA_LABELS[league.area] : "—"}
           />
         </dl>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           League structure is set when the league is created and cannot be
           changed here.
         </p>

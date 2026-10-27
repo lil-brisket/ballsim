@@ -28,7 +28,7 @@ export function SplashBackground(props: {
       <div className="splash-spotlight absolute inset-0" />
       <div className="splash-vignette absolute inset-0" />
       <svg
-        className={`splash-court-lines absolute inset-0 h-full w-full text-zinc-300 ${props.prominent ? "opacity-[0.22]" : "opacity-[0.09]"}`}
+        className={`splash-court-lines absolute inset-0 h-full w-full text-soft ${props.prominent ? "opacity-[0.22]" : "opacity-[0.09]"}`}
         viewBox="0 0 50 47"
         preserveAspectRatio="xMidYMax slice"
         fill="none"

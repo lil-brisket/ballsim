@@ -110,7 +110,7 @@ function ScoreSide(props: {
       )}
     >
       <TeamMark branding={props.branding} size="lg" />
-      <span className="font-display text-sm uppercase tracking-wide text-zinc-300">
+      <span className="font-display text-sm uppercase tracking-wide text-soft">
         {props.team.abbreviation}
       </span>
       <ScoreNumeral
@@ -201,7 +201,7 @@ function heroGraphic(
               score={score.away}
               won={winnerTeamId === away.teamId}
             />
-            <span className="pt-6 text-sm font-medium uppercase tracking-wide text-zinc-400">
+            <span className="pt-6 text-sm font-medium uppercase tracking-wide text-muted">
               {attachment.overtimePeriods > 0 ? "Final/OT" : "Final"}
             </span>
             <ScoreSide
@@ -335,19 +335,19 @@ export function TopStoryHero(props: {
             </p>
             <p
               id={headlineId}
-              className="line-clamp-2 font-display text-2xl font-bold leading-tight text-zinc-50 sm:text-3xl"
+              className="line-clamp-2 font-display text-2xl font-bold leading-tight text-ink sm:text-3xl"
             >
               {headline}
             </p>
-            {dek ? <p className="text-base text-zinc-300">{dek}</p> : null}
+            {dek ? <p className="text-base text-soft">{dek}</p> : null}
             {numbers}
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
               <AccountAvatar
                 account={post.author}
                 context={context}
                 size="reply"
               />
-              <span className="font-medium text-zinc-200">
+              <span className="font-medium text-ink">
                 {post.author.displayName}
               </span>
               <span aria-hidden="true">·</span>

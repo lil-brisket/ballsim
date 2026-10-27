@@ -1,3 +1,9 @@
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import { CardTable } from "@/components/player-profile/CardTable";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -26,8 +32,8 @@ export function PlayerContract(props: {
         title="Current contract"
         action={
           <Link
-            href={`/dashboard/${props.saveId}/contracts`}
-            className="text-sm text-team-ink underline-offset-4 hover:underline"
+            href={`/dashboard/${props.saveId}/team/contracts`}
+            className={cn(linkClass, touchTargetTextClass, focusRingClass)}
           >
             View contracts
           </Link>
@@ -88,8 +94,8 @@ export function PlayerContract(props: {
         ) : (
           <CardTable headers={["Year", "Salary"]}>
             {profile.salaryByYear.map((entry) => (
-              <tr key={entry.year} className="border-t border-zinc-800">
-                <td className="px-3 py-2 text-zinc-100">{entry.year}</td>
+              <tr key={entry.year} className="border-t border-line">
+                <td className="px-3 py-2 text-ink">{entry.year}</td>
                 <td className="px-3 py-2">
                   <MoneyDisplay amount={entry.salary} />
                 </td>
@@ -105,8 +111,8 @@ export function PlayerContract(props: {
 function Info(props: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 p-3">
-      <p className="text-sm text-zinc-400">{props.label}</p>
-      <div className="mt-1 text-sm text-zinc-100">{props.value}</div>
+      <p className="text-sm text-muted">{props.label}</p>
+      <div className="mt-1 text-sm text-ink">{props.value}</div>
     </div>
   );
 }

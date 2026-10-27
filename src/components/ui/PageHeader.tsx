@@ -14,7 +14,7 @@ export function PageHeader(props: {
       <div className="space-y-2">
         <SectionHeading as="h1" size="lg" title={props.title} />
         {props.subtitle ? (
-          <div className="text-sm text-zinc-300">{props.subtitle}</div>
+          <div className="text-sm text-soft">{props.subtitle}</div>
         ) : null}
       </div>
       {props.actions ? (

@@ -1,5 +1,6 @@
 "use client";
 
+import { DataTable, numericCellClass } from "@/components/ui/DataTable";
 import { useEffect, useId, useRef, useState } from "react";
 import { releasePlayerAction } from "@/application/actions";
 import { formatMoney, MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -12,7 +13,7 @@ import type { PlayerReleaseView } from "@/state/player-release-selectors";
 type Mode = "waive" | "buyout";
 
 const FOCUSABLE =
-  'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), input:not([disabled]):not([type="hidden"]), [href], [tabindex]:not([tabindex="-1"])';
 
 /**
  * Release (waive / buyout) confirmation. Presentation only: the mutation
@@ -76,7 +77,7 @@ export function ReleasePlayerDialog(props: {
       <Button
         ref={triggerRef}
         variant="danger"
-        className="min-h-9 px-2.5"
+        className="min-h-11 px-2.5"
         onClick={() => {
           setMode("waive");
           setOpen(true);
@@ -94,8 +95,7 @@ export function ReleasePlayerDialog(props: {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="relative z-10 max-h-full w-full max-w-lg overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-5 text-left shadow-xl"
-            onClick={(event) => event.stopPropagation()}
+            className="relative z-10 max-h-full w-full max-w-lg overflow-y-auto rounded-xl border border-line-strong bg-surface-raised p-5 text-left shadow-xl"
           >
             <SectionHeading
               as="h3"
@@ -136,39 +136,31 @@ export function ReleasePlayerDialog(props: {
                 />
               </fieldset>
 
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[18rem] text-sm">
-                  <thead>
-                    <tr className="text-left text-zinc-400">
-                      <th className="py-1 pr-3 font-medium">Season</th>
-                      <th className="py-1 pr-3 font-medium">Cap hit</th>
-                      <th className="py-1 font-medium">Cash still due</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {option.seasons.map((season) => (
-                      <tr
-                        key={season.seasonYear}
-                        className="border-t border-zinc-800"
-                      >
-                        <td className="py-1 pr-3">{season.seasonYear}</td>
-                        <td className="py-1 pr-3">
-                          <MoneyDisplay amount={season.capHit} />
-                        </td>
-                        <td className="py-1">
-                          {mode === "buyout" ? (
-                            <span className="text-zinc-400">Paid now</span>
-                          ) : (
-                            <MoneyDisplay amount={season.cashDue} />
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                headers={[
+                  "Season",
+                  { label: "Cap hit", numeric: true },
+                  { label: "Cash still due", numeric: true },
+                ]}
+              >
+                {option.seasons.map((season) => (
+                  <tr key={season.seasonYear}>
+                    <td className="px-3 py-2">{season.seasonYear}</td>
+                    <td className={`px-3 py-2 ${numericCellClass}`}>
+                      <MoneyDisplay amount={season.capHit} />
+                    </td>
+                    <td className={`px-3 py-2 ${numericCellClass}`}>
+                      {mode === "buyout" ? (
+                        <span className="text-muted">Paid now</span>
+                      ) : (
+                        <MoneyDisplay amount={season.cashDue} />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </DataTable>
 
-              <p className="text-sm text-zinc-300">
+              <p className="text-sm text-soft">
                 Cap space after: <MoneyDisplay amount={option.capSpaceAfter} />
               </p>
 
@@ -209,8 +201,8 @@ function ModeChoice(props: {
       className={cn(
         "flex cursor-pointer items-start gap-3 rounded-md border p-3 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-team",
         props.checked
-          ? "border-team bg-zinc-800/60"
-          : "border-zinc-700 hover:border-zinc-500",
+          ? "border-team bg-surface-high/60"
+          : "border-line-strong hover:border-faint",
       )}
     >
       <input
@@ -222,11 +214,11 @@ function ModeChoice(props: {
         className={cn("mt-1", focusRingClass)}
       />
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-zinc-100">
+        <span className="block text-sm font-medium text-ink">
           {props.label}
         </span>
-        <span className="block text-sm text-zinc-400">{props.detail}</span>
-        <span className="block text-sm text-zinc-300">
+        <span className="block text-sm text-muted">{props.detail}</span>
+        <span className="block text-sm text-soft">
           {props.amountLabel}: <MoneyDisplay amount={props.amount} />
         </span>
       </span>

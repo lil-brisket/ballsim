@@ -41,7 +41,7 @@ export function buildPlayerPatch(values: {
 
 function StepperField(props: { label: string; children: ReactNode }) {
   return (
-    <div className="space-y-1 text-sm text-zinc-300">
+    <div className="space-y-1 text-sm text-soft">
       <span className="block">{props.label}</span>
       {props.children}
     </div>
@@ -85,7 +85,7 @@ export function RosterEditorForm(props: {
       <input type="hidden" name="patchJson" value={JSON.stringify(patch)} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="block space-y-1 text-sm text-zinc-300">
+        <label className="block space-y-1 text-sm text-soft">
           <span>First name</span>
           <input
             type="text"
@@ -95,7 +95,7 @@ export function RosterEditorForm(props: {
             className={inputClass}
           />
         </label>
-        <label className="block space-y-1 text-sm text-zinc-300">
+        <label className="block space-y-1 text-sm text-soft">
           <span>Last name</span>
           <input
             type="text"

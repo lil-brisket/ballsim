@@ -49,7 +49,7 @@ export function TimelinePostShell(props: {
       data-new-post={!compact && post.unread ? "" : undefined}
       data-big-moment={bigMoment ? "" : undefined}
       className={cn(
-        "flex gap-3 border-b border-zinc-800 last:border-b-0",
+        "flex gap-3 border-b border-line last:border-b-0",
         compact ? "py-3" : bigMoment ? "py-5" : "py-4",
       )}
     >
@@ -60,18 +60,18 @@ export function TimelinePostShell(props: {
       />
       <div className="min-w-0 flex-1 space-y-2">
         <header className="flex flex-wrap items-center gap-x-1.5 text-sm">
-          <span id={nameId} className="font-bold text-zinc-50">
+          <span id={nameId} className="font-bold text-ink">
             {post.author.displayName}
           </span>
           {post.author.verified ? <VerifiedMark /> : null}
-          <span className="text-zinc-400">{post.author.handle}</span>
-          <span aria-hidden="true" className="text-zinc-400">
+          <span className="text-muted">{post.author.handle}</span>
+          <span aria-hidden="true" className="text-muted">
             ·
           </span>
           <time
             dateTime={post.occurredOn}
             title={post.dateLabel}
-            className="text-xs text-zinc-400"
+            className="text-xs text-muted"
           >
             {post.relativeLabel}
           </time>
@@ -79,7 +79,7 @@ export function TimelinePostShell(props: {
         </header>
         <p
           className={cn(
-            "text-zinc-100",
+            "text-ink",
             bigMoment ? "text-lg font-medium" : "text-base",
           )}
         >

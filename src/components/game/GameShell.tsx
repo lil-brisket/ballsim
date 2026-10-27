@@ -1,9 +1,18 @@
 import { GameHeader } from "@/components/game/GameHeader";
 import type { DashboardSnapshot } from "@/state/selectors";
-import type { OwnerNavGroup } from "@/application/owner-nav-config";
-import { DesktopNavigation } from "@/components/game/DesktopNavigation";
-import { MobileNavigationDrawer } from "@/components/game/MobileNavigationDrawer";
+import {
+  numberedHubs,
+  OWNER_NAV_GROUPS,
+  type OwnerNavGroup,
+} from "@/application/owner-nav-config";
 import { RouteTransition } from "@/components/game/RouteTransition";
+import { CommandPalette } from "@/components/game/shell/CommandPalette";
+import { ControlLegend } from "@/components/game/shell/ControlLegend";
+import { GamepadBridge } from "@/components/game/shell/GamepadBridge";
+import { ShellKeys } from "@/components/game/shell/ShellKeys";
+import { MobileHubBar } from "@/components/game/shell/MobileHubBar";
+import { ShellOffset } from "@/components/game/shell/ShellOffset";
+import { SubTabBar } from "@/components/game/shell/SubTabBar";
 import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
 import {
   SimulationActivityProvider,
@@ -12,8 +21,10 @@ import {
 import { teamThemeStyle } from "@/components/ui/TeamThemeScope";
 
 /**
- * In-save chrome. Sets the controlled team's `--team-*` colours on the root so
- * the header, nav and every page below inherit them.
+ * In-save chrome: a sticky top bar (team, hubs, date, record, Sim) with the
+ * active hub's sub-tabs under it, the page, and the control legend (desktop)
+ * or hub bar (phones) along the bottom. Sets the controlled team's `--team-*`
+ * colours on the root so everything below inherits them.
  */
 export function GameShell(props: {
   saveId: string;
@@ -23,6 +34,7 @@ export function GameShell(props: {
   children: React.ReactNode;
 }) {
   const branding = props.dashboard.controlledTeam.branding;
+  const groups = props.navGroups ?? OWNER_NAV_GROUPS;
   return (
     <EntityDrawerProvider saveId={props.saveId}>
       <SimulationActivityProvider>
@@ -35,37 +47,31 @@ export function GameShell(props: {
             data-testid="shell-spotlight"
             className="shell-spotlight"
           />
-          <div className="sticky top-0 z-40 border-b border-surface-line bg-surface-deep/90 pt-[env(safe-area-inset-top)] backdrop-blur lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:pt-0 lg:backdrop-blur-none">
-            <SimulationLockRegion className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-6 lg:pb-0 lg:pt-8">
+          <ShellOffset className="[view-transition-name:shell-header] sticky top-0 z-40 border-b border-surface-line bg-surface-deep/90 pt-[env(safe-area-inset-top)] backdrop-blur">
+            <SimulationLockRegion className="mx-auto flex w-full max-w-[100rem] flex-col gap-2 px-4 py-2 sm:px-6 lg:py-3">
               <GameHeader
                 saveId={props.saveId}
                 saveName={props.saveName}
                 dashboard={props.dashboard}
-                menu={
-                  <MobileNavigationDrawer
-                    saveId={props.saveId}
-                    groups={props.navGroups}
-                    branding={branding}
-                    compact
-                  />
-                }
+                groups={groups}
               />
+              <SubTabBar saveId={props.saveId} groups={groups} />
             </SimulationLockRegion>
-          </div>
+          </ShellOffset>
 
-          <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 lg:py-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-              <SimulationLockRegion className="contents">
-                <DesktopNavigation
-                  saveId={props.saveId}
-                  groups={props.navGroups}
-                />
-              </SimulationLockRegion>
-              <RouteTransition className="flex min-w-0 flex-1 flex-col gap-8">
-                {props.children}
-              </RouteTransition>
-            </div>
-          </div>
+          <main className="mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-4 pb-24 pt-6 sm:px-6 lg:pb-20 lg:pt-8">
+            <RouteTransition className="flex min-w-0 flex-1 flex-col gap-8">
+              {props.children}
+            </RouteTransition>
+          </main>
+
+          <SimulationLockRegion className="contents">
+            <MobileHubBar saveId={props.saveId} groups={groups} />
+          </SimulationLockRegion>
+          <ControlLegend hubCount={numberedHubs(groups).length} />
+          <ShellKeys saveId={props.saveId} groups={groups} />
+          <GamepadBridge />
+          <CommandPalette saveId={props.saveId} groups={groups} />
         </div>
       </SimulationActivityProvider>
     </EntityDrawerProvider>

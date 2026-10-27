@@ -13,11 +13,11 @@ export function OffseasonStatusChecklist(props: {
       {props.items.map((item) => (
         <li
           key={item.id}
-          className="flex items-start justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2.5"
+          className="flex items-start justify-between gap-3 rounded-lg border border-line px-3 py-2.5"
         >
           <div>
-            <p className="text-sm font-medium text-zinc-100">{item.label}</p>
-            <p className="text-sm text-zinc-500">{item.detail}</p>
+            <p className="text-sm font-medium text-ink">{item.label}</p>
+            <p className="text-sm text-faint">{item.detail}</p>
           </div>
           <StatusBadge
             label={item.done ? "Set" : "Open"}

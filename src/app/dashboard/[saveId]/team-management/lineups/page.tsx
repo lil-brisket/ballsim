@@ -4,7 +4,6 @@ import { getRequestSaveStore } from "@/application/request-save-store";
 import { loadTeamManagementView } from "@/application/game-service";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { LineupRotationEditor } from "@/components/team-management/LineupRotationEditor";
 
@@ -37,7 +36,6 @@ export default async function LineupsPage({ params, searchParams }: PageProps) {
 
   return (
     <>
-      <TeamHubSubNav saveId={saveId} active="lineupRotation" />
       <PageHeader title="Lineup & Rotation" />
       {error ? <ErrorState message={error} /> : null}
       <LineupRotationEditor

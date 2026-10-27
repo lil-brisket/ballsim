@@ -17,7 +17,6 @@ import {
   LeaguePlayerStatsTable,
   LeagueTeamStatsTable,
 } from "@/components/league/LeagueStatsTables";
-import { LeagueSubNav } from "@/components/league/LeagueSubNav";
 import type {
   PlayerStatsRow,
   PlayerStatsView,
@@ -54,27 +53,6 @@ function playerRow(id: string, ppg: number): PlayerStatsRow {
   };
 }
 
-describe("LeagueSubNav", () => {
-  it("links every League tab and marks the active one", () => {
-    render(<LeagueSubNav saveId="s1" active="teamStats" />);
-    const hrefs = screen
-      .getAllByRole("link")
-      .map((link) => link.getAttribute("href"));
-    expect(hrefs).toEqual([
-      "/dashboard/s1/league",
-      "/dashboard/s1/league/standings",
-      "/dashboard/s1/league/team-stats",
-      "/dashboard/s1/league/player-stats",
-      "/dashboard/s1/league/transactions",
-    ]);
-    expect(
-      screen
-        .getByRole("link", { name: "Team Stats" })
-        .getAttribute("aria-current"),
-    ).toBe("page");
-  });
-});
-
 describe("LeagueTeamStatsTable", () => {
   it("renders sortable headers with the active sort flipped", () => {
     const view: TeamStatsView = {
@@ -107,7 +85,7 @@ describe("LeagueTeamStatsTable", () => {
       ],
     };
     render(wrap(<LeagueTeamStatsTable saveId="s1" view={view} />));
-    const ppg = screen.getByTestId("league-stats-col-ppg");
+    const ppg = screen.getByRole("columnheader", { name: /PPG/ });
     expect(ppg.getAttribute("aria-sort")).toBe("descending");
     expect(ppg.querySelector("a")!.getAttribute("href")).toBe(
       "/dashboard/s1/league/team-stats?sort=ppg&dir=asc",
@@ -157,7 +135,7 @@ describe("LeaguePlayerStatsTable", () => {
     );
     expect(
       screen
-        .getByTestId("league-stats-col-rpg")
+        .getByRole("columnheader", { name: /RPG/ })
         .querySelector("a")!
         .getAttribute("href"),
     ).toBe("/dashboard/s1/league/player-stats?show=all&sort=rpg");

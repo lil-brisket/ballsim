@@ -17,23 +17,21 @@ export function TeamLeaguePlacement(props: {
   const conferenceLabel = `${props.conferenceName} Conference`;
 
   if (!showDivision) {
-    return (
-      <span className="block text-sm text-zinc-400">{conferenceLabel}</span>
-    );
+    return <span className="block text-sm text-muted">{conferenceLabel}</span>;
   }
 
   const divisionLabel = `${props.divisionName} Division`;
 
   if (compact) {
     return (
-      <span className="block text-sm text-zinc-400">
+      <span className="block text-sm text-muted">
         {conferenceLabel} · {divisionLabel}
       </span>
     );
   }
 
   return (
-    <span className="block text-sm text-zinc-400">
+    <span className="block text-sm text-muted">
       <span className="block">{conferenceLabel}</span>
       <span className="block">{divisionLabel}</span>
     </span>

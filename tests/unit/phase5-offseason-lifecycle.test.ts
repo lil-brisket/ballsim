@@ -42,9 +42,9 @@ describe("phase5 offseason lifecycle", () => {
     expect(nav.some((g) => g.id === "offseason")).toBe(false);
     const hrefs = nav.flatMap((g) => g.items.map((i) => i.href));
     expect(hrefs).not.toContain("/draft");
-    // Free agents can be signed during the season, from the Team group.
-    const team = nav.find((g) => g.id === "team")!;
-    expect(team.items.map((i) => i.href)).toContain("/free-agency");
+    // Free agents can be signed during the season, from Front Office.
+    const office = nav.find((g) => g.id === "front-office")!;
+    expect(office.items.map((i) => i.href)).toContain("/free-agency");
 
     expect(toOffseasonHubView(state).active).toBe(false);
     expect(toDraftHubView(state).active).toBe(false);

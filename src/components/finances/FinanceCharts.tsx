@@ -210,7 +210,7 @@ export function CashRunwayChart(props: {
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <figcaption className="mt-1 text-sm text-zinc-400">
+      <figcaption className="mt-1 text-sm text-muted">
         {props.runwayWeeks === null
           ? "Funds stay positive through the projection."
           : `Funds run out in about ${props.runwayWeeks} weeks at the current burn rate.`}

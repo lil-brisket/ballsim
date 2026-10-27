@@ -3,12 +3,13 @@ import { notFound } from "next/navigation";
 import { loadFranchiseHubView } from "@/application/game-service";
 import { FacilitiesSummarySection } from "@/components/franchise/FacilitiesSummarySection";
 import { FinanceSnapshotCard } from "@/components/franchise/FinanceSnapshotCard";
-import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
+import { FranchiseViews } from "@/components/franchise/FranchiseViews";
 import {
   FranchiseTrends,
   toFranchiseTrends,
 } from "@/components/franchise/FranchiseTrends";
 import { RelocationSummarySection } from "@/components/franchise/RelocationSummarySection";
+import { FranchiseSituations } from "@/components/owner/dashboard/FranchiseSituations";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -62,8 +63,14 @@ export default async function FranchiseOverviewPage({
   return (
     <div className="space-y-4">
       <PageHeader title="Franchise" subtitle={subtitle} />
-      <FranchiseSubNav saveId={saveId} active="overview" />
+      <FranchiseViews saveId={saveId} active="overview" />
       {error ? <ErrorState message={error} /> : null}
+
+      <FranchiseSituations
+        saveId={saveId}
+        situations={view.situations}
+        returnPath={`/dashboard/${saveId}/franchise`}
+      />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -92,7 +99,7 @@ export default async function FranchiseOverviewPage({
           value={
             <>
               <MoneyDisplay amount={view.snapshot.franchiseValue} />
-              <p className="mt-1 font-sans text-sm font-normal capitalize text-zinc-500">
+              <p className="mt-1 font-sans text-sm font-normal capitalize text-faint">
                 {view.valueExplanation.standing.replaceAll("_", " ")}
               </p>
             </>
@@ -101,12 +108,12 @@ export default async function FranchiseOverviewPage({
         />
       </section>
       {view.snapshot.franchiseHealthSummary ? (
-        <p className="text-sm leading-relaxed text-zinc-500">
+        <p className="text-sm leading-relaxed text-faint">
           {view.snapshot.franchiseHealthSummary}
         </p>
       ) : null}
       {positive || negative ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           {positive ? `Driven by ${positive}` : null}
           {positive && negative ? " · " : null}
           {negative ? `Pressed by ${negative}` : null}
@@ -155,15 +162,15 @@ export default async function FranchiseOverviewPage({
               return (
                 <li
                   key={obj.id}
-                  className="rounded-lg border border-zinc-800 px-4 py-3"
+                  className="rounded-lg border border-line px-4 py-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-zinc-100">
+                    <p className="text-sm font-medium text-ink">
                       {obj.description}
                     </p>
                     <StatusBadge label={obj.status} />
                   </div>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-1 text-sm text-faint">
                     {obj.role.replaceAll("_", " ")}
                     {obj.horizonYears != null
                       ? ` · ${obj.horizonYears}y horizon`

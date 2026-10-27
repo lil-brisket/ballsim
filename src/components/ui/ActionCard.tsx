@@ -33,7 +33,7 @@ export function ActionCard(
   const hasSecondary = Boolean(props.secondaryHref && props.secondaryLabel);
   const surfaceClass = cn(
     panelClass,
-    "text-left transition-colors hover:border-team-ink/60 hover:bg-zinc-900",
+    "text-left transition-colors hover:border-team-ink/60 hover:bg-surface-raised",
     focusRingClass,
     props.className,
   );
@@ -41,9 +41,9 @@ export function ActionCard(
   const main = (
     <>
       {props.badge ? <div className="mb-2">{props.badge}</div> : null}
-      <h3 className="text-sm font-medium text-zinc-100">{props.title}</h3>
+      <h3 className="text-sm font-medium text-ink">{props.title}</h3>
       {props.description ? (
-        <p className="mt-1 text-sm text-zinc-400">{props.description}</p>
+        <p className="mt-1 text-sm text-muted">{props.description}</p>
       ) : null}
       {props.children}
     </>
@@ -59,12 +59,12 @@ export function ActionCard(
           {main}
           {props.footer ? <div className="mt-3">{props.footer}</div> : null}
         </Link>
-        <div className="border-t border-zinc-800 px-4 py-1">
+        <div className="border-t border-line px-4 py-1">
           <Link
             href={props.secondaryHref!}
             className={cn(
               touchTargetTextClass,
-              "text-sm text-zinc-400 hover:text-zinc-200",
+              "text-sm text-muted hover:text-ink",
               focusRingClass,
             )}
           >
@@ -85,7 +85,7 @@ export function ActionCard(
             href={props.secondaryHref!}
             className={cn(
               touchTargetTextClass,
-              "text-sm text-zinc-400 hover:text-zinc-200",
+              "text-sm text-muted hover:text-ink",
               focusRingClass,
             )}
           >

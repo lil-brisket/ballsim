@@ -23,15 +23,15 @@ function DrawerSkeleton() {
       aria-busy="true"
       aria-label="Loading"
     >
-      <div className="h-56 rounded-xl bg-zinc-800 sm:h-52" />
+      <div className="h-56 rounded-xl bg-surface-high sm:h-52" />
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {Array.from({ length: 7 }, (_, i) => (
-          <div key={i} className="h-24 rounded-lg bg-zinc-800" />
+          <div key={i} className="h-24 rounded-lg bg-surface-high" />
         ))}
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
-          <div key={i} className="h-20 rounded-lg bg-zinc-800" />
+          <div key={i} className="h-20 rounded-lg bg-surface-high" />
         ))}
       </div>
     </div>
@@ -54,7 +54,7 @@ function PlayerCardBody(props: {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 -mx-4 -mt-4 bg-zinc-900 px-4 pt-2 border-b border-zinc-800">
+      <div className="sticky top-0 z-10 -mx-4 -mt-4 bg-surface-raised px-4 pt-2 border-b border-line">
         <PlayerCardTabList baseId={baseId} active={tab} onChange={changeTab} />
       </div>
       <PlayerCardTabPanel baseId={baseId} tab={tab}>
@@ -140,6 +140,13 @@ export function PlayerDrawer(props: {
             >
               View full player
             </Link>
+            <Link
+              href={`/dashboard/${props.view.saveId}/players/compare?a=${encodeURIComponent(props.view.playerId)}`}
+              className={secondaryActionClass}
+              onClick={() => props.onOpenChange(false)}
+            >
+              Compare
+            </Link>
             {props.view.navigation.contractHref ? (
               <Link
                 href={props.view.navigation.contractHref}
@@ -196,7 +203,7 @@ export function PlayerDrawer(props: {
       ) : null}
 
       {props.status === "missing" ? (
-        <p className="text-sm text-zinc-400" role="status">
+        <p className="text-sm text-muted" role="status">
           Player no longer exists.
         </p>
       ) : null}

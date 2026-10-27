@@ -53,7 +53,7 @@ const SORT_OPTIONS: Array<{ id: TransactionSortKey; label: string }> = [
 ];
 
 const selectClass = cn(
-  "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
+  "min-h-11 rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-sm text-ink",
   focusRingClass,
 );
 
@@ -125,7 +125,7 @@ export function TransactionFilters(props: {
     Boolean(props.start) ||
     Boolean(props.end);
 
-  const fieldClass = "flex min-w-0 flex-col gap-1 text-sm text-zinc-400";
+  const fieldClass = "flex min-w-0 flex-col gap-1 text-sm text-muted";
 
   return (
     <div className={cn(panelClass, "space-y-4 p-4")}>
@@ -163,7 +163,7 @@ export function TransactionFilters(props: {
             name="q"
             defaultValue={props.search}
             placeholder="Search players or teams…"
-            className={cn(selectClass, "w-full placeholder:text-zinc-600")}
+            className={cn(selectClass, "w-full placeholder:text-disabled")}
           />
         </label>
         <button type="submit" className={buttonClass({ variant: "secondary" })}>
@@ -173,7 +173,7 @@ export function TransactionFilters(props: {
           <Link
             href={props.basePath}
             className={cn(
-              "inline-flex items-center px-1 text-sm text-team-ink underline-offset-4 hover:underline",
+              "inline-flex min-h-11 items-center px-1 text-sm text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}
           >
@@ -279,7 +279,7 @@ export function TransactionFilters(props: {
 
       {props.range === "custom" ? (
         <div className="flex flex-wrap items-end gap-3">
-          <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
+          <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-muted">
             Start
             <input
               type="date"
@@ -295,7 +295,7 @@ export function TransactionFilters(props: {
               className={selectClass}
             />
           </label>
-          <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-zinc-400">
+          <label className="flex min-w-[10rem] flex-1 flex-col gap-1 text-sm text-muted">
             End
             <input
               type="date"
@@ -312,7 +312,7 @@ export function TransactionFilters(props: {
             />
           </label>
           {dateError ? (
-            <p className="text-sm text-rose-300" role="alert">
+            <p className="text-sm text-loss" role="alert">
               {dateError}
             </p>
           ) : null}

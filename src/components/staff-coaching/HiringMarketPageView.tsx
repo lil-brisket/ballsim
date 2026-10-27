@@ -64,11 +64,11 @@ export function HiringMarketPageView(props: {
               return (
                 <li
                   key={offer.offerId}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 px-4 py-3 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line px-4 py-3 text-sm"
                 >
                   <div>
-                    <p className="text-zinc-100">{name}</p>
-                    <p className="text-zinc-500">
+                    <p className="text-ink">{name}</p>
+                    <p className="text-faint">
                       {offer.years}y ·{" "}
                       <MoneyDisplay amount={offer.annualSalary} />
                     </p>
@@ -110,18 +110,18 @@ function HireMarketRow(props: {
 }) {
   const { saveId, member, offer, returnPath } = props;
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-950/40 px-4 py-3">
+    <li className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface-base/40 px-4 py-3">
       <div>
-        <p className="font-medium text-zinc-100">
+        <p className="font-medium text-ink">
           <StaffEntityLink saveId={saveId} staffId={member.staffId}>
             {member.firstName} {member.lastName}
           </StaffEntityLink>
         </p>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           {member.roleLabel} · OVR {member.overall} · POT {member.potential} ·
           Age {member.age}
         </p>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           Wants ~<MoneyDisplay amount={member.desiredSalary} /> · Min{" "}
           <MoneyDisplay amount={member.minimumSalary} />
         </p>

@@ -56,7 +56,7 @@ export default async function ProposeTradePage(props: PageProps) {
   const heading = <SectionHeading as="h1" size="lg" title="Propose a trade" />;
   if (participation.mode === "single") {
     return (
-      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 text-sm text-zinc-200">
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 text-sm text-ink">
         {heading}
         <p>Trades with other players are only available in shared leagues.</p>
       </div>
@@ -115,9 +115,9 @@ export default async function ProposeTradePage(props: PageProps) {
     });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 text-sm text-zinc-200">
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 text-sm text-ink">
       {heading}
-      <p className="text-zinc-400">
+      <p className="text-muted">
         Offer a trade to another player. They accept, decline or counter on
         their turn; the AI never decides for them. You can withdraw an offer any
         time before they respond.

@@ -26,7 +26,6 @@ import {
 import { ActionQueue } from "@/components/owner/dashboard/ActionQueue";
 import { GameShell } from "@/components/game/GameShell";
 import { SaveCard } from "@/components/game/SaveCard";
-import { MobileNavigationDrawer } from "@/components/game/MobileNavigationDrawer";
 import { listGameModeDefinitions } from "@/application/game-mode-catalog";
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 import type { DashboardSnapshot } from "@/state/selectors";
@@ -143,9 +142,22 @@ describe("game shell UI", () => {
     ).toBeNull();
     expect(screen.getByText("Career Mode")).toBeTruthy();
     expect(screen.getByText("Dynasty Mode")).toBeTruthy();
-    expect(screen.getAllByText("Coming Soon").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Coming soon").length).toBe(2);
     expect(screen.queryByRole("link", { name: /Career Mode/i })).toBeNull();
     expect(screen.queryByRole("link", { name: /Dynasty Mode/i })).toBeNull();
+    // Locked tiles are announced but are not focusable or actionable.
+    for (const name of [
+      /Career Mode, coming soon/i,
+      /Dynasty Mode, coming soon/i,
+    ]) {
+      const tile = screen.getByRole("article", { name });
+      expect(tile.hasAttribute("tabindex")).toBe(false);
+      expect(tile.querySelector("a, button, [tabindex]")).toBeNull();
+    }
+    // The hero tile is the single entry link and a focus-grid item.
+    const hero = screen.getByRole("link", { name: /Owner Mode/i });
+    expect(hero.hasAttribute("data-focus-item")).toBe(true);
+    expect(screen.getAllByRole("link")).toHaveLength(1);
     expect(screen.queryByText("Continue")).toBeNull();
     unmount();
   });
@@ -304,8 +316,9 @@ describe("game shell UI", () => {
     expect(hrefs).toContain("/media");
     expect(hrefs).not.toContain("/draft");
     expect(hrefs).not.toContain("/free-agency");
-    expect(hrefs).not.toContain("/trades");
-    expect(hrefs).not.toContain("/business");
+    // Trades and Business are Front Office tabs.
+    expect(hrefs).toContain("/trades");
+    expect(hrefs).toContain("/business");
     expect(hrefs).not.toContain("/team-management");
     expect(hrefs).not.toContain("/relocation");
     expect(hrefs).not.toContain("/teams");
@@ -372,12 +385,29 @@ describe("game shell UI", () => {
     unmount();
   });
 
-  it("mobile menu trigger uses the shared 44px touch target", () => {
+  it("GameShell has a main landmark, hub bars and the control legend", () => {
     const { unmount } = render(
-      <MobileNavigationDrawer saveId="save_test" compact />,
+      <GameShell
+        saveId="save_test"
+        saveName="Test Save"
+        dashboard={baseDashboard()}
+      >
+        <p>page</p>
+      </GameShell>,
     );
-    const menu = screen.getByRole("button", { name: "Menu" });
-    expect(menu.className).toContain("min-h-11");
+    expect(screen.getByRole("main").textContent).toContain("page");
+    // Desktop hub row and phone hub bar.
+    expect(screen.getAllByRole("navigation", { name: "Hubs" })).toHaveLength(2);
+    expect(
+      screen.getByRole("contentinfo", { name: "Keyboard controls" }),
+    ).toBeTruthy();
+    const more = screen.getByRole("button", { name: "More" });
+    expect(more.className).toContain("min-h-14");
+    expect(
+      screen
+        .getByRole("link", { name: "Sim to next game" })
+        .getAttribute("href"),
+    ).toBe("/dashboard/save_test/calendar?focus=next-game");
     unmount();
   });
 });

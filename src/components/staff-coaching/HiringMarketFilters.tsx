@@ -28,7 +28,7 @@ export function HiringMarketFilters(props: {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <label className="text-sm text-zinc-400">
+      <label className="text-sm text-muted">
         Role
         <Select
           wrapperClassName="ml-2"
@@ -45,7 +45,7 @@ export function HiringMarketFilters(props: {
           ))}
         </Select>
       </label>
-      <label className="text-sm text-zinc-400">
+      <label className="text-sm text-muted">
         Sort
         <Select
           wrapperClassName="ml-2"
@@ -59,7 +59,7 @@ export function HiringMarketFilters(props: {
           ))}
         </Select>
       </label>
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-faint">
         {props.shownCount < props.totalCount
           ? `Showing ${props.shownCount} of ${props.totalCount}`
           : `${props.totalCount} available`}

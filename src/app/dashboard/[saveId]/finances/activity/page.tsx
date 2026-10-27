@@ -5,7 +5,7 @@ import {
   FinancialLedger,
   FinancialTrend,
 } from "@/components/finances/FinancialLedger";
-import { FinancesSubNav } from "@/components/finances/FinancesSubNav";
+import { FinancesViews } from "@/components/finances/FinancesViews";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -37,14 +37,14 @@ export default async function FinancesActivityPage({
         title="Finances"
         subtitle={`${view.teamName} · Season ${view.seasonYear}`}
       />
-      <FinancesSubNav saveId={saveId} active="activity" />
+      <FinancesViews saveId={saveId} active="activity" />
       {error ? <ErrorState message={error} /> : null}
 
       {lastGameDay || forecast ? (
         <section className="grid gap-4 sm:grid-cols-2">
           {lastGameDay ? (
             <Section title="Last home game day">
-              <ul className="space-y-1 text-sm text-zinc-300">
+              <ul className="space-y-1 text-sm text-soft">
                 <li className="flex justify-between">
                   <span>Attendance</span>
                   <span>{lastGameDay.attendance.toLocaleString()}</span>
@@ -62,7 +62,7 @@ export default async function FinancesActivityPage({
           ) : null}
           {forecast ? (
             <Section title="Next home game forecast">
-              <ul className="space-y-1 text-sm text-zinc-300">
+              <ul className="space-y-1 text-sm text-soft">
                 <li className="flex justify-between">
                   <span>Projected revenue</span>
                   <MoneyDisplay amount={forecast.totalGameDayRevenue} />

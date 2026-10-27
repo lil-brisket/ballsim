@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { buttonClass } from "@/components/ui/Button";
-import { cn, linkClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
@@ -53,7 +58,12 @@ export default async function OffseasonCommandCenterPage({
         <EmptyState message="The offseason has not begun for this franchise. Use the Calendar to advance through the current season." />
         <Link
           href={calendarHref}
-          className={cn(linkClass, "inline-block text-sm font-medium")}
+          className={cn(
+            linkClass,
+            touchTargetTextClass,
+            focusRingClass,
+            "text-sm font-medium",
+          )}
         >
           Open Calendar
         </Link>
@@ -80,7 +90,7 @@ export default async function OffseasonCommandCenterPage({
       <OffseasonHeaderStrip view={view} />
 
       <Section title="Timeline">
-        <p className="mb-3 text-sm text-zinc-400">
+        <p className="mb-3 text-sm text-muted">
           Upcoming offseason events from the Calendar. Advance time only on the
           Calendar — completing workflows here does not move the date.
         </p>

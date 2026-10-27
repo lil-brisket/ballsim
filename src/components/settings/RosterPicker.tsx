@@ -14,7 +14,7 @@ export function RosterPicker(props: {
         method="get"
         className="flex flex-col gap-3 sm:flex-row sm:items-end"
       >
-        <label className="block space-y-1 text-sm text-zinc-300 sm:w-72">
+        <label className="block space-y-1 text-sm text-soft sm:w-72">
           <span>Team</span>
           <Select
             name="team"
@@ -41,7 +41,7 @@ export function RosterPicker(props: {
           className="flex flex-col gap-3 sm:flex-row sm:items-end"
         >
           <input type="hidden" name="team" value={props.selectedTeamId} />
-          <label className="block space-y-1 text-sm text-zinc-300 sm:w-72">
+          <label className="block space-y-1 text-sm text-soft sm:w-72">
             <span>Player</span>
             <Select
               name="player"

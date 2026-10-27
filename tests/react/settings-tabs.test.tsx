@@ -16,7 +16,6 @@ import {
   type RulesFormValues,
 } from "@/components/settings/RulesForm";
 import { SeasonFormatForm } from "@/components/settings/SeasonFormatForm";
-import { SettingsSubNav } from "@/components/settings/SettingsSubNav";
 import { PLAYER_ATTRIBUTE_KEYS } from "@/domain/entities/player";
 import type { PlayerAttributes } from "@/domain/entities/player";
 
@@ -30,29 +29,6 @@ function hidden(container: HTMLElement, name: string): string {
   );
   return input?.value ?? "";
 }
-
-describe("SettingsSubNav", () => {
-  it("links League, Rules, AI Management and Tools and marks the active tab", () => {
-    render(<SettingsSubNav saveId="save_1" active="rules" />);
-    const hrefs: Record<string, string> = {
-      League: "/dashboard/save_1/settings",
-      Rules: "/dashboard/save_1/settings/rules",
-      "AI Management": "/dashboard/save_1/settings/ai",
-      Tools: "/dashboard/save_1/settings/tools",
-    };
-    for (const [name, href] of Object.entries(hrefs)) {
-      expect(screen.getByRole("link", { name }).getAttribute("href")).toBe(
-        href,
-      );
-    }
-    expect(
-      screen.getByRole("link", { name: "Rules" }).getAttribute("aria-current"),
-    ).toBe("page");
-    expect(
-      screen.getByRole("link", { name: "League" }).getAttribute("aria-current"),
-    ).toBeNull();
-  });
-});
 
 const RULES: RulesFormValues = {
   injuryFrequency: "medium",

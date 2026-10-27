@@ -3,6 +3,7 @@ import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { QualifyingOfferRow } from "@/state/rfa-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 /** Qualifying offer decisions for expiring players. */
 export function QualifyingOffers(props: {
@@ -12,7 +13,7 @@ export function QualifyingOffers(props: {
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-muted">
         A qualifying offer makes him a restricted free agent: you can match any
         offer sheet he signs.
       </p>
@@ -20,13 +21,18 @@ export function QualifyingOffers(props: {
         {props.rows.map((row) => (
           <li
             key={row.playerId}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-800 px-4 py-3 text-sm"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line px-4 py-3 text-sm"
           >
             <div>
-              <p className="text-zinc-100">{row.playerName}</p>
-              <p className="text-zinc-500">
-                {row.position} · {row.age} · OVR {row.overall} · Offer{" "}
-                <MoneyDisplay amount={row.qualifyingOfferSalary} />
+              <p className="text-ink">{row.playerName}</p>
+              <p className="flex flex-wrap items-center gap-1.5 text-faint">
+                <span>
+                  {row.position} · {row.age}
+                </span>
+                <OvrBadge overall={row.overall} size="sm" />
+                <span>
+                  Offer <MoneyDisplay amount={row.qualifyingOfferSalary} />
+                </span>
               </p>
             </div>
             {row.issued ? (
@@ -52,7 +58,7 @@ export function QualifyingOffers(props: {
                   Issue qualifying offer
                 </Button>
                 {row.blockedReason ? (
-                  <p className="max-w-xs text-right text-xs text-zinc-400">
+                  <p className="max-w-xs text-right text-xs text-muted">
                     {row.blockedReason}
                   </p>
                 ) : null}

@@ -21,9 +21,9 @@ const PREVIEW = {
 
 export default function LogoShowcasePage() {
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-100">
+    <main className="min-h-screen bg-surface-base px-6 py-8 text-ink">
       <SectionHeading as="h1" size="lg" title="Franchise Logo Showcase" />
-      <p className="mt-2 max-w-2xl text-sm text-zinc-400">
+      <p className="mt-2 max-w-2xl text-sm text-muted">
         Visual QA for all {TEAM_LOGO_CATALOG.length} catalog logos. Review
         silhouette distinction, weight, and readability at small sizes. Not
         linked from production navigation.
@@ -42,7 +42,7 @@ export default function LogoShowcasePage() {
                 {logos.map((logo) => (
                   <div
                     key={logo.id}
-                    className="flex flex-col items-center gap-1 rounded-md border border-zinc-800 bg-zinc-900/60 p-2"
+                    className="flex flex-col items-center gap-1 rounded-md border border-line bg-surface-raised/60 p-2"
                   >
                     <TeamLogoMark
                       logoId={logo.id}
@@ -52,10 +52,10 @@ export default function LogoShowcasePage() {
                       className="h-12 w-12"
                       title={logo.label}
                     />
-                    <span className="text-center text-sm text-zinc-400">
+                    <span className="text-center text-sm text-muted">
                       {logo.label}
                     </span>
-                    <span className="text-center text-sm text-zinc-500">
+                    <span className="text-center text-sm text-faint">
                       {logo.id}
                     </span>
                   </div>

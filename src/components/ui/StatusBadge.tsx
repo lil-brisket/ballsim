@@ -2,7 +2,7 @@ const TONE: Record<string, string> = {
   success: "border-emerald-700/50 bg-emerald-950/40 text-emerald-300",
   warning: "border-warning/40 bg-warning/10 text-warning",
   critical: "border-rose-700/50 bg-rose-950/40 text-rose-300",
-  info: "border-zinc-700 bg-zinc-900 text-zinc-300",
+  info: "border-line-strong bg-surface-raised text-soft",
   active: "border-team-ink/50 bg-team/15 text-team-ink",
   completed: "border-emerald-700/50 bg-emerald-950/40 text-emerald-300",
   failed: "border-rose-700/50 bg-rose-950/40 text-rose-300",
@@ -15,7 +15,7 @@ const TONE: Record<string, string> = {
   injured: "border-rose-700/50 bg-rose-950/40 text-rose-300",
   out: "border-rose-700/50 bg-rose-950/40 text-rose-300",
   suspended: "border-rose-700/50 bg-rose-950/40 text-rose-300",
-  neutral: "border-zinc-700 bg-zinc-900 text-zinc-400",
+  neutral: "border-line-strong bg-surface-raised text-muted",
 };
 
 export function StatusBadge(props: { label: string; tone?: string }) {

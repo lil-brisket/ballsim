@@ -70,7 +70,7 @@ export function PlayerActionMenu(props: {
         onClick={toggle}
         className={cn(
           touchTargetClass,
-          "rounded-md border border-surface-line text-lg leading-none text-zinc-300 hover:border-team-ink hover:text-team-ink",
+          "rounded-md border border-surface-line text-lg leading-none text-soft hover:border-team-ink hover:text-team-ink",
           focusRingClass,
         )}
       >
@@ -109,7 +109,7 @@ export function PlayerActionMenu(props: {
                     type="submit"
                     className={cn(
                       touchTargetClass,
-                      "w-full justify-start rounded-md px-3 text-sm text-zinc-100 hover:bg-white/10",
+                      "w-full justify-start rounded-md px-3 text-sm text-ink hover:bg-white/10",
                       focusRingClass,
                     )}
                   >

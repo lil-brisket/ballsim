@@ -13,7 +13,7 @@ export function ResultSparkline(props: {
 }) {
   const { results } = props;
   if (results.length === 0) {
-    return <span className="text-zinc-600">—</span>;
+    return <span className="text-disabled">—</span>;
   }
   const wins = results.filter((r) => r === "W").length;
   const label =

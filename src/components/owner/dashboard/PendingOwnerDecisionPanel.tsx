@@ -56,7 +56,7 @@ export function PendingOwnerDecisionPanel(props: {
       role="dialog"
       aria-modal="true"
       aria-labelledby="pending-trade-title"
-      className="space-y-3 rounded-md border border-warning/40 bg-warning/10 px-4 py-4 text-sm text-zinc-200"
+      className="space-y-3 rounded-md border border-warning/40 bg-warning/10 px-4 py-4 text-sm text-ink"
     >
       {offer.receivingTeamBranding ? (
         <ActiveTeamBanner
@@ -71,7 +71,7 @@ export function PendingOwnerDecisionPanel(props: {
         eyebrow="Simulation paused"
         title={`${offer.offeringTeamName} trade offer`}
       />
-      <p className="mt-2 flex flex-wrap items-center gap-2 text-zinc-200">
+      <p className="mt-2 flex flex-wrap items-center gap-2 text-ink">
         {offer.offeringTeamBranding ? (
           <span
             className="inline-flex shrink-0 items-center justify-center rounded-sm p-0.5"
@@ -87,35 +87,31 @@ export function PendingOwnerDecisionPanel(props: {
           </span>
         ) : null}
         <span>
-          <span className="font-medium text-zinc-50">
-            {offer.offeringTeamName}
-          </span>
+          <span className="font-medium text-ink">{offer.offeringTeamName}</span>
           {" → "}
-          <span className="font-medium text-zinc-50">
+          <span className="font-medium text-ink">
             {offer.receivingTeamName}
           </span>
         </span>
       </p>
       {offer.motivationLabel ? (
-        <p className="text-sm text-zinc-200">
+        <p className="text-sm text-ink">
           Why they&apos;re calling: {offer.motivationLabel}
         </p>
       ) : null}
       {offer.bothSidesOwned ? (
-        <p className="mt-2 text-sm text-zinc-200">
+        <p className="mt-2 text-sm text-ink">
           You control both franchises in this trade. Approving applies both
           sides — there is no hidden automatic approval.
         </p>
       ) : (
-        <p className="mt-2 text-zinc-200">
-          Simulation is paused until you decide.
-        </p>
+        <p className="mt-2 text-ink">Simulation is paused until you decide.</p>
       )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-md border border-warning/40 bg-zinc-950/40 px-3 py-2">
-          <p className="text-sm font-medium text-zinc-300">You receive</p>
-          <ul className="mt-1 list-inside list-disc text-zinc-200">
+        <div className="rounded-md border border-warning/40 bg-surface-base/40 px-3 py-2">
+          <p className="text-sm font-medium text-soft">You receive</p>
+          <ul className="mt-1 list-inside list-disc text-ink">
             {offer.youReceive.length === 0 ? (
               <li>Nothing</li>
             ) : (
@@ -123,9 +119,9 @@ export function PendingOwnerDecisionPanel(props: {
             )}
           </ul>
         </div>
-        <div className="rounded-md border border-warning/40 bg-zinc-950/40 px-3 py-2">
-          <p className="text-sm font-medium text-zinc-300">You send</p>
-          <ul className="mt-1 list-inside list-disc text-zinc-200">
+        <div className="rounded-md border border-warning/40 bg-surface-base/40 px-3 py-2">
+          <p className="text-sm font-medium text-soft">You send</p>
+          <ul className="mt-1 list-inside list-disc text-ink">
             {offer.theyReceive.length === 0 ? (
               <li>Nothing</li>
             ) : (
@@ -135,11 +131,11 @@ export function PendingOwnerDecisionPanel(props: {
         </div>
       </div>
 
-      <p className="mt-3 text-sm font-medium text-zinc-50">
+      <p className="mt-3 text-sm font-medium text-ink">
         Trade: {valueLabel(offer.valueSummary)}
       </p>
       {offer.reasons && offer.reasons.length > 0 ? (
-        <ul className="list-inside list-disc text-sm text-zinc-300">
+        <ul className="list-inside list-disc text-sm text-soft">
           {offer.reasons.slice(0, 3).map((reason) => (
             <li key={reason}>{reason}</li>
           ))}

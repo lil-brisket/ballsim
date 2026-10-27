@@ -7,7 +7,7 @@ export function OffseasonHeaderStrip(props: { view: OffseasonHubView }) {
   const { view } = props;
   return (
     <div
-      className="flex flex-wrap gap-x-6 gap-y-3 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3"
+      className="flex flex-wrap gap-x-6 gap-y-3 rounded-xl border border-line bg-surface-raised/40 px-4 py-3"
       aria-label="Offseason summary"
     >
       <Metric

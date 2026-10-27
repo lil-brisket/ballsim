@@ -70,7 +70,7 @@ describe("DL hub section chrome", () => {
     const pipeline = screen.getByTestId("dl-pipeline");
     const assign = screen.getByTestId("dl-assign");
     expect(pipeline).toBeTruthy();
-    expect(assign.className).toContain("text-zinc-500");
+    expect(assign.className).toContain("text-faint");
     expect(screen.getByText("Assign")).toBeTruthy();
   });
 });

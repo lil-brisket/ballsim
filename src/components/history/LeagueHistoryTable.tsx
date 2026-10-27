@@ -1,8 +1,9 @@
+import { DataTable } from "@/components/ui/DataTable";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import type { LeagueHistoryView } from "@/state/league-history-selectors";
 
-const TH = "px-3 py-2 font-medium";
 const TD = "px-3 py-2";
 
 export function LeagueHistoryTable(props: {
@@ -14,50 +15,44 @@ export function LeagueHistoryTable(props: {
   }
   const showRunnerUp = props.view.hasRunnerUpData;
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[480px] text-left text-sm">
-        <thead className="border-b border-zinc-800 text-sm text-zinc-400">
-          <tr>
-            <th className={TH}>Season</th>
-            <th className={TH}>Champion</th>
-            {showRunnerUp ? <th className={TH}>Runner-Up</th> : null}
-          </tr>
-        </thead>
-        <tbody>
-          {props.view.seasons.map((row) => (
-            <tr key={row.seasonYear} className="border-b border-zinc-900/80">
-              <td className={`${TD} font-mono tabular-nums text-team-ink`}>
-                {row.seasonYear}
-              </td>
-              <td className={TD}>
+    <DataTable
+      caption="League champions by season"
+      headers={["Season", "Champion", ...(showRunnerUp ? ["Runner-Up"] : [])]}
+    >
+      {props.view.seasons.map((row) => (
+        <tr key={row.seasonYear}>
+          <td className={`${TD} font-mono tabular-nums text-team-ink`}>
+            {row.seasonYear}
+          </td>
+          <td className={TD}>
+            <TeamEntityLink
+              saveId={props.saveId}
+              teamId={row.championTeamId}
+              className={rowLinkClass}
+            >
+              {row.championName}
+            </TeamEntityLink>
+            <span className="ml-2 text-sm text-faint">
+              {row.championRecord}
+            </span>
+          </td>
+          {showRunnerUp ? (
+            <td className={TD}>
+              {row.runnerUpTeamId && row.runnerUpName ? (
                 <TeamEntityLink
                   saveId={props.saveId}
-                  teamId={row.championTeamId}
+                  teamId={row.runnerUpTeamId}
+                  className={rowLinkClass}
                 >
-                  {row.championName}
+                  {row.runnerUpName}
                 </TeamEntityLink>
-                <span className="ml-2 text-sm text-zinc-500">
-                  {row.championRecord}
-                </span>
-              </td>
-              {showRunnerUp ? (
-                <td className={TD}>
-                  {row.runnerUpTeamId && row.runnerUpName ? (
-                    <TeamEntityLink
-                      saveId={props.saveId}
-                      teamId={row.runnerUpTeamId}
-                    >
-                      {row.runnerUpName}
-                    </TeamEntityLink>
-                  ) : (
-                    <span className="text-zinc-600">—</span>
-                  )}
-                </td>
-              ) : null}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              ) : (
+                <span className="text-disabled">—</span>
+              )}
+            </td>
+          ) : null}
+        </tr>
+      ))}
+    </DataTable>
   );
 }

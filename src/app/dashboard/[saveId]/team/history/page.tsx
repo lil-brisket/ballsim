@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { loadSaveWithHistory } from "@/application/game-service";
 import { HistoryHub } from "@/components/history/HistoryHub";
 import { historyHubHref } from "@/components/history/history-hub-links";
-import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 import { ErrorState } from "@/components/ui/EmptyState";
 import {
   misroutedHistoryHubTab,
@@ -36,7 +35,6 @@ export default async function TeamHistoryPage({
 
   return (
     <>
-      <TeamHubSubNav saveId={saveId} active="history" />
       {error ? <ErrorState message={error} /> : null}
       <HistoryHub view={toHistoryHubView(loaded.state, "team", query)} />
     </>

@@ -34,18 +34,30 @@ const TEAMS = [
       logoId: "eagle",
     },
   },
+  {
+    label: "Neon primary",
+    city: "Volt",
+    name: "Surge",
+    abbreviation: "VLT",
+    branding: {
+      primaryColor: "#39FF14",
+      secondaryColor: "#0A0A0A",
+      accentColor: "#FF2BD6",
+      logoId: "bull",
+    },
+  },
 ] as const;
 
 export default function BroadcastUiShowcasePage() {
   return (
-    <main className="min-h-screen bg-surface-deep px-4 py-8 text-zinc-100 sm:px-6">
+    <main className="min-h-screen bg-surface-deep px-4 py-8 text-ink sm:px-6">
       <SectionHeading
         as="h1"
         size="lg"
         eyebrow="Dev / visual QA"
         title="Shared UI primitives"
       />
-      <p className="mt-3 max-w-2xl text-sm text-zinc-400">
+      <p className="mt-3 max-w-2xl text-sm text-muted">
         Every primitive under a very dark and a very light team colour. Toggle
         the OS reduced-motion setting to confirm animations stop.
       </p>
@@ -59,7 +71,7 @@ export default function BroadcastUiShowcasePage() {
         <FullCourtShowcase />
       </TeamThemeScope>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-2">
+      <div className="mt-10 grid gap-10 lg:grid-cols-2 xl:grid-cols-3">
         {TEAMS.map((team) => (
           <TeamThemeScope
             key={team.label}

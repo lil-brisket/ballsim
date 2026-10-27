@@ -37,22 +37,22 @@ export function TeamDecisionPanel(props: {
         </Link>
       }
     >
-      <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
+      <div className="space-y-3 rounded-xl border border-line bg-surface-raised/50 px-4 py-4">
         <div>
-          <p className="text-sm text-zinc-400">Performance</p>
-          <p className="mt-1 text-lg text-zinc-50">{standingLine}</p>
+          <p className="text-sm text-muted">Performance</p>
+          <p className="mt-1 text-lg text-ink">{standingLine}</p>
         </div>
         <dl className="grid gap-2 text-sm sm:grid-cols-2">
           <div>
-            <dt className="text-zinc-500">Strength</dt>
-            <dd className="tabular-nums text-zinc-200">{team.strength}</dd>
+            <dt className="text-faint">Strength</dt>
+            <dd className="tabular-nums text-ink">{team.strength}</dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Payroll</dt>
-            <dd className="text-zinc-200">
+            <dt className="text-faint">Payroll</dt>
+            <dd className="text-ink">
               <MoneyDisplay amount={team.payroll} />
               {payrollContext ? (
-                <span className="ml-2 text-sm text-zinc-500">
+                <span className="ml-2 text-sm text-faint">
                   {payrollContext}
                 </span>
               ) : null}
@@ -80,7 +80,7 @@ export function TeamDecisionPanel(props: {
         ) : null}
 
         <div>
-          <p className="text-sm font-medium text-zinc-300">Upcoming</p>
+          <p className="text-sm font-medium text-soft">Upcoming</p>
           {team.upcomingGames.length === 0 ? (
             <EmptyState message="No upcoming scheduled games." />
           ) : (
@@ -88,16 +88,16 @@ export function TeamDecisionPanel(props: {
               {team.upcomingGames.map((game) => (
                 <li
                   key={game.gameId}
-                  className="flex items-center justify-between rounded-lg border border-zinc-800 px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-lg border border-line px-3 py-2 text-sm"
                 >
-                  <span className="text-zinc-400">
+                  <span className="text-muted">
                     {formatGameDate(game.date, { weekday: true })}
                   </span>
-                  <span className="inline-flex items-center gap-2 text-zinc-200">
+                  <span className="inline-flex items-center gap-2 text-ink">
                     <span>{game.home ? "vs" : "@"}</span>
                     {game.opponentBranding ? (
                       <span
-                        className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                        className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-line-strong"
                         style={{
                           backgroundColor: game.opponentBranding.primaryColor,
                         }}
@@ -116,12 +116,12 @@ export function TeamDecisionPanel(props: {
             </ul>
           )}
           {nextGame ? (
-            <p className="mt-2 inline-flex items-center gap-2 text-sm text-zinc-500">
+            <p className="mt-2 inline-flex items-center gap-2 text-sm text-faint">
               <span>Next:</span>
               <span>{nextGame.home ? "vs" : "@"}</span>
               {nextGame.opponentBranding ? (
                 <span
-                  className="inline-flex h-4 w-4 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                  className="inline-flex h-4 w-4 items-center justify-center overflow-hidden rounded border border-line-strong"
                   style={{
                     backgroundColor: nextGame.opponentBranding.primaryColor,
                   }}

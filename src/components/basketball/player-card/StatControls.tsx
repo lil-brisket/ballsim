@@ -19,8 +19,8 @@ function Segmented<T extends string>(props: {
 }) {
   return (
     <div role="group" aria-label={props.label} className="flex flex-col gap-1">
-      <span className="text-sm text-zinc-400">{props.label}</span>
-      <div className="flex overflow-hidden rounded-md border border-zinc-700">
+      <span className="text-sm text-muted">{props.label}</span>
+      <div className="flex overflow-hidden rounded-md border border-line-strong">
         {props.options.map((option) => {
           const pressed = option.value === props.value;
           return (
@@ -33,7 +33,7 @@ function Segmented<T extends string>(props: {
                 "min-h-11 px-3 text-sm",
                 pressed
                   ? "bg-team font-medium text-on-team"
-                  : "text-zinc-300 hover:bg-zinc-800",
+                  : "text-soft hover:bg-surface-high",
                 focusRingClass,
               )}
             >
@@ -74,7 +74,7 @@ export function StatControls(props: {
       />
       {props.scope === "season" && newestFirst.length > 0 ? (
         <div className="flex flex-col gap-1">
-          <label htmlFor={seasonSelectId} className="text-sm text-zinc-400">
+          <label htmlFor={seasonSelectId} className="text-sm text-muted">
             Season
           </label>
           <Select

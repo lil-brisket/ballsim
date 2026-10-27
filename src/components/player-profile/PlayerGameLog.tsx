@@ -1,10 +1,12 @@
 "use client";
 
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { DataTable, numericCellClass } from "@/components/ui/DataTable";
 import { Section } from "@/components/ui/Section";
 import { TeamLogoMark } from "@/components/team/logos/TeamLogoMark";
 import { formatGameDate } from "@/presentation/game-date";
@@ -13,9 +15,25 @@ import type {
   PlayerProfileView,
 } from "@/state/player-profile-selectors";
 
+type SortKey = Exclude<keyof PlayerGameLogRowView, "opponentBranding">;
+
 const PAGE_SIZE = 25;
 
-type SortKey = Exclude<keyof PlayerGameLogRowView, "opponentBranding">;
+const GAME_LOG_COLUMNS: Array<[SortKey, string, boolean]> = [
+  ["date", "Date", false],
+  ["opponentAbbreviation", "Opp", false],
+  ["won", "Result", false],
+  ["minutes", "MIN", true],
+  ["points", "PTS", true],
+  ["rebounds", "REB", true],
+  ["assists", "AST", true],
+  ["steals", "STL", true],
+  ["blocks", "BLK", true],
+  ["turnovers", "TO", true],
+  ["fgMade", "FG", true],
+  ["threeMade", "3PT", true],
+  ["ftMade", "FT", true],
+];
 
 export function PlayerGameLog(props: {
   player: PlayerProfileView;
@@ -108,113 +126,110 @@ export function PlayerGameLog(props: {
         </div>
       }
     >
-      <div className="overflow-x-auto rounded-lg border border-zinc-800">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-zinc-900/60 text-sm text-zinc-400">
-            <tr>
-              {(
-                [
-                  ["date", "Date"],
-                  ["opponentAbbreviation", "Opp"],
-                  ["won", "Result"],
-                  ["minutes", "MIN"],
-                  ["points", "PTS"],
-                  ["rebounds", "REB"],
-                  ["assists", "AST"],
-                  ["steals", "STL"],
-                  ["blocks", "BLK"],
-                  ["turnovers", "TO"],
-                  ["fgMade", "FG"],
-                  ["threeMade", "3PT"],
-                  ["ftMade", "FT"],
-                ] as Array<[SortKey, string]>
-              ).map(([key, label]) => (
-                <th key={key} className="px-3 py-2 font-normal">
-                  <button
-                    type="button"
-                    className="hover:text-team-ink"
-                    onClick={() => toggleSort(key)}
+      <DataTable
+        caption="Game log"
+        headers={GAME_LOG_COLUMNS.map(([key, label, numeric]) => ({
+          label,
+          numeric,
+          sort: {
+            onSelect: () => toggleSort(key),
+            direction:
+              sortKey === key
+                ? sortAsc
+                  ? ("asc" as const)
+                  : ("desc" as const)
+                : null,
+          },
+        }))}
+      >
+        {pageRows.map((row) => (
+          <tr key={row.gameId}>
+            <td className="px-3 py-2">
+              <Link
+                href={`/dashboard/${props.saveId}/games/${row.gameId}`}
+                className={cn(linkClass, focusRingClass)}
+              >
+                {formatGameDate(row.date)}
+              </Link>
+            </td>
+            <td className="px-3 py-2 text-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <span>{row.home ? "vs" : "@"}</span>
+                {row.opponentBranding ? (
+                  <span
+                    className="inline-flex shrink-0 items-center justify-center rounded-sm p-0.5"
+                    style={{
+                      backgroundColor: row.opponentBranding.primaryColor,
+                    }}
                   >
-                    {label}
-                    {sortKey === key ? (sortAsc ? " ↑" : " ↓") : ""}
-                  </button>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {pageRows.map((row) => (
-              <tr key={row.gameId} className="border-t border-zinc-800">
-                <td className="px-3 py-2">
-                  <Link
-                    href={`/dashboard/${props.saveId}/games/${row.gameId}`}
-                    className="text-team-ink underline-offset-4 hover:underline"
-                  >
-                    {formatGameDate(row.date)}
-                  </Link>
-                </td>
-                <td className="px-3 py-2 text-zinc-400">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span>{row.home ? "vs" : "@"}</span>
-                    {row.opponentBranding ? (
-                      <span
-                        className="inline-flex shrink-0 items-center justify-center rounded-sm p-0.5"
-                        style={{
-                          backgroundColor: row.opponentBranding.primaryColor,
-                        }}
-                      >
-                        <TeamLogoMark
-                          branding={row.opponentBranding}
-                          size="sm"
-                          decorative
-                        />
-                      </span>
-                    ) : null}
-                    <span>{row.opponentAbbreviation}</span>
+                    <TeamLogoMark
+                      branding={row.opponentBranding}
+                      size="sm"
+                      decorative
+                    />
                   </span>
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.won === null
-                    ? "—"
-                    : `${row.won ? "W" : "L"} ${row.teamScore}-${row.opponentScore}`}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.minutes}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-100">
-                  {row.points}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.rebounds}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.assists}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.steals}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.blocks}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.turnovers}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.fgMade}/{row.fgAttempted}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.threeMade}/{row.threeAttempted}
-                </td>
-                <td className="px-3 py-2 font-mono text-zinc-400">
-                  {row.ftMade}/{row.ftAttempted}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                ) : null}
+                <span>{row.opponentAbbreviation}</span>
+              </span>
+            </td>
+            <td className="px-3 py-2 font-mono text-muted">
+              {row.won === null
+                ? "—"
+                : `${row.won ? "W" : "L"} ${row.teamScore}-${row.opponentScore}`}
+            </td>
+            <td
+              className={`px-3 py-2 font-mono text-muted ${numericCellClass}`}
+            >
+              {row.minutes}
+            </td>
+            <td className={`px-3 py-2 font-mono text-ink ${numericCellClass}`}>
+              {row.points}
+            </td>
+            <td
+              className={`px-3 py-2 font-mono text-muted ${numericCellClass}`}
+            >
+              {row.rebounds}
+            </td>
+            <td
+              className={`px-3 py-2 font-mono text-muted ${numericCellClass}`}
+            >
+              {row.assists}
+            </td>
+            <td
+              className={`px-3 py-2 font-mono text-muted ${numericCellClass}`}
+            >
+              {row.steals}
+            </td>
+            <td
+              className={`px-3 py-2 font-mono text-muted ${numericCellClass}`}
+            >
+              {row.blocks}
+            </td>
+            <td
+              className={`px-3 py-2 font-mono text-muted ${numericCellClass}`}
+            >
+              {row.turnovers}
+            </td>
+            <td
+              className={`px-3 py-2 font-mono text-muted ${numericCellClass}`}
+            >
+              {row.fgMade}/{row.fgAttempted}
+            </td>
+            <td
+              className={`px-3 py-2 font-mono text-muted ${numericCellClass}`}
+            >
+              {row.threeMade}/{row.threeAttempted}
+            </td>
+            <td
+              className={`px-3 py-2 font-mono text-muted ${numericCellClass}`}
+            >
+              {row.ftMade}/{row.ftAttempted}
+            </td>
+          </tr>
+        ))}
+      </DataTable>
       {pageCount > 1 ? (
-        <div className="mt-3 flex items-center justify-between text-sm text-zinc-500">
+        <div className="mt-3 flex items-center justify-between text-sm text-faint">
           <span>
             Page {page + 1} of {pageCount} ({filtered.length} games)
           </span>

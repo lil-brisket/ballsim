@@ -1,9 +1,16 @@
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import type { FreeAgentView } from "@/state/selectors";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function FreeAgentRosterView(props: {
   saveId: string;
@@ -26,58 +33,63 @@ export function FreeAgentRosterView(props: {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           Roster shortcut — open Free Agency to sign or make offers.
         </p>
         <Link
           href={props.freeAgencyHubHref}
-          className="text-sm text-team-ink underline-offset-4 hover:underline"
+          className={cn(linkClass, touchTargetTextClass, focusRingClass)}
         >
           Full Free Agency →
         </Link>
       </div>
-      <div className="overflow-x-auto">
-        <DataTable headers={["Player", "Pos", "OVR", "Age", "Action"]}>
-          {props.freeAgents.slice(0, 40).map((agent) => (
-            <tr key={agent.playerId} className="border-t border-zinc-800">
-              <td className="px-3 py-2">
-                <span className="flex items-center gap-2">
-                  <PlayerPortrait
-                    playerId={agent.playerId}
-                    portrait={agent.portrait}
-                    firstName={agent.firstName}
-                    lastName={agent.lastName}
-                    size="sm"
-                  />
-                  <PlayerEntityLink
-                    saveId={props.saveId}
-                    playerId={agent.playerId}
-                  >
-                    {agent.firstName} {agent.lastName}
-                  </PlayerEntityLink>
-                </span>
-              </td>
-              <td className="px-3 py-2 text-zinc-400">{agent.position}</td>
-              <td className="px-3 py-2 text-zinc-200">{agent.overall}</td>
-              <td className="px-3 py-2 text-zinc-400">{agent.age}</td>
-              <td className="px-3 py-2">
-                <Link
-                  href={props.freeAgencyHubHref}
-                  className="text-sm text-team-ink underline-offset-4 hover:underline"
+      <DataTable headers={["Player", "Pos", "OVR", "Age", "Action"]}>
+        {props.freeAgents.slice(0, 40).map((agent) => (
+          <tr key={agent.playerId}>
+            <td className="px-3 py-2">
+              <span className="flex items-center gap-2">
+                <PlayerPortrait
+                  playerId={agent.playerId}
+                  portrait={agent.portrait}
+                  firstName={agent.firstName}
+                  lastName={agent.lastName}
+                  size="sm"
+                />
+                <PlayerEntityLink
+                  saveId={props.saveId}
+                  playerId={agent.playerId}
                 >
-                  View in Free Agency →
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </DataTable>
-      </div>
+                  {agent.firstName} {agent.lastName}
+                </PlayerEntityLink>
+              </span>
+            </td>
+            <td className="px-3 py-2 text-muted">{agent.position}</td>
+            <td className="px-3 py-2">
+              <OvrBadge
+                overall={agent.overall}
+                size="sm"
+                className="align-middle"
+              />
+            </td>
+            <td className="px-3 py-2 text-muted">{agent.age}</td>
+            <td className="px-3 py-2">
+              <Link
+                href={props.freeAgencyHubHref}
+                className={cn(linkClass, touchTargetTextClass, focusRingClass)}
+              >
+                View in Free Agency →
+              </Link>
+            </td>
+          </tr>
+        ))}
+      </DataTable>
+
       {props.freeAgents.length > 40 ? (
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-disabled">
           Showing top 40 by overall.{" "}
           <Link
             href={props.freeAgencyHubHref}
-            className="text-team-ink underline-offset-4 hover:underline"
+            className={cn(linkClass, touchTargetTextClass, focusRingClass)}
           >
             See all
           </Link>

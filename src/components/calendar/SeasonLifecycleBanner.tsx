@@ -10,10 +10,10 @@ export function SeasonLifecycleBanner(props: {
     return (
       <div
         role="status"
-        className="rounded-xl border border-sky-800/50 bg-sky-950/30 px-4 py-3"
+        className="rounded-xl border border-team-ink/40 bg-team/10 px-4 py-3"
       >
-        <p className="text-sm font-semibold text-sky-300">Season setup</p>
-        <p className="mt-1 text-sm text-sky-50">
+        <p className="text-sm font-semibold text-team-ink">Season setup</p>
+        <p className="mt-1 text-sm text-ink">
           Simulate to begin the regular season. No games will be played yet.
         </p>
       </div>
@@ -24,10 +24,10 @@ export function SeasonLifecycleBanner(props: {
     return (
       <div
         role="status"
-        className="rounded-xl border border-emerald-800/50 bg-emerald-950/30 px-4 py-3"
+        className="rounded-xl border border-win/40 bg-win/10 px-4 py-3"
       >
-        <p className="text-sm font-semibold text-emerald-300">Opening Day</p>
-        <p className="mt-1 text-sm text-emerald-50">
+        <p className="text-sm font-semibold text-win">Opening Day</p>
+        <p className="mt-1 text-sm text-ink">
           The regular season is ready. Simulate again to play today&apos;s
           games.
         </p>

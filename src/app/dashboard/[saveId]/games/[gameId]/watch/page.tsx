@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import { formatGameDate } from "@/presentation/game-date";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadOwnerWatchGameView } from "@/application/game-service";
@@ -42,7 +47,11 @@ export default async function WatchGamePage({ params }: WatchGamePageProps) {
         actions={
           <Link
             href={boxScoreHref}
-            className="text-sm text-zinc-300 hover:text-team-ink"
+            className={cn(
+              touchTargetTextClass,
+              focusRingClass,
+              "text-sm text-soft hover:text-team-ink",
+            )}
           >
             Box score →
           </Link>

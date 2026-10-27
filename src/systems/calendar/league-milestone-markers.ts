@@ -58,13 +58,13 @@ type MilestoneDisplay = {
 const MILESTONE_DISPLAY: Record<LeagueMilestoneKey, MilestoneDisplay> = {
   offseasonStart: {
     shortLabel: "Offseason",
-    chipClass: "bg-zinc-800/90 text-zinc-300",
-    dotClass: "bg-zinc-400",
+    chipClass: "bg-surface-high/90 text-soft",
+    dotClass: "bg-muted",
   },
   contractExpirationProcessed: {
     shortLabel: "Contracts",
-    chipClass: "bg-zinc-800/90 text-zinc-400",
-    dotClass: "bg-zinc-500",
+    chipClass: "bg-surface-high/90 text-muted",
+    dotClass: "bg-faint",
   },
   rfaWindowOpen: {
     shortLabel: "RFA",
@@ -123,8 +123,8 @@ const MILESTONE_DISPLAY: Record<LeagueMilestoneKey, MilestoneDisplay> = {
   },
   nextOffseason: {
     shortLabel: "Offseason",
-    chipClass: "bg-zinc-800/90 text-zinc-400",
-    dotClass: "bg-zinc-500",
+    chipClass: "bg-surface-high/90 text-muted",
+    dotClass: "bg-faint",
   },
 };
 

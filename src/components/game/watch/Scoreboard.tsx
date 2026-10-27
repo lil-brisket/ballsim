@@ -1,3 +1,6 @@
+import { useRef } from "react";
+import { useOverflowFocusable } from "@/components/ui/focus/use-overflow-focusable";
+import { focusRingClass } from "@/components/ui/styles";
 import { ScoreNumeral, TeamBadge, TeamThemeScope } from "@/components/ui";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { periodLabel } from "@/state/watch-game-selectors";
@@ -27,14 +30,14 @@ function TeamBlock(props: {
         className="hidden sm:inline-flex"
       />
       <div className={`min-w-0 ${end ? "items-end" : ""}`}>
-        <p className="truncate font-display text-xl font-bold uppercase leading-tight tracking-wide text-zinc-50 sm:text-2xl lg:text-3xl">
+        <p className="truncate font-display text-xl font-bold uppercase leading-tight tracking-wide text-ink sm:text-2xl lg:text-3xl">
           {props.team.city}
         </p>
         <p className="truncate font-display text-base font-semibold uppercase tracking-[0.2em] text-team-ink">
           {props.team.name}
         </p>
         <p
-          className={`flex items-center gap-2 text-sm text-zinc-400 ${
+          className={`flex items-center gap-2 text-sm text-muted ${
             end ? "justify-end" : ""
           }`}
         >
@@ -72,6 +75,8 @@ function Linescore(props: {
   byPeriod: { away: number[]; home: number[] };
   currentPeriod: number;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useOverflowFocusable(scrollRef);
   const columns = Math.max(REGULATION_COLUMNS, props.currentPeriod);
   const periods = Array.from({ length: columns }, (_, index) => index + 1);
   const rows = [
@@ -87,11 +92,16 @@ function Linescore(props: {
     },
   ];
   return (
-    <div className="mt-4 overflow-x-auto sm:flex sm:justify-center">
+    <div
+      ref={scrollRef}
+      role="region"
+      aria-label="Line score, scrollable"
+      className={`mt-4 overflow-x-auto sm:flex sm:justify-center ${focusRingClass}`}
+    >
       <table className="w-full text-sm sm:w-auto">
         <caption className="sr-only">Points by quarter</caption>
         <thead>
-          <tr className="text-zinc-400">
+          <tr className="text-muted">
             <th scope="col" className="px-3 py-1 text-left font-medium">
               Team
             </th>
@@ -113,10 +123,10 @@ function Linescore(props: {
         </thead>
         <tbody>
           {rows.map(({ team, points, total }) => (
-            <tr key={team.teamId} className="border-t border-zinc-800">
+            <tr key={team.teamId} className="border-t border-line">
               <th
                 scope="row"
-                className="px-3 py-1 text-left font-semibold text-zinc-100"
+                className="px-3 py-1 text-left font-semibold text-ink"
               >
                 {team.abbreviation}
               </th>
@@ -125,8 +135,8 @@ function Linescore(props: {
                   key={period}
                   className={`px-3 py-1 text-right font-mono tabular-nums ${
                     period === props.currentPeriod
-                      ? "font-bold text-zinc-50"
-                      : "text-zinc-300"
+                      ? "font-bold text-ink"
+                      : "text-soft"
                   }`}
                 >
                   {period <= props.currentPeriod ? (
@@ -139,7 +149,7 @@ function Linescore(props: {
                   )}
                 </td>
               ))}
-              <td className="px-3 py-1 text-right font-mono font-bold tabular-nums text-zinc-50">
+              <td className="px-3 py-1 text-right font-mono font-bold tabular-nums text-ink">
                 {total}
               </td>
             </tr>
@@ -205,7 +215,7 @@ export function Scoreboard(props: {
         />
         <div
           aria-hidden
-          className="hidden font-display text-3xl text-zinc-500 sm:block"
+          className="hidden font-display text-3xl text-faint sm:block"
         >
           @
         </div>

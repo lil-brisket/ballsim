@@ -279,7 +279,7 @@ function StoryDialog(props: {
 
   const total = ring.slides.length;
   const chevron = cn(
-    "hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-zinc-600 bg-black/40 text-lg text-zinc-100 hover:border-zinc-400 touch-manipulation active:opacity-80 disabled:opacity-30 sm:inline-flex",
+    "hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-disabled bg-black/40 text-lg text-ink hover:border-muted touch-manipulation active:opacity-80 disabled:opacity-30 sm:inline-flex",
     focusRingClass,
   );
 
@@ -315,7 +315,7 @@ function StoryDialog(props: {
           <span aria-hidden="true">‹</span>
         </button>
 
-        <div className="relative h-full w-full overflow-hidden bg-surface-arena sm:aspect-[9/16] sm:h-[min(90dvh,46rem)] sm:w-auto sm:max-w-[420px] sm:rounded-2xl sm:border sm:border-zinc-700">
+        <div className="relative h-full w-full overflow-hidden bg-surface-arena sm:aspect-[9/16] sm:h-[min(90dvh,46rem)] sm:w-auto sm:max-w-[420px] sm:rounded-2xl sm:border sm:border-line-strong">
           <h2 id={titleId} className="sr-only">
             {ring.label}
           </h2>
@@ -398,7 +398,7 @@ function StoryDialog(props: {
             aria-label="Close"
             className={cn(
               touchTargetClass,
-              "absolute right-2 top-[max(1.5rem,calc(env(safe-area-inset-top)+0.75rem))] z-30 rounded-full bg-black/40 text-lg text-zinc-100 hover:bg-black/60",
+              "absolute right-2 top-[max(1.5rem,calc(env(safe-area-inset-top)+0.75rem))] z-30 rounded-full bg-black/40 text-lg text-ink hover:bg-black/60",
               focusRingClass,
             )}
           >
@@ -492,12 +492,12 @@ export function StoriesViewer(props: {
                       "flex h-[72px] w-[72px] items-center justify-center rounded-full p-[3px]",
                       isNew
                         ? "bg-[conic-gradient(from_200deg,var(--team-ink),var(--team-primary),var(--team-ink))]"
-                        : "ring-1 ring-zinc-600",
+                        : "ring-1 ring-disabled",
                     )}
                   >
                     <span
                       data-ring-media={ring.mediaKind}
-                      className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-900"
+                      className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-surface-base bg-surface-raised"
                     >
                       {ring.media}
                     </span>
@@ -506,7 +506,7 @@ export function StoriesViewer(props: {
                     aria-hidden="true"
                     className={cn(
                       "w-full truncate text-center text-sm",
-                      isNew ? "text-zinc-100" : "text-zinc-400",
+                      isNew ? "text-ink" : "text-muted",
                     )}
                   >
                     {ring.label}

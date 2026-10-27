@@ -13,7 +13,7 @@ export function PhaseAttentionSummaryPanel(props: {
         aria-label="Needs attention"
       >
         <p className="text-sm font-medium text-emerald-400">Needs attention</p>
-        <p className="mt-1 text-sm text-zinc-300">
+        <p className="mt-1 text-sm text-soft">
           No required or recommended actions for this franchise right now.
         </p>
       </section>

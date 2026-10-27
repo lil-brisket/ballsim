@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./atmosphere.css";
+import "./sim-moments.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +47,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       suppressHydrationWarning
     >
       <body
-        className="min-h-full flex flex-col bg-zinc-950 text-zinc-100"
+        className="min-h-full flex flex-col bg-surface-base text-ink"
         suppressHydrationWarning
       >
         {children}

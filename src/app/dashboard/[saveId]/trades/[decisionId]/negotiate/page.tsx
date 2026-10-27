@@ -56,7 +56,7 @@ export default async function TradeNegotiatePage(props: PageProps) {
     : `/dashboard/${saveId}/trades/${decisionId}`;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 text-sm text-zinc-200">
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 text-sm text-ink">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading as="h1" size="lg" title="Negotiate trade" />
         <Link href={returnPath} className={buttonClass({ variant: "quiet" })}>
@@ -64,14 +64,14 @@ export default async function TradeNegotiatePage(props: PageProps) {
         </Link>
       </div>
 
-      <p className="text-zinc-400">
+      <p className="text-muted">
         Adjust what you send. The CPU package stays as originally offered unless
         they counter.
       </p>
 
-      <div className="rounded-md border border-zinc-700 bg-zinc-950/50 px-4 py-3">
+      <div className="rounded-md border border-line-strong bg-surface-base/50 px-4 py-3">
         <SectionHeading title="They offer (unchanged)" />
-        <ul className="mt-2 list-inside list-disc text-zinc-300">
+        <ul className="mt-2 list-inside list-disc text-soft">
           {cpuSide.playerIds.map((id) => {
             const p = state.world.players[id];
             return <li key={id}>{p ? `${p.firstName} ${p.lastName}` : id}</li>;
@@ -113,13 +113,13 @@ export default async function TradeNegotiatePage(props: PageProps) {
           />
         ))}
 
-        <fieldset className="rounded-md border border-zinc-700 px-4 py-3">
-          <legend className="px-1 text-zinc-50">Players you send</legend>
+        <fieldset className="rounded-md border border-line-strong px-4 py-3">
+          <legend className="px-1 text-ink">Players you send</legend>
           <div className="mt-2 grid gap-1 sm:grid-cols-2">
             {userPlayers.map((player) => (
               <label
                 key={player.id}
-                className="flex items-center gap-2 text-zinc-300"
+                className="flex items-center gap-2 text-soft"
               >
                 <input
                   type="checkbox"
@@ -133,13 +133,13 @@ export default async function TradeNegotiatePage(props: PageProps) {
           </div>
         </fieldset>
 
-        <fieldset className="rounded-md border border-zinc-700 px-4 py-3">
-          <legend className="px-1 text-zinc-50">Picks you send</legend>
+        <fieldset className="rounded-md border border-line-strong px-4 py-3">
+          <legend className="px-1 text-ink">Picks you send</legend>
           <div className="mt-2 grid gap-1 sm:grid-cols-2">
             {userPicks.map((pick) => (
               <label
                 key={pick.id}
-                className="flex items-center gap-2 text-zinc-300"
+                className="flex items-center gap-2 text-soft"
               >
                 <input
                   type="checkbox"
@@ -151,7 +151,7 @@ export default async function TradeNegotiatePage(props: PageProps) {
               </label>
             ))}
             {userPicks.length === 0 ? (
-              <p className="text-zinc-500">No available picks</p>
+              <p className="text-faint">No available picks</p>
             ) : null}
           </div>
         </fieldset>

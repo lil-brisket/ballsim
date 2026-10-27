@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { AwardsViewSwitch } from "@/components/history/AwardsViewSwitch";
 import { Section } from "@/components/ui/Section";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
@@ -56,6 +58,7 @@ export default async function FanVotingPage({ params }: PageProps) {
 
   return (
     <div className="space-y-4">
+      <AwardsViewSwitch saveId={saveId} active="fan-voting" />
       <PageHeader
         title={hub.title}
         subtitle={
@@ -75,42 +78,46 @@ export default async function FanVotingPage({ params }: PageProps) {
         <div className="grid gap-4 md:grid-cols-2">
           {hub.conferences.map((conference) => (
             <Section key={conference.id} title={conference.label}>
-              <ol className="divide-y divide-zinc-800">
+              <ol className="divide-y divide-line">
                 {conference.leaders.map((row) => (
                   <li
                     key={row.playerId}
                     className="flex items-center justify-between gap-3 py-2 text-sm"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="w-6 shrink-0 font-semibold text-zinc-400">
+                      <span className="w-6 shrink-0 font-semibold text-muted">
                         {row.rank}
                       </span>
                       <div className="min-w-0">
                         <PlayerEntityLink
                           saveId={saveId}
                           playerId={row.playerId}
-                          className="font-medium text-zinc-100"
+                          className="font-medium text-ink"
                         >
                           {row.playerName}
                         </PlayerEntityLink>
                         {row.teamId && row.teamName ? (
-                          <div className="text-sm text-zinc-500">
-                            <TeamEntityLink saveId={saveId} teamId={row.teamId}>
+                          <div className="text-sm text-faint">
+                            <TeamEntityLink
+                              saveId={saveId}
+                              teamId={row.teamId}
+                              className={rowLinkClass}
+                            >
                               {row.teamName}
                             </TeamEntityLink>
                           </div>
                         ) : null}
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3 font-mono text-zinc-300">
+                    <div className="flex shrink-0 items-center gap-3 font-mono tabular-nums text-soft">
                       <span>{row.voteTotal.toLocaleString()}</span>
                       <span
                         className={
                           row.movement === "up"
-                            ? "text-emerald-400"
+                            ? "text-win"
                             : row.movement === "down"
-                              ? "text-rose-400"
-                              : "text-zinc-500"
+                              ? "text-loss"
+                              : "text-faint"
                         }
                         title={
                           row.previousRank != null
@@ -118,7 +125,12 @@ export default async function FanVotingPage({ params }: PageProps) {
                             : "New"
                         }
                       >
-                        {movementGlyph(row.movement)}
+                        <span aria-hidden>{movementGlyph(row.movement)}</span>
+                        <span className="sr-only">
+                          {row.previousRank != null
+                            ? `Was #${row.previousRank}`
+                            : "New"}
+                        </span>
                       </span>
                     </div>
                   </li>

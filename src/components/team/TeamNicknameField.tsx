@@ -21,7 +21,7 @@ export function TeamNicknameField(props: {
 
   return (
     <div className="space-y-1">
-      <label className="block text-sm text-zinc-300" htmlFor={props.id}>
+      <label className="block text-sm text-soft" htmlFor={props.id}>
         Team name
       </label>
       <div className="flex gap-2">
@@ -32,7 +32,7 @@ export function TeamNicknameField(props: {
           disabled={props.disabled}
           aria-invalid={props.error ? true : undefined}
           aria-describedby={describedBy.length > 0 ? describedBy : undefined}
-          className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-team-ink/40 focus:ring-2 disabled:opacity-50"
+          className="min-w-0 flex-1 rounded-md border border-line-strong bg-surface-base px-3 py-2 text-sm text-ink outline-none ring-team-ink/40 focus:ring-2 disabled:opacity-50"
         />
         {props.onRandomize ? (
           <Button
@@ -51,7 +51,7 @@ export function TeamNicknameField(props: {
           {props.error}
         </p>
       ) : props.helperText ? (
-        <p id={helperId} className="text-sm text-zinc-500">
+        <p id={helperId} className="text-sm text-faint">
           {props.helperText}
         </p>
       ) : null}

@@ -15,9 +15,9 @@ export function ProgressBar(props: {
   return (
     <div className={cn("w-full", props.className)}>
       {props.label ? (
-        <div className="mb-1 flex items-center justify-between gap-2 text-sm text-zinc-400">
+        <div className="mb-1 flex items-center justify-between gap-2 text-sm text-muted">
           <span>{props.label}</span>
-          <span className="tabular-nums text-zinc-400">{Math.round(pct)}%</span>
+          <span className="tabular-nums text-muted">{Math.round(pct)}%</span>
         </div>
       ) : null}
       <div
@@ -26,7 +26,7 @@ export function ProgressBar(props: {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label={props["aria-label"] ?? props.label}
-        className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800"
+        className="h-1.5 w-full overflow-hidden rounded-full bg-surface-high"
       >
         <div
           className="h-full rounded-full bg-team-ink transition-[width] duration-300 motion-reduce:transition-none"

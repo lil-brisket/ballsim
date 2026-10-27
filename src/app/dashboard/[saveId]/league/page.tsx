@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadLeagueHubView } from "@/application/game-service";
 import { LeagueHeader } from "@/components/league/LeagueHeader";
-import { LeagueSubNav } from "@/components/league/LeagueSubNav";
 import {
   LeagueSnapshotPanel,
   LeagueStandingsSnapshot,
@@ -14,7 +13,11 @@ import {
   LeagueTransactionsBriefing,
 } from "@/components/league/LeagueTier2Panels";
 import { ErrorState } from "@/components/ui/EmptyState";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 export const metadata: Metadata = { title: "League" };
 
@@ -36,7 +39,6 @@ export default async function LeagueHubPage({
 
   return (
     <div className="space-y-4">
-      <LeagueSubNav saveId={saveId} active="overview" />
       <LeagueHeader
         saveId={saveId}
         leagueName={view.leagueName}
@@ -46,11 +48,12 @@ export default async function LeagueHubPage({
       {error ? <ErrorState message={error} /> : null}
 
       {view.expansionActive ? (
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           Expansion opportunity is available.{" "}
           <Link
             href={`/dashboard/${saveId}/league/expansion`}
             className={cn(
+              touchTargetTextClass,
               "text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}

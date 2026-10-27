@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { FantasyDraftView } from "@/state/selectors";
-import { cn, linkClass } from "@/components/ui/styles";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import { buttonClass } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
@@ -12,7 +12,7 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
 
   return (
     <>
-      <section className="rounded-xl border border-zinc-800 p-4">
+      <section className="rounded-xl border border-line p-4">
         <SectionHeading
           title="Recent picks"
           className="mb-2"
@@ -20,7 +20,11 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className={cn(linkClass, "text-sm")}
+              className={cn(
+                linkClass,
+                "inline-flex min-h-11 items-center text-sm",
+                focusRingClass,
+              )}
             >
               View all
             </button>
@@ -28,12 +32,12 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
         />
         <ul className="space-y-1 text-sm">
           {recent.length === 0 ? (
-            <li className="text-zinc-500">No picks yet</li>
+            <li className="text-faint">No picks yet</li>
           ) : (
             recent.map((sel) => (
               <li key={sel.pickNumber}>
                 {sel.pickNumber}. {sel.teamAbbreviation} — {sel.playerName}
-                <span className="text-zinc-500"> ({sel.position})</span>
+                <span className="text-faint"> ({sel.position})</span>
               </li>
             ))
           )}
@@ -46,9 +50,9 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
             role="dialog"
             aria-modal="true"
             aria-label="Complete draft history"
-            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-zinc-700 bg-zinc-900"
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-line-strong bg-surface-raised"
           >
-            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <SectionHeading as="h3" title="Draft history" />
               <button
                 type="button"
@@ -60,7 +64,7 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
             </div>
             <div className="overflow-y-auto px-4 py-3">
               <table className="w-full text-left text-sm">
-                <thead className="text-zinc-500">
+                <thead className="text-faint">
                   <tr>
                     <th className="py-1">Pick</th>
                     <th>Rnd</th>
@@ -71,10 +75,7 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
                 </thead>
                 <tbody>
                   {[...props.draft.selections].reverse().map((sel) => (
-                    <tr
-                      key={sel.pickNumber}
-                      className="border-t border-zinc-800"
-                    >
+                    <tr key={sel.pickNumber} className="border-t border-line">
                       <td className="py-1.5">{sel.pickNumber}</td>
                       <td>{sel.round}</td>
                       <td>{sel.teamAbbreviation}</td>

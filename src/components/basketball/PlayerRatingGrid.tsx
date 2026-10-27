@@ -10,9 +10,9 @@ import { ratingTier } from "@/presentation/rating-tier";
 type Emphasis = "best" | "worst" | null;
 
 /**
- * Slim list of the seven category ratings. Colour is reserved for the best
- * (tier colour) and weakest (loss colour) category so the eye lands on the
- * extremes. In interactive mode each row toggles an inline breakdown of its
+ * One row per attribute group: label, a bar and a big average, both coloured
+ * by the group average's rating tier. The best and weakest groups are also
+ * announced to screen readers. In interactive mode each row toggles an inline breakdown of its
  * sub-ratings, full width directly under the row; the best category starts
  * open. Remount (key by player) to reset when the player changes.
  */
@@ -44,31 +44,19 @@ export function PlayerRatingGrid(props: {
         const panelId = `${baseId}-${category.key}`;
         const row = (
           <>
-            <span className="w-32 shrink-0 truncate text-left text-sm text-zinc-300 sm:w-36">
+            <span className="w-32 shrink-0 truncate text-left text-sm text-soft sm:w-36">
               {category.label}
             </span>
             <span
-              className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-line"
+              className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-line"
               aria-hidden
             >
               <span
-                className={cn(
-                  "block h-full rounded-full transition-[width] motion-reduce:transition-none",
-                  emphasis === "best" && "bg-tier",
-                  emphasis === "worst" && "bg-loss",
-                  emphasis === null && "bg-zinc-500",
-                )}
+                className="block h-full rounded-full bg-tier transition-[width] motion-reduce:transition-none"
                 style={{ width: `${width}%` }}
               />
             </span>
-            <span
-              className={cn(
-                "w-10 shrink-0 text-right font-display text-2xl font-extrabold leading-none tabular-nums",
-                emphasis === "best" && "text-tier",
-                emphasis === "worst" && "text-loss",
-                emphasis === null && "text-zinc-100",
-              )}
-            >
+            <span className="w-12 shrink-0 text-right font-display text-3xl font-extrabold leading-none tabular-nums text-tier">
               {category.rating}
             </span>
             {emphasis ? (
@@ -108,7 +96,7 @@ export function PlayerRatingGrid(props: {
                 id={panelId}
                 className="mx-2 mb-3 mt-1 rounded-lg bg-surface-deep/60 p-3"
               >
-                <p className="mb-2 text-sm font-medium text-zinc-300">
+                <p className="mb-2 text-sm font-medium text-soft">
                   {category.label} breakdown
                 </p>
                 <RatingBars

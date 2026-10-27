@@ -459,7 +459,7 @@ export function FullCourtView(props: {
           <p
             data-testid="court-possession"
             data-end={frame.ballEnd}
-            className="pointer-events-none absolute bottom-0 left-1/2 z-40 inline-flex h-5 -translate-x-1/2 items-center gap-1.5 rounded-sm bg-black/80 px-2 text-sm font-medium leading-5 text-zinc-50"
+            className="pointer-events-none absolute bottom-0 left-1/2 z-40 inline-flex h-5 -translate-x-1/2 items-center gap-1.5 rounded-sm bg-black/80 px-2 text-sm font-medium leading-5 text-ink"
           >
             {frame.ballEnd === "left" ? arrow : null}
             <span aria-hidden="true">

@@ -10,6 +10,8 @@ import type {
 } from "@/state/team-management-selectors";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { OvrBadge } from "@/components/ui/OvrBadge";
+import { focusRingClass } from "@/components/ui/styles";
 
 type InjuryFilter =
   | "all"
@@ -89,27 +91,28 @@ function InjuryPlayerCard(props: { saveId: string; row: InjuryRowView }) {
   return (
     <Link
       href={`/dashboard/${saveId}/players/${row.playerId}`}
-      className="block rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 transition hover:border-zinc-600 hover:bg-zinc-900/80"
+      className="block rounded-xl border border-line bg-surface-base/60 p-4 transition hover:border-disabled hover:bg-surface-raised/80"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-zinc-100">
+          <div className="text-sm font-semibold text-ink">
             {row.firstName} {row.lastName}
           </div>
-          <div className="mt-0.5 text-sm text-zinc-500">
-            {row.position} · OVR {row.overall}
-            {row.activeInjuryCount > 1
-              ? ` · ${row.activeInjuryCount} active injuries`
-              : null}
+          <div className="mt-0.5 flex items-center gap-1.5 text-sm text-faint">
+            <span>{row.position}</span>
+            <OvrBadge overall={row.overall} size="sm" />
+            {row.activeInjuryCount > 1 ? (
+              <span>{row.activeInjuryCount} active injuries</span>
+            ) : null}
           </div>
         </div>
         <StatusBadge label={row.statusLabel} tone={row.status} />
       </div>
 
-      <div className="mt-3 grid gap-2 text-sm text-zinc-400 sm:grid-cols-2">
+      <div className="mt-3 grid gap-2 text-sm text-muted sm:grid-cols-2">
         <div>
-          <div className="text-zinc-500">Injury</div>
-          <div className="text-zinc-200">
+          <div className="text-faint">Injury</div>
+          <div className="text-ink">
             {row.isLegacyUndisclosed ? "Undisclosed" : (row.injuryType ?? "—")}
             {row.bodyPart && row.bodyPart !== "unknown"
               ? ` (${row.bodyPart})`
@@ -117,37 +120,37 @@ function InjuryPlayerCard(props: { saveId: string; row: InjuryRowView }) {
           </div>
         </div>
         <div>
-          <div className="text-zinc-500">Severity</div>
-          <div className="capitalize text-zinc-200">{row.severity ?? "—"}</div>
+          <div className="text-faint">Severity</div>
+          <div className="capitalize text-ink">{row.severity ?? "—"}</div>
         </div>
         <div>
-          <div className="text-zinc-500">Recovery</div>
-          <div className="text-zinc-200">{recoveryPct}</div>
+          <div className="text-faint">Recovery</div>
+          <div className="text-ink">{recoveryPct}</div>
         </div>
         <div>
-          <div className="text-zinc-500">Expected return</div>
-          <div className="text-zinc-200">{formatReturn(row)}</div>
+          <div className="text-faint">Expected return</div>
+          <div className="text-ink">{formatReturn(row)}</div>
         </div>
         <div>
-          <div className="text-zinc-500">Game / Practice</div>
-          <div className="capitalize text-zinc-200">
+          <div className="text-faint">Game / Practice</div>
+          <div className="capitalize text-ink">
             {row.gameRestriction ?? "—"} / {row.practiceRestriction ?? "—"}
           </div>
         </div>
         <div>
-          <div className="text-zinc-500">Minutes</div>
-          <div className="tabular-nums text-zinc-200">
+          <div className="text-faint">Minutes</div>
+          <div className="tabular-nums text-ink">
             Rec {row.recommendedWorkloadMpg ?? "—"} / Max{" "}
             {row.maximumWorkloadMpg ?? "—"}
           </div>
         </div>
         <div className="sm:col-span-2">
-          <div className="text-zinc-500">Effects</div>
-          <div className="text-zinc-200">{effects}</div>
+          <div className="text-faint">Effects</div>
+          <div className="text-ink">{effects}</div>
         </div>
         <div className="sm:col-span-2">
-          <div className="text-zinc-500">Reinjury risk</div>
-          <div className="text-zinc-200">
+          <div className="text-faint">Reinjury risk</div>
+          <div className="text-ink">
             {row.reinjuryRisk != null
               ? `${Math.round(row.reinjuryRisk * 100)}%${
                   row.isHighReinjuryRisk ? " · elevated" : ""
@@ -157,8 +160,8 @@ function InjuryPlayerCard(props: { saveId: string; row: InjuryRowView }) {
         </div>
         {row.recentHistory.length > 0 ? (
           <div className="sm:col-span-2">
-            <div className="text-zinc-500">Recent history</div>
-            <ul className="mt-1 space-y-0.5 text-zinc-300">
+            <div className="text-faint">Recent history</div>
+            <ul className="mt-1 space-y-0.5 text-soft">
               {row.recentHistory.map((entry, index) => (
                 <li key={`${entry.injuredOn}-${index}`}>
                   {entry.type} ({entry.bodyPart}) · {entry.severity}
@@ -207,11 +210,12 @@ export function InjuryTable(props: {
           <button
             key={entry.id}
             type="button"
+            aria-pressed={filter === entry.id}
             onClick={() => setFilter(entry.id)}
-            className={`rounded-full border px-3 py-1 text-xs ${
+            className={`inline-flex min-h-11 items-center rounded-full border px-3 text-xs touch-manipulation ${focusRingClass} ${
               filter === entry.id
-                ? "border-team-ink bg-team/15 text-zinc-100"
-                : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500"
+                ? "border-team-ink bg-team/15 text-ink"
+                : "border-line-strong bg-surface-raised text-muted hover:border-faint"
             }`}
           >
             {entry.label}
@@ -223,7 +227,8 @@ export function InjuryTable(props: {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search player, injury, body part…"
-        className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
+        aria-label="Search injuries"
+        className={`min-h-11 w-full rounded-lg border border-line bg-surface-base px-3 text-sm text-ink placeholder:text-disabled ${focusRingClass}`}
       />
 
       <section>
@@ -244,9 +249,9 @@ export function InjuryTable(props: {
       </section>
 
       {props.report.historyRows.length > 0 ? (
-        <section className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+        <section className="rounded-xl border border-line bg-surface-base/40 p-4">
           <SectionHeading title="Recent injury history" className="mb-3" />
-          <ul className="space-y-1 text-sm text-zinc-400">
+          <ul className="space-y-1 text-sm text-muted">
             {props.report.historyRows.slice(0, 12).map((entry, index) => (
               <li key={`${entry.injuredOn}-${entry.type}-${index}`}>
                 {formatGameDate(entry.injuredOn)}: {entry.type} (

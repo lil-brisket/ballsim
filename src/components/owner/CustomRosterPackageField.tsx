@@ -58,12 +58,12 @@ export function CustomRosterPackageField(props: {
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm text-zinc-300">
+      <label className="block text-sm text-soft">
         Custom roster package
         <input
           type="file"
           accept="application/json,.json"
-          className="mt-2 block w-full text-sm text-zinc-400 file:mr-3 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-900 file:min-h-11 file:px-3 file:py-1.5 file:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+          className="mt-2 block w-full text-sm text-muted file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-surface-raised file:min-h-11 file:px-3 file:py-1.5 file:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
           onChange={(event) => {
             const file = event.target.files?.[0];
             setReadError(false);
@@ -87,9 +87,9 @@ export function CustomRosterPackageField(props: {
         />
       </label>
       {fileName ? (
-        <p className="text-sm text-zinc-500">Selected: {fileName}</p>
+        <p className="text-sm text-faint">Selected: {fileName}</p>
       ) : (
-        <p className="text-sm text-zinc-500">Upload a JSON roster package.</p>
+        <p className="text-sm text-faint">Upload a JSON roster package.</p>
       )}
       {readError ? (
         <ErrorState message="Could not read the file. Choose a JSON file and try again." />
@@ -103,8 +103,8 @@ export function CustomRosterPackageField(props: {
         />
       ) : null}
       {preview && !invalidJson ? (
-        <div className="space-y-2 rounded-md border border-zinc-800 bg-zinc-950/60 p-3 text-sm">
-          <p className="text-zinc-200">
+        <div className="space-y-2 rounded-md border border-line bg-surface-base/60 p-3 text-sm">
+          <p className="text-ink">
             {teamCount} teams · {playerCount} players
           </p>
           <div className="flex flex-wrap gap-2">
@@ -127,11 +127,11 @@ export function CustomRosterPackageField(props: {
             </ul>
           ) : null}
           {preview.warnings.length > 0 ? (
-            <details className="text-zinc-200">
+            <details className="text-ink">
               <summary className="cursor-pointer text-sm">
                 Show {preview.warnings.length} warnings
               </summary>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-200">
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink">
                 {preview.warnings.map((entry, index) => (
                   <li key={`${entry.path}:${entry.code}:${index}`}>
                     {entry.path}: {entry.message}

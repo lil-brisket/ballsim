@@ -22,7 +22,7 @@ function byId(id: string): TimelinePostView {
 describe("media showcase page", () => {
   it("renders one article per sample post inside a feed, plus 3 heroes and 3 compact", () => {
     render(<MediaShowcasePage />);
-    const feed = screen.getByRole("feed");
+    const feed = screen.getByRole("region", { name: "League timeline" });
     expect(within(feed).getAllByRole("article")).toHaveLength(
       SHOWCASE_POSTS.length,
     );
@@ -62,7 +62,9 @@ describe("media showcase page", () => {
 
   it("renders a recognisable marker for each attachment type", () => {
     render(<MediaShowcasePage />);
-    const feed = within(screen.getByRole("feed"));
+    const feed = within(
+      screen.getByRole("region", { name: "League timeline" }),
+    );
     // game: line score and series state
     expect(feed.getAllByText("2OT").length).toBeGreaterThan(0);
     expect(feed.getByText("HAR leads 3–2")).toBeTruthy();

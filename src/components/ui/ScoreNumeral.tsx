@@ -12,12 +12,12 @@ const SIZE: Record<ScoreNumeralSize, string> = {
 };
 
 const TONE: Record<ScoreNumeralTone, string> = {
-  default: "text-zinc-50",
+  default: "text-ink",
   team: "text-team-ink",
   tier: "text-tier",
   win: "text-win",
   loss: "text-loss",
-  muted: "text-zinc-500",
+  muted: "text-faint",
 };
 
 /**
@@ -37,7 +37,7 @@ export function ScoreNumeral(props: {
   const size = props.size ?? "md";
   const align = props.align ?? "start";
   const label = props.label ? (
-    <span className="text-sm text-zinc-400">{props.label}</span>
+    <span className="text-sm text-muted">{props.label}</span>
   ) : null;
   return (
     <div

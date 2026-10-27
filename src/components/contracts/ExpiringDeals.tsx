@@ -28,7 +28,7 @@ export function ExpiringDeals(props: {
 
   return (
     <Section title="Expiring deals">
-      <ul className="divide-y divide-zinc-800 rounded-md border border-zinc-800">
+      <ul className="divide-y divide-line rounded-md border border-line">
         {rows.map((row) => {
           const extension = row.extension!;
           return (
@@ -40,7 +40,7 @@ export function ExpiringDeals(props: {
                 <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
                   {row.playerName}
                 </PlayerEntityLink>
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-muted">
                   <MoneyDisplay amount={extension.currentSalary} /> a season ·{" "}
                   {seasonsLeftLabel(extension.seasonsLeft)}
                 </p>

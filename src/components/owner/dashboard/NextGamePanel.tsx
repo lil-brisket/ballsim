@@ -60,7 +60,7 @@ export function NextGamePanel(props: {
           panelClass,
           "px-4 py-4",
           props.isFocal &&
-            "border-team-ink/50 bg-zinc-900/80 shadow-[0_0_0_1px_rgb(var(--team-ink-rgb)/0.12)]",
+            "border-team-ink/50 bg-surface-raised/80 shadow-[0_0_0_1px_rgb(var(--team-ink-rgb)/0.12)]",
         )}
       >
         {!nextGame ? (
@@ -68,19 +68,19 @@ export function NextGamePanel(props: {
         ) : (
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted">
                 {formatGameDate(nextGame.date, { weekday: true })}
               </p>
               <p
                 className={cn(
-                  "mt-1 inline-flex items-center gap-2 text-zinc-50",
+                  "mt-1 inline-flex items-center gap-2 text-ink",
                   props.isFocal ? "text-xl" : "text-lg",
                 )}
               >
                 <span>{nextGame.home ? "vs" : "@"}</span>
                 {nextGame.opponentBranding ? (
                   <span
-                    className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded border border-zinc-700"
+                    className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded border border-line-strong"
                     style={{
                       backgroundColor: nextGame.opponentBranding.primaryColor,
                     }}
@@ -96,14 +96,14 @@ export function NextGamePanel(props: {
                   saveId={props.saveId}
                   teamId={nextGame.opponentTeamId}
                   className={cn(
-                    "font-medium text-zinc-50 hover:text-team-ink",
+                    "font-medium text-ink hover:text-team-ink",
                     focusRingClass,
                   )}
                 >
                   {nextGame.opponentName}
                 </TeamEntityLink>
               </p>
-              <p className="mt-1 text-sm text-zinc-400">
+              <p className="mt-1 text-sm text-muted">
                 You {props.teamRecord}
                 {props.recentForm.streak
                   ? ` · Form ${props.recentForm.marks} (${props.recentForm.streak})`

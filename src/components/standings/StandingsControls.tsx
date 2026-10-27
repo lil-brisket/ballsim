@@ -8,7 +8,12 @@ import {
   type StandingsStatsMode,
   type StandingsViewMode,
 } from "@/state/standings-page-params";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 
 const VIEW_LABELS: Record<StandingsViewMode, string> = {
   overall: "Overall",
@@ -20,16 +25,6 @@ const STATS_LABELS: Record<StandingsStatsMode, string> = {
   standard: "Standard",
   advanced: "Advanced",
 };
-
-function pillClass(active: boolean): string {
-  return cn(
-    "rounded-full border px-3 py-1 text-sm",
-    active
-      ? "border-team-ink text-team-ink"
-      : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
-    focusRingClass,
-  );
-}
 
 export function StandingsControls(props: {
   saveId: string;
@@ -50,56 +45,40 @@ export function StandingsControls(props: {
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-4">
-      <nav
-        className="flex flex-wrap items-center gap-2"
-        aria-label="Standings view"
-      >
-        <span className="text-sm text-zinc-400">View</span>
-        {viewModes.map((mode) => {
-          const active = props.view === mode;
-          return (
-            <Link
-              key={mode}
-              href={buildStandingsHref({
-                pathname,
-                currentSearch,
-                view: mode,
-                stats: props.stats,
-              })}
-              className={pillClass(active)}
-              aria-current={active ? "page" : undefined}
-              data-testid={`standings-view-${mode}`}
-            >
-              {VIEW_LABELS[mode]}
-            </Link>
-          );
-        })}
-      </nav>
-      <nav
-        className="flex flex-wrap items-center gap-2"
-        aria-label="Standings stats"
-      >
-        <span className="text-sm text-zinc-400">Stats</span>
-        {STANDINGS_STATS_MODES.map((mode) => {
-          const active = props.stats === mode;
-          return (
-            <Link
-              key={mode}
-              href={buildStandingsHref({
-                pathname,
-                currentSearch,
-                view: props.view,
-                stats: mode,
-              })}
-              className={pillClass(active)}
-              aria-current={active ? "page" : undefined}
-              data-testid={`standings-stats-${mode}`}
-            >
-              {STATS_LABELS[mode]}
-            </Link>
-          );
-        })}
-      </nav>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-muted">View</span>
+        <ViewSwitch
+          aria-label="Standings view"
+          activeKey={props.view}
+          items={viewModes.map((mode) => ({
+            key: mode,
+            label: VIEW_LABELS[mode],
+            href: buildStandingsHref({
+              pathname,
+              currentSearch,
+              view: mode,
+              stats: props.stats,
+            }),
+          }))}
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-muted">Stats</span>
+        <ViewSwitch
+          aria-label="Standings stats"
+          activeKey={props.stats}
+          items={STANDINGS_STATS_MODES.map((mode) => ({
+            key: mode,
+            label: STATS_LABELS[mode],
+            href: buildStandingsHref({
+              pathname,
+              currentSearch,
+              view: props.view,
+              stats: mode,
+            }),
+          }))}
+        />
+      </div>
       {isDefault ? null : (
         <Link
           href={buildStandingsHref({
@@ -109,7 +88,8 @@ export function StandingsControls(props: {
             stats: DEFAULT_STANDINGS_STATS,
           })}
           className={cn(
-            "text-sm text-zinc-400 hover:text-team-ink",
+            touchTargetTextClass,
+            "text-sm text-muted hover:text-team-ink",
             focusRingClass,
           )}
           data-testid="standings-reset"

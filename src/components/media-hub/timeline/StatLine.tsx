@@ -15,7 +15,7 @@ export function StatLine(props: {
       <dl className="flex gap-6">
         {props.primary.map((stat) => (
           <div key={stat.label} className="flex flex-col-reverse">
-            <dt className="text-sm text-zinc-400">{stat.label}</dt>
+            <dt className="text-sm text-muted">{stat.label}</dt>
             <dd
               className={cn(
                 "font-display font-extrabold tabular-nums",
@@ -24,7 +24,7 @@ export function StatLine(props: {
                   ? "text-win"
                   : stat.tone === "loss"
                     ? "text-loss"
-                    : "text-zinc-50",
+                    : "text-ink",
               )}
             >
               {stat.value}
@@ -36,8 +36,8 @@ export function StatLine(props: {
         <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
           {props.secondary.map((stat) => (
             <div key={stat.label} className="flex gap-1.5">
-              <dt className="text-zinc-400">{stat.label}</dt>
-              <dd className="tabular-nums text-zinc-200">{stat.value}</dd>
+              <dt className="text-muted">{stat.label}</dt>
+              <dd className="tabular-nums text-ink">{stat.value}</dd>
             </div>
           ))}
         </dl>

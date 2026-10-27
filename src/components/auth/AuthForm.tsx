@@ -9,7 +9,7 @@ import {
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 const inputClass = cn(
-  "min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100",
+  "min-h-11 w-full rounded-md border border-line-strong bg-surface-base px-3 py-2 text-sm text-ink",
   focusRingClass,
 );
 
@@ -38,7 +38,7 @@ export function AuthForm({ mode, action, next, error }: AuthFormProps) {
           title={signup ? "Create an account" : "Sign in"}
         />
         {signup ? (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             Accounts are only needed for online leagues.
           </p>
         ) : null}
@@ -56,7 +56,7 @@ export function AuthForm({ mode, action, next, error }: AuthFormProps) {
       <form action={action} className={cn(panelClass, "space-y-4 p-5")}>
         <input type="hidden" name="next" value={next} />
         <div className="space-y-1">
-          <label className="block text-sm text-zinc-300" htmlFor="username">
+          <label className="block text-sm text-soft" htmlFor="username">
             Username
           </label>
           <input
@@ -71,13 +71,13 @@ export function AuthForm({ mode, action, next, error }: AuthFormProps) {
             className={inputClass}
           />
           {signup ? (
-            <p id="username-hint" className="text-sm text-zinc-400">
+            <p id="username-hint" className="text-sm text-muted">
               3 to 24 characters: letters, numbers, hyphens and underscores.
             </p>
           ) : null}
         </div>
         <div className="space-y-1">
-          <label className="block text-sm text-zinc-300" htmlFor="password">
+          <label className="block text-sm text-soft" htmlFor="password">
             Password
           </label>
           <input
@@ -92,7 +92,7 @@ export function AuthForm({ mode, action, next, error }: AuthFormProps) {
             className={inputClass}
           />
           {signup ? (
-            <p id="password-hint" className="text-sm text-zinc-400">
+            <p id="password-hint" className="text-sm text-muted">
               At least 8 characters.
             </p>
           ) : null}
@@ -102,7 +102,7 @@ export function AuthForm({ mode, action, next, error }: AuthFormProps) {
         </button>
       </form>
 
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-muted">
         {signup ? "Already have an account? " : "New here? "}
         <Link href={otherHref} className={cn(linkClass, "underline")}>
           {signup ? "Sign in" : "Create an account"}

@@ -5,7 +5,7 @@ import { ContractSummary } from "@/components/owner/ContractSummary";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PlayerActionMenu } from "@/components/roster/PlayerActionMenu";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
-import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 import {
   cn,
   focusRingClass,
@@ -59,33 +59,25 @@ export function RosterCard(props: {
               playerId={player.playerId}
               className={cn(
                 touchTargetTextClass,
-                "block max-w-full whitespace-normal rounded px-0 text-left font-display text-xl font-bold uppercase leading-tight tracking-wide text-zinc-50 hover:text-team-ink",
+                "block max-w-full whitespace-normal rounded px-0 text-left font-display text-xl font-bold uppercase leading-tight tracking-wide text-ink hover:text-team-ink",
                 focusRingClass,
               )}
             >
               {name}
             </PlayerEntityLink>
-            <p className="text-sm text-zinc-300">
+            <p className="text-sm text-soft">
               {player.position} · Age {player.age}
             </p>
-            <p className="mt-0.5 text-sm text-zinc-400">
+            <p className="mt-0.5 text-sm text-muted">
               {player.roleDisplayLabel}
               {player.depthSlot ? (
-                <span className="ml-1 text-sm text-zinc-500">
+                <span className="ml-1 text-sm text-faint">
                   ({player.depthSlot})
                 </span>
               ) : null}
             </p>
           </div>
-          <ScoreNumeral
-            value={player.overall}
-            label="OVR"
-            labelBelow
-            size="lg"
-            tone="tier"
-            align="end"
-            className="shrink-0"
-          />
+          <OvrBadge overall={player.overall} size="lg" />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

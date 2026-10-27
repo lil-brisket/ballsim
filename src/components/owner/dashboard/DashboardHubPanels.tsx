@@ -31,7 +31,7 @@ export function NextImportantEventPanel(props: {
       }
     >
       {!event ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-4">
+        <div className="rounded-xl border border-line bg-surface-raised/50 px-4 py-4">
           <EmptyState message="No high-importance events on the horizon." />
         </div>
       ) : (

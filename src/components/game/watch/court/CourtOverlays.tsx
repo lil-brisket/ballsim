@@ -19,7 +19,7 @@ export function CourtCallout(props: {
   return (
     <div
       className={cn(
-        "court-callout pointer-events-none absolute z-30 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-sm font-medium text-zinc-50",
+        "court-callout pointer-events-none absolute z-30 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-sm font-medium text-ink",
         props.accent && "px-3 py-1.5 font-bold uppercase tracking-wide",
       )}
       style={{
@@ -50,7 +50,7 @@ export function CourtWhistle(props: {
   return (
     <div
       aria-hidden="true"
-      className="court-whistle pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-full rounded-full bg-black/80 px-1.5 py-0.5 text-sm leading-none text-zinc-50"
+      className="court-whistle pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-full rounded-full bg-black/80 px-1.5 py-0.5 text-sm leading-none text-ink"
       style={{
         left: pct(props.at.x),
         top: `calc(${pct(props.at.y)} - 10px)`,
@@ -71,7 +71,7 @@ export function CourtWhistle(props: {
 export function CourtPeriodCard(props: { text: string }) {
   return (
     <div
-      className="court-period-card pointer-events-none absolute left-1/2 top-1/2 z-40 max-w-[90%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/80 px-3 py-1.5 text-sm font-medium text-zinc-50"
+      className="court-period-card pointer-events-none absolute left-1/2 top-1/2 z-40 max-w-[90%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/80 px-3 py-1.5 text-sm font-medium text-ink"
       data-testid="court-period-card"
     >
       {props.text}

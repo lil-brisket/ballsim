@@ -114,7 +114,7 @@ export function PerformanceAttachmentCard(props: {
             {chips.map((chip) => (
               <li
                 key={chip}
-                className="rounded-full bg-zinc-800 px-3 py-0.5 text-sm text-zinc-200"
+                className="rounded-full bg-surface-high px-3 py-0.5 text-sm text-ink"
               >
                 {chip}
               </li>

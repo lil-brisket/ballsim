@@ -10,7 +10,7 @@ export function DraftSettingsPanel(props: {
   draft: FantasyDraftView;
 }) {
   return (
-    <section className="rounded-xl border border-zinc-800 p-4">
+    <section className="rounded-xl border border-line p-4">
       <SectionHeading title="Draft settings" className="mb-2" />
       <form action={updateFantasyDraftSettingsAction} className="text-sm">
         <input type="hidden" name="saveId" value={props.saveId} />

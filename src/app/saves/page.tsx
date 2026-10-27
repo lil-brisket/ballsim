@@ -38,7 +38,7 @@ export default async function SavesPage({ searchParams }: SavesPageProps) {
       <header className="space-y-2">
         <Link
           href={backHref}
-          className="inline-flex min-h-11 items-center text-sm text-zinc-300 hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+          className="inline-flex min-h-11 items-center text-sm text-soft hover:text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
         >
           {backLabel}
         </Link>
@@ -48,7 +48,7 @@ export default async function SavesPage({ searchParams }: SavesPageProps) {
           eyebrow="Saves"
           title={modeFilter === "owner" ? "Load Owner Save" : "Load Game"}
         />
-        <p className="text-zinc-300">
+        <p className="text-soft">
           Open an existing save or delete one to free a slot (
           {allPreviews.length}/{MAX_OWNER_SAVE_SLOTS}).
         </p>
@@ -62,14 +62,14 @@ export default async function SavesPage({ searchParams }: SavesPageProps) {
         encType="multipart/form-data"
         className="flex flex-col gap-3 sm:flex-row sm:items-end"
       >
-        <label className="block flex-1 text-sm text-zinc-300">
+        <label className="block flex-1 text-sm text-soft">
           Import a save file
           <input
             type="file"
             name="saveFile"
             required
             accept="application/json,.json"
-            className="mt-2 block w-full text-sm text-zinc-400 file:mr-3 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-900 file:min-h-11 file:px-3 file:py-1.5 file:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
+            className="mt-2 block w-full text-sm text-muted file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-surface-raised file:min-h-11 file:px-3 file:py-1.5 file:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
           />
         </label>
         <button type="submit" className={buttonClass()}>

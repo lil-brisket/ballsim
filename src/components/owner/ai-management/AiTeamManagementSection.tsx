@@ -44,7 +44,7 @@ export function AiTeamManagementSection({
   return (
     <div className="@container space-y-4">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-zinc-300">
+        <span className="text-sm text-soft">
           What would you like the AI to handle for you?
         </span>
         <InfoTip label="AI Team Management" align="start">
@@ -53,7 +53,7 @@ export function AiTeamManagementSection({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium text-zinc-200">
+        <p className="text-sm font-medium text-ink">
           {delegatedCount} of {total} delegated
         </p>
         <div className="flex gap-2">

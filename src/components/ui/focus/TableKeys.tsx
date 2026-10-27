@@ -1,0 +1,140 @@
+"use client";
+
+import { useRef } from "react";
+import { useOverflowFocusable } from "@/components/ui/focus/use-overflow-focusable";
+import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  nextRowControlIndex,
+  nextSortIndex,
+  ROW_CONTROL_SELECTOR,
+} from "@/components/ui/focus/table-keys";
+import { playUiSound } from "@/components/ui/sound/ui-sound";
+
+/** Class for wrapped tables that don't style the focused row themselves. */
+/**
+ * Links and buttons placed directly in a body cell (player/team/staff names,
+ * row actions) get a 44px hit area that reaches into the cell's py-2 padding,
+ * so rows keep their height. Shared by DataTable and custom tables.
+ */
+export const tableCellTargetClass =
+  "[&_tbody_td>a]:-my-2 [&_tbody_td>a]:inline-flex [&_tbody_td>a]:min-h-11 [&_tbody_td>a]:items-center [&_tbody_td>button]:-my-2 [&_tbody_td>button]:inline-flex [&_tbody_td>button]:min-h-11 [&_tbody_td>button]:items-center";
+
+export const tableRowFocusClass = `[&_tbody_tr:focus-within]:bg-surface-high ${tableCellTargetClass}`;
+
+const SORT_CONTROL_SELECTOR = "a[href], button:not([disabled])";
+
+function controlsIn(row: Element): HTMLElement[] {
+  return Array.from(row.querySelectorAll<HTMLElement>(ROW_CONTROL_SELECTOR));
+}
+
+function sortHeaders(table: HTMLTableElement): HTMLElement[] {
+  const found: HTMLElement[] = [];
+  table.querySelectorAll("thead th[aria-sort]").forEach((th) => {
+    const control = th.querySelector<HTMLElement>(SORT_CONTROL_SELECTOR);
+    if (control) found.push(control);
+  });
+  return found;
+}
+
+function sortedIndex(table: HTMLTableElement, count: number): number {
+  const ths = Array.from(table.querySelectorAll("thead th[aria-sort]")).filter(
+    (th) => th.querySelector(SORT_CONTROL_SELECTOR),
+  );
+  const index = ths.findIndex((th) => {
+    const value = th.getAttribute("aria-sort");
+    return value === "ascending" || value === "descending";
+  });
+  return index >= count ? -1 : index;
+}
+
+/**
+ * Arrow-key movement for a data table: Up/Down step between rows (same
+ * column control), Down from a sort header enters the first row, Left/Right
+ * activate the neighbouring sortable header. Adds to Tab, never replaces it;
+ * Enter stays the focused link/button's own behaviour.
+ */
+export function TableKeys(props: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  /** Names the region when it scrolls and so becomes focusable. */
+  "aria-label"?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  // A wide table scrolls sideways; let keyboard users reach and scroll it.
+  useOverflowFocusable(ref);
+  function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    const { key } = event;
+    const vertical = key === "ArrowDown" || key === "ArrowUp";
+    const horizontal = key === "ArrowLeft" || key === "ArrowRight";
+    if (!vertical && !horizontal) return;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    const target = event.target as HTMLElement;
+    if (
+      target.isContentEditable ||
+      ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)
+    ) {
+      return;
+    }
+    const table = target.closest("table");
+    if (!table || !event.currentTarget.contains(table)) return;
+    const row = target.closest("tr");
+    if (!row) return;
+    const inBody = row.parentElement?.tagName === "TBODY";
+    const inHead = row.parentElement?.tagName === "THEAD";
+    const rows = Array.from(
+      table.querySelectorAll<HTMLTableRowElement>(":scope > tbody > tr"),
+    );
+
+    if (vertical) {
+      const step = key === "ArrowDown" ? 1 : -1;
+      if (inHead) {
+        if (step !== 1) return;
+        const first = rows.find((r) => controlsIn(r).length > 0);
+        const control = first ? controlsIn(first)[0] : undefined;
+        if (!control) return;
+        event.preventDefault();
+        control.focus();
+        if (document.activeElement === control) playUiSound("move");
+        return;
+      }
+      if (!inBody) return;
+      const rowIndex = rows.indexOf(row as HTMLTableRowElement);
+      const controls = controlsIn(row);
+      const controlIndex = Math.max(0, controls.indexOf(target));
+      const counts = rows.map((r) => controlsIn(r).length);
+      const next = nextRowControlIndex(counts, rowIndex, controlIndex, step);
+      if (!next) return;
+      const destination = controlsIn(rows[next.row]!)[next.control];
+      if (!destination) return;
+      event.preventDefault();
+      destination.focus();
+      if (document.activeElement === destination) playUiSound("move");
+      return;
+    }
+
+    if (!inBody) return;
+    const headers = sortHeaders(table);
+    if (headers.length === 0) return;
+    const step = key === "ArrowRight" ? 1 : -1;
+    const next = nextSortIndex(
+      headers.length,
+      sortedIndex(table, headers.length),
+      step,
+    );
+    event.preventDefault();
+    if (next !== null) headers[next]!.click();
+  }
+
+  return (
+    <div
+      ref={ref}
+      aria-label={props["aria-label"]}
+      className={cn(focusRingClass, props.className)}
+      style={props.style}
+      onKeyDown={onKeyDown}
+    >
+      {props.children}
+    </div>
+  );
+}

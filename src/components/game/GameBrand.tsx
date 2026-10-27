@@ -48,14 +48,14 @@ export function GameBrand(props: GameBrandProps) {
       />
       <div className={splash ? "text-center" : ""}>
         <h1
-          className={`font-display font-extrabold uppercase leading-none tracking-wide text-zinc-50 ${
+          className={`font-display font-extrabold uppercase leading-none tracking-wide text-ink ${
             splash ? "text-6xl sm:text-8xl" : "text-4xl sm:text-5xl"
           }`}
         >
           BallSim
         </h1>
         <p
-          className={`mt-2 font-display font-semibold uppercase tracking-[0.25em] text-zinc-300 ${
+          className={`mt-2 font-display font-semibold uppercase tracking-[0.25em] text-soft ${
             splash ? "text-lg sm:text-xl" : "text-sm sm:text-base"
           }`}
         >

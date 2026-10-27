@@ -26,7 +26,7 @@ export function TeamHubHeader(props: { hub: TeamHubView }) {
       className="space-y-2"
     >
       <SectionHeading as="h1" size="lg" title="Team Hub" />
-      <p className="text-sm text-zinc-300">{context.join(" · ")}</p>
+      <p className="text-sm text-soft">{context.join(" · ")}</p>
       {hub.retiredNumbers.length > 0 ? (
         <ul className="flex flex-wrap gap-2" aria-label="Retired numbers">
           {hub.retiredNumbers.map((entry) => (

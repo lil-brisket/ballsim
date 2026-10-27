@@ -27,18 +27,21 @@ export function PlayerHistorySearch(props: {
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm text-zinc-400">
+      <label className="block text-sm text-muted">
         Search players
         <input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search player..."
-          className="mt-1 block w-full max-w-md rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-zinc-100"
+          className={cn(
+            "mt-1 block min-h-11 w-full max-w-md rounded-md border border-line-strong bg-surface-raised px-3 text-ink",
+            focusRingClass,
+          )}
         />
       </label>
       {visible.length === 0 ? (
-        <p className="text-sm text-zinc-500">No players match “{query}”.</p>
+        <p className="text-sm text-faint">No players match “{query}”.</p>
       ) : (
         <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((entry) => (
@@ -49,14 +52,14 @@ export function PlayerHistorySearch(props: {
                   player: entry.playerId,
                 })}
                 className={cn(
-                  "flex items-baseline justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-zinc-900",
+                  "flex min-h-11 items-center justify-between gap-2 rounded-md px-2 text-sm hover:bg-surface-raised",
                   focusRingClass,
                   entry.playerId === props.selectedPlayerId &&
                     "bg-team/15 text-team-ink",
                 )}
               >
-                <span className="text-zinc-100">{entry.displayName}</span>
-                <span className="text-sm text-zinc-500">
+                <span className="text-ink">{entry.displayName}</span>
+                <span className="text-sm text-faint">
                   {entry.retired ? "Retired · " : ""}
                   {entry.seasonsPlayed}{" "}
                   {entry.seasonsPlayed === 1 ? "season" : "seasons"}
@@ -67,7 +70,7 @@ export function PlayerHistorySearch(props: {
         </ul>
       )}
       {matches.length > RESULT_LIMIT ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           Showing {RESULT_LIMIT} of {matches.length}. Refine your search.
         </p>
       ) : null}

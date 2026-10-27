@@ -1,3 +1,8 @@
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { buttonClass } from "@/components/ui/Button";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -19,10 +24,10 @@ import { PlayerGameLog } from "@/components/player-profile/PlayerGameLog";
 import { PlayerOverview } from "@/components/player-profile/PlayerOverview";
 import { PlayerAttributeTrends } from "@/components/player-profile/PlayerAttributeTrends";
 import {
-  PlayerProfileNav,
+  PlayerProfileViews,
   resolvePlayerProfileTab,
   type PlayerProfileTab,
-} from "@/components/player-profile/PlayerProfileNav";
+} from "@/components/player-profile/PlayerProfileViews";
 import { PlayerProfileSummary } from "@/components/player-profile/PlayerProfileSummary";
 import { DevelopmentTab } from "@/components/basketball/player-card/DevelopmentTab";
 import { StatisticsTab } from "@/components/basketball/player-card/StatisticsTab";
@@ -81,7 +86,11 @@ export default async function PlayerDetailPage({
         actions={
           <Link
             href={`/dashboard/${saveId}/roster`}
-            className="text-sm text-zinc-400 hover:text-team-ink"
+            className={cn(
+              touchTargetTextClass,
+              "text-sm text-muted hover:text-team-ink",
+              focusRingClass,
+            )}
           >
             ← Roster
           </Link>
@@ -109,7 +118,7 @@ export default async function PlayerDetailPage({
           availabilityStatus={player.injuryKind}
         />
         <PlayerProfileSummary player={player} />
-        <PlayerProfileNav
+        <PlayerProfileViews
           saveId={saveId}
           playerId={playerId}
           activeTab={activeTab}

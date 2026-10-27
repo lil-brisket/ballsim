@@ -8,6 +8,7 @@ import {
   declineOwnerDecisionAction,
   proposePlayerTradeAction,
 } from "@/application/actions";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export type TradeBuilderPlayer = {
   id: string;
@@ -97,7 +98,7 @@ export function PlayerTradeBuilder(props: Props) {
         <input type="hidden" name="returnPath" value={returnPath} />
         <input type="hidden" name="proposalJson" value={proposalJson} />
 
-        <label className="flex flex-col gap-1 text-zinc-300">
+        <label className="flex flex-col gap-1 text-soft">
           Trade with
           <Select
             value={targetId}
@@ -147,20 +148,20 @@ export function PlayerTradeBuilder(props: Props) {
       <section aria-labelledby="sent-offers-heading" className="space-y-2">
         <SectionHeading id="sent-offers-heading" title="Sent offers" />
         {sentOffers.length === 0 ? (
-          <p className="text-zinc-500">No offers waiting on another player.</p>
+          <p className="text-faint">No offers waiting on another player.</p>
         ) : (
           <ul className="space-y-2">
             {sentOffers.map((offer) => (
               <li
                 key={offer.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-zinc-700 px-3 py-2"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line-strong px-3 py-2"
               >
                 <div>
-                  <p className="text-zinc-50">To {offer.toLabel}</p>
-                  <p className="text-zinc-400">
+                  <p className="text-ink">To {offer.toLabel}</p>
+                  <p className="text-muted">
                     You send: {offer.sends.join(", ") || "nothing"}
                   </p>
-                  <p className="text-zinc-400">
+                  <p className="text-muted">
                     You receive: {offer.receives.join(", ") || "nothing"}
                   </p>
                 </div>
@@ -170,7 +171,7 @@ export function PlayerTradeBuilder(props: Props) {
                   <input type="hidden" name="returnPath" value={returnPath} />
                   <button
                     type="submit"
-                    className="rounded-md border border-zinc-600 px-3 py-1.5 hover:border-zinc-400"
+                    className="rounded-md border border-disabled px-3 py-1.5 hover:border-muted"
                   >
                     Withdraw
                   </button>
@@ -195,24 +196,26 @@ function AssetColumn(props: {
   onPick: (id: string) => void;
 }) {
   return (
-    <fieldset className="rounded-md border border-zinc-700 px-4 py-3">
-      <legend className="px-1 text-zinc-50">{props.title}</legend>
+    <fieldset className="rounded-md border border-line-strong px-4 py-3">
+      <legend className="px-1 text-ink">{props.title}</legend>
       <div className="mt-2 space-y-1">
         {props.players.map((p) => (
-          <label key={p.id} className="flex items-center gap-2 text-zinc-300">
+          <label key={p.id} className="flex items-center gap-2 text-soft">
             <input
               type="checkbox"
               aria-label={`${props.verb} ${p.name}`}
               checked={props.selectedPlayers.includes(p.id)}
               onChange={() => props.onPlayer(p.id)}
             />
-            <span>
-              {p.name} ({p.position}) OVR {p.overall} · Age {p.age}
+            <span className="flex items-center gap-1.5">
+              {p.name} ({p.position})
+              <OvrBadge overall={p.overall} size="sm" />
+              <span>· Age {p.age}</span>
             </span>
           </label>
         ))}
         {props.picks.map((k) => (
-          <label key={k.id} className="flex items-center gap-2 text-zinc-300">
+          <label key={k.id} className="flex items-center gap-2 text-soft">
             <input
               type="checkbox"
               aria-label={`${props.verb} ${k.label}`}
@@ -223,7 +226,7 @@ function AssetColumn(props: {
           </label>
         ))}
         {props.players.length === 0 && props.picks.length === 0 ? (
-          <p className="text-zinc-500">No tradable assets</p>
+          <p className="text-faint">No tradable assets</p>
         ) : null}
       </div>
     </fieldset>

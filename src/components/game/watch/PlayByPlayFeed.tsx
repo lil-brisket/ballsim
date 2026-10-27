@@ -96,7 +96,7 @@ function HighlightBadges(props: { highlights: WatchHighlight[] }) {
 
 function PeriodSeparator(props: { label: string }) {
   return (
-    <li className="flex items-center gap-3 py-1 text-sm text-zinc-500">
+    <li className="flex items-center gap-3 py-1 text-sm text-faint">
       <span className="h-px flex-1 bg-surface-line" aria-hidden />
       <span>End of {props.label}</span>
       <span className="h-px flex-1 bg-surface-line" aria-hidden />
@@ -107,10 +107,10 @@ function PeriodSeparator(props: { label: string }) {
 function MomentText(props: { moment: KeyMoment }) {
   return (
     <span className="block">
-      <span className="block text-sm font-semibold text-zinc-50">
+      <span className="block text-sm font-semibold text-ink">
         {props.moment.title}
       </span>
-      <span className="block text-sm text-zinc-400">{props.moment.detail}</span>
+      <span className="block text-sm text-muted">{props.moment.detail}</span>
     </span>
   );
 }
@@ -162,7 +162,7 @@ export function PlayByPlayFeed(props: {
       items.push(
         <li
           key={`sub-${play.index}`}
-          className="flex items-baseline gap-3 px-3 py-1 text-sm text-zinc-500"
+          className="flex items-baseline gap-3 px-3 py-1 text-sm text-faint"
         >
           <span className="w-24 shrink-0 tabular-nums">
             {play.periodLabel} {play.clockLabel}
@@ -191,12 +191,12 @@ export function PlayByPlayFeed(props: {
             type="button"
             onClick={() => props.onJump(last.index + 1)}
             className={cn(
-              "flex min-h-11 w-full items-start gap-3 rounded-lg border border-l-4 px-3 py-2 text-left hover:border-zinc-600",
+              "flex min-h-11 w-full items-start gap-3 rounded-lg border border-l-4 px-3 py-2 text-left hover:border-disabled",
               rowMoments.length > 0
                 ? MOMENT_CLASS
                 : scoring
-                  ? "border-zinc-700 bg-zinc-900"
-                  : "border-transparent bg-zinc-900/40",
+                  ? "border-line-strong bg-surface-raised"
+                  : "border-transparent bg-surface-raised/40",
               focusRingClass,
             )}
             style={{
@@ -206,11 +206,11 @@ export function PlayByPlayFeed(props: {
             }}
           >
             <span className="block w-24 shrink-0 space-y-1">
-              <span className="block text-sm tabular-nums text-zinc-400">
+              <span className="block text-sm tabular-nums text-muted">
                 {play.periodLabel} {play.clockLabel}
               </span>
               <span
-                className="inline-block rounded border-l-4 bg-zinc-800 px-1.5 py-0.5 text-xs font-semibold uppercase text-zinc-200"
+                className="inline-block rounded border-l-4 bg-surface-high px-1.5 py-0.5 text-xs font-semibold uppercase text-ink"
                 style={{ borderLeftColor: team.branding.primaryColor }}
               >
                 {team.abbreviation}
@@ -231,9 +231,9 @@ export function PlayByPlayFeed(props: {
                   <span
                     className={cn(
                       "min-w-0 break-words text-sm",
-                      p.points > 0 && "font-semibold text-zinc-50",
+                      p.points > 0 && "font-semibold text-ink",
                       isFoul(p) && "text-warning",
-                      p.points === 0 && !isFoul(p) && "text-zinc-300",
+                      p.points === 0 && !isFoul(p) && "text-soft",
                     )}
                   >
                     {p.text}
@@ -242,19 +242,17 @@ export function PlayByPlayFeed(props: {
                 </span>
               ))}
             </span>
-            <span className="block shrink-0 text-right text-sm tabular-nums text-zinc-400">
+            <span className="block shrink-0 text-right text-sm tabular-nums text-muted">
               <span className="sr-only">Score </span>
-              <span className={cn(awayScoring && "font-semibold text-zinc-50")}>
+              <span className={cn(awayScoring && "font-semibold text-ink")}>
                 {view.away.abbreviation} {last.awayScore}
               </span>
               {" – "}
-              <span className={cn(homeScoring && "font-semibold text-zinc-50")}>
+              <span className={cn(homeScoring && "font-semibold text-ink")}>
                 {view.home.abbreviation} {last.homeScore}
               </span>
               {scoring ? (
-                <span className="ml-2 font-semibold text-zinc-50">
-                  +{points}
-                </span>
+                <span className="ml-2 font-semibold text-ink">+{points}</span>
               ) : null}
             </span>
           </button>
@@ -276,7 +274,7 @@ export function PlayByPlayFeed(props: {
     items.push(
       <li
         key="jump-ball"
-        className="flex items-baseline gap-3 px-3 py-1 text-sm text-zinc-500"
+        className="flex items-baseline gap-3 px-3 py-1 text-sm text-faint"
       >
         <span className="w-24 shrink-0 tabular-nums">
           Q1 {formatGameClock(START_PERIOD_CLOCK_SECONDS)}
@@ -289,9 +287,7 @@ export function PlayByPlayFeed(props: {
   return (
     <div className="min-w-0 space-y-3">
       {visible.length === 0 ? (
-        <p className="text-sm text-zinc-500">
-          Press Play to start the broadcast.
-        </p>
+        <p className="text-sm text-faint">Press Play to start the broadcast.</p>
       ) : null}
       <div
         aria-live="polite"

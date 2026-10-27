@@ -59,6 +59,55 @@ describe("style guard", () => {
   it("uses NumberStepper and Select instead of native number inputs and selects", () => {
     const outsideUi = (entry: (typeof FILES)[number]) => !entry.inUi;
     expect(offenders(/type=["']number["']/, outsideUi)).toEqual([]);
-    expect(offenders(/<select[\s>]/, outsideUi)).toEqual([]);
+    expect(offenders(/<select(\s|>|$)/, outsideUi)).toEqual([]);
+  });
+
+  it("uses surface and ink tokens instead of raw zinc classes", () => {
+    expect(
+      offenders(
+        /(^|[\s"'`:])[a-z-]+-zinc-\d{2,3}\b/,
+        ({ file }) => file.endsWith(".tsx") || file.endsWith(".ts"),
+      ),
+    ).toEqual([]);
+  });
+
+  it("uses ArenaPanel (quiet) instead of the removed Panel component", () => {
+    expect(offenders(/components\/ui\/Panel["']/)).toEqual([]);
+    expect(
+      offenders(/import \{[^}]*\bPanel\b[^}]*\} from "@\/components\/ui["']/),
+    ).toEqual([]);
+  });
+
+  it("renders player overalls through OvrBadge, not raw OVR text", () => {
+    // Staff ratings and scouted ranges are not known player overalls; team
+    // averages ("Avg OVR") are aggregates, not a player badge.
+    const allowed = /\/(staff|coaching|hiring|scouting)\/|Staff|Coaching/i;
+    expect(
+      offenders(
+        /(?<!Avg )OVR \{/,
+        ({ file, inUi }) =>
+          file.endsWith(".tsx") && !inUi && !allowed.test(file),
+      ),
+    ).toEqual([]);
+  });
+
+  it("has one navigation model: no sidebar and no page-level sub-navs", () => {
+    expect(offenders(/\bDesktopNavigation\b|\bNavGroups\b/)).toEqual([]);
+    expect(offenders(/\b[A-Z]\w*SubNav\b/)).toEqual([]);
+  });
+
+  it("uses link tabs only in the hub sub-tab row; page views use ViewSwitch", () => {
+    // A <Tabs>/<SlantTabs> whose items carry an href is navigation. Only the
+    // shell's SubTabBar (and the dev showcase) may render that; switching
+    // views of one page uses ViewSwitch, in-card tabs use onSelect.
+    const allowed = /components\/(ui|game\/shell)\/|app\/dev\//;
+    const hits = FILES.filter(
+      ({ file }) => file.endsWith(".tsx") && !allowed.test(file),
+    ).flatMap(({ file, text }) =>
+      Array.from(text.matchAll(/<(Slant)?Tabs\b[\s\S]*?\/>/g))
+        .filter((match) => /\bhref\s*:/.test(match[0]))
+        .map(() => file),
+    );
+    expect(hits).toEqual([]);
   });
 });

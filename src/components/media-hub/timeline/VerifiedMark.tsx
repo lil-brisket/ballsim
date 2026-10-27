@@ -8,7 +8,7 @@ export function VerifiedMark() {
         height={16}
         aria-hidden="true"
         focusable={false}
-        className="shrink-0 text-zinc-300"
+        className="shrink-0 text-soft"
       >
         <circle cx="12" cy="12" r="10" fill="currentColor" />
         <path

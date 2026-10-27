@@ -51,10 +51,10 @@ export function MultiTeamPhaseSwitcher(props: {
 function AttentionCounts(props: { team: PhaseTeamAttentionView }) {
   const { requiredCount, recommendedCount } = props.team;
   if (requiredCount === 0 && recommendedCount === 0) {
-    return <span className="text-sm text-zinc-500">✓</span>;
+    return <span className="text-sm text-faint">✓</span>;
   }
   return (
-    <span className="text-sm text-zinc-400">
+    <span className="text-sm text-muted">
       {requiredCount > 0 ? (
         <span className="text-red-400">{requiredCount} req</span>
       ) : null}

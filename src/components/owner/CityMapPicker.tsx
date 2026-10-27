@@ -102,7 +102,7 @@ export function CityMapPicker(props: {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <header className="flex shrink-0 items-baseline gap-3">
-        <p className="text-sm font-medium text-zinc-300">
+        <p className="text-sm font-medium text-soft">
           {LEAGUE_AREA_LABELS[props.area]}
         </p>
       </header>
@@ -116,12 +116,9 @@ export function CityMapPicker(props: {
           fill
         />
 
-        <aside className="flex min-h-[24rem] flex-1 flex-col gap-3 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-4 lg:h-full lg:min-h-0">
+        <aside className="flex min-h-[24rem] flex-1 flex-col gap-3 overflow-hidden rounded-lg border border-line bg-surface-raised/50 px-4 py-4 lg:h-full lg:min-h-0">
           <div className="space-y-2">
-            <label
-              className="block text-sm text-zinc-400"
-              htmlFor="city-search"
-            >
+            <label className="block text-sm text-muted" htmlFor="city-search">
               Search cities
             </label>
             <input
@@ -130,22 +127,16 @@ export function CityMapPicker(props: {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search cities..."
-              className={`min-h-[44px] w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 ${FOCUS_RING}`}
+              className={`min-h-[44px] w-full rounded-md border border-line-strong bg-surface-base px-3 py-2 text-sm text-ink placeholder:text-disabled ${FOCUS_RING}`}
             />
-            <p
-              role="status"
-              aria-live="polite"
-              className="text-sm text-zinc-400"
-            >
+            <p role="status" aria-live="polite" className="text-sm text-muted">
               {countLabel}
             </p>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="flex min-h-0 flex-1 flex-col items-start justify-center gap-3 rounded-lg border border-zinc-800 px-3 py-4">
-              <p className="text-sm text-zinc-400">
-                No cities match your search.
-              </p>
+            <div className="flex min-h-0 flex-1 flex-col items-start justify-center gap-3 rounded-lg border border-line px-3 py-4">
+              <p className="text-sm text-muted">No cities match your search.</p>
               <Button variant="secondary" onClick={() => setQuery("")}>
                 Clear search
               </Button>
@@ -153,7 +144,7 @@ export function CityMapPicker(props: {
           ) : (
             <ul
               aria-label="Cities"
-              className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded-lg border border-zinc-800"
+              className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded-lg border border-line"
             >
               {filtered.map((city) => {
                 const isSelected = city.city === selectedCity;
@@ -174,13 +165,13 @@ export function CityMapPicker(props: {
                       onClick={() => selectCity(city.city)}
                       className={`flex min-h-[44px] w-full items-center justify-between gap-3 border-l-4 px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-team-ink ${
                         isSelected
-                          ? "border-team-ink bg-team/20 text-zinc-100"
-                          : "border-transparent bg-zinc-900/40 text-zinc-200 hover:bg-zinc-800/80"
+                          ? "border-team-ink bg-team/20 text-ink"
+                          : "border-transparent bg-surface-raised/40 text-ink hover:bg-surface-high/80"
                       }`}
                     >
                       <span>
                         <span className="block font-medium">{city.city}</span>
-                        <span className="block text-sm text-zinc-500">
+                        <span className="block text-sm text-faint">
                           {city.locationLabel}
                         </span>
                       </span>
@@ -197,31 +188,27 @@ export function CityMapPicker(props: {
           )}
 
           {selected ? (
-            <div className="sticky bottom-0 z-10 shrink-0 space-y-3 border-t border-zinc-800 bg-zinc-900/95 pt-3">
+            <div className="sticky bottom-0 z-10 shrink-0 space-y-3 border-t border-line bg-surface-raised/95 pt-3">
               <section aria-labelledby="selected-market-heading">
                 <h2
                   id="selected-market-heading"
-                  className="text-sm font-medium text-zinc-300"
+                  className="text-sm font-medium text-soft"
                 >
                   Selected market
                 </h2>
-                <p className="text-lg font-medium text-zinc-100">
-                  {selected.city}
-                </p>
-                <p className="text-sm text-zinc-400">
-                  {selected.locationLabel}
-                </p>
-                <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 text-sm text-zinc-400">
-                  <dt className="text-zinc-500">League area</dt>
+                <p className="text-lg font-medium text-ink">{selected.city}</p>
+                <p className="text-sm text-muted">{selected.locationLabel}</p>
+                <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 text-sm text-muted">
+                  <dt className="text-faint">League area</dt>
                   <dd>{LEAGUE_AREA_LABELS[props.area]}</dd>
-                  <dt className="text-zinc-500">Coordinates</dt>
+                  <dt className="text-faint">Coordinates</dt>
                   <dd>{formatCoordinates(selected.lat, selected.lng)}</dd>
                 </dl>
-                <p className="mt-2 text-sm text-zinc-400">
+                <p className="mt-2 text-sm text-muted">
                   Your franchise relocates here. If another team already plays
                   in this city, it moves to your franchise&apos;s previous city.
                 </p>
-                <p className="mt-1 text-sm text-zinc-500">
+                <p className="mt-1 text-sm text-faint">
                   Market size and starting facilities are set by the league, not
                   by the city you choose.
                 </p>
@@ -233,7 +220,7 @@ export function CityMapPicker(props: {
               </form>
             </div>
           ) : (
-            <p className="shrink-0 text-sm text-zinc-500">
+            <p className="shrink-0 text-sm text-faint">
               Select a city on the map or from the list to continue.
             </p>
           )}

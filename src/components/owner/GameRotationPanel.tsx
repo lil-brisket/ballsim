@@ -20,16 +20,12 @@ export function GameRotationPanel(props: {
       </div>
       {props.rotation.substitutions.length > 0 ? (
         <div className="mt-6">
-          <h4 className="text-sm font-medium text-zinc-300">Substitutions</h4>
-          <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto text-sm text-zinc-500">
+          <h4 className="text-sm font-medium text-soft">Substitutions</h4>
+          <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto text-sm text-faint">
             {props.rotation.substitutions.map((entry, index) => (
               <li key={`${entry.clockLabel}-${index}`}>
-                <span className="font-mono text-zinc-400">
-                  {entry.clockLabel}
-                </span>{" "}
-                <span className="text-zinc-500/80">
-                  {entry.teamAbbreviation}
-                </span>{" "}
+                <span className="font-mono text-muted">{entry.clockLabel}</span>{" "}
+                <span className="text-faint/80">{entry.teamAbbreviation}</span>{" "}
                 {entry.detail}
               </li>
             ))}
@@ -46,13 +42,13 @@ function MinuteCompare(props: {
 }) {
   return (
     <div>
-      <h4 className="text-sm font-medium text-zinc-300">{props.title}</h4>
+      <h4 className="text-sm font-medium text-soft">{props.title}</h4>
       <ul className="mt-2 space-y-2 text-sm">
         {props.players.slice(0, 12).map((player) => (
-          <li key={player.playerId} className="border-b border-zinc-800 pb-2">
-            <div className="flex justify-between gap-2 text-zinc-200">
+          <li key={player.playerId} className="border-b border-line pb-2">
+            <div className="flex justify-between gap-2 text-ink">
               <span>{player.name}</span>
-              <span className="tabular-nums text-zinc-400">
+              <span className="tabular-nums text-muted">
                 {player.minutes}
                 {player.targetMinutes != null
                   ? ` / ${player.targetMinutes}`
@@ -61,7 +57,7 @@ function MinuteCompare(props: {
               </span>
             </div>
             {player.explanations.length > 0 ? (
-              <ul className="mt-1 text-sm text-zinc-500">
+              <ul className="mt-1 text-sm text-faint">
                 {player.explanations.map((reason) => (
                   <li key={reason}>• {reason}</li>
                 ))}

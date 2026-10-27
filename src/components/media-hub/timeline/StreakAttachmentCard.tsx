@@ -24,7 +24,7 @@ function Chain(props: { length: number; loss: boolean }) {
           key={i}
           data-chain-square={props.loss ? "L" : "W"}
           className={cn(
-            "inline-flex h-6 w-6 items-center justify-center rounded text-sm font-bold text-zinc-950",
+            "inline-flex h-6 w-6 items-center justify-center rounded text-sm font-bold text-surface-base",
             props.loss ? "bg-loss" : "bg-win",
           )}
         >
@@ -32,9 +32,7 @@ function Chain(props: { length: number; loss: boolean }) {
         </span>
       ))}
       {extra > 0 ? (
-        <span className="ml-1 text-sm tabular-nums text-zinc-400">
-          +{extra}
-        </span>
+        <span className="ml-1 text-sm tabular-nums text-muted">+{extra}</span>
       ) : null}
     </div>
   );
@@ -59,13 +57,13 @@ export function StreakAttachmentCard(props: {
           value={streak.length}
         />
         <div className="min-w-0">
-          <p className="text-zinc-50">{LABEL[streak.event]}</p>
-          <p className="text-sm text-zinc-400">{streak.team.displayName}</p>
+          <p className="text-ink">{LABEL[streak.event]}</p>
+          <p className="text-sm text-muted">{streak.team.displayName}</p>
         </div>
       </div>
       <Chain length={streak.length} loss={loss} />
       {snapper ? (
-        <p className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
+        <p className="mt-2 flex items-center gap-2 text-sm text-muted">
           <TeamMark branding={teamBrandingFor(context, snapper)} size="sm" />
           <span>snapped by {snapper.abbreviation}</span>
         </p>

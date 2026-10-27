@@ -67,14 +67,14 @@ export function ControlledFranchiseIdentityEditor(props: {
   }
 
   return (
-    <div className="space-y-4 border-t border-zinc-800 pt-3">
+    <div className="space-y-4 border-t border-line pt-3">
       <section
         aria-label="Identity preview"
         data-testid="identity-preview"
-        className="flex items-center gap-4 rounded-lg border border-zinc-800 bg-zinc-950/60 p-3"
+        className="flex items-center gap-4 rounded-lg border border-line bg-surface-base/60 p-3"
       >
         <span
-          className="inline-flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700"
+          className="inline-flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-line-strong"
           style={{ backgroundColor: draft.primaryColor }}
         >
           <TeamLogoMark
@@ -93,18 +93,18 @@ export function ControlledFranchiseIdentityEditor(props: {
           <div className="flex flex-wrap items-center gap-2">
             <h3
               data-testid="identity-preview-title"
-              className="text-base font-semibold text-zinc-100"
+              className="text-base font-semibold text-ink"
             >
               {draft.city} {draft.nickname}
             </h3>
             <span
               data-testid="identity-preview-abbreviation"
-              className="rounded border border-zinc-600 bg-zinc-900 px-1.5 py-0.5 text-sm font-semibold tracking-wide text-zinc-200"
+              className="rounded border border-disabled bg-surface-raised px-1.5 py-0.5 text-sm font-semibold tracking-wide text-ink"
             >
               {draft.abbreviation}
             </span>
           </div>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-faint">
             Abbreviation is set from your city.
           </p>
           <ul className="flex flex-wrap gap-3" aria-label="Team colours">
@@ -117,17 +117,17 @@ export function ControlledFranchiseIdentityEditor(props: {
             ).map(([label, hex]) => (
               <li
                 key={label}
-                className="flex items-center gap-1.5 text-sm text-zinc-300"
+                className="flex items-center gap-1.5 text-sm text-soft"
               >
                 <span
                   aria-hidden="true"
-                  className="h-4 w-4 rounded-sm border border-zinc-600"
+                  className="h-4 w-4 rounded-sm border border-disabled"
                   style={{ backgroundColor: hex }}
                 />
                 <span>{label}</span>
                 <span
                   data-testid={`identity-preview-${label.toLowerCase()}-hex`}
-                  className="text-zinc-400"
+                  className="text-muted"
                 >
                   {hex}
                 </span>
@@ -146,7 +146,7 @@ export function ControlledFranchiseIdentityEditor(props: {
       />
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-zinc-300">
+        <legend className="text-sm font-medium text-soft">
           Colour palettes
         </legend>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -161,7 +161,7 @@ export function ControlledFranchiseIdentityEditor(props: {
                 className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-left text-sm ${focusRing} ${
                   selected
                     ? "border-team-ink bg-team/15 text-team-ink"
-                    : "border-zinc-700 text-zinc-300 hover:border-team-ink/60"
+                    : "border-line-strong text-soft hover:border-team-ink/60"
                 }`}
               >
                 <span className="flex gap-0.5">
@@ -197,8 +197,8 @@ export function ControlledFranchiseIdentityEditor(props: {
       </fieldset>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-zinc-300">Logo</legend>
-        <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-zinc-800 p-2">
+        <legend className="text-sm font-medium text-soft">Logo</legend>
+        <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-line p-2">
           {TEAM_LOGO_CATEGORIES.map((category) => {
             const logos = TEAM_LOGO_CATALOG.filter(
               (logo) => logo.category === category.id,
@@ -208,7 +208,7 @@ export function ControlledFranchiseIdentityEditor(props: {
             }
             return (
               <div key={category.id} className="space-y-1">
-                <p className="text-sm text-zinc-400">{category.label}</p>
+                <p className="text-sm text-muted">{category.label}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {logos.map((logo) => {
                     const selected = logo.id === draft.logoId;
@@ -223,7 +223,7 @@ export function ControlledFranchiseIdentityEditor(props: {
                         className={`relative inline-flex h-9 w-9 items-center justify-center rounded-md border ${focusRing} ${
                           selected
                             ? "border-2 border-team-ink bg-team/15 ring-1 ring-team-ink"
-                            : "border-zinc-700 hover:border-team-ink/60"
+                            : "border-line-strong hover:border-team-ink/60"
                         }`}
                         style={{ backgroundColor: draft.primaryColor }}
                       >

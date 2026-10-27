@@ -97,6 +97,8 @@ export default async function MarketingPage({
             <input type="hidden" name="returnPath" value={returnPath} />
             <NumberStepper
               name="ticketPrice"
+              aria-label="Ticket price"
+
               defaultValue={biz.ticketPrice}
               min={10}
               max={250}
@@ -119,6 +121,8 @@ export default async function MarketingPage({
             <input type="hidden" name="returnPath" value={returnPath} />
             <NumberStepper
               name="budget"
+              aria-label="Annual marketing budget"
+
               defaultValue={biz.marketingBudget}
               min={0}
               step={100000}
@@ -131,7 +135,7 @@ export default async function MarketingPage({
               Set budget
             </button>
           </form>
-          <p className="mt-2 text-sm text-zinc-500">
+          <p className="mt-2 text-sm text-faint">
             Awareness {biz.awareness} · weekly burn{" "}
             <MoneyDisplay amount={biz.weeklyMarketingSpend} />
           </p>
@@ -140,10 +144,10 @@ export default async function MarketingPage({
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <Section title="Forecast (next home game)">
-          <p className="mb-3 text-sm text-zinc-500">
+          <p className="mb-3 text-sm text-faint">
             Live estimate from current knobs — not a past result.
           </p>
-          <ul className="space-y-2 text-sm text-zinc-300">
+          <ul className="space-y-2 text-sm text-soft">
             <li className="flex justify-between">
               <span>Demand score</span>
               <span>{forecast.demandScore}</span>
@@ -167,7 +171,7 @@ export default async function MarketingPage({
               <span>Concessions</span>
               <MoneyDisplay amount={forecast.concessionsRevenue} />
             </li>
-            <li className="flex justify-between font-medium text-zinc-100">
+            <li className="flex justify-between font-medium text-ink">
               <span>Total game-day</span>
               <MoneyDisplay amount={forecast.totalGameDayRevenue} />
             </li>
@@ -182,10 +186,10 @@ export default async function MarketingPage({
               </span>
             </li>
           </ul>
-          <p className="mt-3 text-sm font-medium text-zinc-300">
+          <p className="mt-3 text-sm font-medium text-soft">
             Demand contributors
           </p>
-          <ul className="mt-1 space-y-1 text-sm text-zinc-400">
+          <ul className="mt-1 space-y-1 text-sm text-muted">
             {forecast.demandContributors.map((c) => (
               <li key={c.key} className="flex justify-between">
                 <span>{c.key}</span>
@@ -197,17 +201,17 @@ export default async function MarketingPage({
 
         <Section title="Last home game (historical)">
           {lastGameDay === null ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-faint">
               No settled home game yet. Advance time through a home date to
               record attendance.
             </p>
           ) : (
             <>
-              <p className="mb-3 text-sm text-zinc-500">
+              <p className="mb-3 text-sm text-faint">
                 Settled {formatGameDate(lastGameDay.occurredOn)} — not a
                 forecast.
               </p>
-              <ul className="space-y-2 text-sm text-zinc-300">
+              <ul className="space-y-2 text-sm text-soft">
                 <li className="flex justify-between">
                   <span>Attendance</span>
                   <span>
@@ -236,7 +240,7 @@ export default async function MarketingPage({
                   <span>Concessions</span>
                   <MoneyDisplay amount={lastGameDay.concessionsRevenue} />
                 </li>
-                <li className="flex justify-between font-medium text-zinc-100">
+                <li className="flex justify-between font-medium text-ink">
                   <span>Total game-day</span>
                   <MoneyDisplay amount={lastGameDay.totalGameDayRevenue} />
                 </li>

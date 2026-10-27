@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
 import { formatGameDate } from "@/presentation/game-date";
 import { notFound } from "next/navigation";
+import {
+  advanceLeaguePhaseAction,
+  dismissPhaseTaskAction,
+  switchActiveOwnerTeamAction,
+} from "@/application/actions";
 import { loadCalendarPageView } from "@/application/game-service";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
+import { PhaseDashboard } from "@/components/phase/PhaseDashboard";
 import { ErrorState } from "@/components/ui/EmptyState";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ScheduleViewSwitch } from "@/components/calendar/ScheduleViewSwitch";
 import { parseCalendarDate } from "@/domain/calendar-date";
 
 export const metadata: Metadata = { title: "Calendar" };
@@ -44,13 +52,24 @@ export default async function CalendarPage({
   const showSimSummary = sp.simSummary === "1";
   let selectedDate = sp.date;
 
-  // Resolve focus=next-game server-side so the workspace stays URL-driven.
-  if (sp.focus === "next-game" && !selectedDate) {
+  // Resolve focus=next-game / focus=trade-deadline server-side so the
+  // workspace stays URL-driven. Focusing only selects the day; simulating
+  // still goes through the inspector's confirm.
+  if (
+    (sp.focus === "next-game" || sp.focus === "trade-deadline") &&
+    !selectedDate
+  ) {
     const probe = await loadCalendarPageView(saveId, {});
-    const nextGameDate = probe?.nextTeamGameDate;
-    if (nextGameDate) {
-      selectedDate = nextGameDate;
-      const parsed = parseCalendarDate(nextGameDate);
+    const deadline = probe?.tradeDeadlineDate;
+    const focusDate =
+      sp.focus === "next-game"
+        ? probe?.nextTeamGameDate
+        : deadline && probe && deadline > probe.currentDate
+          ? deadline
+          : null;
+    if (focusDate) {
+      selectedDate = focusDate;
+      const parsed = parseCalendarDate(focusDate);
       year = parsed.year;
       month = parsed.month;
     }
@@ -76,7 +95,8 @@ export default async function CalendarPage({
   return (
     <>
       <PageHeader
-        title="Calendar"
+        title="Schedule"
+        actions={<ScheduleViewSwitch saveId={saveId} active="calendar" />}
         subtitle={`${view.dashboard.controlledTeam.city} ${view.dashboard.controlledTeam.name} · ${formatGameDate(view.currentDate, { weekday: true })}`}
       />
 
@@ -92,6 +112,29 @@ export default async function CalendarPage({
         resumeTo={sp.resumeTo ?? view.resumeTo}
         autoResume={sp.autoResume === "1"}
       />
+
+      <details className="mt-8 rounded-xl border border-line bg-surface-raised/30 px-4 py-3">
+        <summary
+          className={cn(
+            "flex min-h-11 cursor-pointer items-center text-sm text-muted",
+            focusRingClass,
+          )}
+        >
+          Season phase details
+        </summary>
+        <div className="mt-4">
+          <PhaseDashboard
+            view={view.phaseDashboard}
+            saveId={saveId}
+            returnPath={`/dashboard/${saveId}/calendar`}
+            currentDate={view.currentDate}
+            seasonYear={view.dashboard.seasonYear}
+            advanceAction={advanceLeaguePhaseAction}
+            dismissAction={dismissPhaseTaskAction}
+            switchTeamAction={switchActiveOwnerTeamAction}
+          />
+        </div>
+      </details>
     </>
   );
 }

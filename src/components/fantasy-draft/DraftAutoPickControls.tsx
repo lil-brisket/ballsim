@@ -72,7 +72,7 @@ export function DraftAutoPickControls(props: {
       >
         <input type="hidden" name="saveId" value={saveId} />
         <input type="hidden" name="teamId" value={draft.activeOwnerTeamId} />
-        <label className="text-sm text-zinc-500" htmlFor="auto-strategy">
+        <label className="text-sm text-faint" htmlFor="auto-strategy">
           Strategy
         </label>
         <Select

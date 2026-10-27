@@ -48,14 +48,16 @@ export function NumberStepper(props: {
   }
 
   const buttonClass = cn(
-    "inline-flex min-h-11 min-w-11 items-center justify-center text-lg text-zinc-300 transition touch-manipulation hover:bg-zinc-800 hover:text-zinc-50 active:opacity-80 disabled:pointer-events-none disabled:opacity-40",
+    "inline-flex min-h-11 min-w-11 items-center justify-center text-lg text-soft transition touch-manipulation hover:bg-surface-high hover:text-ink active:opacity-80 disabled:pointer-events-none disabled:opacity-40",
     focusRingClass,
   );
 
   return (
     <span
       className={cn(
-        "inline-flex items-stretch overflow-hidden rounded-md border border-zinc-700 bg-zinc-900",
+        "inline-flex items-stretch overflow-hidden rounded-md border border-line-strong bg-surface-raised",
+        // The input drops its own outline; the whole stepper shows focus.
+        "has-[input:focus-visible]:outline has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-team-ink",
         props.className,
       )}
     >
@@ -68,7 +70,7 @@ export function NumberStepper(props: {
       >
         −
       </button>
-      <span className="inline-flex items-center border-x border-zinc-800">
+      <span className="inline-flex items-center border-x border-line">
         <input
           type="number"
           id={props.id}
@@ -94,12 +96,12 @@ export function NumberStepper(props: {
             else set(props.min ?? 0);
           }}
           className={cn(
-            "w-16 appearance-none bg-transparent text-center font-mono text-sm tabular-nums text-zinc-50 [appearance:textfield] focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+            "w-16 appearance-none bg-transparent text-center font-mono text-sm tabular-nums text-ink [appearance:textfield] focus-visible:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
             props.inputClassName,
           )}
         />
         {props.suffix ? (
-          <span className="pr-2 text-sm text-zinc-400">{props.suffix}</span>
+          <span className="pr-2 text-sm text-muted">{props.suffix}</span>
         ) : null}
       </span>
       <button

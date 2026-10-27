@@ -143,26 +143,23 @@ export function Drawer(props: {
         aria-describedby={props.description ? descriptionId : undefined}
         data-drawer-placement="modal"
         className={cn(
-          "relative z-10 flex w-full flex-col border-zinc-700 bg-zinc-900 shadow-xl",
+          "relative z-10 flex w-full flex-col border-line-strong bg-surface-raised shadow-xl",
           "h-[100dvh] max-h-[100dvh] rounded-none border-0 sm:h-auto sm:max-h-[min(90dvh,52rem)] sm:rounded-xl sm:border",
           SIZE_CLASS[size],
           "drawer-panel-enter-modal",
         )}
       >
-        <div className="flex shrink-0 items-start gap-3 border-b border-zinc-800 px-4 py-3 sm:pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="flex shrink-0 items-start gap-3 border-b border-line px-4 py-3 sm:pt-[max(0.75rem,env(safe-area-inset-top))]">
           <div className="min-w-0 flex-1">
             {props.header ? (
               props.header
             ) : (
               <>
-                <h2 id={titleId} className="text-lg font-medium text-zinc-50">
+                <h2 id={titleId} className="text-lg font-medium text-ink">
                   {props.title}
                 </h2>
                 {props.description ? (
-                  <p
-                    id={descriptionId}
-                    className="mt-0.5 text-sm text-zinc-400"
-                  >
+                  <p id={descriptionId} className="mt-0.5 text-sm text-muted">
                     {props.description}
                   </p>
                 ) : null}
@@ -176,7 +173,7 @@ export function Drawer(props: {
             aria-label="Close"
             className={cn(
               touchTargetClass,
-              "shrink-0 rounded-md border border-zinc-700 px-2.5 text-sm text-zinc-300 hover:border-zinc-500 hover:text-zinc-100",
+              "shrink-0 rounded-md border border-line-strong px-2.5 text-sm text-soft hover:border-faint hover:text-ink",
               focusRingClass,
             )}
           >
@@ -193,7 +190,7 @@ export function Drawer(props: {
         </div>
 
         {props.footer ? (
-          <div className="safe-area-bottom shrink-0 border-t border-zinc-800 px-4 py-3">
+          <div className="safe-area-bottom shrink-0 border-t border-line px-4 py-3">
             {props.footer}
           </div>
         ) : null}

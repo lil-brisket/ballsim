@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { historyHubHref } from "@/components/history/history-hub-links";
 import {
   HISTORY_HUB_ROUTE_TABS,
@@ -49,30 +48,16 @@ export function HistoryHubHeader(props: {
     <>
       <PageHeader title={header.title} subtitle={header.subtitle} />
       {tabs.length > 1 ? (
-        <nav
+        <ViewSwitch
           aria-label={header.navLabel}
-          className="mb-6 flex flex-wrap gap-2 border-b border-zinc-800 pb-3"
-        >
-          {tabs.map((id) => {
-            const active = id === props.activeTab;
-            return (
-              <Link
-                key={id}
-                href={historyHubHref(props.saveId, props.route, { tab: id })}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm",
-                  focusRingClass,
-                  active
-                    ? "bg-team/15 text-team-ink"
-                    : "text-zinc-400 hover:text-zinc-200",
-                )}
-                aria-current={active ? "page" : undefined}
-              >
-                {TAB_LABELS[id]}
-              </Link>
-            );
-          })}
-        </nav>
+          className="mb-6 max-w-full flex-wrap"
+          activeKey={props.activeTab}
+          items={tabs.map((id) => ({
+            key: id,
+            label: TAB_LABELS[id],
+            href: historyHubHref(props.saveId, props.route, { tab: id }),
+          }))}
+        />
       ) : null}
     </>
   );

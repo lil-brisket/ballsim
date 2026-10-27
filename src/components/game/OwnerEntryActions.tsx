@@ -29,7 +29,7 @@ export function OwnerEntryActions(props: {
           aria-label="No Owner saves"
         >
           <SectionHeading title="No Owner saves yet" />
-          <p className="text-sm text-zinc-300">
+          <p className="text-sm text-soft">
             Start your first franchise to begin.
           </p>
           {atSaveLimit ? (
@@ -66,12 +66,12 @@ export function OwnerEntryActions(props: {
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-team-ink">
                     Continue
                   </p>
-                  <h2 className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-zinc-50">
+                  <h2 className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-ink">
                     {continueSave.controlledTeam.city}{" "}
                     {continueSave.controlledTeam.name}
                   </h2>
-                  <p className="text-sm text-zinc-300">{continueSave.name}</p>
-                  <p className="text-sm text-zinc-300">
+                  <p className="text-sm text-soft">{continueSave.name}</p>
+                  <p className="text-sm text-soft">
                     Season {continueSave.seasonYear} ·{" "}
                     {formatGameDate(continueSave.currentDate, { year: true })} ·{" "}
                     {continueSave.seasonPhase}
@@ -105,7 +105,7 @@ export function OwnerEntryActions(props: {
               eyebrow="Load Another Save"
               title="Choose an existing Owner save"
             />
-            <p className="text-sm text-zinc-300">
+            <p className="text-sm text-soft">
               {hasAnySaves
                 ? "Open a different franchise or manage save slots."
                 : "No Owner saves to load yet."}
@@ -119,7 +119,7 @@ export function OwnerEntryActions(props: {
               Load Save →
             </Link>
           ) : (
-            <p className="mt-auto text-sm text-zinc-400">No saves available.</p>
+            <p className="mt-auto text-sm text-muted">No saves available.</p>
           )}
         </div>
 
@@ -130,7 +130,7 @@ export function OwnerEntryActions(props: {
                 eyebrow="Start New Game"
                 title="Create a new franchise"
               />
-              <p className="text-sm text-zinc-300">
+              <p className="text-sm text-soft">
                 Configure league rules and begin a new Owner Mode career.
               </p>
             </div>

@@ -1,3 +1,9 @@
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,7 +14,7 @@ import { ManagementDecisionPanel } from "@/components/management/ManagementDecis
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
-import { Tabs } from "@/components/ui/Tabs";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { StaffEntityLink } from "@/components/entity/StaffEntityLink";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 
@@ -38,7 +44,7 @@ export default async function DevelopmentHubPage({
         actions={
           <Link
             href={`/dashboard/${saveId}/development-league`}
-            className="text-sm text-team-ink underline-offset-4 hover:underline"
+            className={cn(linkClass, touchTargetTextClass, focusRingClass)}
           >
             Franchise Development League
           </Link>
@@ -46,31 +52,29 @@ export default async function DevelopmentHubPage({
       />
       {error ? <ErrorState message={error} /> : null}
 
-      <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-zinc-800 pb-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-3">
         <dl className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
           <div>
-            <dt className="text-sm text-zinc-400">Developing</dt>
-            <dd className="font-medium text-zinc-100">
+            <dt className="text-sm text-muted">Developing</dt>
+            <dd className="font-medium text-ink">
               {view.stageCounts.developing}
             </dd>
           </div>
           <div>
-            <dt className="text-sm text-zinc-400">Prime</dt>
-            <dd className="font-medium text-zinc-100">
-              {view.stageCounts.prime}
-            </dd>
+            <dt className="text-sm text-muted">Prime</dt>
+            <dd className="font-medium text-ink">{view.stageCounts.prime}</dd>
           </div>
           <div>
-            <dt className="text-sm text-zinc-400">Declining</dt>
-            <dd className="font-medium text-zinc-100">
+            <dt className="text-sm text-muted">Declining</dt>
+            <dd className="font-medium text-ink">
               {view.stageCounts.declining}
             </dd>
           </div>
         </dl>
-        <div className="max-w-xs text-right text-sm text-zinc-500">
-          <p className="text-zinc-400">Development staff</p>
+        <div className="max-w-xs text-right text-sm text-faint">
+          <p className="text-muted">Development staff</p>
           {view.staffContext.trainerName && view.staffContext.trainerId ? (
-            <p className="mt-0.5 text-zinc-300">
+            <p className="mt-0.5 text-soft">
               <StaffEntityLink
                 saveId={saveId}
                 staffId={view.staffContext.trainerId}
@@ -82,15 +86,15 @@ export default async function DevelopmentHubPage({
                 : ""}
             </p>
           ) : (
-            <p className="mt-0.5 text-zinc-600">No trainer on staff</p>
+            <p className="mt-0.5 text-disabled">No trainer on staff</p>
           )}
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-disabled">
             Organizational context only — not a causal development claim.
           </p>
         </div>
       </div>
 
-      <Tabs
+      <ViewSwitch
         aria-label="Development"
         activeKey={activeTab}
         items={[
@@ -127,7 +131,7 @@ export default async function DevelopmentHubPage({
                 {view.notableImprovers.map((p) => (
                   <li
                     key={p.playerId}
-                    className="flex flex-wrap items-center justify-between gap-2 text-zinc-300"
+                    className="flex flex-wrap items-center justify-between gap-2 text-soft"
                   >
                     <PlayerEntityLink saveId={saveId} playerId={p.playerId}>
                       {p.playerName}
@@ -137,7 +141,7 @@ export default async function DevelopmentHubPage({
                         ? `+${p.changeDelta}`
                         : p.changeDelta}
                       {p.changeLabel ? (
-                        <span className="ml-2 text-sm text-zinc-600">
+                        <span className="ml-2 text-sm text-disabled">
                           {p.changeLabel}
                         </span>
                       ) : null}

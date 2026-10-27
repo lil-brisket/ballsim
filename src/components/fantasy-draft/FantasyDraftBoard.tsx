@@ -21,6 +21,7 @@ import type {
   FantasyDraftView,
 } from "@/state/selectors";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 type Props = {
   saveId: string;
@@ -115,12 +116,12 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
           />
           <TeamNeedsPanel draft={draft} />
           <RecommendationsPanel draft={draft} />
-          <section className="rounded-xl border border-zinc-800 p-4">
+          <section className="rounded-xl border border-line p-4">
             <SectionHeading
               title={`Current roster (${draft.activeRoster.length}/${draft.picksPerTeam})`}
               className="mb-2"
             />
-            <div className="mb-3 flex flex-wrap gap-2 text-sm text-zinc-400">
+            <div className="mb-3 flex flex-wrap gap-2 text-sm text-muted">
               {draft.positionCounts.map((row) => (
                 <span key={row.position}>
                   {row.position}: {row.count}
@@ -129,19 +130,23 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
             </div>
             <ul className="space-y-1 text-sm">
               {draft.activeRoster.length === 0 ? (
-                <li className="text-zinc-500">Empty</li>
+                <li className="text-faint">Empty</li>
               ) : (
                 draft.activeRoster.map((p) => (
                   <li key={p.playerId}>
-                    <span className="text-zinc-500">{p.position}</span> {p.name}{" "}
-                    <span className="text-zinc-500">({p.overall})</span>
+                    <span className="text-faint">{p.position}</span> {p.name}{" "}
+                    <OvrBadge
+                      overall={p.overall}
+                      size="sm"
+                      className="align-middle"
+                    />
                   </li>
                 ))
               )}
             </ul>
           </section>
           <DraftHistoryPanel draft={draft} />
-          <section className="rounded-xl border border-zinc-800 p-4">
+          <section className="rounded-xl border border-line p-4">
             <SectionHeading title="Draft order" className="mb-2" />
             <ol className="max-h-64 space-y-1 overflow-y-auto text-sm">
               {draft.draftOrder.map((entry) => (
@@ -150,7 +155,7 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
                   className={
                     entry.teamId === draft.onClockTeamId
                       ? "text-team-ink"
-                      : "text-zinc-400"
+                      : "text-muted"
                   }
                 >
                   {entry.pickNumber}. {entry.abbreviation}

@@ -29,10 +29,10 @@ function rowTone(role: string, groupRole: string): string {
     return "bg-team/15";
   }
   if (role === "sixth_man" || role === "rotation") {
-    return "bg-zinc-900/80";
+    return "bg-surface-raised/80";
   }
   if (role === "deep_bench" || role === "emergency") {
-    return "text-zinc-500";
+    return "text-faint";
   }
   return "";
 }
@@ -70,13 +70,13 @@ function RotationRows(props: {
         return (
           <tr
             key={row.playerId}
-            className={`border-t border-zinc-800 ${rowTone(row.role, row.groupRole)}`}
+            className={`border-t border-line ${rowTone(row.role, row.groupRole)}`}
           >
             <td className="px-3 py-2">
               <button
                 type="button"
                 onClick={() => props.onSelect(row.playerId)}
-                className="text-left text-zinc-100 hover:text-team-ink hover:underline"
+                className="text-left text-ink hover:text-team-ink hover:underline"
               >
                 {row.firstName} {row.lastName}
               </button>
@@ -86,12 +86,10 @@ function RotationRows(props: {
                 </p>
               ) : null}
             </td>
-            <td className="px-3 py-2 font-mono text-zinc-400">
-              {row.position}
-            </td>
+            <td className="px-3 py-2 font-mono text-muted">{row.position}</td>
             <td className="px-3 py-2">
               {inactive ? (
-                <span className="capitalize text-zinc-500">inactive</span>
+                <span className="capitalize text-faint">inactive</span>
               ) : (
                 <Select
                   value={row.role}
@@ -111,7 +109,7 @@ function RotationRows(props: {
             </td>
             <td className="px-3 py-2">
               {inactive ? (
-                <span className="text-zinc-500">0</span>
+                <span className="text-faint">0</span>
               ) : (
                 <div className="flex items-center gap-3">
                   <NumberStepper
@@ -129,7 +127,7 @@ function RotationRows(props: {
                   <div
                     aria-hidden="true"
                     title={`${Math.round((row.targetMinutes / 48) * 100)}% of 48 minutes`}
-                    className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-zinc-800 sm:block"
+                    className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-surface-high sm:block"
                   >
                     <div
                       className="h-full rounded-full bg-team"
@@ -141,7 +139,7 @@ function RotationRows(props: {
                 </div>
               )}
             </td>
-            <td className="px-3 py-2 text-sm text-zinc-300">
+            <td className="px-3 py-2 text-sm text-soft">
               <span
                 title={row.availabilityLabel}
                 className="inline-flex items-center gap-2"

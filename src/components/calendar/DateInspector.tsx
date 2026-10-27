@@ -71,11 +71,9 @@ export function DateInspector(props: {
 
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
         <section className="space-y-1">
-          <h4 className="text-sm font-medium text-zinc-300">
-            Simulation status
-          </h4>
-          <p className="text-sm text-zinc-200">{inspector.phaseLabel}</p>
-          <p className="text-sm text-zinc-400">{inspector.simulationStatus}</p>
+          <h4 className="text-sm font-medium text-soft">Simulation status</h4>
+          <p className="text-sm text-ink">{inspector.phaseLabel}</p>
+          <p className="text-sm text-muted">{inspector.simulationStatus}</p>
         </section>
 
         <section
@@ -94,7 +92,7 @@ export function DateInspector(props: {
                 />
                 <p
                   aria-hidden
-                  className="font-display text-xl font-bold uppercase tracking-[0.3em] text-zinc-400"
+                  className="font-display text-xl font-bold uppercase tracking-[0.3em] text-muted"
                 >
                   {inspector.teamGame.home ? "vs" : "@"}
                 </p>
@@ -107,7 +105,7 @@ export function DateInspector(props: {
                   decorative
                 />
               </div>
-              <p className="font-display text-xl font-bold uppercase leading-tight tracking-wide text-zinc-50">
+              <p className="font-display text-xl font-bold uppercase leading-tight tracking-wide text-ink">
                 <span className="text-sm font-semibold text-team-ink">
                   {inspector.teamGame.homeAwayLabel}
                 </span>{" "}
@@ -115,7 +113,7 @@ export function DateInspector(props: {
                 <TeamEntityLink
                   saveId={props.saveId}
                   teamId={inspector.teamGame.opponentTeamId}
-                  className="text-left text-zinc-50 hover:text-team-ink"
+                  className="text-left text-ink hover:text-team-ink"
                 >
                   {inspector.teamGame.opponentName}
                 </TeamEntityLink>
@@ -133,7 +131,7 @@ export function DateInspector(props: {
                   }
                 />
               ) : null}
-              <p className="text-sm text-zinc-300">
+              <p className="text-sm text-soft">
                 {inspector.teamGame.seasonPhase}
                 {inspector.teamGame.resultLabel
                   ? ` · ${inspector.teamGame.resultLabel}`
@@ -189,7 +187,7 @@ export function DateInspector(props: {
                     ) : null}
                   </div>
                   {inspector.date > props.currentDate ? (
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-sm text-muted">
                       Sim stops before tip-off.
                     </p>
                   ) : null}
@@ -197,14 +195,14 @@ export function DateInspector(props: {
               ) : null}
             </div>
           ) : (
-            <p className="text-sm text-zinc-300">No team game</p>
+            <p className="text-sm text-soft">No team game</p>
           )}
         </section>
 
         <section className="space-y-2">
-          <h4 className="text-sm font-medium text-zinc-300">Special events</h4>
+          <h4 className="text-sm font-medium text-soft">Special events</h4>
           {inspector.specialEvents.length === 0 ? (
-            <p className="text-sm text-zinc-400">None</p>
+            <p className="text-sm text-muted">None</p>
           ) : (
             <ul className="space-y-2">
               {inspector.specialEvents.map((event) => (
@@ -215,15 +213,18 @@ export function DateInspector(props: {
                   {event.href ? (
                     <Link
                       href={event.href}
-                      className="block text-sm text-zinc-100"
+                      className={cn(
+                        "block min-h-11 py-2 text-sm text-ink hover:text-team-ink",
+                        focusRingClass,
+                      )}
                     >
                       {event.title}
                     </Link>
                   ) : (
-                    <p className="text-sm text-zinc-100">{event.title}</p>
+                    <p className="text-sm text-ink">{event.title}</p>
                   )}
                   {event.description ? (
-                    <p className="mt-0.5 text-sm text-zinc-400">
+                    <p className="mt-0.5 text-sm text-muted">
                       {event.description}
                     </p>
                   ) : null}
@@ -235,10 +236,8 @@ export function DateInspector(props: {
 
         {inspector.leagueContextSnippet ? (
           <section className="space-y-1">
-            <h4 className="text-sm font-medium text-zinc-300">
-              League context
-            </h4>
-            <p className="text-sm text-zinc-300">
+            <h4 className="text-sm font-medium text-soft">League context</h4>
+            <p className="text-sm text-soft">
               {inspector.leagueContextSnippet}
             </p>
           </section>
@@ -246,16 +245,16 @@ export function DateInspector(props: {
 
         {inspector.simulationPreview ? (
           <section className="space-y-2 border-t border-surface-line pt-3">
-            <h4 className="text-sm font-medium text-zinc-300">
+            <h4 className="text-sm font-medium text-soft">
               Simulation preview
             </h4>
-            <ul className="space-y-1 text-sm text-zinc-300">
+            <ul className="space-y-1 text-sm text-soft">
               {inspector.simulationPreview.summaryLines.map((line) => (
                 <li key={line}>• {line}</li>
               ))}
             </ul>
             {inspector.simulationPreview.blockReason ? (
-              <p className="text-sm text-red-300">
+              <p className="text-sm text-loss">
                 {inspector.simulationPreview.blockReason}
               </p>
             ) : null}
@@ -277,7 +276,7 @@ export function DateInspector(props: {
             )}
           </section>
         ) : (
-          <p className="border-t border-surface-line pt-3 text-sm text-zinc-400">
+          <p className="border-t border-surface-line pt-3 text-sm text-muted">
             Select a future date to simulate through that day. Past dates show
             results for games already played.
           </p>

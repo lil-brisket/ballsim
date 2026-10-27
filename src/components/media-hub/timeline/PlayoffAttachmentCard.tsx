@@ -44,10 +44,10 @@ export function PlayoffAttachmentCard(props: {
         <div className="flex items-center gap-3">
           <TeamMark branding={winnerBranding} size="md" />
           <div className="min-w-0">
-            <p className="font-display text-lg font-bold text-zinc-50">
+            <p className="font-display text-lg font-bold text-ink">
               {formatSeasonLabel(playoff.seasonYear)} champions
             </p>
-            <p className="text-sm text-zinc-400">{winner.displayName}</p>
+            <p className="text-sm text-muted">{winner.displayName}</p>
           </div>
         </div>
       </TeamSurface>
@@ -66,9 +66,9 @@ export function PlayoffAttachmentCard(props: {
             <p className="text-sm">{formatSeasonLabel(playoff.seasonYear)}</p>
           </div>
         </TeamSurfaceSlab>
-        <p className="mt-3 text-zinc-50">{winner.displayName}</p>
+        <p className="mt-3 text-ink">{winner.displayName}</p>
         {seriesScore ? (
-          <p className="mt-1 font-display text-lg font-bold tabular-nums text-zinc-50">
+          <p className="mt-1 font-display text-lg font-bold tabular-nums text-ink">
             {scoreText(winner.abbreviation, seriesScore)}
           </p>
         ) : null}
@@ -87,12 +87,12 @@ export function PlayoffAttachmentCard(props: {
   return (
     <TeamSurface branding={winnerBranding} band="top">
       {playoff.roundLabel ? (
-        <p className="text-sm text-zinc-400">{playoff.roundLabel}</p>
+        <p className="text-sm text-muted">{playoff.roundLabel}</p>
       ) : null}
       <div className="mt-2 space-y-2">
         <div className="flex items-center gap-3">
           <TeamMark branding={winnerBranding} size="md" />
-          <span className="w-12 font-display text-lg font-extrabold uppercase tracking-wide text-zinc-50">
+          <span className="w-12 font-display text-lg font-extrabold uppercase tracking-wide text-ink">
             {winner.abbreviation}
           </span>
           {seriesScore ? <Pips count={seriesScore.winner} filled /> : null}
@@ -100,7 +100,7 @@ export function PlayoffAttachmentCard(props: {
         {loser ? (
           <div className="flex items-center gap-3">
             <TeamMark branding={loserBranding} size="md" />
-            <span className="w-12 font-display text-lg font-medium uppercase tracking-wide text-zinc-400">
+            <span className="w-12 font-display text-lg font-medium uppercase tracking-wide text-muted">
               {loser.abbreviation}
             </span>
             {seriesScore ? (
@@ -111,14 +111,14 @@ export function PlayoffAttachmentCard(props: {
       </div>
       {seriesScore ? (
         <p className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="font-display text-2xl font-extrabold tabular-nums text-zinc-50">
+          <span className="font-display text-2xl font-extrabold tabular-nums text-ink">
             {scoreText(winner.abbreviation, seriesScore)}
           </span>
           <span className="sr-only">
             {seriesScore.winner} games to {seriesScore.loser}
           </span>
           {tag ? (
-            <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-sm font-medium text-zinc-300">
+            <span className="rounded-full border border-line-strong px-2 py-0.5 text-sm font-medium text-soft">
               {tag}
             </span>
           ) : null}

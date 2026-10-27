@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
@@ -33,7 +34,7 @@ export function ProspectCard(props: ProspectCardProps) {
       : null;
 
   return (
-    <article className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 text-sm">
+    <article className="rounded-lg border border-line bg-surface-base/60 p-3 text-sm">
       <header className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2">
           <PlayerPortrait
@@ -44,12 +45,21 @@ export function ProspectCard(props: ProspectCardProps) {
             size="sm"
           />
           <div className="min-w-0">
-            <h3 className="font-medium text-zinc-100">
-              <PlayerEntityLink saveId={props.saveId} playerId={props.playerId}>
-                {props.firstName} {props.lastName}
-              </PlayerEntityLink>
-            </h3>
-            <p className="text-sm text-zinc-500">
+            <SectionHeading
+              as="h3"
+              size="sm"
+              title={
+                <>
+                  <PlayerEntityLink
+                    saveId={props.saveId}
+                    playerId={props.playerId}
+                  >
+                    {props.firstName} {props.lastName}
+                  </PlayerEntityLink>
+                </>
+              }
+            />
+            <p className="text-sm text-faint">
               {props.position}
               {props.age != null ? ` · Age ${props.age}` : ""}
               {props.nationality ? ` · ${props.nationality}` : ""}
@@ -60,14 +70,14 @@ export function ProspectCard(props: ProspectCardProps) {
           <div className="text-lg font-semibold text-team-ink">
             {props.scoutGrade ?? "—"}
           </div>
-          <div className="text-sm text-zinc-500">Scout Grade</div>
+          <div className="text-sm text-faint">Scout Grade</div>
         </div>
       </header>
 
-      <dl className="mt-2 grid grid-cols-2 gap-2 text-sm text-zinc-400">
+      <dl className="mt-2 grid grid-cols-2 gap-2 text-sm text-muted">
         <div>
-          <dt className="text-zinc-600">Est. OVR</dt>
-          <dd className="text-zinc-200">
+          <dt className="text-disabled">Est. OVR</dt>
+          <dd className="text-ink">
             {props.estimatedOverallMin != null &&
             props.estimatedOverallMax != null
               ? `${props.estimatedOverallMin}–${props.estimatedOverallMax}`
@@ -75,15 +85,13 @@ export function ProspectCard(props: ProspectCardProps) {
           </dd>
         </div>
         <div>
-          <dt className="text-zinc-600">Confidence</dt>
-          <dd className="capitalize text-zinc-200">
-            {props.confidence ?? "—"}
-          </dd>
+          <dt className="text-disabled">Confidence</dt>
+          <dd className="capitalize text-ink">{props.confidence ?? "—"}</dd>
         </div>
         {props.projectedPick != null && props.projectedPick < 900 ? (
           <div className="col-span-2">
-            <dt className="text-zinc-600">Projected</dt>
-            <dd className="text-zinc-200">
+            <dt className="text-disabled">Projected</dt>
+            <dd className="text-ink">
               #{props.projectedPick}
               {delta != null && delta !== 0 ? (
                 <span
@@ -113,7 +121,7 @@ export function ProspectCard(props: ProspectCardProps) {
       ) : null}
 
       {props.funFact ? (
-        <p className="mt-2 border-t border-zinc-800 pt-2 text-sm italic text-zinc-500">
+        <p className="mt-2 border-t border-line pt-2 text-sm italic text-faint">
           {props.funFact}
         </p>
       ) : null}

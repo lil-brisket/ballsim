@@ -1,11 +1,9 @@
-import { buttonClass } from "@/components/ui/Button";
-import Link from "next/link";
 import type {
   GameModeCatalogId,
   GameModeDefinition,
 } from "@/application/game-mode-catalog";
-import { ArenaPanel } from "@/components/ui/ArenaPanel";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { HubTile } from "@/components/ui/HubTile";
+import { clipCornerClass, displayClass } from "@/components/ui/styles";
 
 /**
  * Mode icons share one style: 24 grid, 1.75 stroke, currentColor, round caps.
@@ -49,68 +47,92 @@ function ModeIcon(props: { id: GameModeCatalogId; className?: string }) {
   );
 }
 
+function LockIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinejoin="round"
+      strokeLinecap="round"
+    >
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
 /**
- * Mode picker card. Owner Mode is the hero (whole card links, three feature
- * lines, one primary action). Career and Dynasty are small dimmed tiles with a
- * single "Coming Soon" label.
+ * Mode picker tile. Owner Mode is the hero HubTile (the whole tile is the
+ * entry link). Modes that are not available render as locked, non-interactive
+ * tiles: a plain article (not focusable, not a link) that announces
+ * "Coming soon".
  */
-export function GameModeCard(props: { mode: GameModeDefinition }) {
+export function GameModeCard(props: {
+  mode: GameModeDefinition;
+  index?: number;
+}) {
   const { mode } = props;
   const live = mode.available && mode.entryHref != null;
 
   if (!live) {
     return (
-      <article className="flex items-center gap-4 rounded-xl border border-surface-line bg-surface-deep p-4 text-zinc-400">
-        <ModeIcon id={mode.id} className="h-8 w-8 shrink-0 text-zinc-500" />
-        <div className="min-w-0">
-          <h2 className="font-display text-xl font-bold uppercase leading-tight tracking-wide text-zinc-400">
-            {mode.name}
-          </h2>
-          <p className="text-sm text-zinc-400">{mode.statusLabel}</p>
+      <article
+        aria-label={`${mode.name}, coming soon`}
+        className="enter-up tile-enter relative min-h-36 text-muted"
+        style={{ "--i": props.index ?? 1 } as React.CSSProperties}
+      >
+        <span
+          aria-hidden
+          className={`${clipCornerClass} absolute inset-0 bg-surface-line`}
+        />
+        <span
+          aria-hidden
+          className={`${clipCornerClass} absolute inset-[2px] bg-surface-deep`}
+        />
+        <div className="relative flex h-full min-h-[inherit] flex-col justify-between gap-4 p-4">
+          <div className="flex items-start gap-3 pr-6">
+            <ModeIcon id={mode.id} className="h-8 w-8 shrink-0 text-faint" />
+            <h2 className={`${displayClass} text-xl text-muted`}>
+              {mode.name}
+            </h2>
+          </div>
+          <p className="flex items-center gap-2 text-sm text-muted">
+            <LockIcon />
+            <span>Coming soon</span>
+          </p>
         </div>
       </article>
     );
   }
 
-  const label = `${mode.name}. ${mode.tagline} ${mode.actionLabel}`;
-
   return (
-    <ArenaPanel
-      as="article"
-      hero
-      glow
-      edge="top"
-      className="hover-lift relative flex flex-col gap-6 md:flex-row md:items-center md:gap-10"
+    <HubTile
+      href={mode.entryHref!}
+      size="hero"
+      enterIndex={props.index ?? 0}
+      title={mode.name}
+      eyebrow={mode.tagline}
+      art={
+        <ModeIcon
+          id={mode.id}
+          className="hidden h-28 w-28 text-team-ink/70 sm:block"
+        />
+      }
     >
-      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-team/20 text-team-ink md:h-32 md:w-32">
-        <ModeIcon id={mode.id} className="h-12 w-12 md:h-20 md:w-20" />
-      </div>
-
-      <div className="flex-1 space-y-3">
-        <div className="space-y-1">
-          <h2 className="font-display text-4xl font-extrabold uppercase leading-none tracking-wide text-zinc-50 md:text-5xl">
-            {mode.name}
-          </h2>
-          <p className="text-base font-medium text-team-ink">{mode.tagline}</p>
-        </div>
-        <ul className="space-y-1 text-sm text-zinc-300">
-          {mode.features.slice(0, 3).map((feature) => (
-            <li key={feature}>{feature}</li>
-          ))}
-        </ul>
-      </div>
-
-      <Link
-        href={mode.entryHref!}
-        aria-label={label}
-        className={cn(
-          buttonClass({ variant: "primary", size: "lg" }),
-          "after:absolute after:inset-0 after:content-[''] md:px-10",
-          focusRingClass,
-        )}
-      >
+      <span className="block space-y-1">
+        {mode.features.slice(0, 3).map((feature) => (
+          <span key={feature} className="block text-soft">
+            {feature}
+          </span>
+        ))}
+      </span>
+      <span className="mt-3 block font-medium text-team-ink">
         {mode.actionLabel} →
-      </Link>
-    </ArenaPanel>
+      </span>
+    </HubTile>
   );
 }

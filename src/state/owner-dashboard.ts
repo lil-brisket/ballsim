@@ -30,6 +30,7 @@ import {
   DASHBOARD_NOTIFICATION_CAP,
   DASHBOARD_ACTIVITY_CAP,
 } from "@/state/owner-dashboard-config";
+import { toHomeBoardView } from "@/state/owner-dashboard/home-board";
 import { toOwnershipConfidenceView } from "@/state/ownership-confidence-view";
 import { getActiveOwnedFranchise } from "@/state/owner-context";
 import { toOwnerCareerEvaluation } from "@/state/owner-career-evaluation";
@@ -213,6 +214,7 @@ export function toOwnerDashboardView(state: GameState): OwnerDashboardView {
     phaseResponsibility,
     mediaTimeline,
     nextImportantEvent,
+    home: toHomeBoardView(state),
   };
 }
 

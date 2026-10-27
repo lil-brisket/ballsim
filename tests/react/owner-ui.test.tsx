@@ -5,7 +5,8 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/save_test",
 }));
 
-import { OwnerNav } from "@/components/owner/OwnerNav";
+import { HubBar } from "@/components/game/shell/HubBar";
+import { SubTabBar } from "@/components/game/shell/SubTabBar";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
@@ -24,27 +25,39 @@ describe("Owner UI primitives", () => {
     unmount();
   });
 
-  it("renders owner nav links with saveId and new hierarchy", () => {
-    const { unmount } = render(<OwnerNav saveId="save_test" />);
-    const frontOffice = screen.getAllByText("Front Office")[0];
-    expect(frontOffice?.closest("a")?.getAttribute("href")).toBe(
-      "/dashboard/save_test",
+  it("renders hub links with the saveId and marks the active hub", () => {
+    const { unmount } = render(
+      <HubBar saveId="save_test" groups={OWNER_NAV_GROUPS} />,
     );
+    const hubs = screen.getByRole("navigation", { name: "Hubs" });
+    const link = (name: string) =>
+      hubs.querySelector(`a[href="${name}"]`) as HTMLAnchorElement | null;
+    expect(link("/dashboard/save_test")?.textContent).toContain("Home");
+    expect(link("/dashboard/save_test")?.getAttribute("aria-current")).toBe(
+      "true",
+    );
+    expect(link("/dashboard/save_test/team")?.textContent).toContain("Team");
+    expect(link("/dashboard/save_test/finances")?.textContent).toContain(
+      "Front Office",
+    );
+    expect(link("/dashboard/save_test/media")?.textContent).toContain("Media");
     expect(
-      screen.getAllByText("Roster")[0]?.closest("a")?.getAttribute("href"),
-    ).toBe("/dashboard/save_test/roster");
-    expect(
-      screen.getAllByText("Media Hub")[0]?.closest("a")?.getAttribute("href"),
-    ).toBe("/dashboard/save_test/media");
-    expect(
-      screen
-        .getAllByText("Staff & Coaching")[0]
-        ?.closest("a")
-        ?.getAttribute("href"),
-    ).toBe("/dashboard/save_test/staff-coaching");
-    expect(screen.queryByText("Notifications (2)")).toBeNull();
+      screen.getByRole("link", { name: "Settings" }).getAttribute("href"),
+    ).toBe("/dashboard/save_test/settings");
     expect(screen.queryByText("Team Management")).toBeNull();
     expect(screen.queryByText("Relocation")).toBeNull();
+    unmount();
+  });
+
+  it("renders the active hub's sub-tabs", () => {
+    const { unmount } = render(
+      <SubTabBar saveId="save_test" groups={OWNER_NAV_GROUPS} />,
+    );
+    const tabs = screen.getByRole("navigation", { name: "Home sections" });
+    expect(tabs.querySelector("[aria-current=page]")?.textContent).toBe("Home");
+    expect(
+      screen.getByRole("link", { name: "Schedule" }).getAttribute("href"),
+    ).toBe("/dashboard/save_test/calendar");
     unmount();
   });
 
@@ -52,12 +65,9 @@ describe("Owner UI primitives", () => {
     const hrefs = OWNER_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
     expect(hrefs).toContain("/franchise");
     expect(hrefs).toContain("/development");
+    expect(hrefs).toContain("/team/contracts");
     expect(hrefs).not.toContain("/relocation");
-    expect(
-      OWNER_NAV_GROUPS.flatMap((g) => g.items).some(
-        (item) => item.href === "/contracts" || item.label === "Contracts",
-      ),
-    ).toBe(false);
+    expect(hrefs).not.toContain("/contracts");
   });
 
   it("confirm dialog opens and exposes form children without mutating", () => {

@@ -16,7 +16,7 @@ export function RenameLeagueForm(props: {
     >
       <input type="hidden" name="saveId" value={props.saveId} />
       <input type="hidden" name="returnPath" value={props.returnPath} />
-      <label className="block flex-1 space-y-1 text-sm text-zinc-300">
+      <label className="block flex-1 space-y-1 text-sm text-soft">
         <span>League name</span>
         <input
           type="text"

@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn, densityPadding, panelClass } from "@/components/ui/styles";
 import { DL_MAX_SEASONS } from "@/domain/entities/development-league";
 import type { DlProspectRowView } from "@/state/development-league-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 function readinessLabel(value: string): string {
   switch (value) {
@@ -39,7 +40,7 @@ export function ChangeDelta(props: { delta: number | null }) {
   if (props.delta === null) {
     return (
       <span
-        className="font-mono text-zinc-500"
+        className="font-mono text-faint"
         aria-label="No season-over-season history"
       >
         —
@@ -47,7 +48,7 @@ export function ChangeDelta(props: { delta: number | null }) {
     );
   }
   if (props.delta === 0) {
-    return <span className="font-mono text-zinc-400">0</span>;
+    return <span className="font-mono text-muted">0</span>;
   }
   if (props.delta > 0) {
     return (
@@ -118,7 +119,7 @@ export function DlProspectCard(props: {
             <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
               {row.name}
             </PlayerEntityLink>
-            <p className="mt-0.5 text-sm text-zinc-500">
+            <p className="mt-0.5 text-sm text-faint">
               Age {row.age} · {row.role}
             </p>
           </div>
@@ -140,22 +141,22 @@ export function DlProspectCard(props: {
 
       <div className="mt-3 flex flex-wrap items-end gap-4">
         <div>
-          <p className="text-sm text-zinc-400">OVR</p>
-          <p className="text-lg tabular-nums text-zinc-50">{row.overall}</p>
+          <p className="text-sm text-muted">OVR</p>
+          <OvrBadge overall={row.overall} size="md" />
         </div>
         <div>
-          <p className="text-sm text-zinc-400">Change</p>
+          <p className="text-sm text-muted">Change</p>
           <div className="mt-0.5">
             <ChangeDelta delta={row.changeDelta} />
           </div>
           {row.changeLabel ? (
-            <p className="text-sm text-zinc-600">{row.changeLabel}</p>
+            <p className="text-sm text-disabled">{row.changeLabel}</p>
           ) : null}
         </div>
         <div>
-          <p className="text-sm text-zinc-400">POT</p>
-          <p className="tabular-nums text-zinc-300">{row.potential}</p>
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-muted">POT</p>
+          <OvrBadge overall={row.potential} ghost label="POT" size="sm" />
+          <p className="text-sm text-disabled">
             {row.potentialHeadroom === 0
               ? "At ceiling"
               : `${row.potentialHeadroom} headroom`}
@@ -164,7 +165,7 @@ export function DlProspectCard(props: {
       </div>
 
       <div className="mt-3">
-        <p className="mb-1 text-sm text-zinc-500">
+        <p className="mb-1 text-sm text-faint">
           Season {row.dlSeason} of {DL_MAX_SEASONS}
           {row.seasonsRemaining > 0
             ? ` · ${row.seasonsRemaining} left`
@@ -188,7 +189,7 @@ export function DlProspectCard(props: {
         ]}
       />
 
-      <p className="mt-3 text-sm text-zinc-500">{row.whyBullets[0]}</p>
+      <p className="mt-3 text-sm text-faint">{row.whyBullets[0]}</p>
     </article>
   );
 }
@@ -228,9 +229,7 @@ export function DlEligibleCard(props: {
   const { saveId, row, returnPath } = props;
   const nameParts = splitDisplayName(row.name);
   return (
-    <article
-      className={cn(panelClass, densityPadding.compact, "text-zinc-400")}
-    >
+    <article className={cn(panelClass, densityPadding.compact, "text-muted")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2">
           <PlayerPortrait
@@ -244,11 +243,12 @@ export function DlEligibleCard(props: {
             <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
               {row.name}
             </PlayerEntityLink>
-            <p className="mt-0.5 text-sm text-zinc-600">
-              OVR {row.overall} · POT {row.potential} · {row.projectedMpg} proj.
-              MPG
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-disabled">
+              <OvrBadge overall={row.overall} size="sm" />
+              <OvrBadge overall={row.potential} ghost label="POT" size="sm" />
+              <span>{row.projectedMpg} proj. MPG</span>
             </p>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-faint">
               {row.strongCandidate ? "Strong DL candidate" : "Optional"}
             </p>
           </div>
@@ -271,7 +271,7 @@ export function DlEligibleRow(props: {
   const { saveId, row, returnPath } = props;
   const nameParts = splitDisplayName(row.name);
   return (
-    <tr className="border-t border-zinc-800 text-zinc-400">
+    <tr className="border-t border-line text-muted">
       <td className="px-3 py-2">
         <span className="flex items-center gap-2">
           <PlayerPortrait
@@ -286,8 +286,18 @@ export function DlEligibleRow(props: {
           </PlayerEntityLink>
         </span>
       </td>
-      <td className="px-3 py-2 font-mono text-zinc-300">{row.overall}</td>
-      <td className="px-3 py-2 font-mono">{row.potential}</td>
+      <td className="px-3 py-2">
+        <OvrBadge overall={row.overall} size="sm" className="align-middle" />
+      </td>
+      <td className="px-3 py-2">
+        <OvrBadge
+          overall={row.potential}
+          ghost
+          label="POT"
+          size="sm"
+          className="align-middle"
+        />
+      </td>
       <td className="px-3 py-2 text-sm">
         {row.strongCandidate ? "Strong DL candidate" : "Optional"}
       </td>

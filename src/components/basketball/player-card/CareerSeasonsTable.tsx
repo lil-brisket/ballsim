@@ -43,11 +43,11 @@ export function CareerSeasonsTable(props: {
 
   return (
     <div className="space-y-2">
-      <div className="overflow-x-auto rounded-lg border border-zinc-800">
+      <div className="overflow-x-auto rounded-lg border border-line">
         <table className="w-full min-w-[36rem] text-sm">
           <caption className="sr-only">Career statistics by season</caption>
           <thead>
-            <tr className="border-b border-zinc-800 text-left text-sm text-zinc-400">
+            <tr className="border-b border-line text-left text-sm text-muted">
               {columns.map((column) => {
                 const isActive = column.key === active.key;
                 return (
@@ -67,7 +67,7 @@ export function CareerSeasonsTable(props: {
                       type="button"
                       onClick={() => toggle(column.key)}
                       className={cn(
-                        "inline-flex min-h-9 items-center gap-1 rounded px-1.5 hover:text-zinc-100",
+                        "inline-flex min-h-9 items-center gap-1 rounded px-1.5 hover:text-ink",
                         isActive && "text-team-ink",
                         focusRingClass,
                       )}
@@ -88,7 +88,7 @@ export function CareerSeasonsTable(props: {
             {sorted.map((row) => (
               <tr
                 key={row.seasonId}
-                className="border-b border-zinc-800/60 font-mono tabular-nums text-zinc-100"
+                className="border-b border-line/60 font-mono tabular-nums text-ink"
               >
                 {columns.map((column) => (
                   <td key={column.key} className="px-2.5 py-2">
@@ -99,7 +99,7 @@ export function CareerSeasonsTable(props: {
             ))}
           </tbody>
           <tfoot>
-            <tr className="border-t-2 border-team-ink/50 bg-zinc-900/60 font-mono font-semibold tabular-nums text-team-ink">
+            <tr className="border-t-2 border-team-ink/50 bg-surface-raised/60 font-mono font-semibold tabular-nums text-team-ink">
               {columns.map((column) => (
                 <td key={column.key} className="px-2.5 py-2">
                   {column.key === "season"
@@ -114,7 +114,7 @@ export function CareerSeasonsTable(props: {
         </table>
       </div>
       {hasCurrent ? (
-        <p className="text-sm text-zinc-400">* Season in progress</p>
+        <p className="text-sm text-muted">* Season in progress</p>
       ) : null}
     </div>
   );

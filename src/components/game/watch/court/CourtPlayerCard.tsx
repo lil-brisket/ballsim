@@ -28,17 +28,15 @@ export function CourtPlayerCard(props: {
   const { player, team, row } = props;
   return (
     <div
-      className="border-t border-zinc-800 pt-3"
+      className="border-t border-line pt-3"
       data-testid="court-player-card"
       aria-label={`${player.fullName} live stats`}
       role="region"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-semibold text-zinc-50">
-            {player.fullName}
-          </p>
-          <p className="text-sm text-zinc-400">
+          <p className="truncate font-semibold text-ink">{player.fullName}</p>
+          <p className="text-sm text-muted">
             {[player.position, `${team.city} ${team.name}`]
               .filter(Boolean)
               .join(" · ")}
@@ -56,8 +54,8 @@ export function CourtPlayerCard(props: {
       <dl className="mt-3 grid grid-cols-6 gap-2 text-center">
         {STATS.map(([label, key]) => (
           <div key={label} className="min-w-0">
-            <dt className="text-xs text-zinc-500">{label}</dt>
-            <dd className="font-mono text-base tabular-nums text-zinc-100">
+            <dt className="text-xs text-faint">{label}</dt>
+            <dd className="font-mono text-base tabular-nums text-ink">
               {row[key] as number}
             </dd>
           </div>

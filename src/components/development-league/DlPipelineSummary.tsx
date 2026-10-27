@@ -11,7 +11,7 @@ export function DlAssignSection(props: { children: React.ReactNode }) {
   return (
     <div
       data-testid="dl-assign"
-      className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-4 text-zinc-500"
+      className="rounded-xl border border-line/80 bg-surface-base/40 p-4 text-faint"
     >
       {props.children}
     </div>

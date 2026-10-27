@@ -1,4 +1,5 @@
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
+import { rowLinkPlainClass } from "@/components/league/row-link-class";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, panelClass } from "@/components/ui/styles";
@@ -8,7 +9,7 @@ function WinPctBar(props: { winPercentage: number; label: string }) {
   const pct = Math.min(100, Math.max(0, props.winPercentage * 100));
   return (
     <div
-      className="h-2 w-full overflow-hidden rounded-full bg-zinc-800"
+      className="h-2 w-full overflow-hidden rounded-full bg-surface-high"
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
@@ -41,7 +42,10 @@ function RaceRow(props: {
           <TeamEntityLink
             saveId={props.saveId}
             teamId={team.teamId}
-            className="min-w-0 truncate hover:text-team-ink"
+            className={cn(
+              rowLinkPlainClass,
+              "min-w-0 truncate hover:text-team-ink",
+            )}
           >
             <TeamIdentityInline
               city={team.city}
@@ -57,7 +61,7 @@ function RaceRow(props: {
           label={`${team.abbreviation} win percentage`}
         />
       </div>
-      <span className="shrink-0 font-mono text-sm text-zinc-400">
+      <span className="shrink-0 font-mono text-sm text-muted">
         {team.wins}–{team.losses}
       </span>
     </li>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { loadSaveWithHistory } from "@/application/game-service";
 import { HistoryHub } from "@/components/history/HistoryHub";
+import { AwardsViewSwitch } from "@/components/history/AwardsViewSwitch";
 import { historyHubHref } from "@/components/history/history-hub-links";
 import {
   misroutedHistoryHubTab,
@@ -29,5 +30,10 @@ export default async function AwardsPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
-  return <HistoryHub view={toHistoryHubView(loaded.state, "awards", query)} />;
+  return (
+    <>
+      <AwardsViewSwitch saveId={saveId} active="awards" />
+      <HistoryHub view={toHistoryHubView(loaded.state, "awards", query)} />
+    </>
+  );
 }

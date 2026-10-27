@@ -15,13 +15,13 @@ export function MobileListCard(props: {
       className={cn(panelClass, "flex flex-col gap-2 p-3", props.className)}
     >
       <div className="min-w-0">
-        <div className="text-sm font-medium text-zinc-100">{props.title}</div>
+        <div className="text-sm font-medium text-ink">{props.title}</div>
         {props.subtitle ? (
-          <div className="mt-0.5 text-sm text-zinc-400">{props.subtitle}</div>
+          <div className="mt-0.5 text-sm text-muted">{props.subtitle}</div>
         ) : null}
       </div>
       {props.meta ? (
-        <div className="text-sm text-zinc-300">{props.meta}</div>
+        <div className="text-sm text-soft">{props.meta}</div>
       ) : null}
       {props.action ? <div className="mt-1">{props.action}</div> : null}
     </article>

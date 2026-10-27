@@ -68,7 +68,9 @@ describe("Media Hub page", () => {
     fixtureState = playedState();
     const { container } = await renderPage();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole("feed")).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "League timeline" }),
+    ).toBeTruthy();
     expect(screen.getByRole("button", { name: /mark all read/i })).toBeTruthy();
     for (const el of container.querySelectorAll("button, a")) {
       // The primary button style is the solid team plate.
@@ -81,9 +83,9 @@ describe("Media Hub page", () => {
     await renderPage();
     const top = screen.getByRole("region", { name: "Top story" });
     const topArticle = within(top).getByRole("article");
-    const feedArticles = within(screen.getByRole("feed")).queryAllByRole(
-      "article",
-    );
+    const feedArticles = within(
+      screen.getByRole("region", { name: "League timeline" }),
+    ).queryAllByRole("article");
     const topName = topArticle.textContent ?? "";
     expect(feedArticles.every((a) => a.textContent !== topName)).toBe(true);
   });
@@ -101,7 +103,9 @@ describe("Media Hub page", () => {
   it("greets a fresh save with a league-office post", async () => {
     fixtureState = timelineState();
     await renderPage();
-    const articles = within(screen.getByRole("feed")).getAllByRole("article");
+    const articles = within(
+      screen.getByRole("region", { name: "League timeline" }),
+    ).getAllByRole("article");
     expect(articles).toHaveLength(1);
     expect(articles[0]!.textContent).toMatch(/Welcome to the/);
     expect(screen.queryByRole("button", { name: /mark all read/i })).toBeNull();

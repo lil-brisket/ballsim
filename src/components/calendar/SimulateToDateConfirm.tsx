@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef } from "react";
+import { useModalKeys } from "@/components/calendar/use-modal-keys";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { formatGameDate } from "@/presentation/game-date";
 import { buttonClass } from "@/components/ui/Button";
@@ -17,17 +19,20 @@ export function SimulateToDateConfirm(props: {
   const watchGame = props.watchGame;
   const onWatch = props.onWatch;
   const canWatch = watchGame != null && onWatch != null;
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalKeys(panelRef, true, props.onCancel);
   return (
     <Overlay
       className="flex items-center justify-center p-4"
       onClick={props.onCancel}
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="simulate-to-date-title"
-        className="relative z-10 w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
-        onClick={(event) => event.stopPropagation()}
+        className="relative z-10 w-full max-w-md rounded-xl border border-line-strong bg-surface-raised p-5 shadow-xl"
       >
         <SectionHeading
           as="h3"
@@ -38,7 +43,7 @@ export function SimulateToDateConfirm(props: {
               : `Simulate through ${formatGameDate(props.date)}?`
           }
         />
-        <p className="mt-2 text-sm text-zinc-400">
+        <p className="mt-2 text-sm text-muted">
           {canWatch
             ? "Watch it live on the broadcast court, or sim to that day and stop before tip-off."
             : "This plays all games, including yours, up to that day."}

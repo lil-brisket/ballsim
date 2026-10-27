@@ -7,6 +7,7 @@ import type { FantasyDraftTeamSummary } from "@/domain/entities/fantasy-draft";
 import { buttonClass } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Tabs } from "@/components/ui/Tabs";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 function Stars(props: { count: number }) {
   return (
@@ -15,7 +16,7 @@ function Stars(props: { count: number }) {
       aria-label={`${props.count} stars`}
     >
       {"★".repeat(props.count)}
-      <span className="text-zinc-600">
+      <span className="text-disabled">
         {"☆".repeat(Math.max(0, 5 - props.count))}
       </span>
     </span>
@@ -31,7 +32,7 @@ function BalanceBar(props: { level: string }) {
     Weak: "25%",
   };
   return (
-    <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-800">
+    <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-high">
       <div
         className="h-full rounded-full bg-team-ink"
         style={{ width: widths[props.level] ?? "40%" }}
@@ -46,20 +47,21 @@ function HighlightCard(props: {
 }) {
   if (!props.pick) {
     return (
-      <div className="rounded-lg border border-zinc-800 p-3 text-sm text-zinc-500">
+      <div className="rounded-lg border border-line p-3 text-sm text-faint">
         {props.title}: —
       </div>
     );
   }
   return (
-    <div className="rounded-lg border border-zinc-800 p-3 text-sm">
-      <div className="text-sm text-zinc-400">{props.title}</div>
-      <div className="mt-1 font-medium text-zinc-100">
+    <div className="rounded-lg border border-line p-3 text-sm">
+      <div className="text-sm text-muted">{props.title}</div>
+      <div className="mt-1 font-medium text-ink">
         {props.pick.playerName} — Pick #{props.pick.pickNumber}
       </div>
-      <div className="text-zinc-400">
-        {props.pick.position} · {props.pick.overall} OVR /{" "}
-        {props.pick.potential} POT
+      <div className="flex items-center gap-1.5 text-muted">
+        <span>{props.pick.position}</span>
+        <OvrBadge overall={props.pick.overall} size="sm" />
+        <OvrBadge overall={props.pick.potential} ghost label="POT" size="sm" />
       </div>
     </div>
   );
@@ -75,27 +77,25 @@ function TeamSummaryPanel(props: {
     <div className="space-y-6">
       <header>
         <SectionHeading title={teamName} size="lg" />
-        <p className="mt-1 text-sm text-zinc-400">Fantasy Draft Complete</p>
+        <p className="mt-1 text-sm text-muted">Fantasy Draft Complete</p>
         <div className="mt-3 flex flex-wrap items-end gap-4">
           <div>
-            <div className="text-sm text-zinc-400">Draft Grade</div>
+            <div className="text-sm text-muted">Draft Grade</div>
             <div className="text-4xl font-bold text-team-ink">
               {summary.draftGrade}
             </div>
-            <div className="text-sm text-zinc-400">
-              {summary.draftGradeLabel}
-            </div>
+            <div className="text-sm text-muted">{summary.draftGradeLabel}</div>
           </div>
-          <div className="text-sm text-zinc-400">
+          <div className="text-sm text-muted">
             {summary.playerCount} players selected · Avg OVR {summary.avgOvr} ·
             Avg POT {summary.avgPot} · Avg age {summary.avgAge}
           </div>
         </div>
       </header>
 
-      <section className="rounded-xl border border-zinc-800 p-4">
+      <section className="rounded-xl border border-line p-4">
         <SectionHeading as="h3" title="Draft Verdict" />
-        <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+        <p className="mt-2 text-sm leading-relaxed text-soft">
           {summary.draftVerdict}
         </p>
       </section>
@@ -107,21 +107,21 @@ function TeamSummaryPanel(props: {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <section className="rounded-xl border border-zinc-800 p-4">
+        <section className="rounded-xl border border-line p-4">
           <SectionHeading as="h3" title="Strengths" />
           <ul className="mt-2 space-y-1 text-sm text-emerald-300/90">
             {summary.strengths.length === 0 ? (
-              <li className="text-zinc-500">—</li>
+              <li className="text-faint">—</li>
             ) : (
               summary.strengths.map((s) => <li key={s}>{s}</li>)
             )}
           </ul>
         </section>
-        <section className="rounded-xl border border-zinc-800 p-4">
+        <section className="rounded-xl border border-line p-4">
           <SectionHeading as="h3" title="Concerns" />
-          <ul className="mt-2 space-y-1 text-sm text-zinc-400">
+          <ul className="mt-2 space-y-1 text-sm text-muted">
             {summary.concerns.length === 0 ? (
-              <li className="text-zinc-500">—</li>
+              <li className="text-faint">—</li>
             ) : (
               summary.concerns.map((c) => <li key={c}>{c}</li>)
             )}
@@ -129,22 +129,22 @@ function TeamSummaryPanel(props: {
         </section>
       </div>
 
-      <section className="rounded-xl border border-zinc-800 p-4">
+      <section className="rounded-xl border border-line p-4">
         <SectionHeading as="h3" title="Team Outlook" />
-        <p className="mt-2 text-sm text-zinc-300">
+        <p className="mt-2 text-sm text-soft">
           {summary.teamOutlook.narrative}
         </p>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-faint">
           Short term: {summary.teamOutlook.shortTerm} · Long term:{" "}
           {summary.teamOutlook.longTerm}
         </p>
         <div className="mt-4 space-y-2">
-          <h4 className="text-sm font-medium text-zinc-300">Roster Balance</h4>
+          <h4 className="text-sm font-medium text-soft">Roster Balance</h4>
           {summary.positionBalance.map((row) => (
             <div key={row.position} className="flex items-center gap-3 text-sm">
-              <span className="w-8 text-zinc-300">{row.position}</span>
+              <span className="w-8 text-soft">{row.position}</span>
               <BalanceBar level={row.level} />
-              <span className="w-28 text-right text-sm text-zinc-400">
+              <span className="w-28 text-right text-sm text-muted">
                 {row.level}
               </span>
             </div>
@@ -152,27 +152,27 @@ function TeamSummaryPanel(props: {
         </div>
       </section>
 
-      <section className="rounded-xl border border-zinc-800 p-4">
+      <section className="rounded-xl border border-line p-4">
         <SectionHeading as="h3" title="Draft Value" />
-        <p className="mt-2 text-sm text-zinc-300">
+        <p className="mt-2 text-sm text-soft">
           {summary.strongValuePickCount} of {summary.playerCount} picks were
           rated as strong value selections.
         </p>
         <ul className="mt-3 space-y-1 text-sm">
           {summary.pickBreakdown.map((row) => (
             <li key={row.pickNumber} className="flex items-center gap-2">
-              <span className="w-16 text-zinc-500">Pick {row.pickNumber}</span>
+              <span className="w-16 text-faint">Pick {row.pickNumber}</span>
               <Stars count={row.valueStars} />
             </li>
           ))}
         </ul>
       </section>
 
-      <section className="rounded-xl border border-zinc-800 p-4">
+      <section className="rounded-xl border border-line p-4">
         <SectionHeading as="h3" title="Draft Breakdown" className="mb-3" />
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="text-zinc-500">
+            <thead className="text-faint">
               <tr>
                 <th className="py-1">Pick</th>
                 <th>Player</th>
@@ -185,12 +185,21 @@ function TeamSummaryPanel(props: {
             </thead>
             <tbody>
               {summary.pickBreakdown.map((row) => (
-                <tr key={row.pickNumber} className="border-t border-zinc-800">
+                <tr key={row.pickNumber} className="border-t border-line">
                   <td className="py-1.5">{row.pickNumber}</td>
                   <td>{row.playerName}</td>
                   <td>{row.position}</td>
-                  <td>{row.overall}</td>
-                  <td>{row.potential}</td>
+                  <td>
+                    <OvrBadge overall={row.overall} size="sm" />
+                  </td>
+                  <td>
+                    <OvrBadge
+                      overall={row.potential}
+                      ghost
+                      label="POT"
+                      size="sm"
+                    />
+                  </td>
                   <td>{row.age}</td>
                   <td>{row.assessment}</td>
                 </tr>
@@ -202,7 +211,7 @@ function TeamSummaryPanel(props: {
 
       <section className="rounded-xl border border-team-ink/50 bg-team/20 p-4">
         <SectionHeading as="h3" title={"What's Next?"} />
-        <ul className="mt-2 space-y-1 text-sm text-zinc-300">
+        <ul className="mt-2 space-y-1 text-sm text-soft">
           {summary.recommendedNextSteps.map((step, i) => (
             <li key={step}>
               {i === 0 ? (
@@ -215,13 +224,13 @@ function TeamSummaryPanel(props: {
         <div className="mt-3 flex flex-wrap gap-2 text-sm">
           <a
             href={`/dashboard/${props.saveId}/free-agency`}
-            className="rounded border border-zinc-700 px-2 py-1 text-zinc-300 hover:border-zinc-500"
+            className="rounded border border-line-strong px-2 py-1 text-soft hover:border-faint"
           >
             Free agency
           </a>
           <a
             href={`/dashboard/${props.saveId}/roster`}
-            className="rounded border border-zinc-700 px-2 py-1 text-zinc-300 hover:border-zinc-500"
+            className="rounded border border-line-strong px-2 py-1 text-soft hover:border-faint"
           >
             Roster
           </a>
@@ -246,25 +255,25 @@ function LeagueRecapPanel(props: { view: FantasyDraftSummaryView }) {
   ];
 
   return (
-    <section className="rounded-xl border border-zinc-800 p-5">
+    <section className="rounded-xl border border-line p-5">
       <SectionHeading title="League Draft Recap" />
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {awards.map(({ label, award }) => (
           <div
             key={label}
-            className="rounded-lg border border-zinc-800 p-3 text-sm"
+            className="rounded-lg border border-line p-3 text-sm"
           >
-            <div className="text-sm text-zinc-400">{label}</div>
+            <div className="text-sm text-muted">{label}</div>
             {award ? (
               <>
-                <div className="mt-1 font-medium text-zinc-100">
+                <div className="mt-1 font-medium text-ink">
                   {award.teamName}
                   {award.playerName ? ` — ${award.playerName}` : ""}
                 </div>
-                <div className="text-sm text-zinc-500">{award.detail}</div>
+                <div className="text-sm text-faint">{award.detail}</div>
               </>
             ) : (
-              <div className="mt-1 text-zinc-500">—</div>
+              <div className="mt-1 text-faint">—</div>
             )}
           </div>
         ))}
@@ -289,10 +298,8 @@ export function FantasyDraftSummaryClient(props: {
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-4 py-10">
       <header>
-        <h1 className="text-3xl font-semibold text-zinc-50">
-          Fantasy Draft Complete
-        </h1>
-        <p className="mt-1 text-sm text-zinc-400">
+        <SectionHeading as="h1" size="lg" title="Fantasy Draft Complete" />
+        <p className="mt-1 text-sm text-muted">
           {view.selectionsMade} picks · {view.undraftedCount} undrafted free
           agents
         </p>
@@ -322,7 +329,7 @@ export function FantasyDraftSummaryClient(props: {
           summary={summary}
         />
       ) : (
-        <p className="text-sm text-zinc-500">No team summary available.</p>
+        <p className="text-sm text-faint">No team summary available.</p>
       )}
 
       <LeagueRecapPanel view={view} />

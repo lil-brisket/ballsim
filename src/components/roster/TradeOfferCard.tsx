@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import Link from "next/link";
 import { executeTradeOfferAction } from "@/application/actions";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
@@ -12,6 +13,7 @@ import type {
   TradeInterestLevel,
   TradeOfferView,
 } from "@/state/trade-offer-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 const INTEREST_LABELS: Record<TradeInterestLevel, string> = {
   very_interested: "Very interested",
@@ -31,12 +33,12 @@ function assetSummary(asset: TradeAssetView): string {
 
 function AssetColumn(props: { title: string; assets: TradeAssetView[] }) {
   return (
-    <div className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-zinc-950/40 p-3">
-      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+    <div className="min-w-0 flex-1 rounded-lg border border-line bg-surface-base/40 p-3">
+      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-faint">
         {props.title}
       </h4>
       {props.assets.length === 0 ? (
-        <p className="text-sm text-zinc-500">Nothing</p>
+        <p className="text-sm text-faint">Nothing</p>
       ) : (
         <ul className="space-y-2">
           {props.assets.map((asset) => (
@@ -46,24 +48,28 @@ function AssetColumn(props: { title: string; assets: TradeAssetView[] }) {
                   <Link
                     href={asset.href}
                     className={cn(
-                      "text-zinc-100 hover:text-team-ink",
+                      "text-ink hover:text-team-ink",
                       focusRingClass,
                     )}
                   >
                     {asset.name}
                   </Link>
-                  <p className="text-xs text-zinc-500">
-                    {asset.position} · {asset.overall} OVR · Age {asset.age}
-                    {asset.salary !== null
-                      ? ` · ${formatMoney(asset.salary)}`
-                      : ""}
+                  <p className="flex items-center gap-1.5 text-xs text-faint">
+                    <span>{asset.position}</span>
+                    <OvrBadge overall={asset.overall} size="sm" />
+                    <span>
+                      Age {asset.age}
+                      {asset.salary !== null
+                        ? ` · ${formatMoney(asset.salary)}`
+                        : ""}
+                    </span>
                   </p>
                 </>
               ) : (
                 <>
-                  <span className="text-zinc-100">{asset.name}</span>
+                  <span className="text-ink">{asset.name}</span>
                   {asset.viaAbbreviation ? (
-                    <span className="ml-2 text-xs text-zinc-500">
+                    <span className="ml-2 text-xs text-faint">
                       via {asset.viaAbbreviation}
                     </span>
                   ) : null}
@@ -83,12 +89,15 @@ export function TradeOfferCard(props: {
 }) {
   const { offer, saveId } = props;
   return (
-    <div className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+    <div className="space-y-4 rounded-xl border border-line bg-surface-raised/60 p-4">
       <div className="space-y-2">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-lg font-semibold text-zinc-100">
-            {offer.counterpartyName}
-          </h3>
+          <SectionHeading
+            as="h3"
+            size="sm"
+            titleClassName="text-lg!"
+            title={offer.counterpartyName}
+          />
           <span className="text-sm text-team-ink">
             {INTEREST_LABELS[offer.interestLevel]}
           </span>

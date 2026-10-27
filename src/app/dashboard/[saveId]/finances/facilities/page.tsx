@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadFinanceHubView } from "@/application/game-service";
 import { FacilityUpgradeList } from "@/components/finances/FacilityUpgradeList";
-import { FinancesSubNav } from "@/components/finances/FinancesSubNav";
+import { FinancesViews } from "@/components/finances/FinancesViews";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -35,7 +35,7 @@ export default async function FinancesFacilitiesPage({
         title="Finances"
         subtitle={`${view.teamName} · Season ${view.seasonYear}`}
       />
-      <FinancesSubNav saveId={saveId} active="facilities" />
+      <FinancesViews saveId={saveId} active="facilities" />
       {error ? <ErrorState message={error} /> : null}
 
       <section className="grid gap-4 sm:grid-cols-3">
@@ -69,7 +69,7 @@ export default async function FinancesFacilitiesPage({
       </Section>
 
       <Section title="How facilities help">
-        <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-400">
+        <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
           <li>Arena level raises maximum attendance (capacity).</li>
           <li>
             Practice, training, and medical improve the distribution of player

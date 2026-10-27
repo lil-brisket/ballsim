@@ -186,7 +186,7 @@ export function RulesForm(props: {
       </fieldset>
 
       <div className="space-y-2">
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           Changes apply the next time the simulation uses each rule.
         </p>
         <button

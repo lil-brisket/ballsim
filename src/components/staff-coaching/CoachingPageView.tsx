@@ -49,22 +49,20 @@ export function CoachingPageView(props: {
                 <button
                   type="submit"
                   aria-pressed={active}
-                  className={`flex h-full w-full flex-col items-start gap-1 rounded-lg border bg-zinc-950/40 px-4 py-3 text-left transition hover:border-zinc-500 ${
-                    active ? "border-team-ink" : "border-zinc-800"
+                  className={`flex h-full w-full flex-col items-start gap-1 rounded-lg border bg-surface-base/40 px-4 py-3 text-left transition hover:border-faint ${
+                    active ? "border-team-ink" : "border-line"
                   }`}
                 >
                   <span className="flex w-full items-center justify-between gap-2">
-                    <span className="font-medium text-zinc-100">
-                      {preset.label}
-                    </span>
+                    <span className="font-medium text-ink">{preset.label}</span>
                     {active ? (
                       <StatusBadge label="Active" tone="success" />
                     ) : null}
                   </span>
-                  <span className="text-sm text-zinc-400">
+                  <span className="text-sm text-muted">
                     {preset.description}
                   </span>
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-faint">
                     {presetSummary(preset)}
                   </span>
                 </button>

@@ -38,9 +38,9 @@ export default async function JoinLeaguePage({
         </>
       ) : (
         <>
-          <div className="space-y-1 text-zinc-200">
+          <div className="space-y-1 text-ink">
             <p className="text-xl font-semibold">{result.preview.leagueName}</p>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted">
               Hosted by {result.preview.hostName} · {result.preview.playerCount}{" "}
               {result.preview.playerCount === 1 ? "player" : "players"}
             </p>
@@ -74,13 +74,13 @@ export default async function JoinLeaguePage({
             <form action={joinLeagueAction} className="space-y-4">
               <input type="hidden" name="token" value={token} />
               <fieldset className="space-y-2">
-                <legend className="mb-2 text-sm text-zinc-300">
+                <legend className="mb-2 text-sm text-soft">
                   Choose your franchise
                 </legend>
                 {result.preview.openTeams.map((team, index) => (
                   <label
                     key={team.id}
-                    className="flex min-h-11 items-center gap-3 rounded-lg border border-surface-line px-3 text-sm text-zinc-100"
+                    className="flex min-h-11 items-center gap-3 rounded-lg border border-surface-line px-3 text-sm text-ink"
                   >
                     <input
                       type="radio"

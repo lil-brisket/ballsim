@@ -9,7 +9,6 @@ import { ManagementDecisionPanel } from "@/components/management/ManagementDecis
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
-import { TeamHubSubNav } from "@/components/team/TeamHubSubNav";
 
 export const metadata: Metadata = { title: "Contracts" };
 
@@ -38,7 +37,6 @@ export default async function TeamContractsPage({
 
   return (
     <div className="space-y-8">
-      <TeamHubSubNav saveId={saveId} active="contracts" />
       <ContractHubHeader view={view} />
       {error ? <ErrorState message={error} /> : null}
 

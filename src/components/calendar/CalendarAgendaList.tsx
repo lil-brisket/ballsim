@@ -5,7 +5,7 @@ import {
   calendarDayAriaLabel,
   formatShortDate,
 } from "@/components/calendar/CalendarDayCell";
-import { cn, touchTargetClass } from "@/components/ui/styles";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 export function CalendarAgendaList(props: {
   days: readonly CalendarDayCellData[];
@@ -44,25 +44,26 @@ export function CalendarAgendaList(props: {
               aria-pressed={selected}
               className={cn(
                 touchTargetClass,
+                focusRingClass,
                 "w-full justify-between gap-3 rounded-lg border px-3 text-left",
                 cell.isToday
                   ? "border-warning bg-warning/10"
-                  : "border-zinc-800 bg-zinc-950/50",
+                  : "border-line bg-surface-base/50",
                 cell.isNextTeamGame && !cell.isToday
-                  ? "border-sky-700/50 ring-2 ring-sky-500/70"
+                  ? "border-team-ink/50 ring-2 ring-team-ink/70"
                   : "",
                 selected ? "ring-2 ring-team-ink/80" : "",
                 disabled ? "cursor-not-allowed opacity-50" : "",
               )}
             >
               <span className="min-w-0">
-                <span className="block text-sm text-zinc-400">
+                <span className="block text-sm text-muted">
                   {formatShortDate(cell.date)}
                 </span>
                 <span
                   className={cn(
                     "block truncate text-sm",
-                    cell.isToday ? "font-medium text-warning" : "text-zinc-100",
+                    cell.isToday ? "font-medium text-warning" : "text-ink",
                   )}
                 >
                   {summary}

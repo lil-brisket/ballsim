@@ -1,5 +1,5 @@
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
-import { Panel } from "@/components/ui/Panel";
+import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import type { DestinationEvaluation } from "@/state/market-destination";
 import { MARKET_POTENTIAL_PER_POINT } from "@/state/franchise-value-config";
 
@@ -22,13 +22,13 @@ export function MarketComparison(props: {
   );
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Panel className="border-team-ink/40">
-        <p className="text-sm text-zinc-400">Current market</p>
-        <p className="mt-1 font-medium text-zinc-100">{props.currentCity}</p>
-        <ul className="mt-3 space-y-1 text-sm text-zinc-400">
+      <ArenaPanel quiet as="div" className="border-team-ink/40">
+        <p className="text-sm text-muted">Current market</p>
+        <p className="mt-1 font-medium text-ink">{props.currentCity}</p>
+        <ul className="mt-3 space-y-1 text-sm text-muted">
           <li className="flex justify-between gap-2">
             <span>Size</span>
-            <span className="text-zinc-200">{props.marketSize}</span>
+            <span className="text-ink">{props.marketSize}</span>
           </li>
           <li className="flex justify-between gap-2">
             <span>Potential</span>
@@ -38,22 +38,22 @@ export function MarketComparison(props: {
           </li>
           <li className="flex justify-between gap-2">
             <span>Realization</span>
-            <span className="text-zinc-200">
+            <span className="text-ink">
               {Math.round(props.attendanceRealization * 100)}%
             </span>
           </li>
         </ul>
-      </Panel>
+      </ArenaPanel>
       {destinations.map((destination) => (
-        <Panel key={destination.city}>
-          <p className="text-sm text-zinc-400">
+        <ArenaPanel quiet as="div" key={destination.city}>
+          <p className="text-sm text-muted">
             {destination.opportunity.replaceAll("_", " ")} opportunity
           </p>
-          <p className="mt-1 font-medium text-zinc-100">{destination.city}</p>
-          <ul className="mt-3 space-y-1 text-sm text-zinc-400">
+          <p className="mt-1 font-medium text-ink">{destination.city}</p>
+          <ul className="mt-3 space-y-1 text-sm text-muted">
             <li className="flex justify-between gap-2">
               <span>Size</span>
-              <span className="text-zinc-200">
+              <span className="text-ink">
                 {destination.marketSize}{" "}
                 <span
                   className={
@@ -61,7 +61,7 @@ export function MarketComparison(props: {
                       ? "text-emerald-400"
                       : destination.marketSizeDelta < 0
                         ? "text-rose-400"
-                        : "text-zinc-500"
+                        : "text-faint"
                   }
                 >
                   ({destination.marketSizeDelta > 0 ? "+" : ""}
@@ -75,17 +75,15 @@ export function MarketComparison(props: {
             </li>
             <li className="flex justify-between gap-2">
               <span>Risk</span>
-              <span className="capitalize text-zinc-200">
+              <span className="capitalize text-ink">
                 {destination.risk.replaceAll("_", " ")}
               </span>
             </li>
           </ul>
           {destination.reasons[0] ? (
-            <p className="mt-3 text-sm text-zinc-500">
-              {destination.reasons[0]}
-            </p>
+            <p className="mt-3 text-sm text-faint">{destination.reasons[0]}</p>
           ) : null}
-        </Panel>
+        </ArenaPanel>
       ))}
     </div>
   );

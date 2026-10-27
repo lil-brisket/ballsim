@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { loadTransactionHubView } from "@/application/game-service";
 import { parseTeamFilterParam } from "@/components/league/team-filter-utils";
-import { LeagueSubNav } from "@/components/league/LeagueSubNav";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
@@ -14,7 +13,11 @@ import {
   toTransactionHubSearchParams,
   TRANSACTION_HUB_PAGE_SIZE,
 } from "@/state/transaction-hub-selectors";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 export const metadata: Metadata = { title: "Transactions" };
 
@@ -88,6 +91,7 @@ export default async function LeagueTransactionsPage({
     <Link
       href={basePath}
       className={cn(
+        touchTargetTextClass,
         "text-sm text-team-ink underline-offset-4 hover:underline",
         focusRingClass,
       )}
@@ -98,7 +102,6 @@ export default async function LeagueTransactionsPage({
 
   return (
     <div className="space-y-4">
-      <LeagueSubNav saveId={saveId} active="transactions" />
       <PageHeader
         title="Transactions"
         subtitle="Trades, signings, releases and draft moves around the league"
@@ -106,7 +109,7 @@ export default async function LeagueTransactionsPage({
       {query.error ? <ErrorState message={query.error} /> : null}
 
       <Suspense
-        fallback={<p className="text-sm text-zinc-500">Loading filters…</p>}
+        fallback={<p className="text-sm text-faint">Loading filters…</p>}
       >
         <TransactionFilters
           saveId={saveId}
@@ -146,15 +149,15 @@ export default async function LeagueTransactionsPage({
               parsed.activityMode === "league" && teamValue !== "my"
             }
           />
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-3">
-            <p className="text-sm text-zinc-500">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+            <p className="text-sm text-faint">
               Showing {view.shown} of {view.total}
             </p>
             {view.hasMore ? (
               <Link
                 href={loadMoreHref()}
                 className={cn(
-                  "inline-flex rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-team-ink",
+                  "inline-flex min-h-11 items-center rounded-md border border-line-strong px-4 text-sm text-ink hover:border-team-ink",
                   focusRingClass,
                 )}
               >

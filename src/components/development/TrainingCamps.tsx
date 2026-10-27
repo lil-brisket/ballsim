@@ -10,6 +10,7 @@ import {
   DEVELOPMENT_FOCUS_LABELS,
   type DevelopmentPlansView,
 } from "@/state/development-plan-selectors";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 /**
  * Training camps: the camp catalogue plus one form that assigns a camp to
@@ -23,22 +24,22 @@ export function TrainingCamps(props: {
   const { saveId, returnPath, plans } = props;
   return (
     <Section title="Training camps">
-      <p className="mb-1 text-sm text-zinc-400">
+      <p className="mb-1 text-sm text-muted">
         Camps run at the end of the season and add growth to the camp&apos;s
         skills, for players of any age. A camp never lowers a rating, and no
         player grows past their potential.
       </p>
-      <p className="mb-3 text-sm text-zinc-300">
+      <p className="mb-3 text-sm text-soft">
         Camp spots:{" "}
         <span
           className={cn(
             "tabular-nums",
-            plans.booked >= plans.slots ? "text-warning" : "text-zinc-100",
+            plans.booked >= plans.slots ? "text-warning" : "text-ink",
           )}
         >
           {plans.booked} / {plans.slots}
         </span>{" "}
-        <span className="text-zinc-500">
+        <span className="text-faint">
           (set by your trainer; a better trainer runs more)
         </span>
       </p>
@@ -46,15 +47,15 @@ export function TrainingCamps(props: {
         {plans.camps.map((camp) => (
           <li
             key={camp.focus}
-            className="min-w-0 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2"
+            className="min-w-0 rounded-lg border border-line bg-surface-raised/40 px-3 py-2"
           >
-            <p className="flex items-baseline justify-between gap-2 text-sm font-medium text-zinc-100">
+            <p className="flex items-baseline justify-between gap-2 text-sm font-medium text-ink">
               <span className="truncate">{camp.label}</span>
-              <span className="shrink-0 text-xs tabular-nums text-zinc-400">
+              <span className="shrink-0 text-xs tabular-nums text-muted">
                 {camp.attendees}
               </span>
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 text-xs text-faint">
               {camp.skills.join(", ")}
             </p>
           </li>
@@ -66,7 +67,7 @@ export function TrainingCamps(props: {
         <form action={setDevelopmentFocusesAction}>
           <input type="hidden" name="saveId" value={saveId} />
           <input type="hidden" name="returnPath" value={returnPath} />
-          <ul className="divide-y divide-zinc-800">
+          <ul className="divide-y divide-line">
             {plans.rows.map((row) => (
               <li
                 key={row.playerId}
@@ -76,12 +77,14 @@ export function TrainingCamps(props: {
                   <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
                     {row.playerName}
                   </PlayerEntityLink>
-                  <span className="ml-2 text-sm text-zinc-500">
+                  <span className="ml-2 text-sm text-faint">
                     {row.position} · {row.age}
                   </span>
-                  <span className="ml-2 text-sm tabular-nums text-zinc-300">
-                    OVR {row.overall}
-                  </span>
+                  <OvrBadge
+                    overall={row.overall}
+                    size="sm"
+                    className="ml-2 align-middle"
+                  />
                   {row.injury ? (
                     <span className="ml-2 rounded-full border border-orange-400/40 bg-orange-500/10 px-2 py-0.5 text-xs text-orange-300">
                       Injured · {row.injury.label}
@@ -108,7 +111,7 @@ export function TrainingCamps(props: {
             ))}
           </ul>
           <div className="mt-3">
-            <Button type="submit" variant="secondary" className="min-h-9">
+            <Button type="submit" variant="secondary" className="min-h-11">
               Save camps
             </Button>
           </div>

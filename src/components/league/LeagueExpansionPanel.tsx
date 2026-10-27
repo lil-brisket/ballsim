@@ -8,6 +8,7 @@ import type { ExpansionAssessment } from "@/state/expansion-assessment";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { DataTable } from "@/components/ui/DataTable";
 import { buttonClass } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
@@ -53,9 +54,9 @@ export function LeagueExpansionPanel(props: {
       </section>
 
       <Section title="Expansion assessment">
-        <p className="mb-3 text-sm text-zinc-400">
+        <p className="mb-3 text-sm text-muted">
           Status:{" "}
-          <span className="text-zinc-200">
+          <span className="text-ink">
             {assessment.status.replaceAll("_", " ")}
           </span>
           {" · "}
@@ -63,21 +64,21 @@ export function LeagueExpansionPanel(props: {
           {expansion.newTeamId ? ` · New team: ${expansion.newTeamId}` : null}
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border border-zinc-800 p-3 text-sm">
-            <p className="font-medium text-zinc-200">
+          <div className="rounded-lg border border-line p-3 text-sm">
+            <p className="font-medium text-ink">
               League readiness — {assessment.leagueReadiness.status}
             </p>
-            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-zinc-400">
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted">
               {assessment.leagueReadiness.reasons.slice(0, 3).map((reason) => (
                 <li key={reason}>{reason}</li>
               ))}
             </ul>
           </div>
-          <div className="rounded-lg border border-zinc-800 p-3 text-sm">
-            <p className="font-medium text-zinc-200">
+          <div className="rounded-lg border border-line p-3 text-sm">
+            <p className="font-medium text-ink">
               Market opportunity — {assessment.marketOpportunity.status}
             </p>
-            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-zinc-400">
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted">
               {assessment.marketOpportunity.reasons
                 .slice(0, 3)
                 .map((reason) => (
@@ -85,11 +86,11 @@ export function LeagueExpansionPanel(props: {
                 ))}
             </ul>
           </div>
-          <div className="rounded-lg border border-zinc-800 p-3 text-sm">
-            <p className="font-medium text-zinc-200">
+          <div className="rounded-lg border border-line p-3 text-sm">
+            <p className="font-medium text-ink">
               Structural capacity — {assessment.structuralCapacity.status}
             </p>
-            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-zinc-400">
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted">
               {assessment.structuralCapacity.reasons
                 .slice(0, 3)
                 .map((reason) => (
@@ -100,43 +101,33 @@ export function LeagueExpansionPanel(props: {
         </div>
 
         {assessment.marketOpportunity.destinations.length > 0 ? (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[28rem] text-left text-sm text-zinc-300">
-              <thead className="text-zinc-500">
-                <tr>
-                  <th className="py-1 pr-3 font-medium">Market</th>
-                  <th className="py-1 pr-3 font-medium">Size</th>
-                  <th className="py-1 pr-3 font-medium">Opportunity</th>
-                  <th className="py-1 pr-3 font-medium">Risk</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assessment.marketOpportunity.destinations
-                  .slice(0, 5)
-                  .map((destination) => (
-                    <tr
-                      key={destination.city}
-                      className="border-t border-zinc-800"
-                    >
-                      <td className="py-1.5 pr-3">
-                        {destination.city} {destination.name}
-                      </td>
-                      <td className="py-1.5 pr-3">{destination.marketSize}</td>
-                      <td className="py-1.5 pr-3">
-                        {destination.opportunity.replaceAll("_", " ")}
-                      </td>
-                      <td className="py-1.5 pr-3">{destination.risk}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+          <div className="mt-4">
+            <DataTable
+              caption="Candidate markets"
+              headers={["Market", "Size", "Opportunity", "Risk"]}
+            >
+              {assessment.marketOpportunity.destinations
+                .slice(0, 5)
+                .map((destination) => (
+                  <tr key={destination.city}>
+                    <td className="px-3 py-2 text-ink">
+                      {destination.city} {destination.name}
+                    </td>
+                    <td className="px-3 py-2">{destination.marketSize}</td>
+                    <td className="px-3 py-2">
+                      {destination.opportunity.replaceAll("_", " ")}
+                    </td>
+                    <td className="px-3 py-2">{destination.risk}</td>
+                  </tr>
+                ))}
+            </DataTable>
           </div>
         ) : null}
       </Section>
 
       <Section title={`Expansion process (${expansion.stage})`}>
         {!canPropose && !inProgress ? (
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             Expansion is not an active league opportunity. All three gates must
             open before proposing a new franchise.
           </p>

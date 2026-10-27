@@ -1,4 +1,6 @@
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
+import { rowLinkPlainClass } from "@/components/league/row-link-class";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
@@ -9,7 +11,7 @@ import {
   type TransactionActivityMode,
   type TransactionRowView,
 } from "@/state/transaction-hub-selectors";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn } from "@/components/ui/styles";
 
 function badgeTone(type: string): string {
   switch (type) {
@@ -56,20 +58,18 @@ export function TransactionRow(props: {
         "rounded-lg border px-3 py-3",
         props.highlight
           ? "border-team-ink/50 border-l-2 border-l-team-ink bg-team/15"
-          : "border-zinc-800 bg-zinc-900/40",
+          : "border-line bg-surface-raised/40",
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
         <TransactionTypeBadge type={row.type} />
         {showDate ? (
-          <span className="text-sm text-zinc-500">
+          <span className="text-sm text-faint">
             {formatGameDate(row.occurredOn)}
           </span>
         ) : null}
         {props.highlight ? (
-          <span className="text-xs font-semibold uppercase tracking-wide text-team-ink">
-            Your team
-          </span>
+          <span className="text-sm font-semibold text-team-ink">Your team</span>
         ) : null}
       </div>
 
@@ -78,15 +78,15 @@ export function TransactionRow(props: {
           {row.tradeSides.map((side) => (
             <div
               key={side.team.id}
-              className="rounded-md border border-zinc-800/80 bg-zinc-950/40 px-3 py-2"
+              className="rounded-md border border-line/80 bg-surface-base/40 px-3 py-2"
             >
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted">
                 <TeamEntityLink
                   saveId={saveId}
                   teamId={side.team.id}
                   className={cn(
-                    "font-medium text-zinc-200 hover:text-team-ink",
-                    focusRingClass,
+                    rowLinkPlainClass,
+                    "font-medium text-ink hover:text-team-ink",
                   )}
                 >
                   {side.team.abbreviation ?? side.team.name}
@@ -106,8 +106,8 @@ export function TransactionRow(props: {
                       saveId={saveId}
                       playerId={player.id}
                       className={cn(
-                        "text-sm text-zinc-100 hover:text-team-ink",
-                        focusRingClass,
+                        rowLinkPlainClass,
+                        "text-sm text-ink hover:text-team-ink",
                       )}
                     >
                       {player.name}
@@ -115,12 +115,12 @@ export function TransactionRow(props: {
                   </li>
                 ))}
                 {side.assets.map((asset) => (
-                  <li key={asset} className="text-sm text-zinc-400">
+                  <li key={asset} className="text-sm text-muted">
                     {asset}
                   </li>
                 ))}
                 {side.players.length === 0 && side.assets.length === 0 ? (
-                  <li className="text-sm text-zinc-600">—</li>
+                  <li className="text-sm text-disabled">—</li>
                 ) : null}
               </ul>
             </div>
@@ -128,7 +128,7 @@ export function TransactionRow(props: {
         </div>
       ) : (
         <div className="mt-2 space-y-1">
-          <p className="text-sm text-zinc-200">{row.description}</p>
+          <p className="text-sm text-ink">{row.description}</p>
           <div className="flex flex-wrap gap-2 text-sm">
             {row.players.map((player) => (
               <span
@@ -145,8 +145,8 @@ export function TransactionRow(props: {
                   saveId={saveId}
                   playerId={player.id}
                   className={cn(
+                    rowLinkPlainClass,
                     "text-team-ink/90 hover:text-team-ink",
-                    focusRingClass,
                   )}
                 >
                   {player.name}
@@ -159,8 +159,8 @@ export function TransactionRow(props: {
                 saveId={saveId}
                 teamId={team.id}
                 className={cn(
-                  "text-zinc-400 hover:text-team-ink",
-                  focusRingClass,
+                  rowLinkPlainClass,
+                  "text-muted hover:text-team-ink",
                 )}
               >
                 {team.abbreviation ?? team.name}
@@ -187,16 +187,19 @@ export function TransactionTimeline(props: {
   return (
     <div className="space-y-5">
       {props.activityMode === "myTeam" ? (
-        <p className="text-sm text-zinc-400">Showing your franchise activity</p>
+        <p className="text-sm text-muted">Showing your franchise activity</p>
       ) : null}
       {props.groups.map((group) => (
         <section key={group.date} aria-label={group.date}>
           <div className="mb-2 flex items-center gap-3">
-            <h3 className="font-display text-base font-semibold uppercase tracking-wide text-zinc-200">
-              {formatGameDate(group.date, { year: true })}
-            </h3>
-            <span aria-hidden className="h-px flex-1 bg-zinc-800" />
-            <span className="text-xs text-zinc-500">
+            <SectionHeading
+              as="h3"
+              size="sm"
+              titleClassName="font-display text-base! uppercase tracking-wide"
+              title={<>{formatGameDate(group.date, { year: true })}</>}
+            />
+            <span aria-hidden className="h-px flex-1 bg-surface-high" />
+            <span className="text-sm text-faint">
               {group.rows.length === 1
                 ? "1 move"
                 : `${group.rows.length} moves`}

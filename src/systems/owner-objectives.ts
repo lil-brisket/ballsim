@@ -1,3 +1,4 @@
+import { formatMoney } from "@/domain/owner-objective-text";
 import {
   createOwnerObjective,
   type OwnerObjective,
@@ -530,7 +531,7 @@ function createTypedObjective(args: CreateTypedArgs): OwnerObjective {
       return createOwnerObjective({
         id: asOwnerObjectiveId(baseId),
         type,
-        description: `Keep payroll at or below ${target}`,
+        description: `Keep payroll at or below ${formatMoney(target)}`,
         status: "active",
         seasonYear,
         category: definition.category,
@@ -579,7 +580,7 @@ function createTypedObjective(args: CreateTypedArgs): OwnerObjective {
       return createOwnerObjective({
         id: asOwnerObjectiveId(baseId),
         type,
-        description: `Reach ${target} in season revenue`,
+        description: `Reach ${formatMoney(target)} in season revenue`,
         status: "active",
         seasonYear,
         category: definition.category,

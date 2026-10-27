@@ -14,7 +14,7 @@ export function OverviewTab(props: { view: PlayerDrawerView }) {
   return (
     <>
       {view.mood ? (
-        <p className="flex flex-wrap items-center gap-2 text-sm text-zinc-300">
+        <p className="flex flex-wrap items-center gap-2 text-sm text-soft">
           <MoodChip mood={view.mood} />
           <span>
             Mood: {view.mood.label} — {view.mood.reason}
@@ -62,13 +62,13 @@ export function OverviewTab(props: { view: PlayerDrawerView }) {
             <StatTile label="Years" value={view.contract.yearsRemaining} />
             <div className="flex min-w-0 flex-col items-start justify-center gap-1 rounded-lg border border-surface-line border-b-team-ink bg-surface-deep/80 px-3 py-3">
               <StatusBadge label={view.contract.status} />
-              <span className="text-sm text-zinc-400">Status</span>
+              <span className="text-sm text-muted">Status</span>
             </div>
           </div>
         </Section>
       ) : view.navigation.contractHref ? (
         <Section title="Contract" density="compact">
-          <p className="text-sm text-zinc-400">Contract details unavailable</p>
+          <p className="text-sm text-muted">Contract details unavailable</p>
         </Section>
       ) : null}
     </>

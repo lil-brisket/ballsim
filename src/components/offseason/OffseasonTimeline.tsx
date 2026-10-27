@@ -21,13 +21,13 @@ export function OffseasonTimeline(props: {
   }
 
   return (
-    <ul className="divide-y divide-zinc-800 rounded-xl border border-zinc-800">
+    <ul className="divide-y divide-line rounded-xl border border-line">
       {props.events.map((event) => {
         const content = (
           <>
             <div>
-              <p className="font-medium text-zinc-100">{event.label}</p>
-              <p className="text-sm text-zinc-500">
+              <p className="font-medium text-ink">{event.label}</p>
+              <p className="text-sm text-faint">
                 {event.date ? formatGameDate(event.date) : "Date pending"}
               </p>
             </div>
@@ -44,7 +44,7 @@ export function OffseasonTimeline(props: {
               <Link
                 href={event.href}
                 className={cn(
-                  "flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm transition-colors hover:bg-zinc-900/60",
+                  "flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm transition-colors hover:bg-surface-raised/60",
                   focusRingClass,
                 )}
               >

@@ -36,7 +36,7 @@ function Monogram(props: { name: string }) {
   return (
     <span
       aria-hidden="true"
-      className="inline-flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-800 font-display text-2xl font-bold text-zinc-200"
+      className="inline-flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border border-line-strong bg-surface-high font-display text-2xl font-bold text-ink"
     >
       {initials}
     </span>
@@ -114,11 +114,11 @@ export function AwardAttachmentCard(props: {
     <TeamSurface branding={branding} band="top">
       <div className="flex items-center gap-2">
         {award.cadence === "yearly" ? <TrophyIcon /> : <MedalIcon />}
-        <p className="font-display text-xl font-bold leading-tight text-zinc-50">
+        <p className="font-display text-xl font-bold leading-tight text-ink">
           {award.awardName}
         </p>
       </div>
-      <p className="mt-0.5 text-sm text-zinc-400">{awardPeriodLabel(award)}</p>
+      <p className="mt-0.5 text-sm text-muted">{awardPeriodLabel(award)}</p>
 
       <div className="mt-4 flex items-center gap-4">
         {winner ? (
@@ -148,12 +148,12 @@ export function AwardAttachmentCard(props: {
               className="font-display text-lg"
             />
           ) : award.winnerCoachName ? (
-            <p className="font-display text-lg text-zinc-50">
+            <p className="font-display text-lg text-ink">
               {award.winnerCoachName}
             </p>
           ) : null}
           {award.team ? (
-            <p className="flex items-center gap-2 text-sm text-zinc-400">
+            <p className="flex items-center gap-2 text-sm text-muted">
               {branding ? (
                 <TeamLogoMark branding={branding} size="sm" decorative />
               ) : null}
@@ -173,7 +173,7 @@ export function AwardAttachmentCard(props: {
       ) : null}
 
       {runnerUp ? (
-        <p className="mt-3 text-sm text-zinc-400">
+        <p className="mt-3 text-sm text-muted">
           Runner-up: {runnerUp.name}
           {runnerUp.teamAbbreviation ? ` (${runnerUp.teamAbbreviation})` : ""}
         </p>

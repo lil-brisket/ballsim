@@ -11,9 +11,11 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PlayerActionMenu } from "@/components/roster/PlayerActionMenu";
 import { RosterCard } from "@/components/roster/RosterCard";
+import { TableKeys, tableRowFocusClass } from "@/components/ui/focus/TableKeys";
 import { MobileListCard } from "@/components/ui/MobileListCard";
 import {
   cn,
@@ -21,7 +23,6 @@ import {
   touchTargetClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
-import { ratingTier } from "@/presentation/rating-tier";
 
 type SortKey =
   "overall" | "age" | "salary" | "years" | "position" | "role" | "name";
@@ -35,7 +36,7 @@ const POSITION_ORDER = Object.fromEntries(
 ) as Record<string, number>;
 
 const controlClass = cn(
-  "min-h-11 rounded-md border border-surface-line bg-surface-arena px-3 text-sm text-zinc-100",
+  "min-h-11 rounded-md border border-surface-line bg-surface-arena px-3 text-sm text-ink",
   focusRingClass,
 );
 
@@ -176,7 +177,7 @@ export function RosterManagementTable(props: {
                 focusRingClass,
                 chip === entry.id
                   ? "bg-team text-on-team font-semibold"
-                  : "border border-surface-line text-zinc-300 hover:border-team-ink",
+                  : "border border-surface-line text-soft hover:border-team-ink",
               )}
             >
               {entry.label}
@@ -243,7 +244,7 @@ export function RosterManagementTable(props: {
                   focusRingClass,
                   view === option.id
                     ? "bg-team text-on-team font-semibold"
-                    : "text-zinc-300 hover:text-team-ink",
+                    : "text-soft hover:text-team-ink",
                 )}
               >
                 {option.label}
@@ -258,7 +259,7 @@ export function RosterManagementTable(props: {
         {filtered.map((player) => {
           const name = `${player.firstName} ${player.lastName}`;
           return (
-            <li key={player.playerId} data-tier={ratingTier(player.overall).id}>
+            <li key={player.playerId}>
               <MobileListCard
                 title={
                   <span className="flex items-center gap-2">
@@ -285,9 +286,7 @@ export function RosterManagementTable(props: {
                 subtitle={`${player.position} · ${player.roleDisplayLabel} · Age ${player.age}`}
                 meta={
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-display text-xl font-bold tabular-nums text-tier">
-                      {player.overall}
-                    </span>
+                    <OvrBadge overall={player.overall} size="sm" />
                     <StatusBadge
                       label={player.availabilityLabel}
                       tone={player.canPlay ? "available" : player.injuryKind}
@@ -330,9 +329,14 @@ export function RosterManagementTable(props: {
           ))}
         </ul>
       ) : (
-        <div className="hidden overflow-x-auto md:block">
-          <table className="min-w-full overflow-hidden rounded-xl border border-zinc-800 text-left text-sm">
-            <thead className="bg-zinc-900 text-zinc-400">
+        <TableKeys className="hidden overflow-x-auto md:block">
+          <table
+            className={cn(
+              "min-w-full overflow-hidden rounded-xl border border-line text-left text-sm",
+              tableRowFocusClass,
+            )}
+          >
+            <thead className="bg-surface-raised text-muted">
               <tr>
                 <th scope="col" className="px-3 py-2 text-right font-medium">
                   <span aria-hidden>#</span>
@@ -386,12 +390,8 @@ export function RosterManagementTable(props: {
                   player.contractYearsRemaining <= 1;
                 const name = `${player.firstName} ${player.lastName}`;
                 return (
-                  <tr
-                    key={player.playerId}
-                    data-tier={ratingTier(player.overall).id}
-                    className="border-t border-zinc-800"
-                  >
-                    <td className="px-3 py-2 text-right font-mono text-sm tabular-nums text-zinc-400">
+                  <tr key={player.playerId} className="border-t border-line">
+                    <td className="px-3 py-2 text-right font-mono text-sm tabular-nums text-muted">
                       {player.jerseyNumber}
                     </td>
                     <td className="px-3 py-2">
@@ -414,19 +414,21 @@ export function RosterManagementTable(props: {
                         <span className="ml-2 text-sm team-ink">Block</span>
                       ) : null}
                     </td>
-                    <td className="px-3 py-2 text-zinc-400">
-                      {player.position}
+                    <td className="px-3 py-2 text-muted">{player.position}</td>
+                    <td className="px-3 py-2 text-right">
+                      <OvrBadge
+                        overall={player.overall}
+                        size="sm"
+                        className="align-middle"
+                      />
                     </td>
-                    <td className="px-3 py-2 text-right font-display text-lg font-bold tabular-nums text-tier">
-                      {player.overall}
-                    </td>
-                    <td className="hidden px-3 py-2 text-right tabular-nums text-zinc-400 sm:table-cell">
+                    <td className="hidden px-3 py-2 text-right tabular-nums text-muted sm:table-cell">
                       {player.age}
                     </td>
-                    <td className="hidden px-3 py-2 text-zinc-400 md:table-cell">
+                    <td className="hidden px-3 py-2 text-muted md:table-cell">
                       {player.roleDisplayLabel}
                       {player.depthSlot ? (
-                        <span className="ml-1 text-sm text-zinc-600">
+                        <span className="ml-1 text-sm text-disabled">
                           ({player.depthSlot})
                         </span>
                       ) : null}
@@ -443,7 +445,7 @@ export function RosterManagementTable(props: {
                         </span>
                       ) : null}
                     </td>
-                    <td className="hidden px-3 py-2 text-right tabular-nums text-zinc-400 xl:table-cell">
+                    <td className="hidden px-3 py-2 text-right tabular-nums text-muted xl:table-cell">
                       {player.contractYearsRemaining ?? "—"}
                     </td>
                     <td className="px-3 py-2">
@@ -471,7 +473,7 @@ export function RosterManagementTable(props: {
               })}
             </tbody>
           </table>
-        </div>
+        </TableKeys>
       )}
     </div>
   );

@@ -158,7 +158,7 @@ function buildTasksForPhase(
       title: "Explore pick trades",
       detail: "Move up, back, or acquire extra picks.",
       explanation: "Trades are available but not required to advance.",
-      href: `/dashboard/${saveId}/team-management/transactions`,
+      href: `/dashboard/${saveId}/trades`,
       teamId,
     });
   }
@@ -243,7 +243,7 @@ function buildTasksForPhase(
       title: "Explore trades",
       detail: "Trades remain available during free agency.",
       explanation: "Optional — use only if it improves roster construction.",
-      href: `/dashboard/${saveId}/team-management/transactions`,
+      href: `/dashboard/${saveId}/trades`,
       teamId,
     });
   }
@@ -260,7 +260,7 @@ function buildTasksForPhase(
         detail: "Fill a vacant starter staff role.",
         explanation:
           "Empty staff roles reduce development and organizational quality.",
-        href: `/dashboard/${saveId}/staff-coaching`,
+        href: `/dashboard/${saveId}/staff-coaching/staff`,
         teamId,
         focusKey: "staff_vacancies",
       });
@@ -273,7 +273,7 @@ function buildTasksForPhase(
       title: "Review staff and development",
       detail: "Upgrade roles or adjust priorities.",
       explanation: "Optional fine-tuning before preseason.",
-      href: `/dashboard/${saveId}/staff-coaching`,
+      href: `/dashboard/${saveId}/staff-coaching/staff`,
       teamId,
     });
   }
@@ -318,7 +318,7 @@ function buildTasksForPhase(
       title: "Explore trade targets",
       detail: "Address roster weakness via trades before the draft.",
       explanation: "Optional — draft and free agency can also fill holes.",
-      href: `/dashboard/${saveId}/team-management/transactions`,
+      href: `/dashboard/${saveId}/trades`,
       teamId,
     });
   }

@@ -41,10 +41,10 @@ export function GameRow(props: GameRowProps) {
 
   const opponentLabel = (
     <span className="inline-flex items-center gap-2">
-      <span className="text-zinc-500">{props.home ? "vs" : "@"}</span>
+      <span className="text-faint">{props.home ? "vs" : "@"}</span>
       {props.opponentBranding ? (
         <span
-          className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-zinc-700"
+          className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-line-strong"
           style={{ backgroundColor: props.opponentBranding.primaryColor }}
         >
           <TeamLogoMark
@@ -60,14 +60,14 @@ export function GameRow(props: GameRowProps) {
           teamId={props.opponentTeamId}
           className={cn(
             touchTargetTextClass,
-            "text-zinc-100 hover:text-team-ink",
+            "text-ink hover:text-team-ink",
             focusRingClass,
           )}
         >
           {props.opponentName ?? props.opponentAbbreviation}
         </TeamEntityLink>
       ) : (
-        <span className="text-zinc-100">
+        <span className="text-ink">
           {props.opponentName ?? props.opponentAbbreviation}
         </span>
       )}
@@ -111,18 +111,18 @@ export function GameRow(props: GameRowProps) {
       Calendar
     </Link>
   ) : (
-    <span className="text-sm text-zinc-500">Scheduled</span>
+    <span className="text-sm text-faint">Scheduled</span>
   );
 
   return (
     <div
       className={cn(
-        "flex min-h-11 items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2 text-sm",
+        "flex min-h-11 items-center justify-between gap-3 rounded-lg border border-line px-3 py-2 text-sm",
         props.className,
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="shrink-0 text-sm text-zinc-500">
+        <span className="shrink-0 text-sm text-faint">
           {formatGameDate(props.date)}
         </span>
         {opponentLabel}

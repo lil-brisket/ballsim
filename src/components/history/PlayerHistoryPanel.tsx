@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Metric } from "@/components/ui/Metric";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -9,6 +10,7 @@ import {
   focusRingClass,
   linkClass,
   panelClass,
+  touchTargetTextClass,
 } from "@/components/ui/styles";
 import { PlayerHistorySearch } from "@/components/history/PlayerHistorySearch";
 import type { HistoryHubRoute } from "@/state/history-hub-selectors";
@@ -28,7 +30,12 @@ function PlayerHistoryDetail(props: {
       action={
         <Link
           href={player.profileHref}
-          className={cn("text-sm", linkClass, focusRingClass)}
+          className={cn(
+            "text-sm",
+            linkClass,
+            touchTargetTextClass,
+            focusRingClass,
+          )}
         >
           View player profile
         </Link>
@@ -51,10 +58,10 @@ function PlayerHistoryDetail(props: {
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-2">
               <SectionHeading as="h3" title="Team history" />
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-faint">
                 Team of record at each season&apos;s end.
               </p>
-              <ul className="divide-y divide-zinc-900 text-sm">
+              <ul className="divide-y divide-surface-raised text-sm">
                 {player.teamSequence.map((stop) => (
                   <li
                     key={stop.seasonYear}
@@ -67,11 +74,12 @@ function PlayerHistoryDetail(props: {
                       <TeamEntityLink
                         saveId={props.saveId}
                         teamId={stop.teamId}
+                        className={rowLinkClass}
                       >
                         {stop.teamName ?? stop.teamId}
                       </TeamEntityLink>
                     ) : (
-                      <span className="text-zinc-500">No team</span>
+                      <span className="text-faint">No team</span>
                     )}
                     {stop.championship ? (
                       <span className="text-sm font-medium text-team-ink">
@@ -85,16 +93,16 @@ function PlayerHistoryDetail(props: {
             <div className="space-y-2">
               <SectionHeading as="h3" title="Awards" />
               {player.awardTotals.length === 0 ? (
-                <p className="text-sm text-zinc-500">No awards yet.</p>
+                <p className="text-sm text-faint">No awards yet.</p>
               ) : (
-                <ul className="divide-y divide-zinc-900 text-sm">
+                <ul className="divide-y divide-surface-raised text-sm">
                   {player.awardTotals.map((award) => (
                     <li
                       key={award.awardId}
                       className="flex justify-between py-1.5"
                     >
-                      <span className="text-zinc-200">{award.displayName}</span>
-                      <span className="text-zinc-400">×{award.count}</span>
+                      <span className="text-ink">{award.displayName}</span>
+                      <span className="text-muted">×{award.count}</span>
                     </li>
                   ))}
                 </ul>

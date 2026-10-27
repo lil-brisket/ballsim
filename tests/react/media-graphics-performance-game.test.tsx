@@ -149,7 +149,7 @@ describe("game final-score graphic", () => {
     const [away, home] =
       container.querySelectorAll<HTMLElement>("[data-score-half]");
     expect(away.style.backgroundColor).not.toBe("");
-    expect(home.className).toContain("bg-zinc-800");
+    expect(home.className).toContain("bg-surface-high");
     expect(withoutPortraits(container)).not.toContain("amber");
     expect(withoutPortraits(container)).not.toContain("font-mono");
   });

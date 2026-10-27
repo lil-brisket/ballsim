@@ -141,7 +141,7 @@ describe("Media Hub page frame", () => {
   it("puts day dividers between posts from different dates", async () => {
     fixtureState = framedState();
     await renderPage();
-    const feed = screen.getByRole("feed");
+    const feed = screen.getByRole("region", { name: "League timeline" });
     const dividers = within(feed).getAllByRole("separator");
     expect(dividers.length).toBeGreaterThanOrEqual(2);
     const labels = dividers.map((d) => d.textContent);

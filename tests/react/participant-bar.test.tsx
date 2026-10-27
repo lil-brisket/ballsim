@@ -336,7 +336,7 @@ describe("ParticipantBar", () => {
       expect(container.textContent).toContain("you missed the approval window");
       expect(screen.queryByRole("button", { name: "I'm ready" })).toBeNull();
       const blocked = screen.getByText(/Only the commissioner/);
-      expect(blocked.className).toContain("text-zinc-400");
+      expect(blocked.className).toContain("text-muted");
       fireEvent.click(
         screen.getByRole("button", { name: "Take back control" }),
       );

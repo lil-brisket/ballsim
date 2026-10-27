@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { StaffCoachingNav } from "@/components/staff-coaching/StaffCoachingNav";
+import { StaffCoachingViews } from "@/components/staff-coaching/StaffCoachingViews";
 
 type LayoutProps = {
   children: ReactNode;
@@ -13,7 +13,7 @@ export default async function StaffCoachingLayout({
   const { saveId } = await params;
   return (
     <div className="space-y-6">
-      <StaffCoachingNav saveId={saveId} />
+      <StaffCoachingViews saveId={saveId} />
       {children}
     </div>
   );

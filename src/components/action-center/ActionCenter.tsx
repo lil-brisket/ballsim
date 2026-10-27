@@ -51,7 +51,7 @@ export function ActionCenter(props: {
         )}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-medium text-zinc-50">
+          <p className="text-sm font-medium text-ink">
             {view.urgentCount} action{view.urgentCount === 1 ? "" : "s"} need
             attention before time can advance
           </p>
@@ -75,7 +75,7 @@ export function ActionCenter(props: {
                 href={item.href}
                 className={cn(
                   touchTargetTextClass,
-                  "text-sm text-zinc-100 underline-offset-4 hover:underline",
+                  "text-sm text-ink underline-offset-4 hover:underline",
                   focusRingClass,
                 )}
               >
@@ -96,7 +96,7 @@ export function ActionCenter(props: {
         aria-label="Action center"
       >
         <SectionHeading title="You're in good shape" />
-        <p className="text-sm text-zinc-300">
+        <p className="text-sm text-soft">
           No urgent franchise decisions require your attention right now.
         </p>
       </section>
@@ -167,7 +167,7 @@ export function ActionCenter(props: {
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge label={item.severity} tone={item.severity} />
                   {item.deadline ? (
-                    <span className="text-sm text-zinc-400">
+                    <span className="text-sm text-muted">
                       Due {formatGameDate(item.deadline)}
                     </span>
                   ) : null}
@@ -186,7 +186,7 @@ export function ActionCenter(props: {
       </ul>
 
       {!isActionsFocal ? (
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           Next Game is your primary focus while the queue is quiet.{" "}
           <Link
             href={`/dashboard/${props.saveId}/calendar`}

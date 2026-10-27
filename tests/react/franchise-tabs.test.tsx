@@ -4,7 +4,7 @@ import {
   FranchiseLedgerTable,
   toFranchiseIdentityChanges,
 } from "@/components/franchise/FranchiseLedgerTable";
-import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
+import { FranchiseViews } from "@/components/franchise/FranchiseViews";
 import {
   FRANCHISE_TREND_SEASONS,
   toFranchiseTrends,
@@ -54,9 +54,9 @@ function season(
   } as FranchiseSeasonRecord;
 }
 
-describe("FranchiseSubNav", () => {
+describe("FranchiseViews", () => {
   it("links Overview, Ownership, History and Relocation under /franchise", () => {
-    render(<FranchiseSubNav saveId="save_1" active="history" />);
+    render(<FranchiseViews saveId="save_1" active="history" />);
 
     expect(
       screen.getByRole("link", { name: "Overview" }).getAttribute("href"),

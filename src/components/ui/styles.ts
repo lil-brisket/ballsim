@@ -1,18 +1,30 @@
 /**
  * Shared BallSim UI surface tokens and density scales.
- * Prefer these over ad-hoc zinc panel classes in new components.
+ *
+ * Colours come from the tokens in globals.css (`text-ink`, `text-soft`,
+ * `text-muted`, `text-faint`, `border-line`, `bg-surface-*`...), never raw
+ * `zinc-*` classes; a re-skin is a change of token values.
  *
  * Broadcast / arena primitives (team-themed via the `--team-*` CSS variables,
- * see TeamThemeScope): ArenaPanel for hero and primary surfaces, ScoreNumeral
- * for big numbers, TickerBar for label/value strips, TeamBadge for logo plates
- * and SectionHeading for section titles. `panelClass` / `Panel` remain for
- * quiet secondary boxes while pages migrate.
+ * see TeamThemeScope): ArenaPanel for every surface (`quiet` for flat
+ * secondary boxes; `panelClass` is its class form), ScoreNumeral for big
+ * numbers, TickerBar for label/value strips, TeamBadge for logo plates and
+ * SectionHeading for section titles (`size="sm"` for sub-headings).
  *
  * Design rules (every screen follows these):
  * - Mono is for numbers in tables, clocks and box scores only. No mono
  *   labels, eyebrows, tabs, buttons or status text.
- * - At most one small uppercase eyebrow per panel, and only above a hero
- *   title. Most labels are sentence case `text-sm text-zinc-400`.
+ * - Two type voices: the display font (`displayClass`, Barlow Condensed
+ *   600–800) for hub names, tab labels, tile titles, OVR and big numbers;
+ *   Geist for everything else. Uppercase is allowed in the display font
+ *   only.
+ * - At most one small uppercase Geist eyebrow per panel, and only above a
+ *   hero title. Most labels are sentence case `text-sm text-muted`.
+ * - Console shapes: `slantClass` (parallelogram, tabs and name slabs) and
+ *   `clipCornerClass` (one cut corner, tiles) shape a background layer only.
+ *   Text never rotates or skews.
+ * - Focusable tiles, cards and rows use `consoleFocusClass`; it is the
+ *   visible focus state (team-ink edge + glow), so do not remove it.
  * - Text floor is `text-sm` for anything a player reads. `text-xs` only for
  *   table footnotes, axis ticks and timestamps.
  * - One heading component: `SectionHeading` (page and section sizes). No
@@ -45,10 +57,32 @@ export const touchTargetClass =
 export const touchTargetTextClass =
   "inline-flex min-h-11 items-center px-2 touch-manipulation active:opacity-80";
 
-export const panelClass = "rounded-xl border border-zinc-800 bg-zinc-900/60";
+/** Heavy condensed uppercase: hub names, tile titles, OVR, big numbers. */
+export const displayClass =
+  "font-display font-bold uppercase leading-none tracking-wide";
+
+/**
+ * Parallelogram slab behind the content (~8°). Set the fill with
+ * `[--slant-fill:var(--team-primary)]` or similar; see `.slant` in
+ * globals.css.
+ */
+export const slantClass = "slant";
+
+/** One cut corner (top right) for a tile's background layers. */
+export const clipCornerClass = "clip-corner";
+
+/**
+ * Controller-style focus: scale 1.03, team-ink edge, team glow, raised
+ * surface; static (edge + glow only) under reduced motion. Shaped hosts add
+ * `data-shape` and paint their edge from `var(--edge)` and surface from
+ * `var(--tile-surface)`.
+ */
+export const consoleFocusClass = "console-focus";
+
+export const panelClass = "rounded-xl border border-line bg-surface-raised/60";
 
 export const panelDashedClass =
-  "rounded-xl border border-dashed border-zinc-800 bg-zinc-900/30";
+  "rounded-xl border border-dashed border-line bg-surface-raised/30";
 
 export const densityPadding: Record<Density, string> = {
   compact: "p-3",

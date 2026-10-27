@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { AvailabilityDot } from "@/components/team-management/availability-dot";
 import { Drawer } from "@/components/ui/Drawer";
 import { cn, focusRingClass } from "@/components/ui/styles";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export type PickerPlayer = {
   playerId: string;
@@ -53,7 +54,7 @@ export function PlayerPicker(props: {
       size="sm"
     >
       {props.players.length === 0 ? (
-        <p className="text-sm text-zinc-400">No eligible players.</p>
+        <p className="text-sm text-muted">No eligible players.</p>
       ) : (
         <ul ref={listRef} className="space-y-1">
           {props.players.map((player) => {
@@ -80,8 +81,8 @@ export function PlayerPicker(props: {
                   className={cn(
                     "flex min-h-11 w-full touch-manipulation items-center gap-3 rounded-md border px-3 py-2 text-left text-sm hover:border-team-ink",
                     current
-                      ? "border-team-ink bg-team/15 text-zinc-50"
-                      : "border-zinc-800 text-zinc-200",
+                      ? "border-team-ink bg-team/15 text-ink"
+                      : "border-line text-ink",
                     focusRingClass,
                   )}
                 >
@@ -89,11 +90,9 @@ export function PlayerPicker(props: {
                     {player.firstName} {player.lastName}
                     {current ? " (current)" : ""}
                   </span>
-                  <span className="w-8 text-zinc-400">{player.position}</span>
-                  <span className="w-8 text-right tabular-nums">
-                    {player.overall}
-                  </span>
-                  <span className="flex w-28 items-center gap-1.5 text-zinc-400">
+                  <span className="w-8 text-muted">{player.position}</span>
+                  <OvrBadge overall={player.overall} size="sm" />
+                  <span className="flex w-28 items-center gap-1.5 text-muted">
                     <AvailabilityDot status={player.availabilityLabel} />
                     <span className="truncate">{player.availabilityLabel}</span>
                   </span>

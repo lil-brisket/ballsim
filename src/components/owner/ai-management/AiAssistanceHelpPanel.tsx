@@ -4,7 +4,7 @@
 export function AiAssistanceHelpPanel() {
   return (
     <>
-      <span className="block font-medium text-zinc-100">
+      <span className="block font-medium text-ink">
         How AI assistance works
       </span>
       <span className="mt-1 block">

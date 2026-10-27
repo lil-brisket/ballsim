@@ -48,12 +48,12 @@ export function SigningAttachmentCard(props: {
               className="font-display text-lg"
             />
             {signing.summary ? (
-              <p className="text-sm text-zinc-300">{signing.summary}</p>
+              <p className="text-sm text-soft">{signing.summary}</p>
             ) : null}
           </div>
         </div>
       ) : signing.summary ? (
-        <p className="text-sm text-zinc-300">{signing.summary}</p>
+        <p className="text-sm text-soft">{signing.summary}</p>
       ) : null}
     </TeamSurface>
   );

@@ -1,3 +1,4 @@
+import type { HomeBoardView } from "@/state/owner-dashboard/home-board";
 import type { TimelineHighlights } from "@/state/media-timeline/highlights";
 import type {
   FranchiseStanding,
@@ -256,6 +257,8 @@ export type OwnerDashboardView = {
   mediaTimeline: TimelineHighlights;
   /** Next high-importance calendar target for the controlled franchise. */
   nextImportantEvent: OwnerDashboardNextEvent | null;
+  /** Facts for the Home tile board. */
+  home: HomeBoardView;
 };
 
 export type CanonicalDashboardData = {

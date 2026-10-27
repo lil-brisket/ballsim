@@ -23,7 +23,7 @@ function SwapArrow() {
     <span
       aria-hidden="true"
       data-trade-arrow=""
-      className="pointer-events-none absolute left-1/2 top-3 z-10 hidden h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-zinc-50 sm:flex"
+      className="pointer-events-none absolute left-1/2 top-3 z-10 hidden h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-line-strong bg-surface-raised text-ink sm:flex"
     >
       <svg
         viewBox="0 0 24 24"
@@ -85,7 +85,7 @@ export function TradeAttachmentCard(props: {
                   data-trade-header=""
                   className={cn(
                     "flex items-center gap-2 rounded-md px-3 py-2",
-                    !branding && "bg-zinc-800 text-zinc-50",
+                    !branding && "bg-surface-high text-ink",
                   )}
                   style={
                     branding
@@ -118,7 +118,7 @@ export function TradeAttachmentCard(props: {
                 </div>
                 {received.length > 0 ? (
                   <>
-                    <p className="mt-3 text-sm text-zinc-400">Receives</p>
+                    <p className="mt-3 text-sm text-muted">Receives</p>
                     <ul className="mt-1 space-y-2">
                       {received.map((movement) => {
                         const p = movement.player;
@@ -155,7 +155,7 @@ export function TradeAttachmentCard(props: {
       {trade.otherPieces.length > 0 ? (
         <ul className="mt-4 space-y-1">
           {trade.otherPieces.map((piece) => (
-            <li key={piece} className="text-sm text-zinc-400">
+            <li key={piece} className="text-sm text-muted">
               {piece}
             </li>
           ))}

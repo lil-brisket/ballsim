@@ -8,22 +8,22 @@ export function FinancialLedger(props: { entries: EventLogEntryView[] }) {
     return <EmptyState message="No finance events recorded yet." />;
   }
   return (
-    <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800 text-sm">
+    <ul className="divide-y divide-line rounded-lg border border-line text-sm">
       {props.entries.slice(0, 20).map((entry) => (
         <li
           key={entry.id}
-          className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-zinc-300"
+          className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-soft"
         >
           <div className="min-w-0">
             <p className="truncate">{entry.description}</p>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-faint">
               {entry.type} · {entry.occurredOn}
             </p>
           </div>
           {entry.amount !== null ? (
             <MoneyDisplay amount={entry.amount} />
           ) : (
-            <span className="text-zinc-600">—</span>
+            <span className="text-disabled">—</span>
           )}
         </li>
       ))}
@@ -43,7 +43,7 @@ export function FinancialTrend(props: { points: FinanceTrendPoint[] }) {
     <ul className="space-y-3">
       {props.points.map((p) => (
         <li key={p.monthKey}>
-          <div className="mb-1 flex justify-between text-sm text-zinc-400">
+          <div className="mb-1 flex justify-between text-sm text-muted">
             <span>{p.monthKey}</span>
             <span>
               Net <MoneyDisplay amount={p.net} />
@@ -68,8 +68,8 @@ function Bar(props: {
   const pct = Math.min(100, Math.round((props.value / props.max) * 100));
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className="w-8 text-zinc-500">{props.label}</span>
-      <div className="h-1.5 flex-1 rounded bg-zinc-900">
+      <span className="w-8 text-faint">{props.label}</span>
+      <div className="h-1.5 flex-1 rounded bg-surface-raised">
         <div
           className={
             props.tone === "emerald"
@@ -79,7 +79,7 @@ function Bar(props: {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-16 text-right text-zinc-400">
+      <span className="w-16 text-right text-muted">
         <MoneyDisplay amount={props.value} />
       </span>
     </div>

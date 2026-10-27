@@ -14,7 +14,7 @@ export function MetricBlock(props: {
       ? "text-emerald-400"
       : props.direction === "down"
         ? "text-rose-400"
-        : "text-zinc-400";
+        : "text-muted";
 
   return (
     <ArenaPanel
@@ -23,8 +23,8 @@ export function MetricBlock(props: {
       density="compact"
       className={props.emphasize ? "sm:col-span-2 lg:col-span-1" : undefined}
     >
-      <p className="text-sm text-zinc-400">{props.label}</p>
-      <div className="mt-1.5 font-display text-3xl font-bold tabular-nums text-zinc-50">
+      <p className="text-sm text-muted">{props.label}</p>
+      <div className="mt-1.5 font-display text-3xl font-bold tabular-nums text-ink">
         {props.value}
       </div>
       {props.context ? (

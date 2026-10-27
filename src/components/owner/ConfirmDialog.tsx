@@ -3,7 +3,12 @@
 import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { Overlay } from "@/components/ui/Overlay";
-import { focusRingClass, cn, linkClass } from "@/components/ui/styles";
+import {
+  focusRingClass,
+  cn,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 /**
@@ -23,7 +28,12 @@ export function ConfirmDialog(props: {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={cn(linkClass, "text-sm", focusRingClass)}
+        className={cn(
+          linkClass,
+          touchTargetTextClass,
+          "px-0 text-sm",
+          focusRingClass,
+        )}
       >
         {props.confirmLabel ?? "Confirm"}
       </button>
@@ -36,7 +46,7 @@ export function ConfirmDialog(props: {
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
-            className="relative z-10 w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
+            className="relative z-10 w-full max-w-md rounded-xl border border-line-strong bg-surface-raised p-5 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <SectionHeading
@@ -44,7 +54,7 @@ export function ConfirmDialog(props: {
               id="confirm-dialog-title"
               title={props.title}
             />
-            <p className="mt-2 text-sm text-zinc-400">{props.description}</p>
+            <p className="mt-2 text-sm text-muted">{props.description}</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setOpen(false)}>
                 Cancel

@@ -9,7 +9,7 @@ export function MediaUnreadBadge(props: { count: number; className?: string }) {
     <span
       className={
         props.className ??
-        "inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-team px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-on-team"
+        "inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-team px-1.5 py-0.5 text-xs font-semibold tabular-nums text-on-team"
       }
       aria-label={`${props.count} unread`}
     >

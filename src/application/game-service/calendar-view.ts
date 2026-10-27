@@ -1,3 +1,8 @@
+import { getCalendarContext } from "@/systems/simulation/calendar-context";
+import {
+  toPhaseDashboardView,
+  type PhaseDashboardView,
+} from "@/state/phase-dashboard";
 import "server-only";
 import type {
   SaveGameSummary,
@@ -57,6 +62,10 @@ export type CalendarPageMediaHighlight = {
 
 export type CalendarPageView = {
   save: SaveGameSummary;
+  /** Phase tasks and advance controls ("Season phase details"). */
+  phaseDashboard: PhaseDashboardView;
+  /** This season's trade deadline, if one is set. */
+  tradeDeadlineDate: string | null;
   dashboard: DashboardSnapshot;
   currentDate: string;
   year: number;
@@ -243,6 +252,8 @@ export async function loadCalendarPageView(
 
   return {
     save: toSaveSummary(loaded),
+    phaseDashboard: toPhaseDashboardView(state),
+    tradeDeadlineDate: getCalendarContext(state).tradeDeadlineDate,
     dashboard: toDashboardSnapshot(state),
     currentDate,
     year,

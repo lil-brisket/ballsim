@@ -152,7 +152,7 @@ export function CourtToken(props: {
       {props.fouledOut ? (
         <span
           aria-hidden="true"
-          className={cn(SUB_CHIP_BELOW_CLASS, "whitespace-nowrap text-zinc-50")}
+          className={cn(SUB_CHIP_BELOW_CLASS, "whitespace-nowrap text-ink")}
         >
           Fouled out
         </span>
@@ -162,7 +162,7 @@ export function CourtToken(props: {
           aria-hidden="true"
           className={cn(
             props.labelSide === "above" ? SUB_CHIP_BELOW_CLASS : SUB_CHIP_CLASS,
-            "text-zinc-50",
+            "text-ink",
           )}
         >
           In
@@ -172,7 +172,7 @@ export function CourtToken(props: {
         aria-hidden="true"
         data-label={props.labelShown ? "shown" : "hover"}
         className={cn(
-          "court-token-label pointer-events-none absolute max-w-[4.5rem] truncate text-sm font-medium leading-tight text-zinc-50 sm:max-w-24 rounded bg-black/70 px-1",
+          "court-token-label pointer-events-none absolute max-w-[4.5rem] truncate text-sm font-medium leading-tight text-ink sm:max-w-24 rounded bg-black/70 px-1",
           LABEL_SIDE_CLASS[props.labelSide],
         )}
       >

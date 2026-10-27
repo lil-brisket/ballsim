@@ -1,9 +1,15 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { RosterPageView } from "@/state/roster-page-selectors";
-import { Tabs } from "@/components/ui/Tabs";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DepthChart } from "@/components/roster/DepthChart";
 import { FreeAgentRosterView } from "@/components/roster/FreeAgentRosterView";
@@ -36,36 +42,29 @@ function parseTab(raw: string | null): RosterManagementTab {
 }
 
 export function RosterPage(props: { view: RosterPageView }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseTab(searchParams.get("tab"));
   const { view } = props;
-  const returnPath = `/dashboard/${view.saveId}/roster${
-    tab === "roster" ? "" : `?tab=${tab}`
-  }`;
 
-  function setTab(next: RosterManagementTab) {
-    const params = new URLSearchParams();
-    if (next !== "roster") {
-      params.set("tab", next);
-    }
-    const qs = params.toString();
-    router.replace(`/dashboard/${view.saveId}/roster${qs ? `?${qs}` : ""}`, {
-      scroll: false,
-    });
+  function tabHref(next: RosterManagementTab): string {
+    return `/dashboard/${view.saveId}/roster${
+      next === "roster" ? "" : `?tab=${next}`
+    }`;
   }
+  const returnPath = tabHref(tab);
 
   return (
     <div className="space-y-6">
       <RosterManagementHeader view={view} />
 
-      <Tabs
+      <ViewSwitch
         aria-label="Roster management"
+        className="max-w-full flex-wrap"
         activeKey={tab}
         items={TABS.map((entry) => ({
           key: entry.id,
           label: entry.label,
-          onSelect: () => setTab(entry.id),
+          href: tabHref(entry.id),
         }))}
       />
 
@@ -78,10 +77,14 @@ export function RosterPage(props: { view: RosterPageView }) {
             <section aria-label="Roster table" className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <SectionHeading as="h2" title="Roster" />
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-muted">
                   <Link
                     href={view.lineupHref}
-                    className="text-team-ink hover:underline"
+                    className={cn(
+                      linkClass,
+                      touchTargetTextClass,
+                      focusRingClass,
+                    )}
                   >
                     Edit lineup &amp; rotation
                   </Link>

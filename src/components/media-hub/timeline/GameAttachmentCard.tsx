@@ -77,7 +77,7 @@ function ScoreHalf(props: {
     <div
       className={cn(
         "flex min-w-0 flex-1 flex-col items-center px-2 py-4 text-center",
-        !branding && "bg-zinc-800 text-zinc-50",
+        !branding && "bg-surface-high text-ink",
       )}
       style={
         branding
@@ -89,13 +89,12 @@ function ScoreHalf(props: {
       }
       data-score-half={props.won ? "winner" : "loser"}
     >
-      <div
-        className={cn(
-          "flex flex-col items-center gap-1",
-          !props.won && "opacity-75",
-        )}
-      >
-        <TeamMark branding={branding} size="md" />
+      <div className="flex flex-col items-center gap-1">
+        {/* Dim only the logo for the loser: dimming the text broke contrast;
+            the lighter weight already marks the losing side. */}
+        <span className={cn(!props.won && "opacity-75")}>
+          <TeamMark branding={branding} size="md" />
+        </span>
         <span
           className={cn(
             "font-display text-lg uppercase tracking-wide",
@@ -146,7 +145,7 @@ function Performer(props: {
         >
           {player.firstName} {player.lastName}
         </Link>
-        <span className="shrink-0 tabular-nums text-zinc-400">
+        <span className="shrink-0 tabular-nums text-muted">
           {line.points} PTS · {line.rebounds} REB · {line.assists} AST
         </span>
       </div>
@@ -201,9 +200,9 @@ export function GameAttachmentCard(props: {
               won={a.score.home > a.score.away}
             />
           </div>
-          <p className="text-center text-sm font-medium uppercase tracking-wide text-zinc-300">
+          <p className="text-center text-sm font-medium uppercase tracking-wide text-soft">
             {tag}
-            <span className="normal-case tracking-normal text-zinc-400">
+            <span className="normal-case tracking-normal text-muted">
               {" "}
               · {shortDate}
             </span>
@@ -212,10 +211,10 @@ export function GameAttachmentCard(props: {
 
         {a.periodScores.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm tabular-nums text-zinc-300">
+            <table className="w-full text-sm tabular-nums text-soft">
               <caption className="sr-only">Score by quarter</caption>
               <thead>
-                <tr className="text-zinc-400">
+                <tr className="text-muted">
                   <th
                     scope="col"
                     className="py-1 pr-2 text-left font-medium sm:pr-3"
@@ -239,12 +238,12 @@ export function GameAttachmentCard(props: {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800">
+              <tbody className="divide-y divide-line">
                 {rows.map(({ team, side, branding }) => (
                   <tr key={side}>
                     <th
                       scope="row"
-                      className="py-1 pr-2 text-left font-medium text-zinc-200 sm:pr-3"
+                      className="py-1 pr-2 text-left font-medium text-ink sm:pr-3"
                     >
                       <span className="flex items-center gap-1.5">
                         {/* The score header already pairs logo and team; at
@@ -260,7 +259,7 @@ export function GameAttachmentCard(props: {
                         {period[side]}
                       </td>
                     ))}
-                    <td className="py-1 pl-1 text-right font-semibold text-zinc-50 sm:pl-2">
+                    <td className="py-1 pl-1 text-right font-semibold text-ink sm:pl-2">
                       {a.score[side]}
                     </td>
                   </tr>
@@ -271,14 +270,14 @@ export function GameAttachmentCard(props: {
         ) : null}
 
         {a.series ? (
-          <p className="text-sm text-zinc-400">
-            <span className="font-medium text-zinc-200">
+          <p className="text-sm text-muted">
+            <span className="font-medium text-ink">
               {seriesLine(a.series, home, away)}
             </span>
             {` · ${a.series.roundLabel}`}
           </p>
         ) : null}
-        {note ? <p className="text-sm text-zinc-400">{note}</p> : null}
+        {note ? <p className="text-sm text-muted">{note}</p> : null}
 
         {performers.length > 0 ? (
           <div className="space-y-2">

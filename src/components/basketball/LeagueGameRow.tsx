@@ -38,7 +38,7 @@ function TeamMark(props: {
   if (props.branding) {
     return (
       <span
-        className="inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded border border-zinc-700"
+        className="inline-flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded border border-line-strong"
         style={{ backgroundColor: props.branding.primaryColor }}
       >
         <TeamLogoMark branding={props.branding} size="sm" decorative />
@@ -46,7 +46,7 @@ function TeamMark(props: {
     );
   }
   return (
-    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-zinc-700 font-mono text-[9px] text-zinc-400">
+    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-line-strong font-mono text-[9px] text-muted">
       {props.abbreviation.slice(0, 3)}
     </span>
   );
@@ -71,13 +71,13 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
         teamId={props.awayTeamId}
         className={cn(
           touchTargetTextClass,
-          "text-zinc-100 hover:text-team-ink",
+          "text-ink hover:text-team-ink",
           focusRingClass,
         )}
       >
         {props.awayAbbreviation}
       </TeamEntityLink>
-      <span className="text-zinc-600">@</span>
+      <span className="text-disabled">@</span>
       <TeamMark
         branding={props.homeBranding}
         abbreviation={props.homeAbbreviation}
@@ -87,7 +87,7 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
         teamId={props.homeTeamId}
         className={cn(
           touchTargetTextClass,
-          "text-zinc-100 hover:text-team-ink",
+          "text-ink hover:text-team-ink",
           focusRingClass,
         )}
       >
@@ -106,7 +106,7 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
       canOpen
       className={cn(
         touchTargetTextClass,
-        "font-mono text-sm text-zinc-200",
+        "font-mono text-sm text-ink",
         focusRingClass,
       )}
     >
@@ -115,22 +115,22 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
   ) : props.status === "in_progress" ? (
     <span className="text-sm font-medium text-emerald-400">Live</span>
   ) : props.status === "postponed" ? (
-    <span className="text-sm text-zinc-500">Postponed</span>
+    <span className="text-sm text-faint">Postponed</span>
   ) : props.status === "cancelled" ? (
-    <span className="text-sm text-zinc-500">Cancelled</span>
+    <span className="text-sm text-faint">Cancelled</span>
   ) : (
-    <span className="text-sm text-zinc-500">Scheduled</span>
+    <span className="text-sm text-faint">Scheduled</span>
   );
 
   return (
     <div
       className={cn(
-        "flex min-h-11 items-center justify-between gap-3 rounded-lg border border-zinc-800 px-3 py-2 text-sm",
+        "flex min-h-11 items-center justify-between gap-3 rounded-lg border border-line px-3 py-2 text-sm",
         props.className,
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="shrink-0 text-sm text-zinc-500">
+        <span className="shrink-0 text-sm text-faint">
           {formatGameDate(props.date)}
         </span>
         {matchup}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { formatGameDate } from "@/presentation/game-date";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
@@ -59,28 +60,36 @@ function SelectionList(props: {
   rows: ReturnType<typeof toAllStarHubView>["selections"];
 }) {
   if (props.rows.length === 0) {
-    return <p className="text-sm text-zinc-500">None yet.</p>;
+    return <p className="text-sm text-faint">None yet.</p>;
   }
   return (
-    <ul className="divide-y divide-zinc-800">
+    <ul className="divide-y divide-line">
       {props.rows.map((row) => (
         <li
           key={row.playerId}
           className="flex justify-between gap-3 py-2 text-sm"
         >
           <div>
-            <PlayerEntityLink saveId={props.saveId} playerId={row.playerId}>
+            <PlayerEntityLink
+              saveId={props.saveId}
+              playerId={row.playerId}
+              className={rowLinkClass}
+            >
               {row.playerName}
             </PlayerEntityLink>
             {row.teamId && row.teamName ? (
-              <div className="text-sm text-zinc-500">
-                <TeamEntityLink saveId={props.saveId} teamId={row.teamId}>
+              <div className="text-sm text-faint">
+                <TeamEntityLink
+                  saveId={props.saveId}
+                  teamId={row.teamId}
+                  className={rowLinkClass}
+                >
                   {row.teamName}
                 </TeamEntityLink>
               </div>
             ) : null}
           </div>
-          <span className="text-zinc-400">
+          <span className="text-muted">
             {row.voteRank != null ? `Vote #${row.voteRank}` : row.role}
           </span>
         </li>

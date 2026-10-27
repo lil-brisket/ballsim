@@ -8,6 +8,7 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { ContractSummary } from "@/components/owner/ContractSummary";
 import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 type SortKey = "name" | "position" | "age" | "overall" | "status";
 
@@ -61,7 +62,7 @@ export function RosterTable(props: {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
-        <label className="flex flex-col gap-1 text-sm text-zinc-500">
+        <label className="flex flex-col gap-1 text-sm text-faint">
           Filter
           <input
             type="search"
@@ -69,12 +70,12 @@ export function RosterTable(props: {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Name, position, status…"
             className={cn(
-              "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100",
+              "rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-sm text-ink",
               focusRingClass,
             )}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-zinc-500">
+        <label className="flex flex-col gap-1 text-sm text-faint">
           Sort by
           <Select
             value={sortKey}
@@ -87,7 +88,7 @@ export function RosterTable(props: {
             <option value="status">Status</option>
           </Select>
         </label>
-        <label className="flex flex-col gap-1 text-sm text-zinc-500">
+        <label className="flex flex-col gap-1 text-sm text-faint">
           Direction
           <Select
             value={sortDir}
@@ -105,7 +106,7 @@ export function RosterTable(props: {
         headers={["Player", "Pos", "Age", "OVR", "Contract", "Status", "Dev"]}
       >
         {filtered.map((player) => (
-          <tr key={player.playerId} className="border-t border-zinc-800">
+          <tr key={player.playerId} className="border-t border-line">
             <td className="px-3 py-2">
               <PlayerEntityLink
                 saveId={props.saveId}
@@ -114,9 +115,15 @@ export function RosterTable(props: {
                 {player.firstName} {player.lastName}
               </PlayerEntityLink>
             </td>
-            <td className="px-3 py-2 text-zinc-400">{player.position}</td>
-            <td className="px-3 py-2 text-zinc-400">{player.age}</td>
-            <td className="px-3 py-2 text-zinc-200">{player.overall}</td>
+            <td className="px-3 py-2 text-muted">{player.position}</td>
+            <td className="px-3 py-2 text-muted">{player.age}</td>
+            <td className="px-3 py-2">
+              <OvrBadge
+                overall={player.overall}
+                size="sm"
+                className="align-middle"
+              />
+            </td>
             <td className="px-3 py-2">
               <ContractSummary
                 salary={player.contractSalary}
@@ -127,9 +134,7 @@ export function RosterTable(props: {
             <td className="px-3 py-2">
               <StatusBadge label={player.injuryKind} tone={player.injuryKind} />
             </td>
-            <td className="px-3 py-2 text-zinc-400">
-              {player.developmentStage}
-            </td>
+            <td className="px-3 py-2 text-muted">{player.developmentStage}</td>
           </tr>
         ))}
       </DataTable>

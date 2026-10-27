@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
@@ -66,7 +71,7 @@ export function SimulationPausedBanner(props: {
       <div>
         <SectionHeading eyebrow="Simulation paused" title={longDate} />
         {reasons.length > 1 ? (
-          <p className="mt-1 text-sm text-zinc-200/90">
+          <p className="mt-1 text-sm text-ink/90">
             {reasons.length} items need your attention
           </p>
         ) : null}
@@ -78,14 +83,18 @@ export function SimulationPausedBanner(props: {
             key={item.id}
             className="rounded-lg border border-surface-line bg-surface-arena px-3 py-2"
           >
-            <p className="text-sm font-medium text-zinc-50">{item.title}</p>
+            <p className="text-sm font-medium text-ink">{item.title}</p>
             {item.detail ? (
-              <p className="mt-0.5 text-sm text-zinc-200/80">{item.detail}</p>
+              <p className="mt-0.5 text-sm text-ink/80">{item.detail}</p>
             ) : null}
             {item.href ? (
               <Link
                 href={item.href}
-                className="mt-2 inline-block text-sm font-medium text-team-ink hover:underline"
+                className={cn(
+                  touchTargetTextClass,
+                  focusRingClass,
+                  "mt-1 text-sm font-medium text-team-ink hover:underline",
+                )}
               >
                 {item.hrefLabel ?? "Review"} →
               </Link>

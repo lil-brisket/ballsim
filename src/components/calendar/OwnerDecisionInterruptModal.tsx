@@ -78,7 +78,7 @@ export function OwnerDecisionInterruptModal(props: {
         aria-modal="true"
         aria-labelledby="owner-interrupt-title"
         tabIndex={-1}
-        className="relative z-10 max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-xl border border-warning/40 bg-zinc-950 p-5 shadow-xl"
+        className="relative z-10 max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-xl border border-warning/40 bg-surface-base p-5 shadow-xl"
       >
         {interrupt.kind === "trade_offer" ? (
           <TradeReviewPanel
@@ -98,17 +98,17 @@ export function OwnerDecisionInterruptModal(props: {
             }
           />
         ) : (
-          <div className="space-y-4 text-sm text-zinc-200">
+          <div className="space-y-4 text-sm text-ink">
             <SectionHeading
               id="owner-interrupt-title"
               eyebrow="Simulation paused"
               title="You're on the clock"
             />
-            <p className="text-zinc-300">
+            <p className="text-soft">
               {interrupt.teamName} must pick at overall #{interrupt.pickNumber}.
             </p>
             {props.error ? (
-              <p role="alert" className="text-sm text-red-300">
+              <p role="alert" className="text-sm text-loss">
                 {props.error}
               </p>
             ) : null}

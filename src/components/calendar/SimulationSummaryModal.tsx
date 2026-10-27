@@ -3,12 +3,20 @@
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { useModalKeys } from "@/components/calendar/use-modal-keys";
 import type { CalendarPageMediaHighlight } from "@/application/game-service";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
-import { CountUp } from "@/components/ui/CountUp";
-import { focusRingClass } from "@/components/ui/styles";
+import { CountUp, prefersReducedMotion } from "@/components/ui/CountUp";
+import { playUiSound } from "@/components/ui/sound/ui-sound";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import { formatGameDate } from "@/presentation/game-date";
 import { parseGameResultHeadline } from "@/presentation/game-result-headline";
 
@@ -27,14 +35,12 @@ function ResultReveal(props: {
     ? "border-win text-win"
     : loss
       ? "border-loss text-loss"
-      : "border-zinc-500 text-zinc-300";
+      : "border-faint text-soft";
   const content = (
     <div className="flex items-center justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-sm text-zinc-400">
-          {formatGameDate(props.game.date)}
-        </p>
-        <p className="truncate font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
+        <p className="text-sm text-muted">{formatGameDate(props.game.date)}</p>
+        <p className="truncate font-display text-xl font-bold uppercase tracking-wide text-ink">
           vs {parsed.opponent}
         </p>
         <div
@@ -46,7 +52,7 @@ function ResultReveal(props: {
             size="lg"
             tone={tone}
           />
-          <span aria-hidden className="font-display text-3xl text-zinc-500">
+          <span aria-hidden className="font-display text-3xl text-faint">
             –
           </span>
           <ScoreNumeral
@@ -68,7 +74,7 @@ function ResultReveal(props: {
     <section
       aria-label="Latest result"
       className={`rounded-xl border border-l-4 border-surface-line bg-surface-raised px-4 py-3 ${
-        win ? "border-l-win" : loss ? "border-l-loss" : "border-l-zinc-500"
+        win ? "border-l-win" : loss ? "border-l-loss" : "border-l-faint"
       }`}
     >
       {props.game.gameId && props.saveId ? (
@@ -82,6 +88,49 @@ function ResultReveal(props: {
         content
       )}
     </section>
+  );
+}
+
+const SIM_MOMENT_MS = 700;
+
+function subscribeNever(): () => void {
+  return () => {};
+}
+
+/**
+ * Full-screen WIN / LOSS flash when the summary opens on a result. Purely
+ * decorative: aria-hidden, no pointer events, and never takes focus. Under
+ * reduced motion nothing is drawn (the static stamp in the modal remains).
+ * The sting plays once whenever sound is on.
+ */
+function SimMoment(props: { result: "W" | "L" }) {
+  const [done, setDone] = useState(false);
+  // Server snapshot is "reduced" so nothing flashes before hydration.
+  const reduced = useSyncExternalStore(
+    subscribeNever,
+    prefersReducedMotion,
+    () => true,
+  );
+
+  useEffect(() => {
+    playUiSound("sting");
+    const timer = window.setTimeout(() => setDone(true), SIM_MOMENT_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const shown = !reduced && !done;
+  if (!shown) return null;
+  return (
+    <div
+      aria-hidden="true"
+      data-testid="sim-moment"
+      data-tone={props.result === "W" ? "win" : "loss"}
+      className="sim-moment"
+    >
+      <span className="sim-moment__word">
+        {props.result === "W" ? "Win" : "Loss"}
+      </span>
+    </div>
   );
 }
 
@@ -112,6 +161,7 @@ export function SimulationSummaryModal(props: {
   const router = useRouter();
   const [dismissed, setDismissed] = useState(false);
   const visible = props.open && !dismissed;
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const grouped = useMemo(() => {
     const byDate = new Map<string, CalendarPageMediaHighlight[]>();
@@ -139,6 +189,8 @@ export function SimulationSummaryModal(props: {
     router.replace(next);
   }
 
+  useModalKeys(panelRef, visible, dismiss);
+
   if (!visible) {
     return null;
   }
@@ -165,6 +217,9 @@ export function SimulationSummaryModal(props: {
   const latestGame = allGames.length > 0 ? allGames[allGames.length - 1] : null;
   const revealed =
     latestGame != null && parseGameResultHeadline(latestGame.headline) != null;
+  const latestResult = latestGame
+    ? parseGameResultHeadline(latestGame.headline)?.result
+    : undefined;
   const otherGames = revealed ? allGames.slice(0, -1) : allGames;
 
   return (
@@ -176,6 +231,8 @@ export function SimulationSummaryModal(props: {
         onClick={dismiss}
       />
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="simulation-summary-title"
@@ -195,7 +252,7 @@ export function SimulationSummaryModal(props: {
             title={rangeLabel}
           />
           {props.highlightCount > 0 ? (
-            <p className="mt-1 text-sm text-zinc-300">
+            <p className="mt-1 text-sm text-soft">
               {props.highlightCount} highlight
               {props.highlightCount === 1 ? "" : "s"} recorded
             </p>
@@ -238,7 +295,7 @@ export function SimulationSummaryModal(props: {
               ) : null}
               {typeof props.transactionCount === "number" &&
               props.transactionCount > 0 ? (
-                <p className="text-sm text-zinc-300">
+                <p className="text-sm text-soft">
                   {props.transactionCount} transaction
                   {props.transactionCount === 1 ? "" : "s"}
                 </p>
@@ -248,14 +305,12 @@ export function SimulationSummaryModal(props: {
 
           {props.aroundTheLeague ? (
             <section className="space-y-2">
-              <p className="text-sm font-medium text-zinc-300">
-                Around the league
-              </p>
+              <p className="text-sm font-medium text-soft">Around the league</p>
               <Link
                 href={props.aroundTheLeague.href}
-                className={`block rounded-md border border-surface-line px-3 py-2 text-sm text-zinc-300 hover:border-zinc-600 ${focusRingClass}`}
+                className={`block rounded-md border border-surface-line px-3 py-2 text-sm text-soft hover:border-disabled ${focusRingClass}`}
               >
-                <span className="font-semibold text-zinc-100">
+                <span className="font-semibold text-ink">
                   {props.aroundTheLeague.authorName}
                 </span>
                 <p className="line-clamp-2">{props.aroundTheLeague.text}</p>
@@ -267,14 +322,14 @@ export function SimulationSummaryModal(props: {
           (typeof props.transactionCount === "number" &&
             props.transactionCount > 0) ? (
             <section className="space-y-2">
-              <p className="text-sm font-medium text-zinc-300">League</p>
+              <p className="text-sm font-medium text-soft">League</p>
               <ul className="space-y-1.5">
                 {props.leagueEvents?.slice(0, 5).map((event) => (
                   <li
                     key={`${event.date}-${event.headline}`}
-                    className="rounded-md border border-surface-line px-3 py-2 text-sm text-zinc-300"
+                    className="rounded-md border border-surface-line px-3 py-2 text-sm text-soft"
                   >
-                    <span className="text-sm text-zinc-400">
+                    <span className="text-sm text-muted">
                       {formatGameDate(event.date)}
                     </span>
                     <p>{event.headline}</p>
@@ -291,10 +346,13 @@ export function SimulationSummaryModal(props: {
                 {attention.slice(0, 6).map((item) => (
                   <li
                     key={item.id}
-                    className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-zinc-200"
+                    className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-ink"
                   >
                     {item.href ? (
-                      <Link href={item.href} className="hover:text-team-ink">
+                      <Link
+                        href={item.href}
+                        className={cn("hover:text-team-ink", focusRingClass)}
+                      >
                         {item.title}
                       </Link>
                     ) : (
@@ -308,7 +366,7 @@ export function SimulationSummaryModal(props: {
 
           {otherGames.length > 0 ? (
             <section className="space-y-2">
-              <p className="text-sm font-medium text-zinc-300">
+              <p className="text-sm font-medium text-soft">
                 {revealed ? "Earlier games" : "Box scores"}
               </p>
               <ul className="space-y-1.5">
@@ -319,16 +377,16 @@ export function SimulationSummaryModal(props: {
                       ? "border-l-win"
                       : parsed?.result === "L"
                         ? "border-l-loss"
-                        : "border-l-zinc-500";
+                        : "border-l-faint";
                   const scoreTone =
                     parsed?.result === "W"
                       ? "text-win"
                       : parsed?.result === "L"
                         ? "text-loss"
-                        : "text-zinc-100";
+                        : "text-ink";
                   const body = parsed ? (
                     <span className="flex items-center justify-between gap-3">
-                      <span className="font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
+                      <span className="font-display text-xl font-bold uppercase tracking-wide text-ink">
                         vs {parsed.opponent}
                       </span>
                       <span
@@ -344,9 +402,9 @@ export function SimulationSummaryModal(props: {
                   return (
                     <li
                       key={`${game.date}-${game.gameId ?? game.headline}`}
-                      className={`rounded-lg border border-l-4 border-surface-line bg-surface-raised px-3 py-2 text-sm text-zinc-100 ${tone}`}
+                      className={`rounded-lg border border-l-4 border-surface-line bg-surface-raised px-3 py-2 text-sm text-ink ${tone}`}
                     >
-                      <span className="text-sm text-zinc-400">
+                      <span className="text-sm text-muted">
                         {formatGameDate(game.date)}
                       </span>
                       {game.gameId && props.saveId ? (
@@ -368,12 +426,12 @@ export function SimulationSummaryModal(props: {
 
           {props.teamEvents && props.teamEvents.length > 0 ? (
             <section className="space-y-2">
-              <p className="text-sm font-medium text-zinc-300">Team events</p>
+              <p className="text-sm font-medium text-soft">Team events</p>
               <ul className="space-y-1.5">
                 {props.teamEvents.map((event) => (
                   <li
                     key={`${event.date}-${event.headline}`}
-                    className="rounded-md border border-surface-line px-3 py-2 text-sm text-zinc-100"
+                    className="rounded-md border border-surface-line px-3 py-2 text-sm text-ink"
                   >
                     <span className="text-sm text-team-ink">
                       {formatGameDate(event.date)}
@@ -387,21 +445,17 @@ export function SimulationSummaryModal(props: {
 
           {grouped.length > 0 ? (
             <div className="space-y-3 opacity-80">
-              <p className="text-sm font-medium text-zinc-400">
-                Media highlights
-              </p>
+              <p className="text-sm font-medium text-muted">Media highlights</p>
               {grouped.map(([date, items]) => (
                 <section key={date} className="space-y-1.5">
-                  <h4 className="text-sm text-zinc-400">
-                    {formatGameDate(date)}
-                  </h4>
+                  <h4 className="text-sm text-muted">{formatGameDate(date)}</h4>
                   <ul className="space-y-1.5">
                     {items.slice(0, 3).map((item, index) => (
                       <li
                         key={`${item.date}-${item.headline}-${index}`}
-                        className="rounded-md border border-zinc-800 bg-zinc-950/50 px-3 py-2"
+                        className="rounded-md border border-line bg-surface-base/50 px-3 py-2"
                       >
-                        <p className="text-sm text-zinc-200">{item.headline}</p>
+                        <p className="text-sm text-ink">{item.headline}</p>
                       </li>
                     ))}
                   </ul>
@@ -421,6 +475,12 @@ export function SimulationSummaryModal(props: {
           </button>
         </div>
       </div>
+      {latestGame && (latestResult === "W" || latestResult === "L") ? (
+        <SimMoment
+          key={`${latestGame.date}-${latestGame.gameId ?? latestGame.headline}`}
+          result={latestResult}
+        />
+      ) : null}
     </div>
   );
 }

@@ -2,11 +2,11 @@
 
 :root {
   color-scheme: dark;
-  --background: #09090b;
+  --background: #060607;
   --foreground: #f4f4f5;
   --accent: #d97706;
   --panel: #18181b;
-  --line: #27272a;
+  --line: #26262c;
 
   /*
    * Team theming. Neutral amber defaults so pages outside a save still work.
@@ -22,11 +22,30 @@
   --team-ink: #f59e0b;
   --team-ink-rgb: 245 158 11;
 
-  /* Arena surface scale, deepest to most raised. */
-  --surface-deep: #050507;
-  --surface-arena: #0f0f12;
-  --surface-raised: #18181b;
-  --surface-line: #2a2a30;
+  /*
+   * Arena surface scale, deepest to most raised. Near-black neutral so the
+   * team colour is the only saturated hue; one clearly brighter raised tier
+   * for focused tiles and menus.
+   */
+  --surface-deep: #030304;
+  --surface-base: #060607;
+  --surface-arena: #0c0c0f;
+  --surface-raised: #1c1c21;
+  --surface-high: #2a2a31;
+  --surface-line: #2a2a31;
+  --row-alt: rgb(255 255 255 / 0.04);
+
+  /*
+   * Neutral ink and line scale. Components use these (text-ink, text-muted,
+   * border-line, bg-surface-raised...) instead of raw zinc-* classes, so a
+   * re-skin is a change of values here. Brightest to dimmest.
+   */
+  --ink: #f4f4f5;
+  --soft: #d4d4d8;
+  --muted: #a1a1aa;
+  --faint: #71717a;
+  --disabled: #52525b;
+  --line-strong: #3f3f46;
 
   /* Semantic broadcast colours. */
   --win: #22c55e;
@@ -56,9 +75,18 @@
   --color-team-ink: var(--team-ink);
   --color-on-team: var(--team-on-primary);
   --color-surface-deep: var(--surface-deep);
+  --color-surface-base: var(--surface-base);
   --color-surface-arena: var(--surface-arena);
   --color-surface-raised: var(--surface-raised);
+  --color-surface-high: var(--surface-high);
   --color-surface-line: var(--surface-line);
+  --color-row-alt: var(--row-alt);
+  --color-ink: var(--ink);
+  --color-soft: var(--soft);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-disabled: var(--disabled);
+  --color-line-strong: var(--line-strong);
   --color-tier: var(--tier);
   --color-win: var(--win);
   --color-loss: var(--loss);
@@ -765,3 +793,262 @@ body {
   }
 }
 /* ===== end Phase 9 ===== */
+
+/* ===== Console UI: shapes and focus (see styles.ts) ===== */
+
+/*
+ * Slanted slab (~8°) drawn on a ::before layer so the element's own outline
+ * and text are never clipped or skewed. Fill with `--slant-fill`.
+ */
+.slant {
+  --slant-x: 0.4rem;
+  position: relative;
+  isolation: isolate;
+}
+
+.slant::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--slant-fill, transparent);
+  clip-path: polygon(
+    var(--slant-x) 0,
+    100% 0,
+    calc(100% - var(--slant-x)) 100%,
+    0 100%
+  );
+  transition: background-color 150ms ease;
+}
+
+/* One cut corner (top right). Use on a background layer, not a focus host. */
+.clip-corner {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--corner, 0.875rem)) 0,
+    100% var(--corner, 0.875rem),
+    100% 100%,
+    0 100%
+  );
+}
+
+/*
+ * Controller-style focus: the focused element scales up slightly, gets a
+ * team-ink edge and glow and a raised surface. Shaped hosts (`data-shape`)
+ * draw the edge from `--edge` on their own clipped layers and glow with
+ * drop-shadow, which follows the clipped outline.
+ */
+.console-focus {
+  --edge: var(--surface-line);
+  --tile-surface: var(--surface-arena);
+  position: relative;
+  transition:
+    transform 150ms ease,
+    filter 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.console-focus:focus-visible {
+  z-index: 1;
+  outline: 2px solid var(--team-ink);
+  outline-offset: 2px;
+  box-shadow: var(--glow-team);
+  transform: scale(1.03);
+  --edge: var(--team-ink);
+  --tile-surface: var(--surface-raised);
+}
+
+.console-focus[data-shape]:focus-visible {
+  outline: none;
+  box-shadow: none;
+  filter: drop-shadow(0 0 14px rgb(var(--team-ink-rgb) / 0.45));
+}
+
+@media (hover: hover) {
+  .console-focus:hover {
+    --edge: rgb(var(--team-ink-rgb) / 0.6);
+    --tile-surface: var(--surface-raised);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-focus,
+  .slant::before {
+    transition: none;
+  }
+
+  .console-focus:focus-visible {
+    transform: none;
+  }
+}
+
+/*
+ * Height of the in-save bottom chrome: the phone hub bar, or the desktop
+ * control legend (none on touch screens). Sticky-bottom page bars use
+ * `bottom-[var(--shell-bottom,0px)]`.
+ */
+.shell-backdrop {
+  --shell-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 64rem) {
+  .shell-backdrop {
+    --shell-bottom: 2.6rem;
+  }
+}
+
+@media (min-width: 64rem) and (pointer: coarse) {
+  .shell-backdrop {
+    --shell-bottom: 0px;
+  }
+}
+
+/*
+ * Page transitions (RouteTransition, shell links and keys).
+ *
+ * Only the in-save page content has its own snapshot ("page-content"). The
+ * sticky header and bottom bars are named so they are captured separately and
+ * kept still above it; everything else is the "root" snapshot, which is not
+ * animated. A hub change slides the content in the direction moved
+ * (hub-forward: in from the right; hub-back: in from the left); any other
+ * path change crossfades (page-fade). 200ms, ease-out.
+ */
+::view-transition {
+  /* Never swallow clicks while a transition runs. */
+  pointer-events: none;
+}
+
+::view-transition-group(root),
+::view-transition-new(root),
+::view-transition-group(page-content) {
+  animation: none;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-group(shell-header),
+::view-transition-group(shell-mobile-bar),
+::view-transition-group(shell-legend) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(shell-header),
+::view-transition-old(shell-mobile-bar),
+::view-transition-old(shell-legend) {
+  display: none;
+}
+
+::view-transition-new(shell-header),
+::view-transition-new(shell-mobile-bar),
+::view-transition-new(shell-legend) {
+  animation: none;
+}
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes page-slide {
+  from {
+    translate: var(--page-slide-offset) 0;
+    opacity: 0;
+  }
+  to {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+::view-transition-old(.page-fade) {
+  animation: 120ms ease-out both page-fade reverse;
+}
+
+::view-transition-new(.page-fade) {
+  animation: 200ms ease-out both page-fade;
+}
+
+::view-transition-old(.hub-forward) {
+  --page-slide-offset: -40px;
+  animation: 200ms ease-out both page-slide reverse;
+}
+
+::view-transition-new(.hub-forward) {
+  --page-slide-offset: 40px;
+  animation: 200ms ease-out both page-slide;
+}
+
+::view-transition-old(.hub-back) {
+  --page-slide-offset: 40px;
+  animation: 200ms ease-out both page-slide reverse;
+}
+
+::view-transition-new(.hub-back) {
+  --page-slide-offset: -40px;
+  animation: 200ms ease-out both page-slide;
+}
+
+/*
+ * Tile entrance: an `.enter-up` with --i capped by the component (0-4, so the
+ * last tile starts at 240ms). Fills backwards only, so once it has played the
+ * focus scale on `.console-focus` is not held down by the final keyframe.
+ */
+.enter-up.tile-enter {
+  animation-duration: 260ms;
+  animation-fill-mode: backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  ::view-transition-old(*) {
+    display: none;
+  }
+
+  .enter-up.tile-enter {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Loading skeletons (src/components/ui/Skeleton.tsx)
+   A short highlight sweeps across surface blocks while a route loads. Under
+   prefers-reduced-motion the highlight is removed: a flat block remains.
+   ========================================================================== */
+.skeleton {
+  background-color: var(--surface-raised);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--surface-high) 70%, transparent) 50%,
+    transparent 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 60% 100%;
+  background-position: -100% 0;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background-image: none;
+  }
+}

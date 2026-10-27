@@ -1,6 +1,7 @@
 /**
- * Owner Mode primary navigation.
- * Persistent systems in the sidebar; contextual hubs derived from season state.
+ * Owner Mode navigation: hubs across the top, each with one row of sub-tabs.
+ * Contextual tabs (Playoffs, All-Star, Members, Free Agency) and the Offseason
+ * hub are derived from season state.
  */
 
 import type { GameState } from "@/state/game-state";
@@ -14,90 +15,158 @@ import { isInSeasonSigningOpen } from "@/systems/league-rules/free-agency-rules"
 import type { SeasonPhase } from "@/domain/entities/season";
 
 export type OwnerNavItem = {
+  /** Path under /dashboard/<saveId> ("" is Home). */
   href: string;
   label: string;
   icon?: string;
   badgeKey?: OwnerNavBadgeKey;
+  /** Other path prefixes that open this tab (e.g. a merged legacy page). */
+  also?: readonly string[];
   /** Populated by ownerNavGroupsForState — not set on static config. */
   badge?: OwnerNavBadge;
 };
 
+export type OwnerHubId =
+  | "home"
+  | "team"
+  | "league"
+  | "front-office"
+  | "media"
+  | "offseason"
+  | "settings";
+
+/** A hub: one top-level destination and its sub-tabs. */
 export type OwnerNavGroup = {
-  id: string;
+  id: OwnerHubId;
   label: string;
+  /** Landing path of the hub. */
+  href: string;
+  icon: string;
   items: readonly OwnerNavItem[];
+  /** Path prefixes inside the hub that have no tab of their own. */
+  also?: readonly string[];
+  /** Most urgent badge among the hub's tabs. Set by ownerNavGroupsForState. */
+  badge?: OwnerNavBadge;
 };
 
-/** Static nav structure (canonical routes only). Offseason group injected at runtime. */
-export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
-  {
-    // Everyday destinations; unlabelled so the sidebar stays short.
-    id: "main",
-    label: "",
-    items: [
-      { href: "", label: "Front Office", icon: "home" },
-      {
-        href: "/calendar",
-        label: "Calendar",
-        icon: "calendar",
-        badgeKey: "calendar",
-      },
-      {
-        href: "/media",
-        label: "Media Hub",
-        icon: "media",
-        badgeKey: "media",
-      },
-    ],
-  },
-  {
-    id: "team",
-    label: "Team",
-    items: [
-      { href: "/team", label: "Team", icon: "team" },
-      { href: "/roster", label: "Roster", icon: "roster", badgeKey: "roster" },
-      {
-        href: "/team-management/lineups",
-        label: "Lineup & Rotation",
-        icon: "lineups",
-      },
-      {
-        href: "/staff-coaching",
-        label: "Staff & Coaching",
-        icon: "staff",
-        badgeKey: "staff",
-      },
-      { href: "/development", label: "Development", icon: "development" },
-    ],
-  },
-  {
-    id: "league",
-    label: "League",
-    items: [
-      { href: "/league", label: "League", icon: "league" },
-      { href: "/schedule", label: "Schedule", icon: "schedule" },
-      { href: "/awards", label: "Awards", icon: "awards" },
-      {
-        href: "/season-events/fan-voting",
-        label: "Fan Voting",
-        icon: "awards",
-      },
-    ],
-  },
-  {
-    id: "franchise",
-    label: "Franchise",
-    items: [
-      { href: "/finances", label: "Finances", icon: "finances" },
-      { href: "/franchise", label: "Franchise", icon: "franchise" },
-      { href: "/settings", label: "Settings", icon: "settings" },
-    ],
-  },
-] as const;
+const HOME_HUB: OwnerNavGroup = {
+  id: "home",
+  label: "Home",
+  href: "",
+  icon: "home",
+  items: [
+    { href: "", label: "Home", icon: "home" },
+    {
+      href: "/calendar",
+      label: "Schedule",
+      icon: "calendar",
+      badgeKey: "calendar",
+      also: ["/schedule"],
+    },
+  ],
+  also: ["/notifications", "/games"],
+};
 
-const OFFSEASON_GROUP: OwnerNavGroup = {
+const TEAM_HUB: OwnerNavGroup = {
+  id: "team",
+  label: "Team",
+  href: "/team",
+  icon: "team",
+  items: [
+    { href: "/team", label: "Overview", icon: "team" },
+    { href: "/roster", label: "Roster", icon: "roster", badgeKey: "roster" },
+    { href: "/roster/injuries", label: "Injuries", icon: "injuries" },
+    {
+      href: "/team-management/lineups",
+      label: "Lineups",
+      icon: "lineups",
+    },
+    { href: "/development", label: "Development", icon: "development" },
+    {
+      href: "/development-league",
+      label: "Dev League",
+      icon: "development",
+    },
+    { href: "/team/history", label: "History", icon: "awards" },
+  ],
+  also: ["/players", "/team-management"],
+};
+
+const LEAGUE_HUB: OwnerNavGroup = {
+  id: "league",
+  label: "League",
+  href: "/league",
+  icon: "league",
+  items: [
+    { href: "/league", label: "Overview", icon: "league" },
+    { href: "/league/standings", label: "Standings", icon: "standings" },
+    {
+      href: "/league/player-stats",
+      label: "Player Stats",
+      icon: "standings",
+    },
+    { href: "/league/team-stats", label: "Team Stats", icon: "standings" },
+    {
+      href: "/league/transactions",
+      label: "Transactions",
+      icon: "transactions",
+    },
+    {
+      href: "/awards",
+      label: "Awards",
+      icon: "awards",
+      also: ["/season-events/fan-voting"],
+    },
+    { href: "/history", label: "History", icon: "awards" },
+  ],
+};
+
+const FRONT_OFFICE_HUB: OwnerNavGroup = {
+  id: "front-office",
+  label: "Front Office",
+  href: "/finances",
+  icon: "finances",
+  items: [
+    { href: "/finances", label: "Finances", icon: "finances" },
+    {
+      href: "/team/contracts",
+      label: "Contracts",
+      icon: "contracts",
+      badgeKey: "contracts",
+    },
+    { href: "/trades", label: "Trades", icon: "transactions" },
+    {
+      href: "/staff-coaching/staff",
+      label: "Staff",
+      icon: "staff",
+      badgeKey: "staff",
+      also: ["/staff-coaching", "/staff"],
+    },
+    { href: "/franchise", label: "Franchise", icon: "franchise" },
+    {
+      href: "/business",
+      label: "Business",
+      icon: "finances",
+      also: ["/sponsorships"],
+    },
+  ],
+};
+
+const MEDIA_HUB: OwnerNavGroup = {
+  id: "media",
+  label: "Media",
+  href: "/media",
+  icon: "media",
+  items: [
+    { href: "/media", label: "Media Hub", icon: "media", badgeKey: "media" },
+  ],
+};
+
+const OFFSEASON_HUB: OwnerNavGroup = {
   id: "offseason",
   label: "Offseason",
+  href: "/offseason",
+  icon: "offseason",
   items: [
     {
       href: "/offseason",
@@ -107,138 +176,210 @@ const OFFSEASON_GROUP: OwnerNavGroup = {
     },
     { href: "/draft", label: "Draft", icon: "draft" },
     { href: "/scouting", label: "Scouting", icon: "scouting" },
-    {
-      href: "/free-agency",
-      label: "Free Agency",
-      icon: "freeAgency",
-    },
   ],
 };
 
-/** In preseason and the regular season, free agents can still be signed. */
-const IN_SEASON_FREE_AGENTS_NAV_ITEM: OwnerNavItem = {
+const SETTINGS_HUB: OwnerNavGroup = {
+  id: "settings",
+  label: "Settings",
+  href: "/settings",
+  icon: "settings",
+  items: [
+    { href: "/settings", label: "League", icon: "settings" },
+    { href: "/settings/rules", label: "Rules", icon: "settings" },
+    { href: "/settings/ai", label: "AI Management", icon: "settings" },
+    { href: "/settings/tools", label: "Tools", icon: "settings" },
+  ],
+};
+
+/**
+ * Static hubs (canonical routes only). The Offseason hub and contextual tabs
+ * are added by ownerNavGroupsForState.
+ */
+export const OWNER_NAV_GROUPS: readonly OwnerNavGroup[] = [
+  HOME_HUB,
+  TEAM_HUB,
+  LEAGUE_HUB,
+  FRONT_OFFICE_HUB,
+  MEDIA_HUB,
+  SETTINGS_HUB,
+];
+
+const FREE_AGENCY_ITEM: OwnerNavItem = {
   href: "/free-agency",
-  label: "Free Agents",
+  label: "Free Agency",
   icon: "freeAgency",
 };
 
-const PLAYOFFS_NAV_ITEM: OwnerNavItem = {
+const OFFSEASON_WITH_FREE_AGENCY: OwnerNavGroup = {
+  ...OFFSEASON_HUB,
+  items: [...OFFSEASON_HUB.items, FREE_AGENCY_ITEM],
+};
+
+const PLAYOFFS_ITEM: OwnerNavItem = {
   href: "/playoffs",
   label: "Playoffs",
   icon: "playoffs",
 };
 
-const ALL_STAR_NAV_ITEM: OwnerNavItem = {
+const ALL_STAR_ITEM: OwnerNavItem = {
   href: "/season-events/all-star",
   label: "All-Star",
   icon: "awards",
 };
 
-const PROPOSE_TRADE_NAV_ITEM: OwnerNavItem = {
+const PROPOSE_TRADE_ITEM: OwnerNavItem = {
   href: "/trades/propose",
   label: "Propose Trade",
   icon: "transactions",
 };
 
-const LEAGUE_MEMBERS_NAV_ITEM: OwnerNavItem = {
+const LEAGUE_MEMBERS_ITEM: OwnerNavItem = {
   href: "/league-members",
-  label: "League Members",
+  label: "Members",
   icon: "league",
 };
 
-/** Items that only exist for shared (local or online) leagues. */
-function sharedLeagueNavExtras(state: GameState): OwnerNavItem[] {
-  const mode = state.user.participation.mode;
-  if (mode === "single") return [];
-  return mode === "online"
-    ? [PROPOSE_TRADE_NAV_ITEM, LEAGUE_MEMBERS_NAV_ITEM]
-    : [PROPOSE_TRADE_NAV_ITEM];
+/** Online leagues list their members under League. */
+function sharedLeagueItems(state: GameState): OwnerNavItem[] {
+  return state.user.participation.mode === "online"
+    ? [LEAGUE_MEMBERS_ITEM]
+    : [];
+}
+
+/** Shared leagues propose trades to other humans; a tab of its own. */
+function sharedTradeItems(state: GameState): OwnerNavItem[] {
+  return state.user.participation.mode === "single" ? [] : [PROPOSE_TRADE_ITEM];
 }
 
 function isPlayoffsNavPhase(phase: SeasonPhase): boolean {
   return phase === "playoffs" || phase === "postseason";
 }
 
-function midseasonNavExtras(state: GameState): OwnerNavItem[] {
-  const extras: OwnerNavItem[] = [];
-  const se = state.competition.seasonEvents;
-  if (!se) return extras;
+function allStarItems(state: GameState): OwnerNavItem[] {
+  const allStar = state.competition.seasonEvents?.allStar;
   if (
-    se.allStar &&
-    (se.allStar.status === "selections_announced" ||
-      se.allStar.status === "completed" ||
-      se.allStar.status === "voting")
+    allStar &&
+    (allStar.status === "selections_announced" ||
+      allStar.status === "completed" ||
+      allStar.status === "voting")
   ) {
-    extras.push(ALL_STAR_NAV_ITEM);
+    return [ALL_STAR_ITEM];
   }
-  return extras;
+  return [];
 }
 
 export function flattenOwnerNavItems(): readonly OwnerNavItem[] {
   return OWNER_NAV_GROUPS.flatMap((group) => group.items);
 }
 
+/** Number keys 1–n jump to hubs in this order; Settings is not numbered. */
+export function numberedHubs(
+  groups: readonly OwnerNavGroup[],
+): readonly OwnerNavGroup[] {
+  return groups.filter((group) => group.id !== "settings");
+}
+
 /**
- * Contextual nav: inject Offseason Hub when in offseason; attach actionable badges.
- * Relocation is never a permanent sidebar destination.
+ * Hubs for the current state: inserts the Offseason hub during the offseason
+ * (Free Agency moves there), adds contextual tabs and attaches badges.
  */
 export function ownerNavGroupsForState(state: GameState): OwnerNavGroup[] {
   const badges = computeOwnerNavBadges(state);
-  const groups: OwnerNavGroup[] = [];
+  const offseason = isOffseasonPeriod(state);
+  const signingOpen = !offseason && isInSeasonSigningOpen(state);
   const phase = state.competition.season.phase;
+  const groups: OwnerNavGroup[] = [];
 
-  for (const group of OWNER_NAV_GROUPS) {
-    if (group.id === "main" && isOffseasonPeriod(state)) {
-      groups.push(withBadges(group, badges));
-      groups.push(withBadges(OFFSEASON_GROUP, badges));
-      continue;
-    }
-    if (group.id === "team" && isInSeasonSigningOpen(state)) {
-      groups.push(
-        withBadges(
-          { ...group, items: [...group.items, IN_SEASON_FREE_AGENTS_NAV_ITEM] },
-          badges,
-        ),
-      );
-      continue;
-    }
-    if (group.id === "league") {
-      const extras = [
-        ...sharedLeagueNavExtras(state),
-        ...(isPlayoffsNavPhase(phase) ? [PLAYOFFS_NAV_ITEM] : []),
-        ...midseasonNavExtras(state),
+  for (const hub of OWNER_NAV_GROUPS) {
+    let items = hub.items;
+    if (hub.id === "league") {
+      items = [
+        ...items,
+        ...(isPlayoffsNavPhase(phase) ? [PLAYOFFS_ITEM] : []),
+        ...allStarItems(state),
+        ...sharedLeagueItems(state),
       ];
-      if (extras.length > 0) {
-        groups.push(
-          withBadges(
-            {
-              ...group,
-              items: [...group.items, ...extras],
-            },
-            badges,
-          ),
-        );
-        continue;
-      }
     }
-    groups.push(withBadges(group, badges));
+    if (hub.id === "front-office") {
+      const tradesIndex = items.findIndex((item) => item.href === "/trades");
+      items = [
+        ...items.slice(0, tradesIndex + 1),
+        ...sharedTradeItems(state),
+        ...(signingOpen ? [FREE_AGENCY_ITEM] : []),
+        ...items.slice(tradesIndex + 1),
+      ];
+    }
+    if (hub.id === "settings" && offseason) {
+      groups.push(withBadges(OFFSEASON_WITH_FREE_AGENCY, badges));
+    }
+    groups.push(withBadges({ ...hub, items }, badges));
   }
 
   return groups;
 }
 
+const BADGE_RANK: Record<OwnerNavBadge["kind"], number> = {
+  critical: 3,
+  actionable: 2,
+  unread: 1,
+};
+
 function withBadges(
   group: OwnerNavGroup,
   badges: ReturnType<typeof computeOwnerNavBadges>,
 ): OwnerNavGroup {
-  return {
-    ...group,
-    items: group.items.map((item) => {
-      const badge =
-        item.badgeKey && badges[item.badgeKey]
-          ? badges[item.badgeKey]
-          : undefined;
-      return badge ? { ...item, badge } : { ...item };
-    }),
+  const items = group.items.map((item) => {
+    const badge =
+      item.badgeKey && badges[item.badgeKey]
+        ? badges[item.badgeKey]
+        : undefined;
+    return badge ? { ...item, badge } : { ...item };
+  });
+  let hubBadge: OwnerNavBadge | undefined;
+  for (const item of items) {
+    if (!item.badge || item.badge.count <= 0) continue;
+    if (!hubBadge || BADGE_RANK[item.badge.kind] > BADGE_RANK[hubBadge.kind]) {
+      hubBadge = item.badge;
+    }
+  }
+  return hubBadge ? { ...group, items, badge: hubBadge } : { ...group, items };
+}
+
+function matchesPrefix(path: string, prefix: string): boolean {
+  if (prefix === "") return path === "";
+  return path === prefix || path.startsWith(`${prefix}/`);
+}
+
+export type ActiveOwnerNav = {
+  hub: OwnerNavGroup;
+  /** The active sub-tab, if the path belongs to one. */
+  item?: OwnerNavItem;
+};
+
+/**
+ * Hub and tab for a path under /dashboard/<saveId> (e.g. "/team/contracts").
+ * The longest matching prefix wins, so a tab nested under another hub's path
+ * (Contracts under /team) still belongs to its own hub.
+ */
+export function activeOwnerNav(
+  groups: readonly OwnerNavGroup[],
+  path: string,
+): ActiveOwnerNav | undefined {
+  let best: { length: number; active: ActiveOwnerNav } | undefined;
+  const consider = (prefix: string, active: ActiveOwnerNav) => {
+    if (!matchesPrefix(path, prefix)) return;
+    if (!best || prefix.length > best.length) {
+      best = { length: prefix.length, active };
+    }
   };
+  for (const hub of groups) {
+    for (const prefix of hub.also ?? []) consider(prefix, { hub });
+    for (const item of hub.items) {
+      for (const prefix of [item.href, ...(item.also ?? [])]) {
+        consider(prefix, { hub, item });
+      }
+    }
+  }
+  return best?.active;
 }

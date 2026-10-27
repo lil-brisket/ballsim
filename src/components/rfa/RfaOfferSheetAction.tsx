@@ -10,7 +10,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { RfaTag } from "@/state/rfa-selectors";
 
 const FOCUSABLE =
-  'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), input:not([disabled]):not([type="hidden"]), [href], [tabindex]:not([tabindex="-1"])';
 
 const SALARY_STEP = 100_000;
 const MAX_YEARS = 5;
@@ -68,7 +68,7 @@ export function RfaOfferSheetAction(props: {
 
   if (tag.pendingMatch) {
     return (
-      <span className="text-sm text-zinc-400">
+      <span className="text-sm text-muted">
         Waiting on {tag.originalTeamName}
       </span>
     );
@@ -84,7 +84,7 @@ export function RfaOfferSheetAction(props: {
       <Button
         ref={triggerRef}
         variant="secondary"
-        className="min-h-9 px-2.5"
+        className="min-h-11 px-2.5"
         onClick={() => {
           setYears(2);
           setSalary(tag.qualifyingOfferSalary);
@@ -103,8 +103,7 @@ export function RfaOfferSheetAction(props: {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="relative z-10 max-h-full w-full max-w-md overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-5 text-left shadow-xl"
-            onClick={(event) => event.stopPropagation()}
+            className="relative z-10 max-h-full w-full max-w-md overflow-y-auto rounded-xl border border-line-strong bg-surface-raised p-5 text-left shadow-xl"
           >
             <SectionHeading
               as="h3"
@@ -119,18 +118,19 @@ export function RfaOfferSheetAction(props: {
               <input type="hidden" name="playerId" value={props.playerId} />
               <input type="hidden" name="returnPath" value={props.returnPath} />
               <input type="hidden" name="intent" value="offer_sheet" />
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted">
                 {tag.originalTeamName} can match this sheet. If they do not, he
                 joins you.
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <label htmlFor={yearsId} className="text-sm text-zinc-400">
+                  <label htmlFor={yearsId} className="text-sm text-muted">
                     Seasons
                   </label>
                   <div>
                     <NumberStepper
                       id={yearsId}
+
                       name="years"
                       value={years}
                       onValueChange={setYears}
@@ -143,12 +143,13 @@ export function RfaOfferSheetAction(props: {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor={salaryId} className="text-sm text-zinc-400">
+                  <label htmlFor={salaryId} className="text-sm text-muted">
                     Salary per season
                   </label>
                   <div className="flex flex-wrap items-center gap-2">
                     <NumberStepper
                       id={salaryId}
+
                       name="salary"
                       value={salary}
                       onValueChange={setSalary}

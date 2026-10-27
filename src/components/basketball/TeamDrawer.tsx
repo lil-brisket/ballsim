@@ -19,9 +19,9 @@ function DrawerSkeleton() {
       aria-busy="true"
       aria-label="Loading"
     >
-      <div className="h-20 rounded-lg bg-zinc-800" />
-      <div className="h-8 w-1/2 rounded bg-zinc-800" />
-      <div className="h-32 rounded-lg bg-zinc-800" />
+      <div className="h-20 rounded-lg bg-surface-high" />
+      <div className="h-8 w-1/2 rounded bg-surface-high" />
+      <div className="h-32 rounded-lg bg-surface-high" />
     </div>
   );
 }
@@ -67,7 +67,7 @@ export function TeamDrawer(props: {
               <Link
                 href={props.view.navigation.rosterHref}
                 className={cn(
-                  "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500",
+                  "rounded-md border border-line-strong px-3 py-1.5 text-sm text-soft hover:border-faint",
                   focusRingClass,
                 )}
                 onClick={() => props.onOpenChange(false)}
@@ -78,7 +78,7 @@ export function TeamDrawer(props: {
             <Link
               href={props.view.navigation.scheduleHref}
               className={cn(
-                "rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:border-zinc-500",
+                "rounded-md border border-line-strong px-3 py-1.5 text-sm text-soft hover:border-faint",
                 focusRingClass,
               )}
               onClick={() => props.onOpenChange(false)}
@@ -105,7 +105,7 @@ export function TeamDrawer(props: {
       ) : null}
 
       {props.status === "missing" ? (
-        <p className="text-sm text-zinc-400" role="status">
+        <p className="text-sm text-muted" role="status">
           Team no longer exists.
         </p>
       ) : null}
@@ -164,7 +164,7 @@ export function TeamDrawer(props: {
                     key={player.playerId}
                     className="flex items-center justify-between gap-2 text-sm"
                   >
-                    <span className="text-zinc-300">
+                    <span className="text-soft">
                       {player.firstName} {player.lastName}
                     </span>
                     <InjuryBadge status={player.injuryStatus} />
@@ -208,7 +208,7 @@ export function TeamDrawer(props: {
                     key={game.gameId}
                     className="flex items-center justify-between gap-2 text-sm"
                   >
-                    <span className="text-zinc-400">
+                    <span className="text-muted">
                       {game.home ? "vs" : "@"} {game.opponentAbbreviation}
                     </span>
                     <span

@@ -48,11 +48,11 @@ export function SaveCard(props: {
     return (
       <li className="flex flex-col gap-3 rounded-xl border border-rose-900/50 bg-rose-950/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="font-medium text-zinc-100">{preview.name}</p>
+          <p className="font-medium text-ink">{preview.name}</p>
           <p className="mt-1 text-sm text-rose-300" role="status">
             {preview.error}
           </p>
-          <p className="mt-1 text-sm text-zinc-400">
+          <p className="mt-1 text-sm text-muted">
             Last updated {formatLastPlayed(preview.updatedAt)}
           </p>
         </div>
@@ -85,7 +85,7 @@ export function SaveCard(props: {
             />
             <div className="min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-display text-2xl font-bold uppercase leading-tight tracking-wide text-zinc-50">
+                <p className="font-display text-2xl font-bold uppercase leading-tight tracking-wide text-ink">
                   {preview.name}
                 </p>
                 <StatusBadge label={modeDef.name} tone="info" />
@@ -110,13 +110,13 @@ export function SaveCard(props: {
                   </>
                 )}
               </div>
-              <p className="text-sm text-zinc-200">{teamLabel}</p>
-              <p className="text-sm text-zinc-300">
+              <p className="text-sm text-ink">{teamLabel}</p>
+              <p className="text-sm text-soft">
                 Season {preview.seasonYear} ·{" "}
                 {formatGameDate(preview.currentDate, { year: true })} ·{" "}
                 {preview.seasonPhase}
               </p>
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted">
                 Last played {formatLastPlayed(preview.updatedAt)}
               </p>
             </div>

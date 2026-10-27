@@ -1,4 +1,10 @@
 import type { Metadata } from "next";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadOwnerGameBoxScoreView } from "@/application/game-service";
@@ -31,14 +37,23 @@ export default async function GameBoxScorePage({ params }: GamePageProps) {
             {view.canWatch ? (
               <Link
                 href={`/dashboard/${saveId}/games/${gameId}/watch`}
-                className="text-sm text-team-ink underline-offset-4 hover:underline"
+                className={cn(
+                  linkClass,
+                  touchTargetTextClass,
+                  focusRingClass,
+                  "text-sm",
+                )}
               >
                 Watch replay →
               </Link>
             ) : null}
             <Link
               href={`/dashboard/${saveId}/schedule`}
-              className="text-sm text-zinc-300 hover:text-team-ink"
+              className={cn(
+                touchTargetTextClass,
+                focusRingClass,
+                "text-sm text-soft hover:text-team-ink",
+              )}
             >
               ← Schedule
             </Link>

@@ -10,7 +10,7 @@ export function CalendarLeagueContextPanel(props: {
     return (
       <ArenaPanel as="aside" raised>
         <SectionHeading as="h3" title="League context" />
-        <p className="mt-2 text-sm text-zinc-400">
+        <p className="mt-2 text-sm text-muted">
           Standings are unavailable for this phase.
         </p>
       </ArenaPanel>
@@ -35,7 +35,7 @@ export function CalendarLeagueContextPanel(props: {
     <ArenaPanel as="aside" raised density="compact" className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <SectionHeading as="h3" title="League context" />
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           {c.conferenceName} · {c.divisionName}
         </p>
       </div>

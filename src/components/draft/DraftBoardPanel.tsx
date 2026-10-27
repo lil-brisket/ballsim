@@ -1,4 +1,9 @@
-import { cn, linkClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 type BoardEntry = {
   prospectPlayerId: string;
@@ -25,7 +30,7 @@ export function DraftBoardPanel({
 }: Props) {
   if (entries.length === 0) {
     return (
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-faint">
         No prospects on your board yet. Add players from the prospect list.
       </p>
     );
@@ -36,10 +41,10 @@ export function DraftBoardPanel({
       {entries.map((entry) => (
         <li
           key={entry.prospectPlayerId}
-          className="rounded-md border border-zinc-800 px-3 py-2 text-sm"
+          className="rounded-md border border-line px-3 py-2 text-sm"
         >
           <div className="flex items-center justify-between gap-2">
-            <span className="font-medium text-zinc-100">
+            <span className="font-medium text-ink">
               #{entry.rank} {entry.name}
               {entry.priority ? (
                 <span className="ml-2 text-sm font-medium text-team-ink">
@@ -47,12 +52,12 @@ export function DraftBoardPanel({
                 </span>
               ) : null}
             </span>
-            <span className="text-sm text-zinc-500">
+            <span className="text-sm text-faint">
               {entry.position} · {entry.scoutGrade ?? "—"}
             </span>
           </div>
           {entry.notes ? (
-            <p className="mt-1 text-sm text-zinc-500">{entry.notes}</p>
+            <p className="mt-1 text-sm text-faint">{entry.notes}</p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-3">
             <form action={togglePriorityAction}>
@@ -62,7 +67,15 @@ export function DraftBoardPanel({
                 name="prospectPlayerId"
                 value={entry.prospectPlayerId}
               />
-              <button type="submit" className={cn(linkClass, "text-sm")}>
+              <button
+                type="submit"
+                className={cn(
+                  linkClass,
+                  touchTargetTextClass,
+                  focusRingClass,
+                  "text-sm",
+                )}
+              >
                 {entry.priority ? "Unmark priority" : "Mark priority"}
               </button>
             </form>
@@ -75,7 +88,11 @@ export function DraftBoardPanel({
               />
               <button
                 type="submit"
-                className="text-sm text-zinc-500 hover:underline"
+                className={cn(
+                  touchTargetTextClass,
+                  focusRingClass,
+                  "text-sm text-faint hover:underline",
+                )}
               >
                 Remove
               </button>

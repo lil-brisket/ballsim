@@ -14,23 +14,21 @@ function FormDelta(props: { label: string; recent: number; season: number }) {
   const diff = props.recent - props.season;
   const tone =
     Math.abs(diff) < 0.3
-      ? "text-zinc-400"
+      ? "text-muted"
       : diff > 0
         ? "text-emerald-400"
         : "text-red-400";
   const arrow = Math.abs(diff) < 0.3 ? "→" : diff > 0 ? "↑" : "↓";
   return (
     <div className={panelClass}>
-      <p className="text-sm text-zinc-400">{props.label}</p>
-      <p className="tabular-nums text-sm text-zinc-100">
+      <p className="text-sm text-muted">{props.label}</p>
+      <p className="tabular-nums text-sm text-ink">
         {props.recent.toFixed(1)}{" "}
         <span className={tone}>
           {arrow} {Math.abs(diff).toFixed(1)}
         </span>
       </p>
-      <p className="text-sm text-zinc-500">
-        vs {props.season.toFixed(1)} season
-      </p>
+      <p className="text-sm text-faint">vs {props.season.toFixed(1)} season</p>
     </div>
   );
 }
@@ -120,7 +118,7 @@ export function PlayerOverview(props: {
                   key={item.attribute}
                   className={`${panelClass} flex items-center justify-between text-sm`}
                 >
-                  <span className="text-zinc-100">{item.label}</span>
+                  <span className="text-ink">{item.label}</span>
                   <span className="tabular-nums text-team-ink">
                     {item.rating}
                   </span>
@@ -139,10 +137,8 @@ export function PlayerOverview(props: {
                   key={item.attribute}
                   className={`${panelClass} flex items-center justify-between text-sm`}
                 >
-                  <span className="text-zinc-100">{item.label}</span>
-                  <span className="tabular-nums text-zinc-400">
-                    {item.rating}
-                  </span>
+                  <span className="text-ink">{item.label}</span>
+                  <span className="tabular-nums text-muted">{item.rating}</span>
                 </li>
               ))}
             </ul>
@@ -154,7 +150,7 @@ export function PlayerOverview(props: {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {player.keyAttributes.map((entry) => (
             <div key={entry.attribute} className={panelClass}>
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted">
                 {formatAttributeLabel(entry.attribute)}
               </p>
               <p className="tabular-nums text-lg text-team-ink">
@@ -173,20 +169,20 @@ export function PlayerOverview(props: {
                 key={`${award.awardId}-${award.seasonYear}-${award.period ?? "y"}`}
                 className={panelClass}
               >
-                <span className="text-zinc-100">{award.displayName}</span>
+                <span className="text-ink">{award.displayName}</span>
                 <span className="ml-2 tabular-nums text-team-ink">
                   {award.periodLabel
                     ? award.periodLabel
                     : String(award.seasonYear)}
                 </span>
                 {award.teamName ? (
-                  <span className="ml-2 text-zinc-500">{award.teamName}</span>
+                  <span className="ml-2 text-faint">{award.teamName}</span>
                 ) : null}
               </li>
             ))}
           </ul>
           {player.awardCareerTotals.length > 0 ? (
-            <p className="mt-3 text-sm text-zinc-500">
+            <p className="mt-3 text-sm text-faint">
               {player.awardCareerTotals
                 .map((t) => `${t.count}× ${t.shortLabel}`)
                 .join(" · ")}

@@ -50,10 +50,10 @@ function MatchupTeamBlock(props: {
         decorative
       />
       <div className="min-w-0">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted">
           {props.label} · {props.abbreviation}
         </p>
-        <p className="font-display text-2xl font-bold uppercase leading-tight tracking-wide text-zinc-50">
+        <p className="font-display text-2xl font-bold uppercase leading-tight tracking-wide text-ink">
           {props.city} {props.name}
         </p>
         <ScoreNumeral
@@ -121,7 +121,7 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
           />
           <div
             aria-hidden
-            className="hidden font-display text-3xl text-zinc-500 sm:block"
+            className="hidden font-display text-3xl text-faint sm:block"
           >
             –
           </div>
@@ -139,13 +139,13 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
         <p className="mt-5 text-sm font-medium text-team-ink">
           {boxScore.winnerName} wins by {boxScore.margin}
         </p>
-        <p className="mt-1 text-sm text-zinc-300">{metaParts.join(" · ")}</p>
+        <p className="mt-1 text-sm text-soft">{metaParts.join(" · ")}</p>
         {boxScore.periods.length > 0 ? (
           <div className="mt-5 overflow-x-auto">
             <table className="w-full text-sm">
               <caption className="sr-only">Scoring by period</caption>
               <thead>
-                <tr className="text-zinc-400">
+                <tr className="text-muted">
                   <th scope="col" className="px-2 py-1 text-left font-medium">
                     Team
                   </th>
@@ -173,23 +173,21 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
                   <tr key={key} className="border-t border-surface-line">
                     <th
                       scope="row"
-                      className="px-2 py-1.5 text-left font-display text-lg font-bold uppercase tracking-wide text-zinc-100"
+                      className="px-2 py-1.5 text-left font-display text-lg font-bold uppercase tracking-wide text-ink"
                     >
                       {side.abbreviation}
                     </th>
                     {boxScore.periods.map((period, index) => (
                       <td
                         key={periodLabel(index)}
-                        className="px-2 py-1.5 text-right font-mono tabular-nums text-zinc-300"
+                        className="px-2 py-1.5 text-right font-mono tabular-nums text-soft"
                       >
                         {period[key]}
                       </td>
                     ))}
                     <td
                       className={`px-2 py-1.5 text-right font-display text-xl font-extrabold tabular-nums ${
-                        boxScore.winner === key
-                          ? "text-team-ink"
-                          : "text-zinc-400"
+                        boxScore.winner === key ? "text-team-ink" : "text-muted"
                       }`}
                     >
                       {side.score}
@@ -210,13 +208,11 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
                 <ArenaPanel as="div" raised density="compact" edge="left">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm text-zinc-400">
-                        {side.abbreviation}
-                      </p>
-                      <p className="truncate font-display text-xl font-bold uppercase tracking-wide text-zinc-50">
+                      <p className="text-sm text-muted">{side.abbreviation}</p>
+                      <p className="truncate font-display text-xl font-bold uppercase tracking-wide text-ink">
                         {player.playerName}
                       </p>
-                      <p className="font-mono text-sm text-zinc-300">
+                      <p className="font-mono text-sm text-soft">
                         {player.rebounds} REB · {player.assists} AST ·{" "}
                         {player.minutes} MIN
                       </p>
@@ -256,12 +252,12 @@ export function GameBoxScore({ boxScore }: GameBoxScoreProps) {
               ["PF", away.teamStats.fouls, home.teamStats.fouls],
             ] as const
           ).map(([label, awayValue, homeValue]) => (
-            <tr key={label} className="border-t border-zinc-800">
-              <td className="px-3 py-2 text-zinc-400">{label}</td>
-              <td className="px-3 py-2 text-right font-mono tabular-nums text-zinc-100">
+            <tr key={label} className="border-t border-line">
+              <td className="px-3 py-2 text-muted">{label}</td>
+              <td className="px-3 py-2 text-right font-mono tabular-nums text-ink">
                 {awayValue}
               </td>
-              <td className="px-3 py-2 text-right font-mono tabular-nums text-zinc-100">
+              <td className="px-3 py-2 text-right font-mono tabular-nums text-ink">
                 {homeValue}
               </td>
             </tr>
@@ -286,15 +282,13 @@ function PlayerTable({
   players: GameBoxScoreView["home"]["players"];
 }) {
   if (players.length === 0) {
-    return (
-      <p className="text-sm text-zinc-500">No player statistics recorded.</p>
-    );
+    return <p className="text-sm text-faint">No player statistics recorded.</p>;
   }
   const stat = "px-3 py-2 text-right font-mono tabular-nums";
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-800">
+    <div className="overflow-x-auto rounded-xl border border-line">
       <table className="min-w-full text-left text-sm">
-        <thead className="bg-zinc-900 text-zinc-400">
+        <thead className="bg-surface-raised text-muted">
           <tr>
             {PLAYER_HEADERS.map((header, index) => (
               <th
@@ -302,7 +296,7 @@ function PlayerTable({
                 scope="col"
                 className={
                   index === 0
-                    ? "sticky left-0 z-10 bg-zinc-900 px-3 py-2 font-medium"
+                    ? "sticky left-0 z-10 bg-surface-raised px-3 py-2 font-medium"
                     : "px-3 py-2 text-right font-medium"
                 }
               >
@@ -313,24 +307,22 @@ function PlayerTable({
         </thead>
         <tbody>
           {players.map((player) => (
-            <tr key={player.playerId} className="border-t border-zinc-800">
+            <tr key={player.playerId} className="border-t border-line">
               <th
                 scope="row"
-                className="sticky left-0 z-10 whitespace-nowrap bg-surface-deep px-3 py-2 text-left font-normal text-zinc-100"
+                className="sticky left-0 z-10 whitespace-nowrap bg-surface-deep px-3 py-2 text-left font-normal text-ink"
               >
                 {player.playerName}
               </th>
-              <td className={`${stat} text-zinc-300`}>{player.minutes}</td>
-              <td className={`${stat} text-zinc-100`}>{player.points}</td>
-              <td className={`${stat} text-zinc-300`}>{player.fieldGoals}</td>
-              <td className={`${stat} text-zinc-300`}>
-                {player.threePointers}
-              </td>
-              <td className={`${stat} text-zinc-300`}>{player.freeThrows}</td>
-              <td className={`${stat} text-zinc-300`}>{player.rebounds}</td>
-              <td className={`${stat} text-zinc-300`}>{player.assists}</td>
-              <td className={`${stat} text-zinc-300`}>{player.turnovers}</td>
-              <td className={`${stat} text-zinc-300`}>{player.fouls}</td>
+              <td className={`${stat} text-soft`}>{player.minutes}</td>
+              <td className={`${stat} text-ink`}>{player.points}</td>
+              <td className={`${stat} text-soft`}>{player.fieldGoals}</td>
+              <td className={`${stat} text-soft`}>{player.threePointers}</td>
+              <td className={`${stat} text-soft`}>{player.freeThrows}</td>
+              <td className={`${stat} text-soft`}>{player.rebounds}</td>
+              <td className={`${stat} text-soft`}>{player.assists}</td>
+              <td className={`${stat} text-soft`}>{player.turnovers}</td>
+              <td className={`${stat} text-soft`}>{player.fouls}</td>
             </tr>
           ))}
         </tbody>

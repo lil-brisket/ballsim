@@ -6,7 +6,7 @@ vi.mock("@/application/actions", () => ({
 }));
 
 import { FacilityUpgradeList } from "@/components/finances/FacilityUpgradeList";
-import { FinancesSubNav } from "@/components/finances/FinancesSubNav";
+import { FinancesViews } from "@/components/finances/FinancesViews";
 import type { FacilityRowView } from "@/state/franchise-selectors";
 
 afterEach(() => {
@@ -23,9 +23,9 @@ function row(overrides: Partial<FacilityRowView>): FacilityRowView {
   };
 }
 
-describe("FinancesSubNav", () => {
+describe("FinancesViews", () => {
   it("links Overview, Payroll, Activity and Arena & Facilities under /finances", () => {
-    render(<FinancesSubNav saveId="save_1" active="facilities" />);
+    render(<FinancesViews saveId="save_1" active="facilities" />);
 
     const hrefs: Record<string, string> = {
       Overview: "/dashboard/save_1/finances",

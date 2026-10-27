@@ -42,7 +42,7 @@ function SeasonChart(props: {
   }
   return (
     <div className={`${panelClass} p-4`}>
-      <p className="text-sm text-zinc-400">{props.label}</p>
+      <p className="text-sm text-muted">{props.label}</p>
       <div className="mt-2 h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={props.points}>
@@ -111,14 +111,14 @@ export function SeasonLabPanel(props: {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-muted">
         Runs a full owner-career through production{" "}
         <code>advanceSimulation</code>. CBL is the practical default. Standard
         82-game seasons are much slower — capped at {props.maxSeasonsStandard}{" "}
         seasons here.
       </p>
       <div className={`${panelClass} grid gap-3 p-4 sm:grid-cols-3`}>
-        <div className="text-sm text-zinc-400">
+        <div className="text-sm text-muted">
           <span className="block">Seed</span>
           <NumberStepper
             className="mt-1"
@@ -128,7 +128,7 @@ export function SeasonLabPanel(props: {
             onValueChange={setSeed}
           />
         </div>
-        <div className="text-sm text-zinc-400">
+        <div className="text-sm text-muted">
           <span className="block">Seasons (max {cap})</span>
           <NumberStepper
             className="mt-1"
@@ -140,7 +140,7 @@ export function SeasonLabPanel(props: {
             onValueChange={setSeasons}
           />
         </div>
-        <label className="text-sm text-zinc-400">
+        <label className="text-sm text-muted">
           League
           <Select
             wrapperClassName="mt-1 w-full"
@@ -195,7 +195,7 @@ export function SeasonLabPanel(props: {
               mono
             />
           </div>
-          <p className="font-mono text-sm text-zinc-500">
+          <p className="font-mono text-sm text-faint">
             checksum={result.report.checksum} · {result.report.reproCommand}
           </p>
           <SeasonChart
@@ -220,8 +220,8 @@ export function SeasonLabPanel(props: {
           />
           {result.series.length > 0 ? (
             <div className={`${panelClass} overflow-x-auto p-4`}>
-              <table className="w-full text-left text-sm text-zinc-300">
-                <thead className="text-sm text-zinc-400">
+              <table className="w-full text-left text-sm text-soft">
+                <thead className="text-sm text-muted">
                   <tr>
                     <th className="pb-2">Season</th>
                     <th className="pb-2">Win%</th>
@@ -232,10 +232,7 @@ export function SeasonLabPanel(props: {
                 </thead>
                 <tbody>
                   {result.series.map((row) => (
-                    <tr
-                      key={row.seasonIndex}
-                      className="border-t border-zinc-800"
-                    >
+                    <tr key={row.seasonIndex} className="border-t border-line">
                       <td className="py-2 font-mono">{row.seasonIndex}</td>
                       <td className="py-2 font-mono">
                         {formatPct(row.meanWinPct)}

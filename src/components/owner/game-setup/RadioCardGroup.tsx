@@ -32,7 +32,7 @@ export function RadioCardGroup<T extends string>({
   const uid = useId();
   return (
     <div className="space-y-2">
-      <p id={`${uid}-legend`} className="text-sm font-medium text-zinc-200">
+      <p id={`${uid}-legend`} className="text-sm font-medium text-ink">
         {legend}
       </p>
       <div
@@ -67,7 +67,7 @@ export function RadioCardGroup<T extends string>({
               />
               <span
                 className={cn(
-                  "block h-full min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-left transition-colors",
+                  "block h-full min-h-11 rounded-lg border border-line-strong bg-surface-base p-3 text-left transition-colors",
                   option.disabled ? "opacity-60" : "hover:border-team-ink",
                   "peer-checked:border-team-ink peer-checked:bg-team/15 peer-checked:ring-1 peer-checked:ring-team-ink",
                   "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-team-ink",
@@ -75,18 +75,18 @@ export function RadioCardGroup<T extends string>({
               >
                 <span
                   id={titleId}
-                  className="block text-sm font-medium text-zinc-100"
+                  className="block text-sm font-medium text-ink"
                 >
                   {option.title}
                 </span>
-                <span id={descId} className="mt-1 block text-sm text-zinc-400">
+                <span id={descId} className="mt-1 block text-sm text-muted">
                   {option.description}
                 </span>
                 {option.meta ? (
                   <span
                     className={cn(
                       "mt-2 block text-sm font-medium",
-                      option.disabled ? "text-zinc-400" : "text-team-ink",
+                      option.disabled ? "text-muted" : "text-team-ink",
                     )}
                   >
                     {option.meta}

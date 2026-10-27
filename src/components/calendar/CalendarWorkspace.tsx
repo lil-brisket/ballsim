@@ -779,7 +779,7 @@ export function CalendarWorkspace(props: {
                   : "Simulating"}{" "}
               · {formatGameDate(playback.currentDate)}
             </p>
-            <p className="text-xs text-zinc-400">
+            <p className="text-sm text-muted">
               Day {playback.daysAdvanced} of {playback.daysRequested} ·{" "}
               {playback.gamesSimulated} games played
             </p>
@@ -797,7 +797,7 @@ export function CalendarWorkspace(props: {
         <p
           role="status"
           aria-live="polite"
-          className="rounded-md border border-team-ink/50 bg-team/15 px-3 py-2 text-sm text-zinc-100"
+          className="rounded-md border border-team-ink/50 bg-team/15 px-3 py-2 text-sm text-ink"
         >
           Simulation in progress — calendar navigation is locked until it
           finishes.
@@ -811,7 +811,7 @@ export function CalendarWorkspace(props: {
       ) : null}
 
       {simError ? (
-        <p role="alert" className="text-sm text-red-300">
+        <p role="alert" className="text-sm text-loss">
           {simError}
         </p>
       ) : null}
@@ -874,9 +874,9 @@ export function CalendarWorkspace(props: {
       {resumeTarget && !props.view.timeDisabled && !busy ? (
         <div
           role="status"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-700/50 bg-sky-950/30 px-4 py-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-team-ink/40 bg-team/10 px-4 py-3"
         >
-          <p className="text-sm text-sky-100">
+          <p className="text-sm text-ink">
             Continue simulation through{" "}
             <span className="font-medium">{formatGameDate(resumeTarget)}</span>
           </p>
@@ -908,7 +908,9 @@ export function CalendarWorkspace(props: {
         <>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
             {monthView}
-            <div className="sticky top-4">{inspector}</div>
+            <div className="sticky top-[calc(var(--shell-offset,0px)+1rem)]">
+              {inspector}
+            </div>
           </div>
           <CalendarLeagueContextPanel context={leagueContext} />
         </>

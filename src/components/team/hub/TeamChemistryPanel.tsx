@@ -15,8 +15,8 @@ export function TeamChemistryPanel(props: { chemistry: TeamChemistryView }) {
           value={chemistry.value}
           hideLabel
         />
-        <div className="min-w-0 flex-1 space-y-1 text-sm text-zinc-300">
-          <p className="font-medium text-zinc-100">{chemistry.label}</p>
+        <div className="min-w-0 flex-1 space-y-1 text-sm text-soft">
+          <p className="font-medium text-ink">{chemistry.label}</p>
           <p>
             {chemistry.continuityKnown
               ? `${Math.round(chemistry.continuity * 100)}% of the core rotation played here last season.`

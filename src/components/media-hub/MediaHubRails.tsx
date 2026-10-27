@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Gauge } from "@/components/ui/Gauge";
-import { NavIcon } from "@/components/game/NavGroups";
+import { NavIcon } from "@/components/game/shell/NavIcon";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { Tabs } from "@/components/ui/Tabs";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import {
   cn,
   focusRingClass,
@@ -28,8 +28,9 @@ export function MediaFilterTabs(props: {
   filters: readonly MediaFilterOption[];
 }) {
   return (
-    <Tabs
+    <ViewSwitch
       aria-label="Timeline filters"
+      className="max-w-full overflow-x-auto"
       activeKey={activeFilterKey(props.filters)}
       items={props.filters.map((option) => ({
         key: option.filter,
@@ -69,8 +70,8 @@ export function MediaFilterList(props: {
               className={cn(
                 "flex min-h-11 items-center gap-2 rounded-r-lg border-l-2 px-3 text-sm font-semibold transition",
                 option.active
-                  ? "border-team-ink bg-zinc-800/60 text-zinc-50"
-                  : "border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100",
+                  ? "border-team-ink bg-surface-high/60 text-ink"
+                  : "border-transparent text-muted hover:bg-surface-raised hover:text-ink",
                 focusRingClass,
               )}
             >
@@ -97,12 +98,12 @@ function ScoreLine(props: {
     <span
       className={cn(
         "flex items-center gap-2 text-sm tabular-nums",
-        won ? "font-bold text-zinc-50" : "text-zinc-400",
+        won ? "font-bold text-ink" : "text-muted",
       )}
     >
       <TeamMark branding={side.branding} size="sm" />
       <span className="uppercase">{side.abbreviation}</span>
-      {props.ot ? <span className="font-normal text-zinc-400">OT</span> : null}
+      {props.ot ? <span className="font-normal text-muted">OT</span> : null}
       <span className="ml-auto">{side.score}</span>
     </span>
   );
@@ -128,7 +129,7 @@ function ScoreRow(props: { score: MediaScoreView }) {
     return (
       <Link
         href={score.href}
-        className={cn(rowClass, "hover:bg-zinc-900", focusRingClass)}
+        className={cn(rowClass, "hover:bg-surface-raised", focusRingClass)}
       >
         {body}
       </Link>
@@ -145,7 +146,7 @@ export function MediaScoresStrip(props: {
   if (props.scores.length === 0) return null;
   return (
     <section aria-label={`Scores, ${props.dateLabel ?? "latest"}`}>
-      <ul className="-mx-4 flex snap-x overflow-x-auto divide-x divide-zinc-800 px-4 pb-1 sm:mx-0 sm:px-0">
+      <ul className="-mx-4 flex snap-x overflow-x-auto divide-x divide-line px-4 pb-1 sm:mx-0 sm:px-0">
         {props.scores.map((score) => (
           <li key={score.gameId} className="w-40 shrink-0 snap-start">
             <ScoreRow score={score} />
@@ -158,7 +159,7 @@ export function MediaScoresStrip(props: {
 
 function TrendingList(props: { trending: readonly MediaTrendView[] }) {
   return (
-    <ol className="divide-y divide-zinc-800">
+    <ol className="divide-y divide-line">
       {props.trending.map((trend) => (
         <li key={trend.tag}>
           <Link
@@ -171,7 +172,7 @@ function TrendingList(props: { trending: readonly MediaTrendView[] }) {
             )}
           >
             <span>#{trend.tag.replace(/\s+/g, "")}</span>
-            <span className="tabular-nums text-zinc-400">
+            <span className="tabular-nums text-muted">
               {trend.count} {trend.count === 1 ? "post" : "posts"}
             </span>
           </Link>
@@ -193,7 +194,7 @@ export function MediaSideRail(props: { view: MediaTimelinePageView }) {
             title={`Scores · ${view.scoresDateLabel ?? "Latest"}`}
             titleClassName="whitespace-nowrap truncate"
           />
-          <ul className="divide-y divide-zinc-800">
+          <ul className="divide-y divide-line">
             {view.scores.map((score) => (
               <li key={score.gameId}>
                 <ScoreRow score={score} />

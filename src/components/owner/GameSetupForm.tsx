@@ -561,7 +561,7 @@ export function GameSetupForm({
     ) : null;
 
   const blockedNote = blockedReason ? (
-    <p id="review-blocked-reason" className="text-sm text-zinc-400">
+    <p id="review-blocked-reason" className="text-sm text-muted">
       {blockedReason}
     </p>
   ) : null;
@@ -570,7 +570,7 @@ export function GameSetupForm({
   const summaryAside = (
     <aside
       aria-labelledby="setup-summary-heading"
-      className="mt-6 space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 lg:sticky lg:top-6 lg:mt-0"
+      className="mt-6 space-y-3 rounded-xl border border-line bg-surface-raised/60 p-4 lg:sticky lg:top-6 lg:mt-0"
     >
       <SectionHeading id="setup-summary-heading" title="Summary" />
       <dl className="space-y-2 text-sm">
@@ -602,7 +602,7 @@ export function GameSetupForm({
           : null}
         <SummaryRow label="Salary cap" value={capLabel} />
       </dl>
-      <p aria-live="polite" className="text-sm text-zinc-400">
+      <p aria-live="polite" className="text-sm text-muted">
         {blockedReason ? "Not ready to review yet." : "Ready to review."}
       </p>
     </aside>
@@ -1032,7 +1032,7 @@ export function GameSetupForm({
                 }
               />
               {rosterTeamCountLocked ? (
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-faint">
                   Team count comes from the loaded custom roster package.
                 </p>
               ) : null}
@@ -1147,7 +1147,7 @@ export function GameSetupForm({
               {rosterDropped && rosterPackageJson.length === 0 ? (
                 <p
                   role="status"
-                  className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-zinc-200"
+                  className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-ink"
                 >
                   Your roster package was too large to keep — upload it again.
                 </p>
@@ -1162,7 +1162,7 @@ export function GameSetupForm({
             </div>
           ) : null}
           {fantasyOpening && useCustomRoster ? (
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted">
               Imported players enter the pool; generated players fill out 15-man
               drafts. Anyone not drafted becomes a free agent.
             </p>
@@ -1171,7 +1171,7 @@ export function GameSetupForm({
 
         <SetupSection id={SECTION_IDS.save} title="Save Details">
           <div className="space-y-1">
-            <label className="block text-sm text-zinc-300" htmlFor="save-name">
+            <label className="block text-sm text-soft" htmlFor="save-name">
               Save name
             </label>
             <input
@@ -1183,16 +1183,14 @@ export function GameSetupForm({
             />
           </div>
           <div className="space-y-3">
-            <p className="text-sm font-medium text-zinc-200">
-              Franchise control
-            </p>
+            <p className="text-sm font-medium text-ink">Franchise control</p>
             {localShared ? (
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted">
                 Set by League Participants ({teamsLabel(participantsTotal)})
               </p>
             ) : (
               <>
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-muted">
                   Decide how many franchises you will control. You choose the
                   specific teams after the league is generated.
                 </p>
@@ -1273,7 +1271,7 @@ export function GameSetupForm({
             columns={3}
           />
           {signedInAs === null ? (
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted">
               <Link
                 href="/login?next=/new/setup?mode=owner"
                 className={cn(linkClass, "underline")}
@@ -1283,7 +1281,7 @@ export function GameSetupForm({
             </p>
           ) : null}
           {online && signedInAs !== null ? (
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted">
               Hosting as {signedInAs}. After you create the league and pick your
               franchises, invite players from League Members. Each player takes
               over one AI team when they join.
@@ -1322,7 +1320,7 @@ export function GameSetupForm({
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <label
-                              className="block text-sm text-zinc-300"
+                              className="block text-sm text-soft"
                               htmlFor={`participant-name-${index}`}
                             >
                               Player {index + 1} name
@@ -1361,10 +1359,10 @@ export function GameSetupForm({
                   );
                 })}
               </ul>
-              <p aria-live="polite" className="text-sm text-zinc-200">
+              <p aria-live="polite" className="text-sm text-ink">
                 {participantsTotal} of {maxControlled} franchises assigned
               </p>
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted">
                 Players take turns on this device. Each player presses Ready
                 before the league advances. Teams nobody picks stay
                 AI-controlled. After creating the league, each player&apos;s
@@ -1441,7 +1439,7 @@ function ControlButton({
         focusRingClass,
         selected
           ? "bg-team text-on-team"
-          : "border border-zinc-700 text-zinc-300 hover:border-team-ink",
+          : "border border-line-strong text-soft hover:border-team-ink",
       )}
     >
       {children}
@@ -1452,8 +1450,8 @@ function ControlButton({
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-3">
-      <dt className="text-zinc-500">{label}</dt>
-      <dd className="text-right font-medium text-zinc-100">{value}</dd>
+      <dt className="text-faint">{label}</dt>
+      <dd className="text-right font-medium text-ink">{value}</dd>
     </div>
   );
 }
@@ -1470,7 +1468,7 @@ function ReviewGroup({
   return (
     <section
       aria-label={title}
-      className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4"
+      className="space-y-3 rounded-lg border border-line bg-surface-base/60 p-4"
     >
       <div className="flex items-center justify-between gap-3">
         <SectionHeading as="h3" title={title} />
@@ -1491,8 +1489,8 @@ function ReviewGroup({
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-zinc-500">{label}</dt>
-      <dd className="font-medium text-zinc-100">{value}</dd>
+      <dt className="text-faint">{label}</dt>
+      <dd className="font-medium text-ink">{value}</dd>
     </div>
   );
 }

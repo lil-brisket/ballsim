@@ -17,6 +17,15 @@ function num(
   return typeof value === "number" ? value : Number(value) || 0;
 }
 
+/** Preformatted `<key>Label` (e.g. "$98.8M") when the detector sent one. */
+function label(
+  ctx: Record<string, number | boolean | string>,
+  key: string,
+): string {
+  const formatted = ctx[`${key}Label`];
+  return typeof formatted === "string" ? formatted : String(num(ctx, key));
+}
+
 function bool(
   ctx: Record<string, number | boolean | string>,
   key: string,
@@ -201,14 +210,14 @@ export function renderNarrative(
         return {
           title: "Ownership objective at risk",
           summary: str(ctx, "description"),
-          body: `Progress is ${num(ctx, "progress")} against a target of ${num(ctx, "target")}. The gap is large enough to put the mandate at risk.`,
+          body: `Progress is ${label(ctx, "progress")} against a target of ${label(ctx, "target")}. The gap is large enough to put the mandate at risk.`,
           severity,
         };
       }
       return {
         title: "Ownership objective within reach",
         summary: str(ctx, "description"),
-        body: `Progress is ${num(ctx, "progress")} toward ${num(ctx, "target")}. Another strong stretch would put the objective within reach.`,
+        body: `Progress is ${label(ctx, "progress")} toward ${label(ctx, "target")}. Another strong stretch would put the objective within reach.`,
         severity,
       };
     case "franchise_value_move":

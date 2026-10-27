@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { rowLinkPlainClass } from "@/components/league/row-link-class";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -9,7 +10,11 @@ import type {
   LeagueTransactionBrief,
 } from "@/state/league-hub-selectors";
 import type { LeagueInjuryRow } from "@/state/league-injury-selectors";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { formatGameDate } from "@/presentation/game-date";
 
 export function LeagueRecentResultsPanel(props: {
@@ -71,6 +76,7 @@ export function LeagueTransactionsBriefing(props: {
         <Link
           href={href}
           className={cn(
+            touchTargetTextClass,
             "text-sm text-team-ink underline-offset-4 hover:underline",
             focusRingClass,
           )}
@@ -86,12 +92,12 @@ export function LeagueTransactionsBriefing(props: {
           {props.rows.map((row) => (
             <li
               key={row.id}
-              className="rounded-lg border border-zinc-800 px-3 py-2 text-sm"
+              className="rounded-lg border border-line px-3 py-2 text-sm"
             >
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-faint">
                 {formatGameDate(row.occurredOn)} · {row.type}
               </p>
-              <p className="mt-0.5 text-zinc-200">{row.description}</p>
+              <p className="mt-0.5 text-ink">{row.description}</p>
             </li>
           ))}
         </ul>
@@ -113,27 +119,27 @@ export function LeagueInjuriesBriefing(props: {
           {props.rows.map((row) => (
             <li
               key={`${row.playerId}-${row.injuredOn}`}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-800 px-3 py-2 text-sm"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line px-3 py-2 text-sm"
             >
               <div className="min-w-0">
                 <PlayerEntityLink
                   saveId={props.saveId}
                   playerId={row.playerId}
                   className={cn(
-                    "text-zinc-100 hover:text-team-ink",
-                    focusRingClass,
+                    rowLinkPlainClass,
+                    "text-ink hover:text-team-ink",
                   )}
                 >
                   {row.playerName}
                 </PlayerEntityLink>
                 {row.teamId && row.teamAbbreviation ? (
-                  <span className="ml-2 text-zinc-500">
+                  <span className="ml-2 text-faint">
                     <TeamEntityLink
                       saveId={props.saveId}
                       teamId={row.teamId}
                       className={cn(
-                        "text-zinc-400 hover:text-team-ink",
-                        focusRingClass,
+                        rowLinkPlainClass,
+                        "text-muted hover:text-team-ink",
                       )}
                     >
                       {row.teamAbbreviation}
@@ -141,7 +147,7 @@ export function LeagueInjuriesBriefing(props: {
                   </span>
                 ) : null}
               </div>
-              <span className="text-sm text-zinc-500">
+              <span className="text-sm text-faint">
                 {row.severity} · {row.bodyPart}
               </span>
             </li>

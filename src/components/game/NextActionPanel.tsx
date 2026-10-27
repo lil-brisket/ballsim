@@ -70,7 +70,7 @@ export function NextActionPanel(props: { action: NextActionPresentation }) {
       aria-label="Suggested next action"
     >
       <SectionHeading eyebrow="Next" title={action.title} />
-      <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-300">
+      <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-soft">
         {action.opponentBranding ? (
           <span
             className="inline-flex shrink-0 items-center justify-center rounded-sm p-0.5"

@@ -3,7 +3,16 @@ import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  DataTable,
+  numericCellClass,
+  type DataTableHeader,
+} from "@/components/ui/DataTable";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import {
   buildLeagueStatsSortHref,
   PLAYER_STATS_PAGE_SIZE,
@@ -90,54 +99,37 @@ function formatStat(
   }
 }
 
-function SortHeader<K extends string>(props: {
+function sortHeader<K extends string>(props: {
   column: StatColumn<K>;
   sort: LeagueStatsSort<K>;
   pathname: string;
   extra?: Record<string, string>;
-}) {
+}): DataTableHeader {
   const active = props.sort.key === props.column.key;
-  return (
-    <th
-      scope="col"
-      className="px-2 py-2 text-right font-medium"
-      aria-sort={
-        active
-          ? props.sort.dir === "asc"
-            ? "ascending"
-            : "descending"
-          : undefined
-      }
-      data-testid={`league-stats-col-${props.column.key}`}
-    >
-      <Link
-        href={buildLeagueStatsSortHref({
-          pathname: props.pathname,
-          current: props.sort,
-          key: props.column.key,
-          extra: props.extra,
-        })}
-        title={props.column.title}
-        scroll={false}
-        className={cn(
-          "inline-flex min-h-8 items-center gap-0.5 hover:text-zinc-100",
-          active && "text-team-ink",
-          focusRingClass,
-        )}
-      >
-        {props.column.label}
-        {active ? (
-          <span aria-hidden>{props.sort.dir === "asc" ? "▲" : "▼"}</span>
-        ) : null}
-      </Link>
-    </th>
-  );
+  return {
+    label: props.column.label,
+    numeric: true,
+    sort: {
+      href: buildLeagueStatsSortHref({
+        pathname: props.pathname,
+        current: props.sort,
+        key: props.column.key,
+        extra: props.extra,
+      }),
+      direction: active ? props.sort.dir : null,
+    },
+  };
 }
+
+/** Inset team bar: survives the table zebra and the focused-row fill. */
+const userRowClass =
+  "font-medium shadow-[inset_3px_0_0_0_rgb(var(--team-ink-rgb))]";
 
 function statCellClass(active: boolean): string {
   return cn(
-    "px-2 py-2 text-right font-mono tabular-nums",
-    active ? "text-zinc-50" : "text-zinc-300",
+    "px-3 py-2 font-mono",
+    numericCellClass,
+    active ? "text-ink" : "text-soft",
   );
 }
 
@@ -152,67 +144,52 @@ export function LeagueTeamStatsTable(props: {
   const pathname = `/dashboard/${props.saveId}/league/team-stats`;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[56rem] text-left text-sm">
-        <caption className="sr-only">Team stats</caption>
-        <thead className="text-zinc-500">
-          <tr>
-            <th scope="col" className="px-2 py-2 text-right font-medium">
-              #
-            </th>
-            <th scope="col" className="px-2 py-2 font-medium">
-              Team
-            </th>
-            {TEAM_COLUMNS.map((column) => (
-              <SortHeader
-                key={column.key}
-                column={column}
-                sort={view.sort}
-                pathname={pathname}
-              />
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {view.rows.map((row, index) => (
-            <tr
-              key={row.teamId}
+    <DataTable
+      caption="Team stats"
+      headers={[
+        { label: "#", numeric: true },
+        "Team",
+        ...TEAM_COLUMNS.map((column) =>
+          sortHeader({ column, sort: view.sort, pathname }),
+        ),
+      ]}
+    >
+      {view.rows.map((row, index) => (
+        <tr key={row.teamId} className={cn(row.isUserTeam && userRowClass)}>
+          <td
+            className={cn("px-3 py-2 font-mono text-faint", numericCellClass)}
+          >
+            {index + 1}
+          </td>
+          <td className="px-3 py-2">
+            <TeamEntityLink
+              saveId={props.saveId}
+              teamId={row.teamId}
               className={cn(
-                "border-t border-zinc-800",
-                row.isUserTeam && "bg-team/15 font-medium",
+                "-my-2 inline-flex min-h-11 items-center gap-2 whitespace-nowrap hover:text-team-ink",
+                focusRingClass,
               )}
             >
-              <td className="px-2 py-2 text-right font-mono text-zinc-500">
-                {index + 1}
-              </td>
-              <td className="px-2 py-2">
-                <TeamEntityLink
-                  saveId={props.saveId}
-                  teamId={row.teamId}
-                  className="inline-flex items-center gap-2 whitespace-nowrap hover:text-team-ink"
-                >
-                  <TeamIdentityInline
-                    city={row.city}
-                    name={row.name}
-                    abbreviation={row.abbreviation}
-                    branding={row.branding}
-                    size="sm"
-                  />
-                </TeamEntityLink>
-              </td>
-              {TEAM_COLUMNS.map((column) => (
-                <td
-                  key={column.key}
-                  className={statCellClass(view.sort.key === column.key)}
-                >
-                  {formatStat(row.values[column.key], column.format)}
-                </td>
-              ))}
-            </tr>
+              <TeamIdentityInline
+                city={row.city}
+                name={row.name}
+                abbreviation={row.abbreviation}
+                branding={row.branding}
+                size="sm"
+              />
+            </TeamEntityLink>
+          </td>
+          {TEAM_COLUMNS.map((column) => (
+            <td
+              key={column.key}
+              className={statCellClass(view.sort.key === column.key)}
+            >
+              {formatStat(row.values[column.key], column.format)}
+            </td>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+      ))}
+    </DataTable>
   );
 }
 
@@ -237,80 +214,65 @@ export function LeaguePlayerStatsTable(props: {
 
   return (
     <>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[52rem] text-left text-sm">
-          <caption className="sr-only">Player stats</caption>
-          <thead className="text-zinc-500">
-            <tr>
-              <th scope="col" className="px-2 py-2 text-right font-medium">
-                #
-              </th>
-              <th scope="col" className="px-2 py-2 font-medium">
-                Player
-              </th>
-              <th scope="col" className="px-2 py-2 font-medium">
-                Team
-              </th>
-              {PLAYER_COLUMNS.map((column) => (
-                <SortHeader
-                  key={column.key}
-                  column={column}
-                  sort={view.sort}
-                  pathname={pathname}
-                  extra={extra}
-                />
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {view.rows.map((row, index) => (
-              <tr
-                key={row.playerId}
+      <DataTable
+        caption="Player stats"
+        headers={[
+          { label: "#", numeric: true },
+          "Player",
+          "Team",
+          ...PLAYER_COLUMNS.map((column) =>
+            sortHeader({ column, sort: view.sort, pathname, extra }),
+          ),
+        ]}
+      >
+        {view.rows.map((row, index) => (
+          <tr key={row.playerId} className={cn(row.isUserTeam && userRowClass)}>
+            <td
+              className={cn("px-3 py-2 font-mono text-faint", numericCellClass)}
+            >
+              {index + 1}
+            </td>
+            <td className="whitespace-nowrap px-3 py-2">
+              <PlayerEntityLink
+                saveId={props.saveId}
+                playerId={row.playerId}
                 className={cn(
-                  "border-t border-zinc-800",
-                  row.isUserTeam && "bg-team/15 font-medium",
+                  "-my-2 inline-flex min-h-11 items-center hover:text-team-ink",
+                  focusRingClass,
                 )}
               >
-                <td className="px-2 py-2 text-right font-mono text-zinc-500">
-                  {index + 1}
-                </td>
-                <td className="whitespace-nowrap px-2 py-2">
-                  <PlayerEntityLink
-                    saveId={props.saveId}
-                    playerId={row.playerId}
-                    className="hover:text-team-ink"
-                  >
-                    {`${row.firstName} ${row.lastName}`.trim()}
-                  </PlayerEntityLink>
-                </td>
-                <td className="px-2 py-2 text-zinc-400">
-                  {row.teamId && row.teamAbbreviation ? (
-                    <TeamEntityLink
-                      saveId={props.saveId}
-                      teamId={row.teamId}
-                      className="hover:text-team-ink"
-                    >
-                      {row.teamAbbreviation}
-                    </TeamEntityLink>
-                  ) : (
-                    "—"
+                {`${row.firstName} ${row.lastName}`.trim()}
+              </PlayerEntityLink>
+            </td>
+            <td className="px-3 py-2 text-muted">
+              {row.teamId && row.teamAbbreviation ? (
+                <TeamEntityLink
+                  saveId={props.saveId}
+                  teamId={row.teamId}
+                  className={cn(
+                    "-my-2 inline-flex min-h-11 items-center hover:text-team-ink",
+                    focusRingClass,
                   )}
-                </td>
-                {PLAYER_COLUMNS.map((column) => (
-                  <td
-                    key={column.key}
-                    className={statCellClass(view.sort.key === column.key)}
-                  >
-                    {formatStat(row.values[column.key], column.format)}
-                  </td>
-                ))}
-              </tr>
+                >
+                  {row.teamAbbreviation}
+                </TeamEntityLink>
+              ) : (
+                "—"
+              )}
+            </td>
+            {PLAYER_COLUMNS.map((column) => (
+              <td
+                key={column.key}
+                className={statCellClass(view.sort.key === column.key)}
+              >
+                {formatStat(row.values[column.key], column.format)}
+              </td>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        ))}
+      </DataTable>
       {view.totalQualified > PLAYER_STATS_PAGE_SIZE ? (
-        <p className="mt-3 text-sm text-zinc-400">
+        <p className="mt-3 text-sm text-muted">
           {view.showAll
             ? `Showing all ${view.totalQualified} qualified players. `
             : `Showing top ${view.rows.length} of ${view.totalQualified}. `}
@@ -318,6 +280,7 @@ export function LeaguePlayerStatsTable(props: {
             href={`${pathname}?${toggleParams.toString()}`}
             scroll={false}
             className={cn(
+              touchTargetTextClass,
               "text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}

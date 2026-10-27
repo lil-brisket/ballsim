@@ -182,7 +182,7 @@ export function buildCalendarActionItems(
           `Basketball: ${relocAssessment.basketballHealth}`,
           `Business: ${relocAssessment.businessHealth}`,
         ],
-        href: `/dashboard/${saveId}/relocation`,
+        href: `/dashboard/${saveId}/franchise/relocation`,
         hrefLabel: "Review Stay vs Move",
       });
     }

@@ -62,7 +62,7 @@ export function ContractRow(props: {
   return (
     <tr
       className={cn(
-        "border-t border-zinc-800",
+        "border-t border-line",
         row.isExpiring && "bg-warning/10",
         row.isLargeCommitment && "font-medium",
       )}
@@ -71,7 +71,7 @@ export function ContractRow(props: {
         <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
           {row.playerName}
         </PlayerEntityLink>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           {row.position}
           {row.age !== null ? ` · ${row.age}` : ""}
         </p>
@@ -79,9 +79,9 @@ export function ContractRow(props: {
       <td className="px-3 py-2">
         {row.salary !== null ? <MoneyDisplay amount={row.salary} /> : "—"}
       </td>
-      <td className="px-3 py-2 text-zinc-400">{row.yearsRemaining}y</td>
-      <td className="px-3 py-2 text-zinc-300">{row.expirationYear}</td>
-      <td className="px-3 py-2 text-sm text-zinc-400">{row.optionLabel}</td>
+      <td className="px-3 py-2 text-muted">{row.yearsRemaining}y</td>
+      <td className="px-3 py-2 text-soft">{row.expirationYear}</td>
+      <td className="px-3 py-2 text-sm text-muted">{row.optionLabel}</td>
       <td className="px-3 py-2">
         <StatusBadge
           label={statusLabel(row.contractState)}
@@ -136,9 +136,9 @@ export function ContractRow(props: {
               </ConfirmDialog>
             </>
           ) : row.hasPendingPlayerOption ? (
-            <span className="text-sm text-zinc-500">Player decision</span>
+            <span className="text-sm text-faint">Player decision</span>
           ) : row.release === null && !row.extension ? (
-            <span className="text-sm text-zinc-600">—</span>
+            <span className="text-sm text-disabled">—</span>
           ) : null}
           {row.extension ? (
             <ExtendContractDialog

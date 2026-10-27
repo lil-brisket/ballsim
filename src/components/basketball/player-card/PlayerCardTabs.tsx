@@ -85,7 +85,7 @@ export function PlayerCardTabList(props: {
               "min-h-11 shrink-0 flex-1 whitespace-nowrap border-b-2 px-3 text-sm font-medium transition-colors",
               selected
                 ? "border-team-ink text-team-ink"
-                : "border-transparent text-zinc-400 hover:text-zinc-100",
+                : "border-transparent text-muted hover:text-ink",
               focusRingClass,
             )}
           >

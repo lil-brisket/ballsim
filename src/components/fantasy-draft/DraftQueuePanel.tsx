@@ -1,9 +1,11 @@
+import { cn, focusRingClass } from "@/components/ui/styles";
 import {
   removeFantasyDraftQueuePlayerAction,
   reorderFantasyDraftQueueAction,
 } from "@/application/actions";
 import type { FantasyDraftView } from "@/state/selectors";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export function DraftQueuePanel(props: {
   saveId: string;
@@ -24,14 +26,14 @@ export function DraftQueuePanel(props: {
     draft.userOnClock && !draft.paused && draft.onClockTeamId === teamId;
 
   return (
-    <section className="rounded-xl border border-zinc-800 p-4">
+    <section className="rounded-xl border border-line p-4">
       <SectionHeading
         className="mb-2"
         title={
           <>
             Draft queue
             {activeTeam ? (
-              <span className="ml-2 font-sans text-sm font-normal normal-case tracking-normal text-zinc-400">
+              <span className="ml-2 font-sans text-sm font-normal normal-case tracking-normal text-muted">
                 · {activeTeam.abbreviation}
               </span>
             ) : null}
@@ -39,7 +41,7 @@ export function DraftQueuePanel(props: {
         }
       />
       {draft.queue.length === 0 ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-faint">
           No players queued. Add players from the player card.
         </p>
       ) : (
@@ -64,21 +66,27 @@ export function DraftQueuePanel(props: {
                 key={entry.playerId}
                 className={`rounded-lg border px-2 py-2 text-sm ${
                   entry.isAvailable
-                    ? "border-zinc-800"
-                    : "border-zinc-800/60 opacity-60"
+                    ? "border-line"
+                    : "border-line/60 opacity-60"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-zinc-100">
+                    <div className="truncate font-medium text-ink">
                       {entry.firstName} {entry.lastName}
                     </div>
-                    <div className="text-sm text-zinc-500">
-                      {entry.position} · {entry.overall} OVR · {entry.potential}{" "}
-                      POT
+                    <div className="flex items-center gap-1.5 text-sm text-faint">
+                      <span>{entry.position}</span>
+                      <OvrBadge overall={entry.overall} size="sm" />
+                      <OvrBadge
+                        overall={entry.potential}
+                        ghost
+                        label="POT"
+                        size="sm"
+                      />
                     </div>
                     {!entry.isAvailable ? (
-                      <div className="mt-1 text-sm text-zinc-500/90">
+                      <div className="mt-1 text-sm text-faint/90">
                         Drafted by {entry.draftedByAbbreviation ?? "—"}
                         {entry.pickNumber != null
                           ? ` · Pick #${entry.pickNumber}`
@@ -101,7 +109,11 @@ export function DraftQueuePanel(props: {
                             <button
                               type="submit"
                               disabled={index === 0}
-                              className="rounded border border-zinc-700 px-1.5 py-0.5 text-sm disabled:opacity-30"
+                              className={cn(
+                                "rounded border border-line-strong px-1.5 py-0.5 text-sm disabled:opacity-30",
+                                "min-h-11 min-w-11 touch-manipulation",
+                                focusRingClass,
+                              )}
                               aria-label="Move up in queue"
                             >
                               ↑
@@ -118,7 +130,11 @@ export function DraftQueuePanel(props: {
                             <button
                               type="submit"
                               disabled={index >= draft.queue.length - 1}
-                              className="rounded border border-zinc-700 px-1.5 py-0.5 text-sm disabled:opacity-30"
+                              className={cn(
+                                "rounded border border-line-strong px-1.5 py-0.5 text-sm disabled:opacity-30",
+                                "min-h-11 min-w-11 touch-manipulation",
+                                focusRingClass,
+                              )}
                               aria-label="Move down in queue"
                             >
                               ↓
@@ -138,7 +154,10 @@ export function DraftQueuePanel(props: {
                                 potential: entry.potential,
                               })
                             }
-                            className="rounded bg-team px-2 py-0.5 text-sm text-on-team disabled:opacity-50"
+                            className={cn(
+                              "min-h-11 touch-manipulation rounded bg-team px-3 py-0.5 text-sm text-on-team disabled:opacity-50",
+                              focusRingClass,
+                            )}
                           >
                             Draft
                           </button>
@@ -155,7 +174,10 @@ export function DraftQueuePanel(props: {
                       />
                       <button
                         type="submit"
-                        className="rounded border border-zinc-700 px-2 py-0.5 text-sm text-zinc-400"
+                        className={cn(
+                          "min-h-11 touch-manipulation rounded border border-line-strong px-3 py-0.5 text-sm text-muted",
+                          focusRingClass,
+                        )}
                       >
                         Remove
                       </button>

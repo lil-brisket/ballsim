@@ -33,7 +33,7 @@ export function ActiveTeamBanner(props: {
           size="sm"
         />
         <div className="min-w-0">
-          <p className="truncate font-display text-lg font-bold uppercase leading-tight tracking-wide text-zinc-50">
+          <p className="truncate font-display text-lg font-bold uppercase leading-tight tracking-wide text-ink">
             {props.city} {props.name}
           </p>
           {props.actionLabel ? (

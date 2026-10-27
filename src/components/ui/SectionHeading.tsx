@@ -1,15 +1,29 @@
 import { cn } from "@/components/ui/styles";
 
+const SMALL_TONE = {
+  ink: "text-ink",
+  soft: "text-soft",
+  muted: "text-muted",
+  team: "text-team-ink",
+  win: "text-win",
+  loss: "text-loss",
+} as const;
+
 /**
  * Broadcast section heading: condensed uppercase title over a short team-colour
  * underline, with an optional eyebrow and right-aligned action slot.
+ *
+ * `size="sm"` is the quiet sub-heading for groups inside a card or list
+ * (sentence case, no underline, no eyebrow); `tone` colours it.
  */
 export function SectionHeading(props: {
   title: React.ReactNode;
   eyebrow?: React.ReactNode;
   action?: React.ReactNode;
   as?: "h1" | "h2" | "h3";
-  size?: "md" | "lg";
+  size?: "sm" | "md" | "lg";
+  /** Title colour for `size="sm"`. */
+  tone?: keyof typeof SMALL_TONE;
   id?: string;
   /** For headings that receive programmatic focus (e.g. form sections). */
   tabIndex?: number;
@@ -18,6 +32,36 @@ export function SectionHeading(props: {
   titleClassName?: string;
 }) {
   const Tag = props.as ?? "h2";
+  if (props.size === "sm") {
+    const heading = (
+      <Tag
+        id={props.id}
+        tabIndex={props.tabIndex}
+        className={cn(
+          "text-sm font-semibold",
+          SMALL_TONE[props.tone ?? "ink"],
+          props.titleClassName,
+          !props.action && props.className,
+        )}
+      >
+        {props.title}
+      </Tag>
+    );
+    if (!props.action) return heading;
+    return (
+      <div
+        className={cn(
+          "flex flex-wrap items-center justify-between gap-2",
+          props.className,
+        )}
+      >
+        {heading}
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {props.action}
+        </div>
+      </div>
+    );
+  }
   const large = props.size === "lg";
   return (
     <div
@@ -36,7 +80,7 @@ export function SectionHeading(props: {
           id={props.id}
           tabIndex={props.tabIndex}
           className={cn(
-            "font-display font-bold uppercase leading-tight tracking-wide text-zinc-50",
+            "font-display font-bold uppercase leading-tight tracking-wide text-ink",
             large ? "text-3xl sm:text-4xl" : "text-xl sm:text-2xl",
             props.titleClassName,
           )}

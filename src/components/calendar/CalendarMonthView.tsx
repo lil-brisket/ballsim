@@ -54,22 +54,22 @@ function CalendarMilestoneLegend(props: { grid: CalendarMonthGrid }) {
 
   return (
     <div className="rounded-lg border border-surface-line bg-surface-arena px-3 py-2">
-      <p className="text-sm font-medium text-zinc-300">League milestones</p>
+      <p className="text-sm font-medium text-soft">League milestones</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {legend.map((milestone) => (
           <span
             key={milestone.key}
-            className="inline-flex items-center gap-1.5 text-sm text-zinc-300"
+            className="inline-flex items-center gap-1.5 text-sm text-soft"
           >
             <span
               className={[
-                "inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                "inline-block rounded px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide",
                 milestone.chipClass,
               ].join(" ")}
             >
               {milestone.shortLabel}
             </span>
-            <span className="text-zinc-400">{milestone.label}</span>
+            <span className="text-muted">{milestone.label}</span>
           </span>
         ))}
       </div>
@@ -123,7 +123,7 @@ export function CalendarMonthView(props: {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <SectionHeading title={title} />
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             Today is{" "}
             <span className="font-medium text-team-ink">
               {formatGameDate(props.currentDate, { weekday: true })}
@@ -182,7 +182,7 @@ export function CalendarMonthView(props: {
           {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="px-1 py-1 text-center text-xs font-medium uppercase tracking-[0.14em] text-zinc-400"
+              className="px-1 py-1 text-center text-xs font-medium uppercase tracking-[0.14em] text-muted"
             >
               {day}
             </div>

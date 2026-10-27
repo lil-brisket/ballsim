@@ -65,7 +65,7 @@ function LeagueMilestoneChips(props: {
       ))}
       {hiddenCount > 0 ? (
         <span
-          className="inline-block rounded bg-zinc-800 px-1 py-0.5 text-[9px] font-medium text-zinc-400 sm:text-[10px]"
+          className="inline-block rounded bg-surface-high px-1 py-0.5 text-[9px] font-medium text-muted sm:text-[10px]"
           title={props.milestones
             .slice(2)
             .map((milestone) => milestone.label)
@@ -110,7 +110,7 @@ function dayCellStateClass(input: {
         ? "border-l-win"
         : tone === "loss"
           ? "border-l-loss"
-          : "border-l-zinc-500",
+          : "border-l-faint",
     );
   }
 
@@ -127,7 +127,7 @@ function dayCellStateClass(input: {
     if (cell.isNextTeamGame && !cell.isToday) {
       classes.push("ring-2 ring-team-ink/80 team-pulse");
     }
-    classes.push(selected ? "ring-2 ring-zinc-100" : "hover:border-zinc-500");
+    classes.push(selected ? "ring-2 ring-ink" : "hover:border-faint");
   }
 
   return classes.join(" ");
@@ -178,18 +178,18 @@ export function CalendarDayCell(props: {
           className={[
             "font-display text-sm font-bold leading-none sm:text-base",
             !cell.inMonth
-              ? "text-zinc-600"
+              ? "text-disabled"
               : cell.isToday
                 ? "text-warning"
                 : hasContent
-                  ? "text-zinc-100"
-                  : "text-zinc-500",
+                  ? "text-ink"
+                  : "text-faint",
           ].join(" ")}
         >
           {dayNumber(cell.date)}
         </span>
         {cell.isNextTeamGame && !cell.isToday ? (
-          <span className="rounded bg-team-ink px-1 text-[8px] font-bold uppercase leading-4 text-zinc-950 sm:text-[9px]">
+          <span className="rounded bg-team-ink px-1 text-[8px] font-bold uppercase leading-4 text-surface-base sm:text-[9px]">
             Next
           </span>
         ) : null}
@@ -208,14 +208,14 @@ export function CalendarDayCell(props: {
               className="!h-6 !w-6 sm:!h-8 sm:!w-8"
             />
             <span
-              className="text-[10px] font-semibold uppercase text-zinc-400"
+              className="text-[10px] font-semibold uppercase text-muted"
               title={teamGame.home ? "Home" : "Away"}
               aria-hidden
             >
               {teamGame.home ? "vs" : "@"}
             </span>
           </span>
-          <p className="max-w-full truncate font-display text-xs font-bold uppercase leading-none tracking-wide text-zinc-50 sm:text-sm">
+          <p className="max-w-full truncate font-display text-xs font-bold uppercase leading-none tracking-wide text-ink sm:text-sm">
             {teamGame.opponentAbbreviation}
           </p>
           {teamGame.resultLabel ? (
@@ -226,23 +226,23 @@ export function CalendarDayCell(props: {
                   ? "text-win"
                   : tone === "loss"
                     ? "text-loss"
-                    : "text-zinc-100",
+                    : "text-ink",
               ].join(" ")}
             >
               {teamGame.resultLabel}
             </p>
           ) : teamGame.startTimeLabel ? (
-            <p className="text-xs text-zinc-400">{teamGame.startTimeLabel}</p>
+            <p className="text-xs text-muted">{teamGame.startTimeLabel}</p>
           ) : null}
         </div>
       ) : milestoneCount === 0 && specialCount > 0 ? (
         <div className="mt-auto">
           <span
-            className="inline-block h-1.5 w-1.5 rounded-full bg-violet-400"
+            className="inline-block h-1.5 w-1.5 rounded-full bg-team-ink"
             title={`${specialCount} event${specialCount === 1 ? "" : "s"}`}
             aria-hidden
           />
-          <p className="mt-0.5 text-xs text-zinc-400">
+          <p className="mt-0.5 text-xs text-muted">
             {specialCount === 1 ? "Event" : `${specialCount} events`}
           </p>
         </div>
