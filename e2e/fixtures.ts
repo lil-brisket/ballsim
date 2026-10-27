@@ -125,6 +125,17 @@ export const test = base.extend<{
 }>({
   // `provide` is Playwright's fixture `use`; renamed so the React hooks lint
   // rule does not mistake it for a hook.
+  // No gamepads: a controller plugged into the machine running the suite
+  // would otherwise drive the shell (scroll, open Sim) mid-test.
+  context: async ({ context }, provide) => {
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, "getGamepads", {
+        configurable: true,
+        value: () => [],
+      });
+    });
+    await provide(context);
+  },
   dashboard: async ({}, provide) => {
     const id = await saveId();
     await provide((path = "") => `/dashboard/${id}${path}`);

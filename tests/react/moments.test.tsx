@@ -299,6 +299,16 @@ describe("useMomentGate", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("keeps a replay-only gate closed while another shows the moment", () => {
+    render(
+      <>
+        <Harness />
+        <Harness eligible={false} />
+      </>,
+    );
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+  });
+
   it("does not auto-open when the facts are not there", () => {
     render(<Harness eligible={false} />);
     expect(screen.queryByRole("dialog")).toBeNull();

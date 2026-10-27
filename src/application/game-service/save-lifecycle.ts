@@ -21,6 +21,7 @@ import type {
 } from "@/persistence/save-game-store";
 import type { CustomContentStore } from "@/persistence/custom-content-store";
 import { validateGameSettings } from "@/domain/game-settings-validation";
+import { toDashboardMomentsView } from "@/state/dashboard-moments";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { validateRosterPackage } from "@/systems/custom-content";
 import { createSeededRng } from "@/domain/rng";
@@ -232,6 +233,7 @@ export async function loadOwnerSave(
     save: toSaveSummary(loaded),
     dashboard: toDashboardSnapshot(loaded.state),
     navGroups: ownerNavGroupsForState(loaded.state),
+    moments: toDashboardMomentsView(loaded.state),
   };
 }
 

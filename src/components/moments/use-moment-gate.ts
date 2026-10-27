@@ -24,7 +24,8 @@ function serverStatus(): MomentStatus {
  * Whether a moment is open: it auto-opens once per viewer when `eligible`
  * (the facts it shows exist) and was not seen before, and reopens on
  * `replay`. `key` should come from `momentKey(kind, teamId, seasonYear)`.
- * Nothing opens during server rendering or hydration.
+ * Nothing opens during server rendering or hydration. Give one gate per key
+ * `eligible` (the auto-opening host); others for the same key are replay-only.
  */
 export function useMomentGate(
   saveId: string,
@@ -52,7 +53,9 @@ export function useMomentGate(
   }, [saveId, key]);
 
   return {
-    open: replaying === key || autoOpen || status === "showing",
+    // Only an eligible gate holds an auto-opened moment, so a replay-only
+    // gate for the same key (the page's replay button) does not open too.
+    open: replaying === key || (eligible && status !== "seen"),
     replay,
     close,
   };

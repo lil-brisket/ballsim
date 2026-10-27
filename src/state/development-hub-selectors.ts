@@ -18,6 +18,10 @@ import {
   filterDomainDecisions,
 } from "@/state/action-center-selectors";
 import { toOwnerDashboardView } from "@/state/owner-dashboard";
+import {
+  toProgressionRevealView,
+  type ProgressionRevealView,
+} from "@/state/progression-reveal-selectors";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
 import { toRosterView } from "@/state/selectors";
 import { toStaffView } from "@/state/franchise-selectors";
@@ -63,6 +67,7 @@ export type DevelopmentHubView = {
   decisions: ActionCenterItem[];
   plans: DevelopmentPlansView;
   ratings: SkillRatingsRow[];
+  progression: ProgressionRevealView | null;
 };
 
 /**
@@ -148,6 +153,7 @@ export function toDevelopmentHubView(state: GameState): DevelopmentHubView {
   return {
     plans: toDevelopmentPlansView(state),
     ratings: toSkillRatingsView(state),
+    progression: toProgressionRevealView(state, teamId),
     saveId,
     teamName: team ? `${team.city} ${team.name}` : "Team",
     currentDate: owner.currentDate,
