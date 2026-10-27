@@ -77,3 +77,6 @@ next-env.d.ts
 /screenshots
 /test-results/
 /playwright-report/
+# Seeded visual baselines (npm run e2e:seed): only CI's linux set is committed
+/e2e/baselines/*
+!/e2e/baselines/linux/
