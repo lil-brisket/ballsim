@@ -1,4 +1,10 @@
 import type { Metadata } from "next";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { loadSaveWithHistory } from "@/application/game-service";
@@ -37,7 +43,7 @@ export default async function HistoryPage({ params, searchParams }: PageProps) {
       <p className="mb-4 text-sm">
         <Link
           href={`/dashboard/${saveId}/history/legacy`}
-          className="text-team-ink underline-offset-4 hover:underline"
+          className={cn(linkClass, touchTargetTextClass, focusRingClass)}
         >
           Legacy: record book and Hall of Fame
         </Link>

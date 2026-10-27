@@ -1,4 +1,5 @@
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { Section } from "@/components/ui/Section";
 import { panelClass, cn } from "@/components/ui/styles";
 import {
@@ -28,7 +29,11 @@ function ContenderName(props: {
   const { contender } = props;
   if (contender.href) {
     return (
-      <PlayerEntityLink saveId={props.saveId} playerId={contender.subjectId}>
+      <PlayerEntityLink
+        saveId={props.saveId}
+        playerId={contender.subjectId}
+        className={rowLinkClass}
+      >
         {contender.name}
       </PlayerEntityLink>
     );
@@ -43,7 +48,7 @@ function AwardRace(props: {
   const contenders = props.race.contenders.slice(0, 5);
   return (
     <div className="mt-1">
-      <p className="text-xs text-faint">
+      <p className="text-sm text-faint">
         {formatRaceWeekLabel(props.race.throughDate)}
       </p>
       <ol className="mt-1 space-y-0.5 text-sm">
@@ -56,7 +61,7 @@ function AwardRace(props: {
               <ContenderName saveId={props.saveId} contender={contender} />
             </span>
             {contender.teamAbbreviation ? (
-              <span className="ml-auto shrink-0 text-xs text-faint">
+              <span className="ml-auto shrink-0 text-sm text-faint">
                 {contender.teamAbbreviation}
               </span>
             ) : null}

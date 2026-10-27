@@ -20,16 +20,13 @@ export function OnboardingSteps(props: {
 }) {
   const stepIndex = STEPS.findIndex((s) => s.id === props.step);
   return (
-    <nav
-      aria-label="New game steps"
-      className="flex flex-wrap gap-2 font-display text-sm uppercase tracking-wide"
-    >
+    <nav aria-label="New game steps" className="flex flex-wrap gap-2">
       {STEPS.map((step, index) => {
         const active = index === stepIndex;
         const done = index < stepIndex;
         const label = `${index + 1}. ${step.label}`;
         const select = props.onSelect?.[step.id];
-        const className = `inline-flex min-h-11 items-center rounded-full border px-3 py-1 ${
+        const className = `inline-flex min-h-11 items-center rounded-full border px-3 py-1 font-display text-sm uppercase tracking-wide ${
           active
             ? "border-team-ink bg-team font-bold text-on-team"
             : done || select

@@ -4,9 +4,9 @@ import { cn, focusRingClass } from "@/components/ui/styles";
 
 export function TimelineFeed(props: { children: ReactNode }) {
   return (
-    <div role="feed" aria-busy="false" aria-label="League timeline">
-      {props.children}
-    </div>
+    // A labelled section, not role="feed": the feed pattern requires only
+    // article children and page-key navigation, which this list does not have.
+    <section aria-label="League timeline">{props.children}</section>
   );
 }
 

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadFranchiseOwnershipView } from "@/application/game-service";
-import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
+import { DataTable } from "@/components/ui/DataTable";
+import { FranchiseViews } from "@/components/franchise/FranchiseViews";
 import { ObjectiveCard } from "@/components/game/ObjectiveCard";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -42,7 +43,7 @@ export default async function FranchiseOwnershipPage({
         title="Franchise"
         subtitle={`Ownership · ${confidence.philosophy}`}
       />
-      <FranchiseSubNav saveId={saveId} active="ownership" />
+      <FranchiseViews saveId={saveId} active="ownership" />
       {error ? <ErrorState message={error} /> : null}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -108,31 +109,15 @@ export default async function FranchiseOwnershipPage({
         {view.seasonMoods.length === 0 ? (
           <EmptyState message="No completed seasons under this ownership yet." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-line text-muted">
-                <tr>
-                  <th className="px-3 py-2">Year</th>
-                  <th className="px-3 py-2">Mood</th>
-                  <th className="px-3 py-2">Mandate</th>
-                </tr>
-              </thead>
-              <tbody>
-                {view.seasonMoods.map((row) => (
-                  <tr
-                    key={row.seasonYear}
-                    className="border-b border-surface-raised text-ink"
-                  >
-                    <td className="px-3 py-2">{row.seasonYear}</td>
-                    <td className="px-3 py-2">{row.moodLabel}</td>
-                    <td className="px-3 py-2 text-muted">
-                      {row.mandateSummary}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable headers={["Year", "Mood", "Mandate"]}>
+            {view.seasonMoods.map((row) => (
+              <tr key={row.seasonYear} className="text-ink">
+                <td className="px-3 py-2">{row.seasonYear}</td>
+                <td className="px-3 py-2">{row.moodLabel}</td>
+                <td className="px-3 py-2 text-muted">{row.mandateSummary}</td>
+              </tr>
+            ))}
+          </DataTable>
         )}
       </Section>
 

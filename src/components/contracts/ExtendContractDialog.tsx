@@ -1,5 +1,6 @@
 "use client";
 
+import { DataTable, numericCellClass } from "@/components/ui/DataTable";
 import { useEffect, useId, useRef, useState } from "react";
 import { offerContractExtensionAction } from "@/application/actions";
 import { formatMoney, MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -11,7 +12,7 @@ import { cn } from "@/components/ui/styles";
 import type { ContractExtensionView } from "@/state/contract-extension-selectors";
 
 const FOCUSABLE =
-  'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), input:not([disabled]):not([type="hidden"]), [href], [tabindex]:not([tabindex="-1"])';
 
 const SALARY_STEP = 100_000;
 
@@ -93,7 +94,7 @@ export function ExtendContractDialog(props: {
       <Button
         ref={triggerRef}
         variant="secondary"
-        className="min-h-9 px-2.5"
+        className="min-h-11 px-2.5"
         onClick={() => {
           setYears(defaultYears(extension));
           setSalary(extension.askSalary);
@@ -113,7 +114,6 @@ export function ExtendContractDialog(props: {
             aria-modal="true"
             aria-labelledby={titleId}
             className="relative z-10 max-h-full w-full max-w-lg overflow-y-auto rounded-xl border border-line-strong bg-surface-raised p-5 text-left shadow-xl"
-            onClick={(event) => event.stopPropagation()}
           >
             <SectionHeading
               as="h3"
@@ -152,7 +152,7 @@ export function ExtendContractDialog(props: {
                       </p>
                       <Button
                         variant="secondary"
-                        className="min-h-9 px-2.5"
+                        className="min-h-11 px-2.5"
                         onClick={() => {
                           setSalary(response.askSalary);
                           setYears(
@@ -192,6 +192,7 @@ export function ExtendContractDialog(props: {
                   <div>
                     <NumberStepper
                       id={yearsId}
+
                       name="years"
                       value={years}
                       onValueChange={setYears}
@@ -210,6 +211,7 @@ export function ExtendContractDialog(props: {
                   <div className="flex flex-wrap items-center gap-2">
                     <NumberStepper
                       id={salaryId}
+
                       name="salary"
                       value={salary}
                       onValueChange={setSalary}
@@ -224,39 +226,35 @@ export function ExtendContractDialog(props: {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[18rem] text-sm">
-                  <thead>
-                    <tr className="text-left text-muted">
-                      <th className="py-1 pr-3 font-medium">Season</th>
-                      <th className="py-1 pr-3 font-medium">Payroll after</th>
-                      {extension.salaryCapEnabled ? (
-                        <th className="py-1 font-medium">Cap room</th>
-                      ) : null}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.seasonYear} className="border-t border-line">
-                        <td className="py-1 pr-3">{row.seasonYear}</td>
-                        <td className="py-1 pr-3">
-                          <MoneyDisplay amount={row.payroll} />
-                        </td>
-                        {extension.salaryCapEnabled ? (
-                          <td
-                            className={cn(
-                              "py-1",
-                              row.room < 0 && "text-rose-300",
-                            )}
-                          >
-                            <MoneyDisplay amount={row.room} />
-                          </td>
-                        ) : null}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                headers={[
+                  "Season",
+                  { label: "Payroll after", numeric: true },
+                  ...(extension.salaryCapEnabled
+                    ? [{ label: "Cap room", numeric: true }]
+                    : []),
+                ]}
+              >
+                {rows.map((row) => (
+                  <tr key={row.seasonYear}>
+                    <td className="px-3 py-2">{row.seasonYear}</td>
+                    <td className={`px-3 py-2 ${numericCellClass}`}>
+                      <MoneyDisplay amount={row.payroll} />
+                    </td>
+                    {extension.salaryCapEnabled ? (
+                      <td
+                        className={cn(
+                          "px-3 py-2",
+                          numericCellClass,
+                          row.room < 0 && "text-rose-300",
+                        )}
+                      >
+                        <MoneyDisplay amount={row.room} />
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+              </DataTable>
 
               {blocked ? (
                 <p role="alert" className="text-sm text-rose-300">

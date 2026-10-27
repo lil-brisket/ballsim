@@ -17,10 +17,12 @@ import {
 
 vi.mock("server-only", () => ({}));
 
+const navigation = vi.hoisted(() => ({ search: "" }));
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/save_test/team/contracts",
   useRouter: () => ({ replace: vi.fn(), push: vi.fn(), refresh: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(navigation.search),
 }));
 
 vi.mock("@/application/actions", () => ({
@@ -387,6 +389,40 @@ describe("roster screen", () => {
     const bounds = rosterBoundsForPhase(phase);
     expect(count).toBeGreaterThanOrEqual(bounds.min);
     expect(count).toBeLessThanOrEqual(bounds.max);
+  });
+
+  it("switches Roster / Free Agents / Trade Block / Trade Finder through ?tab= links", () => {
+    const view = toRosterPageView(stateAt(phases[0]!));
+    const base = `/dashboard/${view.saveId}/roster`;
+    const hrefs: Record<string, string> = {
+      Roster: base,
+      "Free Agents": `${base}?tab=free-agents`,
+      "Trade Block": `${base}?tab=trade-block`,
+      "Trade Finder": `${base}?tab=trade-finder`,
+    };
+    const expectedActive: Array<[string, string]> = [
+      ["", "Roster"],
+      ["tab=free-agents", "Free Agents"],
+      ["tab=trade-block", "Trade Block"],
+      ["tab=trade-finder", "Trade Finder"],
+      ["tab=bogus", "Roster"],
+    ];
+    for (const [search, active] of expectedActive) {
+      navigation.search = search;
+      const { unmount } = render(withDrawer(<RosterPage view={view} />));
+      const nav = screen.getByRole("navigation", {
+        name: "Roster management",
+      });
+      for (const [label, href] of Object.entries(hrefs)) {
+        const link = within(nav).getByRole("link", { name: label });
+        expect(link.getAttribute("href")).toBe(href);
+        expect(link.getAttribute("aria-current")).toBe(
+          label === active ? "page" : null,
+        );
+      }
+      unmount();
+    }
+    navigation.search = "";
   });
 
   // Regression: in the offseason both surfaces showed payroll and cap space

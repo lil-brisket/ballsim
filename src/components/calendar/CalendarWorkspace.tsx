@@ -779,7 +779,7 @@ export function CalendarWorkspace(props: {
                   : "Simulating"}{" "}
               · {formatGameDate(playback.currentDate)}
             </p>
-            <p className="text-xs text-muted">
+            <p className="text-sm text-muted">
               Day {playback.daysAdvanced} of {playback.daysRequested} ·{" "}
               {playback.gamesSimulated} games played
             </p>
@@ -811,7 +811,7 @@ export function CalendarWorkspace(props: {
       ) : null}
 
       {simError ? (
-        <p role="alert" className="text-sm text-red-300">
+        <p role="alert" className="text-sm text-loss">
           {simError}
         </p>
       ) : null}
@@ -874,9 +874,9 @@ export function CalendarWorkspace(props: {
       {resumeTarget && !props.view.timeDisabled && !busy ? (
         <div
           role="status"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-700/50 bg-sky-950/30 px-4 py-3"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-team-ink/40 bg-team/10 px-4 py-3"
         >
-          <p className="text-sm text-sky-100">
+          <p className="text-sm text-ink">
             Continue simulation through{" "}
             <span className="font-medium">{formatGameDate(resumeTarget)}</span>
           </p>

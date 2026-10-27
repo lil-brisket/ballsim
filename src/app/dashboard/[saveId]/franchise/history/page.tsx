@@ -6,13 +6,13 @@ import {
   FranchiseLedgerTable,
   toFranchiseIdentityChanges,
 } from "@/components/franchise/FranchiseLedgerTable";
-import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
+import { FranchiseViews } from "@/components/franchise/FranchiseViews";
 import { FranchiseHistorySummary } from "@/components/owner/FranchiseHistorySummary";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
-import { cn, linkClass } from "@/components/ui/styles";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import { getActiveTeam } from "@/state/owner-context";
 import { toFranchiseHistoryView } from "@/state/franchise-selectors";
 
@@ -49,7 +49,7 @@ export default async function FranchiseHistoryPage({
         title="Franchise"
         subtitle={`${team.city} ${team.name} · franchise history`}
       />
-      <FranchiseSubNav saveId={saveId} active="history" />
+      <FranchiseViews saveId={saveId} active="history" />
       {error ? <ErrorState message={error} /> : null}
 
       {history.seasons.length === 0 ? (
@@ -103,7 +103,7 @@ export default async function FranchiseHistoryPage({
         Season results, team records, player history and retired jerseys live on{" "}
         <Link
           href={`/dashboard/${saveId}/team/history`}
-          className={cn(linkClass, "font-medium")}
+          className={cn(linkClass, "font-medium", focusRingClass)}
         >
           Team History
         </Link>

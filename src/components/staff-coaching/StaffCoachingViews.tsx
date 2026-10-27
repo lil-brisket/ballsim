@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Tabs } from "@/components/ui/Tabs";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 
 const TABS = [
   { href: "/staff", label: "Staff" },
@@ -9,13 +9,14 @@ const TABS = [
   { href: "/coaching", label: "Coaching" },
 ] as const;
 
-export function StaffCoachingNav(props: { saveId: string }) {
+export function StaffCoachingViews(props: { saveId: string }) {
   const pathname = usePathname();
   const base = `/dashboard/${props.saveId}/staff-coaching`;
 
   return (
-    <Tabs
+    <ViewSwitch
       aria-label="Staff and coaching"
+      className="max-w-full flex-wrap"
       activeKey={
         TABS.find((tab) => {
           const href = `${base}${tab.href}`;

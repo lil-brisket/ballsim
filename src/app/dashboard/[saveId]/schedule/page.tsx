@@ -14,6 +14,7 @@ import {
 } from "@/components/league/team-filter-utils";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { ScheduleViewSwitch } from "@/components/calendar/ScheduleViewSwitch";
 import {
   formatGameDate,
@@ -182,7 +183,7 @@ export default async function SchedulePage({
               <Link
                 href={href({ date: undefined })}
                 className={cn(
-                  "rounded-md border border-line-strong px-3 py-1.5 text-sm text-soft hover:border-team-ink hover:text-team-ink",
+                  "inline-flex min-h-11 items-center rounded-md border border-line-strong px-4 text-sm text-soft hover:border-team-ink hover:text-team-ink",
                   focusRingClass,
                 )}
               >
@@ -213,35 +214,19 @@ export default async function SchedulePage({
             value={teamValue}
           />
         </Suspense>
-        <div
-          className="inline-flex rounded-full border border-line-strong p-0.5"
+        <ViewSwitch
           aria-label="Status filter"
-        >
-          {(
-            [
-              ["all", "All"],
-              ["upcoming", "Upcoming"],
-              ["final", "Final"],
-            ] as const
-          ).map(([id, label]) => (
-            <Link
-              key={id}
-              href={href({
-                status: id === "all" ? undefined : id,
-              })}
-              aria-current={statusFilter === id ? "true" : undefined}
-              className={cn(
-                "rounded-full px-3 py-1 text-sm",
-                statusFilter === id
-                  ? "bg-team-ink/15 text-team-ink"
-                  : "text-muted hover:text-ink",
-                focusRingClass,
-              )}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
+          activeKey={statusFilter}
+          items={[
+            { key: "all", label: "All", href: href({ status: undefined }) },
+            {
+              key: "upcoming",
+              label: "Upcoming",
+              href: href({ status: "upcoming" }),
+            },
+            { key: "final", label: "Final", href: href({ status: "final" }) },
+          ]}
+        />
       </div>
 
       {view.emptyReason ? (
@@ -304,7 +289,6 @@ export default async function SchedulePage({
                               as="h3"
                               size="sm"
                               tone="muted"
-                              titleClassName="text-xs! uppercase tracking-wide"
                               title={
                                 <>
                                   {formatGameDate(group.date, {

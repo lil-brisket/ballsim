@@ -85,7 +85,7 @@ describe("LeagueTeamStatsTable", () => {
       ],
     };
     render(wrap(<LeagueTeamStatsTable saveId="s1" view={view} />));
-    const ppg = screen.getByTestId("league-stats-col-ppg");
+    const ppg = screen.getByRole("columnheader", { name: /PPG/ });
     expect(ppg.getAttribute("aria-sort")).toBe("descending");
     expect(ppg.querySelector("a")!.getAttribute("href")).toBe(
       "/dashboard/s1/league/team-stats?sort=ppg&dir=asc",
@@ -135,7 +135,7 @@ describe("LeaguePlayerStatsTable", () => {
     );
     expect(
       screen
-        .getByTestId("league-stats-col-rpg")
+        .getByRole("columnheader", { name: /RPG/ })
         .querySelector("a")!
         .getAttribute("href"),
     ).toBe("/dashboard/s1/league/player-stats?show=all&sort=rpg");

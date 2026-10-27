@@ -89,13 +89,12 @@ function ScoreHalf(props: {
       }
       data-score-half={props.won ? "winner" : "loser"}
     >
-      <div
-        className={cn(
-          "flex flex-col items-center gap-1",
-          !props.won && "opacity-75",
-        )}
-      >
-        <TeamMark branding={branding} size="md" />
+      <div className="flex flex-col items-center gap-1">
+        {/* Dim only the logo for the loser: dimming the text broke contrast;
+            the lighter weight already marks the losing side. */}
+        <span className={cn(!props.won && "opacity-75")}>
+          <TeamMark branding={branding} size="md" />
+        </span>
         <span
           className={cn(
             "font-display text-lg uppercase tracking-wide",

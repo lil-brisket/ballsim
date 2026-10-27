@@ -1,4 +1,5 @@
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
+import { rowLinkPlainClass } from "@/components/league/row-link-class";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { splitDisplayName } from "@/presentation/portrait-hash";
@@ -10,7 +11,7 @@ import {
   type TransactionActivityMode,
   type TransactionRowView,
 } from "@/state/transaction-hub-selectors";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn } from "@/components/ui/styles";
 
 function badgeTone(type: string): string {
   switch (type) {
@@ -68,9 +69,7 @@ export function TransactionRow(props: {
           </span>
         ) : null}
         {props.highlight ? (
-          <span className="text-xs font-semibold uppercase tracking-wide text-team-ink">
-            Your team
-          </span>
+          <span className="text-sm font-semibold text-team-ink">Your team</span>
         ) : null}
       </div>
 
@@ -86,8 +85,8 @@ export function TransactionRow(props: {
                   saveId={saveId}
                   teamId={side.team.id}
                   className={cn(
+                    rowLinkPlainClass,
                     "font-medium text-ink hover:text-team-ink",
-                    focusRingClass,
                   )}
                 >
                   {side.team.abbreviation ?? side.team.name}
@@ -107,8 +106,8 @@ export function TransactionRow(props: {
                       saveId={saveId}
                       playerId={player.id}
                       className={cn(
+                        rowLinkPlainClass,
                         "text-sm text-ink hover:text-team-ink",
-                        focusRingClass,
                       )}
                     >
                       {player.name}
@@ -146,8 +145,8 @@ export function TransactionRow(props: {
                   saveId={saveId}
                   playerId={player.id}
                   className={cn(
+                    rowLinkPlainClass,
                     "text-team-ink/90 hover:text-team-ink",
-                    focusRingClass,
                   )}
                 >
                   {player.name}
@@ -159,7 +158,10 @@ export function TransactionRow(props: {
                 key={team.id}
                 saveId={saveId}
                 teamId={team.id}
-                className={cn("text-muted hover:text-team-ink", focusRingClass)}
+                className={cn(
+                  rowLinkPlainClass,
+                  "text-muted hover:text-team-ink",
+                )}
               >
                 {team.abbreviation ?? team.name}
               </TeamEntityLink>
@@ -197,7 +199,7 @@ export function TransactionTimeline(props: {
               title={<>{formatGameDate(group.date, { year: true })}</>}
             />
             <span aria-hidden className="h-px flex-1 bg-surface-high" />
-            <span className="text-xs text-faint">
+            <span className="text-sm text-faint">
               {group.rows.length === 1
                 ? "1 move"
                 : `${group.rows.length} moves`}

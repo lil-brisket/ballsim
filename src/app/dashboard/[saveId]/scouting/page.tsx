@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { buttonClass } from "@/components/ui/Button";
-import { cn, linkClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { notFound } from "next/navigation";
 import {
@@ -115,7 +121,11 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                     className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm"
                   >
                     <div>
-                      <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
+                      <PlayerEntityLink
+                        saveId={saveId}
+                        playerId={row.playerId}
+                        className={rowLinkClass}
+                      >
                         {row.firstName} {row.lastName}
                       </PlayerEntityLink>
                       <p className="text-sm text-faint">
@@ -196,7 +206,12 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                           />
                           <button
                             type="submit"
-                            className={cn(linkClass, "text-sm")}
+                            className={cn(
+                              linkClass,
+                              touchTargetTextClass,
+                              focusRingClass,
+                              "text-sm",
+                            )}
                           >
                             Assign scout
                           </button>
@@ -215,7 +230,11 @@ export default async function ScoutingPage({ params, searchParams }: Props) {
                           />
                           <button
                             type="submit"
-                            className="text-sm text-muted hover:underline"
+                            className={cn(
+                              touchTargetTextClass,
+                              focusRingClass,
+                              "text-sm text-muted hover:underline",
+                            )}
                           >
                             {interview ? "Re-interview" : "Interview"}
                           </button>

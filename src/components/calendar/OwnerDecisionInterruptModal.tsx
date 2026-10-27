@@ -108,7 +108,7 @@ export function OwnerDecisionInterruptModal(props: {
               {interrupt.teamName} must pick at overall #{interrupt.pickNumber}.
             </p>
             {props.error ? (
-              <p role="alert" className="text-sm text-red-300">
+              <p role="alert" className="text-sm text-loss">
                 {props.error}
               </p>
             ) : null}

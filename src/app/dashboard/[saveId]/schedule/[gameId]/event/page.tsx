@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { formatGameDate } from "@/presentation/game-date";
 import { buttonClass } from "@/components/ui/Button";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -53,7 +59,7 @@ export default async function GameDayEventPage({
       <p className="mb-4 text-sm text-faint">
         <Link
           href={`/dashboard/${saveId}/schedule`}
-          className="text-team-ink underline-offset-4 hover:underline"
+          className={cn(linkClass, touchTargetTextClass, focusRingClass)}
         >
           ← Back to schedule
         </Link>
@@ -110,9 +116,7 @@ export default async function GameDayEventPage({
               <dt className="text-faint">Net event impact</dt>
               <dd
                 className={
-                  view.result.netFinancialImpact >= 0
-                    ? "text-emerald-400"
-                    : "text-rose-400"
+                  view.result.netFinancialImpact >= 0 ? "text-win" : "text-loss"
                 }
               >
                 <MoneyDisplay amount={view.result.netFinancialImpact} />
@@ -250,9 +254,7 @@ export default async function GameDayEventPage({
                       </p>
                     ) : null}
                     {!item.available && item.reason ? (
-                      <p className="mt-2 text-sm text-rose-400">
-                        {item.reason}
-                      </p>
+                      <p className="mt-2 text-sm text-loss">{item.reason}</p>
                     ) : null}
                   </div>
                   {item.available ? (

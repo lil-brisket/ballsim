@@ -81,13 +81,13 @@ describe("StandingsControls", () => {
         />,
       ),
     );
-    const conference = screen.getByTestId("standings-view-conference");
+    const conference = screen.getByRole("link", { name: "Conference" });
     expect(conference.getAttribute("aria-current")).toBe("page");
     expect(conference.getAttribute("href")).toContain("view=conference");
     expect(conference.getAttribute("href")).toContain("stats=advanced");
     expect(conference.getAttribute("href")).not.toContain("error=");
 
-    const overall = screen.getByTestId("standings-view-overall");
+    const overall = screen.getByRole("link", { name: "Overall" });
     expect(overall.getAttribute("href")).toContain("stats=advanced");
     expect(overall.getAttribute("href") ?? "").not.toMatch(/[?&]view=/);
 
@@ -106,7 +106,7 @@ describe("StandingsControls", () => {
         />,
       ),
     );
-    expect(screen.queryByTestId("standings-view-division")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Division" })).toBeNull();
     expect(screen.queryByTestId("standings-reset")).toBeNull();
     unmount();
   });

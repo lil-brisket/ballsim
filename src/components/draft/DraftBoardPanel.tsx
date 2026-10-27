@@ -1,4 +1,9 @@
-import { cn, linkClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 type BoardEntry = {
   prospectPlayerId: string;
@@ -62,7 +67,15 @@ export function DraftBoardPanel({
                 name="prospectPlayerId"
                 value={entry.prospectPlayerId}
               />
-              <button type="submit" className={cn(linkClass, "text-sm")}>
+              <button
+                type="submit"
+                className={cn(
+                  linkClass,
+                  touchTargetTextClass,
+                  focusRingClass,
+                  "text-sm",
+                )}
+              >
                 {entry.priority ? "Unmark priority" : "Mark priority"}
               </button>
             </form>
@@ -75,7 +88,11 @@ export function DraftBoardPanel({
               />
               <button
                 type="submit"
-                className="text-sm text-faint hover:underline"
+                className={cn(
+                  touchTargetTextClass,
+                  focusRingClass,
+                  "text-sm text-faint hover:underline",
+                )}
               >
                 Remove
               </button>

@@ -13,7 +13,11 @@ import {
   toTransactionHubSearchParams,
   TRANSACTION_HUB_PAGE_SIZE,
 } from "@/state/transaction-hub-selectors";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 export const metadata: Metadata = { title: "Transactions" };
 
@@ -87,6 +91,7 @@ export default async function LeagueTransactionsPage({
     <Link
       href={basePath}
       className={cn(
+        touchTargetTextClass,
         "text-sm text-team-ink underline-offset-4 hover:underline",
         focusRingClass,
       )}
@@ -152,7 +157,7 @@ export default async function LeagueTransactionsPage({
               <Link
                 href={loadMoreHref()}
                 className={cn(
-                  "inline-flex rounded-md border border-line-strong px-3 py-1.5 text-sm text-ink hover:border-team-ink",
+                  "inline-flex min-h-11 items-center rounded-md border border-line-strong px-4 text-sm text-ink hover:border-team-ink",
                   focusRingClass,
                 )}
               >

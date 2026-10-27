@@ -111,7 +111,7 @@ export function TrainingCamps(props: {
             ))}
           </ul>
           <div className="mt-3">
-            <Button type="submit" variant="secondary" className="min-h-9">
+            <Button type="submit" variant="secondary" className="min-h-11">
               Save camps
             </Button>
           </div>

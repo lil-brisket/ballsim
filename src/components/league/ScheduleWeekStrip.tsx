@@ -19,7 +19,7 @@ function dayParts(iso: string): { weekday: string; day: string } {
 }
 
 const arrowClass = cn(
-  "flex w-9 shrink-0 items-center justify-center rounded-lg border border-surface-line text-muted hover:border-team-ink hover:text-team-ink",
+  "flex min-h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-surface-line text-muted hover:border-team-ink hover:text-team-ink",
   focusRingClass,
 );
 

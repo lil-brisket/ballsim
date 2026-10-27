@@ -2,7 +2,8 @@
 
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
-import { useEffect, useId, useRef } from "react";
+import { useId, useRef } from "react";
+import { useDialogFocus } from "@/components/management/use-dialog-focus";
 import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export type RotationPlayerCardData = {
@@ -216,24 +217,15 @@ export function RotationPlayerCard(props: {
 }) {
   const { player, onClose } = props;
   const titleId = useId();
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    closeRef.current?.focus();
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(true, dialogRef, onClose);
 
   const stats = player.seasonStats;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -267,7 +259,6 @@ export function RotationPlayerCard(props: {
             </p>
           </div>
           <Button
-            ref={closeRef}
             type="button"
             variant="secondary"
             onClick={onClose}

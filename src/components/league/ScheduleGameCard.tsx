@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { rowLinkPlainClass } from "@/components/league/row-link-class";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
@@ -41,9 +42,9 @@ function TeamLine(props: {
         saveId={props.saveId}
         teamId={props.teamId}
         className={cn(
+          rowLinkPlainClass,
           "min-w-0 truncate hover:text-team-ink",
           props.dimmed ? "text-muted" : "text-ink",
-          focusRingClass,
         )}
       >
         <span className="font-display uppercase tracking-wide">
@@ -90,10 +91,10 @@ export function ScheduleGameCard(props: {
         isMine ? "border-team-ink/70" : "border-surface-line",
       )}
     >
-      <div className="flex items-center justify-between gap-2 text-xs font-medium uppercase tracking-wide">
+      <div className="flex items-center justify-between gap-2 text-sm font-medium">
         <span
           className={cn(
-            game.status === "in_progress" ? "text-emerald-400" : "text-faint",
+            game.status === "in_progress" ? "text-live" : "text-faint",
           )}
         >
           {statusLabel(game)}

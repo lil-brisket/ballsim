@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { formatGameDate } from "@/presentation/game-date";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
@@ -69,12 +70,20 @@ function SelectionList(props: {
           className="flex justify-between gap-3 py-2 text-sm"
         >
           <div>
-            <PlayerEntityLink saveId={props.saveId} playerId={row.playerId}>
+            <PlayerEntityLink
+              saveId={props.saveId}
+              playerId={row.playerId}
+              className={rowLinkClass}
+            >
               {row.playerName}
             </PlayerEntityLink>
             {row.teamId && row.teamName ? (
               <div className="text-sm text-faint">
-                <TeamEntityLink saveId={props.saveId} teamId={row.teamId}>
+                <TeamEntityLink
+                  saveId={props.saveId}
+                  teamId={row.teamId}
+                  className={rowLinkClass}
+                >
                   {row.teamName}
                 </TeamEntityLink>
               </div>

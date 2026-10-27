@@ -56,6 +56,8 @@ export function NumberStepper(props: {
     <span
       className={cn(
         "inline-flex items-stretch overflow-hidden rounded-md border border-line-strong bg-surface-raised",
+        // The input drops its own outline; the whole stepper shows focus.
+        "has-[input:focus-visible]:outline has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-team-ink",
         props.className,
       )}
     >

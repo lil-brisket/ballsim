@@ -5,6 +5,7 @@ import { loadOwnerSaveView } from "@/application/game-service";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import { buttonClass } from "@/components/ui/Button";
 import { NumberStepper } from "@/components/ui/NumberStepper";
 import { Section } from "@/components/ui/Section";
@@ -63,18 +64,31 @@ export default async function SponsorshipsPage({
           <input type="hidden" name="returnPath" value={returnPath} />
           <input
             name="sponsorName"
+            aria-label="Sponsor name"
             placeholder="Sponsor name"
             defaultValue="City Trust Bank"
-            className="rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-sm text-ink"
+            className={cn(
+              "min-h-11 rounded-md border border-line-strong bg-surface-raised px-3 text-sm text-ink",
+              focusRingClass,
+            )}
           />
           <NumberStepper
             name="annualValue"
+            aria-label="Annual value"
+
             defaultValue={2_500_000}
             min={100000}
             step={100000}
             inputClassName="w-28"
           />
-          <NumberStepper name="years" defaultValue={3} min={1} max={6} />
+          <NumberStepper
+            name="years"
+            aria-label="Years"
+
+            defaultValue={3}
+            min={1}
+            max={6}
+          />
           <button type="submit" className={buttonClass({ variant: "primary" })}>
             Sign
           </button>

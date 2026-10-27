@@ -90,4 +90,24 @@ describe("style guard", () => {
       ),
     ).toEqual([]);
   });
+
+  it("has one navigation model: no sidebar and no page-level sub-navs", () => {
+    expect(offenders(/\bDesktopNavigation\b|\bNavGroups\b/)).toEqual([]);
+    expect(offenders(/\b[A-Z]\w*SubNav\b/)).toEqual([]);
+  });
+
+  it("uses link tabs only in the hub sub-tab row; page views use ViewSwitch", () => {
+    // A <Tabs>/<SlantTabs> whose items carry an href is navigation. Only the
+    // shell's SubTabBar (and the dev showcase) may render that; switching
+    // views of one page uses ViewSwitch, in-card tabs use onSelect.
+    const allowed = /components\/(ui|game\/shell)\/|app\/dev\//;
+    const hits = FILES.filter(
+      ({ file }) => file.endsWith(".tsx") && !allowed.test(file),
+    ).flatMap(({ file, text }) =>
+      Array.from(text.matchAll(/<(Slant)?Tabs\b[\s\S]*?\/>/g))
+        .filter((match) => /\bhref\s*:/.test(match[0]))
+        .map(() => file),
+    );
+    expect(hits).toEqual([]);
+  });
 });

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { loadFranchiseHubView } from "@/application/game-service";
 import { FacilitiesSummarySection } from "@/components/franchise/FacilitiesSummarySection";
 import { FinanceSnapshotCard } from "@/components/franchise/FinanceSnapshotCard";
-import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
+import { FranchiseViews } from "@/components/franchise/FranchiseViews";
 import {
   FranchiseTrends,
   toFranchiseTrends,
@@ -63,7 +63,7 @@ export default async function FranchiseOverviewPage({
   return (
     <div className="space-y-4">
       <PageHeader title="Franchise" subtitle={subtitle} />
-      <FranchiseSubNav saveId={saveId} active="overview" />
+      <FranchiseViews saveId={saveId} active="overview" />
       {error ? <ErrorState message={error} /> : null}
 
       <FranchiseSituations

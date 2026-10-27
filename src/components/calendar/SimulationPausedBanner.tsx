@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
@@ -85,7 +90,11 @@ export function SimulationPausedBanner(props: {
             {item.href ? (
               <Link
                 href={item.href}
-                className="mt-2 inline-block text-sm font-medium text-team-ink hover:underline"
+                className={cn(
+                  touchTargetTextClass,
+                  focusRingClass,
+                  "mt-1 text-sm font-medium text-team-ink hover:underline",
+                )}
               >
                 {item.hrefLabel ?? "Review"} →
               </Link>

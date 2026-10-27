@@ -1,3 +1,9 @@
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import { CardTable } from "@/components/player-profile/CardTable";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -27,7 +33,7 @@ export function PlayerContract(props: {
         action={
           <Link
             href={`/dashboard/${props.saveId}/team/contracts`}
-            className="text-sm text-team-ink underline-offset-4 hover:underline"
+            className={cn(linkClass, touchTargetTextClass, focusRingClass)}
           >
             View contracts
           </Link>

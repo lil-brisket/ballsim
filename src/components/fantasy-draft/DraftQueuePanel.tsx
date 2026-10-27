@@ -1,3 +1,4 @@
+import { cn, focusRingClass } from "@/components/ui/styles";
 import {
   removeFantasyDraftQueuePlayerAction,
   reorderFantasyDraftQueueAction,
@@ -108,7 +109,11 @@ export function DraftQueuePanel(props: {
                             <button
                               type="submit"
                               disabled={index === 0}
-                              className="rounded border border-line-strong px-1.5 py-0.5 text-sm disabled:opacity-30"
+                              className={cn(
+                                "rounded border border-line-strong px-1.5 py-0.5 text-sm disabled:opacity-30",
+                                "min-h-11 min-w-11 touch-manipulation",
+                                focusRingClass,
+                              )}
                               aria-label="Move up in queue"
                             >
                               ↑
@@ -125,7 +130,11 @@ export function DraftQueuePanel(props: {
                             <button
                               type="submit"
                               disabled={index >= draft.queue.length - 1}
-                              className="rounded border border-line-strong px-1.5 py-0.5 text-sm disabled:opacity-30"
+                              className={cn(
+                                "rounded border border-line-strong px-1.5 py-0.5 text-sm disabled:opacity-30",
+                                "min-h-11 min-w-11 touch-manipulation",
+                                focusRingClass,
+                              )}
                               aria-label="Move down in queue"
                             >
                               ↓
@@ -145,7 +154,10 @@ export function DraftQueuePanel(props: {
                                 potential: entry.potential,
                               })
                             }
-                            className="rounded bg-team px-2 py-0.5 text-sm text-on-team disabled:opacity-50"
+                            className={cn(
+                              "min-h-11 touch-manipulation rounded bg-team px-3 py-0.5 text-sm text-on-team disabled:opacity-50",
+                              focusRingClass,
+                            )}
                           >
                             Draft
                           </button>
@@ -162,7 +174,10 @@ export function DraftQueuePanel(props: {
                       />
                       <button
                         type="submit"
-                        className="rounded border border-line-strong px-2 py-0.5 text-sm text-muted"
+                        className={cn(
+                          "min-h-11 touch-manipulation rounded border border-line-strong px-3 py-0.5 text-sm text-muted",
+                          focusRingClass,
+                        )}
                       >
                         Remove
                       </button>

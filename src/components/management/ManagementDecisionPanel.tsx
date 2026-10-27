@@ -5,7 +5,12 @@ import type { ActionCenterItem } from "@/state/action-center-selectors";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { cn } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { calendarDaysBetween } from "@/domain/calendar-date";
 
 /**
@@ -35,7 +40,7 @@ export function ManagementDecisionPanel(props: {
       action={
         <Link
           href={`/dashboard/${saveId}`}
-          className="text-sm text-team-ink underline-offset-4 hover:underline"
+          className={cn(linkClass, touchTargetTextClass, focusRingClass)}
         >
           Front Office
         </Link>

@@ -43,8 +43,8 @@ export function FreeAgentInterest({
                   className={cn(
                     "rounded-full border px-2 py-0.5",
                     f.points > 0
-                      ? "border-emerald-800 text-emerald-300"
-                      : "border-red-900 text-red-300",
+                      ? "border-win/50 text-win"
+                      : "border-loss/50 text-loss",
                   )}
                 >
                   {formatPoints(f.points)} {f.label}

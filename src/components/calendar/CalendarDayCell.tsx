@@ -238,7 +238,7 @@ export function CalendarDayCell(props: {
       ) : milestoneCount === 0 && specialCount > 0 ? (
         <div className="mt-auto">
           <span
-            className="inline-block h-1.5 w-1.5 rounded-full bg-violet-400"
+            className="inline-block h-1.5 w-1.5 rounded-full bg-team-ink"
             title={`${specialCount} event${specialCount === 1 ? "" : "s"}`}
             aria-hidden
           />

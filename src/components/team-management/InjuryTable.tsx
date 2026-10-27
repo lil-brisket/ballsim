@@ -11,6 +11,7 @@ import type {
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { OvrBadge } from "@/components/ui/OvrBadge";
+import { focusRingClass } from "@/components/ui/styles";
 
 type InjuryFilter =
   | "all"
@@ -209,8 +210,9 @@ export function InjuryTable(props: {
           <button
             key={entry.id}
             type="button"
+            aria-pressed={filter === entry.id}
             onClick={() => setFilter(entry.id)}
-            className={`rounded-full border px-3 py-1 text-xs ${
+            className={`inline-flex min-h-11 items-center rounded-full border px-3 text-xs touch-manipulation ${focusRingClass} ${
               filter === entry.id
                 ? "border-team-ink bg-team/15 text-ink"
                 : "border-line-strong bg-surface-raised text-muted hover:border-faint"
@@ -225,7 +227,8 @@ export function InjuryTable(props: {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search player, injury, body part…"
-        className="w-full rounded-lg border border-line bg-surface-base px-3 py-2 text-sm text-ink placeholder:text-disabled"
+        aria-label="Search injuries"
+        className={`min-h-11 w-full rounded-lg border border-line bg-surface-base px-3 text-sm text-ink placeholder:text-disabled ${focusRingClass}`}
       />
 
       <section>

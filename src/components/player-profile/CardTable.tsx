@@ -1,3 +1,5 @@
+import { TableKeys } from "@/components/ui/focus/TableKeys";
+
 /** DataTable styled like the player card tables (sentence-case headers). */
 export function CardTable(props: {
   headers: string[];
@@ -5,7 +7,7 @@ export function CardTable(props: {
   caption?: string;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-line">
+    <TableKeys className="overflow-x-auto rounded-lg border border-line">
       <table className="min-w-full text-left text-sm">
         {props.caption ? (
           <caption className="sr-only">{props.caption}</caption>
@@ -21,6 +23,6 @@ export function CardTable(props: {
         </thead>
         <tbody>{props.children}</tbody>
       </table>
-    </div>
+    </TableKeys>
   );
 }

@@ -6,7 +6,8 @@ import {
   cancelRelocationAction,
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
-import { FranchiseSubNav } from "@/components/franchise/FranchiseSubNav";
+import { DataTable } from "@/components/ui/DataTable";
+import { FranchiseViews } from "@/components/franchise/FranchiseViews";
 import { MarketComparison } from "@/components/franchise/MarketComparison";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -59,7 +60,7 @@ export default async function FranchiseRelocationPage({
         title="Franchise"
         subtitle="Relocation · stay and invest in a weak market, or pay a fee to move up"
       />
-      <FranchiseSubNav saveId={saveId} active="relocation" />
+      <FranchiseViews saveId={saveId} active="relocation" />
       {error ? <ErrorState message={error} /> : null}
       {!accessible ? (
         <p className="mb-4 rounded-xl border border-line bg-surface-raised/50 px-4 py-3 text-sm text-soft">
@@ -115,19 +116,19 @@ export default async function FranchiseRelocationPage({
         <div className="mt-3 flex flex-wrap gap-2 text-sm">
           <Link
             href={`/dashboard/${saveId}/business`}
-            className="rounded-md border border-line-strong px-3 py-1.5 text-ink hover:border-team-ink"
+            className={buttonClass({ variant: "secondary" })}
           >
             Marketing & tickets
           </Link>
           <Link
             href={`/dashboard/${saveId}/finances/facilities`}
-            className="rounded-md border border-line-strong px-3 py-1.5 text-ink hover:border-team-ink"
+            className={buttonClass({ variant: "secondary" })}
           >
             Facilities
           </Link>
           <Link
             href={`/dashboard/${saveId}/roster`}
-            className="rounded-md border border-line-strong px-3 py-1.5 text-ink hover:border-team-ink"
+            className={buttonClass({ variant: "secondary" })}
           >
             Roster
           </Link>
@@ -149,32 +150,20 @@ export default async function FranchiseRelocationPage({
         {topDestinations.length === 0 ? (
           <p className="text-sm text-muted">No open catalog markets.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[32rem] text-left text-sm text-soft">
-              <thead className="text-faint">
-                <tr>
-                  <th className="py-1 pr-3 font-medium">Market</th>
-                  <th className="py-1 pr-3 font-medium">Size</th>
-                  <th className="py-1 pr-3 font-medium">Opportunity</th>
-                  <th className="py-1 pr-3 font-medium">Risk</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topDestinations.map((destination) => (
-                  <tr key={destination.city} className="border-t border-line">
-                    <td className="py-1.5 pr-3">
-                      {destination.city} {destination.name}
-                    </td>
-                    <td className="py-1.5 pr-3">{destination.marketSize}</td>
-                    <td className="py-1.5 pr-3">
-                      {destination.opportunity.replaceAll("_", " ")}
-                    </td>
-                    <td className="py-1.5 pr-3">{destination.risk}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable headers={["Market", "Size", "Opportunity", "Risk"]}>
+            {topDestinations.map((destination) => (
+              <tr key={destination.city} className="text-soft">
+                <td className="px-3 py-2">
+                  {destination.city} {destination.name}
+                </td>
+                <td className="px-3 py-2">{destination.marketSize}</td>
+                <td className="px-3 py-2">
+                  {destination.opportunity.replaceAll("_", " ")}
+                </td>
+                <td className="px-3 py-2">{destination.risk}</td>
+              </tr>
+            ))}
+          </DataTable>
         )}
         <p className="mt-2 text-sm text-faint">
           {assessment.estimatedCost.transitionRiskSummary} Estimated fee about{" "}

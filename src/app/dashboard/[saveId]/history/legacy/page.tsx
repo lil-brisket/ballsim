@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadSaveWithHistory } from "@/application/game-service";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import { HallOfFame, RecordBook } from "@/components/history/LegacyPanels";
 import { ErrorState } from "@/components/ui/EmptyState";
@@ -32,7 +38,7 @@ export default async function LegacyPage({ params, searchParams }: PageProps) {
       <p className="text-sm">
         <Link
           href={`/dashboard/${saveId}/team/history?tab=jerseys`}
-          className="text-team-ink underline-offset-4 hover:underline"
+          className={cn(linkClass, touchTargetTextClass, focusRingClass)}
         >
           Retired numbers
         </Link>

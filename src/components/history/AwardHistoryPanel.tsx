@@ -1,3 +1,4 @@
+import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { AwardHistoryFilters } from "@/components/history/AwardHistoryFilters";
@@ -8,7 +9,6 @@ import {
 import type { AwardHistoryView } from "@/state/awards-hub-selectors";
 import type { HistoryHubRoute } from "@/state/history-hub-selectors";
 
-const TH = "px-3 py-2 font-medium";
 const TD = "px-3 py-2 align-top";
 
 /**
@@ -48,57 +48,38 @@ export function AwardHistoryPanel(props: {
 
       {view.awardFilter === null ? (
         <Section title="Season awards">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-line text-sm text-muted">
-                <tr>
-                  <th className={TH}>Season</th>
-                  {pivotDefinitions.map((def) => (
-                    <th key={def.id} className={TH} title={def.displayName}>
-                      {def.shortLabel}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {view.seasons.map((season) => (
-                  <tr
-                    key={season.seasonYear}
-                    className="border-b border-surface-raised/80"
-                  >
-                    <td
-                      className={`${TD} font-mono tabular-nums text-team-ink`}
-                    >
-                      {season.seasonYear}
+          <DataTable
+            caption="Season awards by year"
+            headers={[
+              "Season",
+              ...pivotDefinitions.map((def) => def.shortLabel),
+            ]}
+          >
+            {view.seasons.map((season) => (
+              <tr key={season.seasonYear}>
+                <td className={`${TD} font-mono tabular-nums text-team-ink`}>
+                  {season.seasonYear}
+                </td>
+                {pivotDefinitions.map((def) => {
+                  const row = season.yearlyByAwardId[def.id];
+                  return (
+                    <td key={def.id} className={TD}>
+                      {row ? (
+                        <div className="space-y-0.5">
+                          <AwardWinnerName saveId={props.saveId} row={row} />
+                          <div className="text-sm">
+                            <AwardWinnerTeam saveId={props.saveId} row={row} />
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-disabled">—</span>
+                      )}
                     </td>
-                    {pivotDefinitions.map((def) => {
-                      const row = season.yearlyByAwardId[def.id];
-                      return (
-                        <td key={def.id} className={TD}>
-                          {row ? (
-                            <div className="space-y-0.5">
-                              <AwardWinnerName
-                                saveId={props.saveId}
-                                row={row}
-                              />
-                              <div className="text-sm">
-                                <AwardWinnerTeam
-                                  saveId={props.saveId}
-                                  row={row}
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-disabled">—</span>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  );
+                })}
+              </tr>
+            ))}
+          </DataTable>
         </Section>
       ) : (
         view.seasons.map((season) => (

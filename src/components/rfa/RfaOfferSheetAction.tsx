@@ -10,7 +10,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { RfaTag } from "@/state/rfa-selectors";
 
 const FOCUSABLE =
-  'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), input:not([disabled]):not([type="hidden"]), [href], [tabindex]:not([tabindex="-1"])';
 
 const SALARY_STEP = 100_000;
 const MAX_YEARS = 5;
@@ -84,7 +84,7 @@ export function RfaOfferSheetAction(props: {
       <Button
         ref={triggerRef}
         variant="secondary"
-        className="min-h-9 px-2.5"
+        className="min-h-11 px-2.5"
         onClick={() => {
           setYears(2);
           setSalary(tag.qualifyingOfferSalary);
@@ -104,7 +104,6 @@ export function RfaOfferSheetAction(props: {
             aria-modal="true"
             aria-labelledby={titleId}
             className="relative z-10 max-h-full w-full max-w-md overflow-y-auto rounded-xl border border-line-strong bg-surface-raised p-5 text-left shadow-xl"
-            onClick={(event) => event.stopPropagation()}
           >
             <SectionHeading
               as="h3"
@@ -131,6 +130,7 @@ export function RfaOfferSheetAction(props: {
                   <div>
                     <NumberStepper
                       id={yearsId}
+
                       name="years"
                       value={years}
                       onValueChange={setYears}
@@ -149,6 +149,7 @@ export function RfaOfferSheetAction(props: {
                   <div className="flex flex-wrap items-center gap-2">
                     <NumberStepper
                       id={salaryId}
+
                       name="salary"
                       value={salary}
                       onValueChange={setSalary}

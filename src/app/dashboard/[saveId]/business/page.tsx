@@ -97,6 +97,8 @@ export default async function MarketingPage({
             <input type="hidden" name="returnPath" value={returnPath} />
             <NumberStepper
               name="ticketPrice"
+              aria-label="Ticket price"
+
               defaultValue={biz.ticketPrice}
               min={10}
               max={250}
@@ -119,6 +121,8 @@ export default async function MarketingPage({
             <input type="hidden" name="returnPath" value={returnPath} />
             <NumberStepper
               name="budget"
+              aria-label="Annual marketing budget"
+
               defaultValue={biz.marketingBudget}
               min={0}
               step={100000}

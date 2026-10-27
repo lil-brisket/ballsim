@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { FantasyDraftView } from "@/state/selectors";
-import { cn, linkClass } from "@/components/ui/styles";
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import { buttonClass } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
@@ -20,7 +20,11 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className={cn(linkClass, "text-sm")}
+              className={cn(
+                linkClass,
+                "inline-flex min-h-11 items-center text-sm",
+                focusRingClass,
+              )}
             >
               View all
             </button>

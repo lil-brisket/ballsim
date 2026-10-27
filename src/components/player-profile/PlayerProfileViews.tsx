@@ -1,4 +1,4 @@
-import { Tabs } from "@/components/ui/Tabs";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 
 export const PLAYER_PROFILE_TABS = [
   "overview",
@@ -35,7 +35,7 @@ export function resolvePlayerProfileTab(
   return isPlayerProfileTab(value) ? value : "overview";
 }
 
-export function PlayerProfileNav(props: {
+export function PlayerProfileViews(props: {
   saveId: string;
   playerId: string;
   activeTab: PlayerProfileTab;
@@ -43,8 +43,9 @@ export function PlayerProfileNav(props: {
   const base = `/dashboard/${props.saveId}/players/${props.playerId}`;
 
   return (
-    <Tabs
+    <ViewSwitch
       aria-label="Player profile sections"
+      className="max-w-full flex-wrap"
       activeKey={props.activeTab}
       items={PLAYER_PROFILE_TABS.map((tab) => ({
         key: tab,

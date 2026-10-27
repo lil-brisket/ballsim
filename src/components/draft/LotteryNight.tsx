@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/Button";
 import { prefersReducedMotion } from "@/components/ui/CountUp";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
@@ -43,6 +43,21 @@ export function LotteryNight(props: { view: DraftLotteryView }) {
   }, [revealed, total]);
 
   const done = revealed >= total;
+  const statusRef = useRef<HTMLParagraphElement>(null);
+
+  // The reveal buttons disable once everything is shown; move focus to the
+  // result so a keyboard user is not dropped to the page.
+  useEffect(() => {
+    if (!done) return;
+    const active = document.activeElement;
+    if (
+      !active ||
+      active === document.body ||
+      (active instanceof HTMLButtonElement && active.disabled)
+    ) {
+      statusRef.current?.focus();
+    }
+  }, [done]);
   // Reveal runs last slot to first; the newest reveal sits on top.
   const shown = [...view.slots].reverse().slice(0, revealed).reverse();
   const winner = view.slots[0];
@@ -68,8 +83,10 @@ export function LotteryNight(props: { view: DraftLotteryView }) {
 
       {done && winner ? (
         <p
+          ref={statusRef}
+          tabIndex={-1}
           role="status"
-          className="rounded-md border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-ink"
+          className="rounded-md border border-team-ink/50 bg-team/15 px-4 py-3 text-sm text-ink outline-none"
         >
           {winner.teamName} won the lottery and hold the #1 pick.
           {view.biggestJump
@@ -110,10 +127,10 @@ export function LotteryNight(props: { view: DraftLotteryView }) {
               <p className="truncate text-sm font-medium text-ink">
                 {slot.teamName}
                 {slot.isUserTeam ? (
-                  <span className="ml-2 text-xs text-team-ink">Your pick</span>
+                  <span className="ml-2 text-sm text-team-ink">Your pick</span>
                 ) : null}
               </p>
-              <p className="text-xs text-faint">
+              <p className="text-sm text-faint">
                 {(slot.odds * 100).toFixed(1)}% odds
                 {slot.drawn ? "" : " · By record"}
                 {slot.ownerTeamId && slot.ownerTeamId !== slot.teamId
@@ -123,7 +140,7 @@ export function LotteryNight(props: { view: DraftLotteryView }) {
             </div>
             <span
               className={cn(
-                "rounded-full border px-2 py-0.5 text-xs font-medium tabular-nums",
+                "rounded-full border px-2 py-0.5 text-sm font-medium tabular-nums",
                 movementClass(slot.movement),
               )}
             >

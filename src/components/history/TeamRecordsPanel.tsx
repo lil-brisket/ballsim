@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DataTable, numericCellClass } from "@/components/ui/DataTable";
 import { Metric } from "@/components/ui/Metric";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -24,7 +25,6 @@ import type {
   OwnerStoryItem,
 } from "@/state/history-hub-selectors";
 
-const TH = "px-3 py-2 font-medium";
 const TD = "px-3 py-2";
 
 function formatRecord(record: BestRecordMetric | null): string {
@@ -40,46 +40,55 @@ function TeamRecordsTable(props: {
   selectedTeamId: string | null;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-left text-sm">
-        <thead className="border-b border-line text-sm text-muted">
-          <tr>
-            <th className={TH}>Team</th>
-            <th className={TH}>Titles</th>
-            <th className={TH}>Finals Apps</th>
-            <th className={TH}>Best Record</th>
-            <th className={TH}>Playoff Apps</th>
-          </tr>
-        </thead>
-        <tbody>
-          {props.rows.map((row) => (
-            <tr
-              key={row.teamId}
+    <DataTable
+      caption="All-time team records"
+      headers={[
+        "Team",
+        { label: "Titles", numeric: true },
+        { label: "Finals Apps", numeric: true },
+        { label: "Best Record", numeric: true },
+        { label: "Playoff Apps", numeric: true },
+      ]}
+    >
+      {props.rows.map((row) => (
+        <tr
+          key={row.teamId}
+          aria-selected={row.teamId === props.selectedTeamId ? true : undefined}
+          className={cn(
+            row.teamId === props.selectedTeamId &&
+              "shadow-[inset_3px_0_0_0_rgb(var(--team-ink-rgb))]",
+          )}
+        >
+          <td className={TD}>
+            <Link
+              href={historyHubHref(props.saveId, props.route, {
+                tab: "teams",
+                team: row.teamId,
+              })}
               className={cn(
-                "border-b border-surface-raised/80",
-                row.teamId === props.selectedTeamId && "bg-team/15",
+                linkClass,
+                "inline-flex min-h-11 items-center",
+                focusRingClass,
               )}
             >
-              <td className={TD}>
-                <Link
-                  href={historyHubHref(props.saveId, props.route, {
-                    tab: "teams",
-                    team: row.teamId,
-                  })}
-                  className={cn(linkClass, focusRingClass)}
-                >
-                  {row.teamName}
-                </Link>
-              </td>
-              <td className={TD}>{row.summary.championships}</td>
-              <td className={TD}>{row.summary.finalsAppearances}</td>
-              <td className={TD}>{formatRecord(row.summary.bestRecord)}</td>
-              <td className={TD}>{row.summary.playoffAppearances}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              {row.teamName}
+            </Link>
+          </td>
+          <td className={cn(TD, numericCellClass)}>
+            {row.summary.championships}
+          </td>
+          <td className={cn(TD, numericCellClass)}>
+            {row.summary.finalsAppearances}
+          </td>
+          <td className={cn(TD, numericCellClass)}>
+            {formatRecord(row.summary.bestRecord)}
+          </td>
+          <td className={cn(TD, numericCellClass)}>
+            {row.summary.playoffAppearances}
+          </td>
+        </tr>
+      ))}
+    </DataTable>
   );
 }
 

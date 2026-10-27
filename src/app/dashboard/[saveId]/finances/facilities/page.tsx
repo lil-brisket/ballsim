@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadFinanceHubView } from "@/application/game-service";
 import { FacilityUpgradeList } from "@/components/finances/FacilityUpgradeList";
-import { FinancesSubNav } from "@/components/finances/FinancesSubNav";
+import { FinancesViews } from "@/components/finances/FinancesViews";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -35,7 +35,7 @@ export default async function FinancesFacilitiesPage({
         title="Finances"
         subtitle={`${view.teamName} · Season ${view.seasonYear}`}
       />
-      <FinancesSubNav saveId={saveId} active="facilities" />
+      <FinancesViews saveId={saveId} active="facilities" />
       {error ? <ErrorState message={error} /> : null}
 
       <section className="grid gap-4 sm:grid-cols-3">

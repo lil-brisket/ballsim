@@ -1,5 +1,6 @@
 "use client";
 
+import { cn, focusRingClass } from "@/components/ui/styles";
 import { useRef, useState, useTransition, type DragEvent } from "react";
 import {
   moveFantasyDraftTeamToIndexAction,
@@ -237,7 +238,10 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                   type="button"
                   disabled={pending || index === 0}
                   onClick={() => submitStep(entry.teamId, -1)}
-                  className="rounded border border-line-strong px-2 py-1 text-sm text-soft disabled:opacity-40"
+                  className={cn(
+                    "min-h-11 min-w-11 touch-manipulation rounded border border-line-strong px-2 py-1 text-sm text-soft disabled:opacity-40",
+                    focusRingClass,
+                  )}
                   aria-label={`Move ${entry.teamName} up`}
                 >
                   ↑
@@ -246,7 +250,10 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                   type="button"
                   disabled={pending || index === entries.length - 1}
                   onClick={() => submitStep(entry.teamId, 1)}
-                  className="rounded border border-line-strong px-2 py-1 text-sm text-soft disabled:opacity-40"
+                  className={cn(
+                    "min-h-11 min-w-11 touch-manipulation rounded border border-line-strong px-2 py-1 text-sm text-soft disabled:opacity-40",
+                    focusRingClass,
+                  )}
                   aria-label={`Move ${entry.teamName} down`}
                 >
                   ↓

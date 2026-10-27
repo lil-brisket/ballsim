@@ -9,7 +9,7 @@ import {
   RevenueExpenseWaterfall,
 } from "@/components/finances/FinanceCharts";
 import { FinancialStatStrip } from "@/components/finances/FinancialStatStrip";
-import { FinancesSubNav } from "@/components/finances/FinancesSubNav";
+import { FinancesViews } from "@/components/finances/FinancesViews";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -67,7 +67,7 @@ export default async function FinancesPage({
           </>
         }
       />
-      <FinancesSubNav saveId={saveId} active="overview" />
+      <FinancesViews saveId={saveId} active="overview" />
       {error ? <ErrorState message={error} /> : null}
 
       {view.warnings.length > 0 ? (

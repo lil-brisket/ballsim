@@ -34,7 +34,10 @@ export function PlayerHistorySearch(props: {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search player..."
-          className="mt-1 block w-full max-w-md rounded-md border border-line-strong bg-surface-raised px-3 py-1.5 text-ink"
+          className={cn(
+            "mt-1 block min-h-11 w-full max-w-md rounded-md border border-line-strong bg-surface-raised px-3 text-ink",
+            focusRingClass,
+          )}
         />
       </label>
       {visible.length === 0 ? (
@@ -49,7 +52,7 @@ export function PlayerHistorySearch(props: {
                   player: entry.playerId,
                 })}
                 className={cn(
-                  "flex items-baseline justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-surface-raised",
+                  "flex min-h-11 items-center justify-between gap-2 rounded-md px-2 text-sm hover:bg-surface-raised",
                   focusRingClass,
                   entry.playerId === props.selectedPlayerId &&
                     "bg-team/15 text-team-ink",

@@ -142,9 +142,22 @@ describe("game shell UI", () => {
     ).toBeNull();
     expect(screen.getByText("Career Mode")).toBeTruthy();
     expect(screen.getByText("Dynasty Mode")).toBeTruthy();
-    expect(screen.getAllByText("Coming Soon").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Coming soon").length).toBe(2);
     expect(screen.queryByRole("link", { name: /Career Mode/i })).toBeNull();
     expect(screen.queryByRole("link", { name: /Dynasty Mode/i })).toBeNull();
+    // Locked tiles are announced but are not focusable or actionable.
+    for (const name of [
+      /Career Mode, coming soon/i,
+      /Dynasty Mode, coming soon/i,
+    ]) {
+      const tile = screen.getByRole("article", { name });
+      expect(tile.hasAttribute("tabindex")).toBe(false);
+      expect(tile.querySelector("a, button, [tabindex]")).toBeNull();
+    }
+    // The hero tile is the single entry link and a focus-grid item.
+    const hero = screen.getByRole("link", { name: /Owner Mode/i });
+    expect(hero.hasAttribute("data-focus-item")).toBe(true);
+    expect(screen.getAllByRole("link")).toHaveLength(1);
     expect(screen.queryByText("Continue")).toBeNull();
     unmount();
   });

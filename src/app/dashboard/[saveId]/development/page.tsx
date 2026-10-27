@@ -1,3 +1,9 @@
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,7 +14,7 @@ import { ManagementDecisionPanel } from "@/components/management/ManagementDecis
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
-import { Tabs } from "@/components/ui/Tabs";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { StaffEntityLink } from "@/components/entity/StaffEntityLink";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 
@@ -38,7 +44,7 @@ export default async function DevelopmentHubPage({
         actions={
           <Link
             href={`/dashboard/${saveId}/development-league`}
-            className="text-sm text-team-ink underline-offset-4 hover:underline"
+            className={cn(linkClass, touchTargetTextClass, focusRingClass)}
           >
             Franchise Development League
           </Link>
@@ -88,7 +94,7 @@ export default async function DevelopmentHubPage({
         </div>
       </div>
 
-      <Tabs
+      <ViewSwitch
         aria-label="Development"
         activeKey={activeTab}
         items={[

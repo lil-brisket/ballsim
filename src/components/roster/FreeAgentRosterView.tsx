@@ -1,3 +1,9 @@
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import Link from "next/link";
 import type { FreeAgentView } from "@/state/selectors";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
@@ -32,59 +38,58 @@ export function FreeAgentRosterView(props: {
         </p>
         <Link
           href={props.freeAgencyHubHref}
-          className="text-sm text-team-ink underline-offset-4 hover:underline"
+          className={cn(linkClass, touchTargetTextClass, focusRingClass)}
         >
           Full Free Agency →
         </Link>
       </div>
-      <div className="overflow-x-auto">
-        <DataTable headers={["Player", "Pos", "OVR", "Age", "Action"]}>
-          {props.freeAgents.slice(0, 40).map((agent) => (
-            <tr key={agent.playerId} className="border-t border-line">
-              <td className="px-3 py-2">
-                <span className="flex items-center gap-2">
-                  <PlayerPortrait
-                    playerId={agent.playerId}
-                    portrait={agent.portrait}
-                    firstName={agent.firstName}
-                    lastName={agent.lastName}
-                    size="sm"
-                  />
-                  <PlayerEntityLink
-                    saveId={props.saveId}
-                    playerId={agent.playerId}
-                  >
-                    {agent.firstName} {agent.lastName}
-                  </PlayerEntityLink>
-                </span>
-              </td>
-              <td className="px-3 py-2 text-muted">{agent.position}</td>
-              <td className="px-3 py-2">
-                <OvrBadge
-                  overall={agent.overall}
+      <DataTable headers={["Player", "Pos", "OVR", "Age", "Action"]}>
+        {props.freeAgents.slice(0, 40).map((agent) => (
+          <tr key={agent.playerId}>
+            <td className="px-3 py-2">
+              <span className="flex items-center gap-2">
+                <PlayerPortrait
+                  playerId={agent.playerId}
+                  portrait={agent.portrait}
+                  firstName={agent.firstName}
+                  lastName={agent.lastName}
                   size="sm"
-                  className="align-middle"
                 />
-              </td>
-              <td className="px-3 py-2 text-muted">{agent.age}</td>
-              <td className="px-3 py-2">
-                <Link
-                  href={props.freeAgencyHubHref}
-                  className="text-sm text-team-ink underline-offset-4 hover:underline"
+                <PlayerEntityLink
+                  saveId={props.saveId}
+                  playerId={agent.playerId}
                 >
-                  View in Free Agency →
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </DataTable>
-      </div>
+                  {agent.firstName} {agent.lastName}
+                </PlayerEntityLink>
+              </span>
+            </td>
+            <td className="px-3 py-2 text-muted">{agent.position}</td>
+            <td className="px-3 py-2">
+              <OvrBadge
+                overall={agent.overall}
+                size="sm"
+                className="align-middle"
+              />
+            </td>
+            <td className="px-3 py-2 text-muted">{agent.age}</td>
+            <td className="px-3 py-2">
+              <Link
+                href={props.freeAgencyHubHref}
+                className={cn(linkClass, touchTargetTextClass, focusRingClass)}
+              >
+                View in Free Agency →
+              </Link>
+            </td>
+          </tr>
+        ))}
+      </DataTable>
+
       {props.freeAgents.length > 40 ? (
         <p className="text-sm text-disabled">
           Showing top 40 by overall.{" "}
           <Link
             href={props.freeAgencyHubHref}
-            className="text-team-ink underline-offset-4 hover:underline"
+            className={cn(linkClass, touchTargetTextClass, focusRingClass)}
           >
             See all
           </Link>

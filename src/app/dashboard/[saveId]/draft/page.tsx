@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { cn, linkClass } from "@/components/ui/styles";
+import { rowLinkClass } from "@/components/league/row-link-class";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { notFound } from "next/navigation";
 import {
@@ -261,6 +267,7 @@ export default async function DraftPage({
                         <PlayerEntityLink
                           saveId={saveId}
                           playerId={selection.playerId}
+                          className={rowLinkClass}
                         >
                           {selection.playerName}
                         </PlayerEntityLink>
@@ -271,7 +278,7 @@ export default async function DraftPage({
               </Section>
             </aside>
 
-            <main className="space-y-4">
+            <div className="space-y-4">
               <Section title="Prospect pool">
                 {!board.userOnClock ? (
                   <EmptyState message="Selection unlocks when you are on the clock. You can still scout and build your board." />
@@ -347,7 +354,12 @@ export default async function DraftPage({
                               ) : null}
                               <button
                                 type="submit"
-                                className={cn(linkClass, "text-sm font-medium")}
+                                className={cn(
+                                  linkClass,
+                                  touchTargetTextClass,
+                                  focusRingClass,
+                                  "text-sm font-medium",
+                                )}
                               >
                                 Draft
                               </button>
@@ -367,7 +379,11 @@ export default async function DraftPage({
                             />
                             <button
                               type="submit"
-                              className="text-sm text-muted hover:underline"
+                              className={cn(
+                                touchTargetTextClass,
+                                focusRingClass,
+                                "text-sm text-muted hover:underline",
+                              )}
                             >
                               {onBoard ? "On board" : "Add to board"}
                             </button>
@@ -383,7 +399,7 @@ export default async function DraftPage({
                   })}
                 </div>
               </Section>
-            </main>
+            </div>
 
             <aside className="space-y-4">
               <Section title="Team needs">

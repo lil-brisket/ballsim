@@ -1,7 +1,7 @@
-import { Tabs } from "@/components/ui/Tabs";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 
 /**
- * Sub-navigation for the Franchise section (Issue #190). Relocation lives
+ * Views of the Franchise section (Issue #190). Relocation lives
  * at `/franchise/relocation`; the old `/relocation` route redirects there.
  */
 const LINKS = [
@@ -11,17 +11,17 @@ const LINKS = [
   { key: "relocation", suffix: "/franchise/relocation", label: "Relocation" },
 ] as const;
 
-export type FranchiseSubNavKey = (typeof LINKS)[number]["key"];
+export type FranchiseViewKey = (typeof LINKS)[number]["key"];
 
-export function FranchiseSubNav(props: {
+export function FranchiseViews(props: {
   saveId: string;
-  active: FranchiseSubNavKey;
+  active: FranchiseViewKey;
 }) {
   const base = `/dashboard/${props.saveId}`;
   return (
-    <Tabs
+    <ViewSwitch
       aria-label="Franchise"
-      className="mb-6"
+      className="mb-6 max-w-full flex-wrap"
       activeKey={props.active}
       items={LINKS.map((link) => ({
         key: link.key,

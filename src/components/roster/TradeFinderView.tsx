@@ -7,7 +7,7 @@ import { formatMoney } from "@/components/owner/MoneyDisplay";
 import { TradeOfferCard } from "@/components/roster/TradeOfferCard";
 import { buttonClass } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
 import type {
   TradeAssetView,
@@ -23,7 +23,7 @@ const keyOf = (asset: Selected) => `${asset.kind}:${asset.id}`;
 
 const itemClass = (selected: boolean) =>
   cn(
-    "flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40",
+    "flex w-full items-center justify-between gap-2 rounded-lg border min-h-11 px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40",
     selected
       ? "border-team-ink bg-surface-high text-ink"
       : "border-line bg-surface-raised/60 text-soft hover:border-disabled",
@@ -141,7 +141,7 @@ export function TradeFinderView(props: {
               aria-label={`${offer.counterpartyName}, interest ${Math.round(offer.interest)}`}
               onClick={() => setIndex(i)}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1 text-xs",
+                "inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full border px-3 text-xs touch-manipulation",
                 i === active
                   ? "border-team-ink bg-surface-high text-ink"
                   : "border-line text-muted hover:border-disabled",
@@ -204,6 +204,7 @@ export function TradeFinderView(props: {
                     aria-label={`Remove ${slotLabel(asset)}`}
                     onClick={() => toggle(asset)}
                     className={cn(
+                      touchTargetClass,
                       "shrink-0 text-faint hover:text-rose-400",
                       focusRingClass,
                     )}

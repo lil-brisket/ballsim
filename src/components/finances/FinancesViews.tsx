@@ -1,7 +1,7 @@
-import { Tabs } from "@/components/ui/Tabs";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 
 /**
- * Sub-navigation for the Finances section (Issue #189). Facilities live at
+ * Views of the Finances section (Issue #189). Facilities live at
  * `/finances/facilities`; the old `/facilities` route redirects there.
  */
 const LINKS = [
@@ -15,17 +15,17 @@ const LINKS = [
   },
 ] as const;
 
-export type FinancesSubNavKey = (typeof LINKS)[number]["key"];
+export type FinancesViewKey = (typeof LINKS)[number]["key"];
 
-export function FinancesSubNav(props: {
+export function FinancesViews(props: {
   saveId: string;
-  active: FinancesSubNavKey;
+  active: FinancesViewKey;
 }) {
   const base = `/dashboard/${props.saveId}`;
   return (
-    <Tabs
+    <ViewSwitch
       aria-label="Finances"
-      className="mb-6"
+      className="mb-6 max-w-full flex-wrap"
       activeKey={props.active}
       items={LINKS.map((link) => ({
         key: link.key,

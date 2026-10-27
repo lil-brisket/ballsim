@@ -10,6 +10,7 @@ import { loadCalendarPageView } from "@/application/game-service";
 import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import { PhaseDashboard } from "@/components/phase/PhaseDashboard";
 import { ErrorState } from "@/components/ui/EmptyState";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ScheduleViewSwitch } from "@/components/calendar/ScheduleViewSwitch";
 import { parseCalendarDate } from "@/domain/calendar-date";
@@ -102,7 +103,12 @@ export default async function CalendarPage({
       />
 
       <details className="mt-8 rounded-xl border border-line bg-surface-raised/30 px-4 py-3">
-        <summary className="cursor-pointer text-sm text-muted">
+        <summary
+          className={cn(
+            "flex min-h-11 cursor-pointer items-center text-sm text-muted",
+            focusRingClass,
+          )}
+        >
           Season phase details
         </summary>
         <div className="mt-4">

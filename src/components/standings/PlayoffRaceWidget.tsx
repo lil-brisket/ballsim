@@ -1,4 +1,5 @@
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
+import { rowLinkPlainClass } from "@/components/league/row-link-class";
 import { TeamIdentityInline } from "@/components/team/TeamIdentityInline";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, panelClass } from "@/components/ui/styles";
@@ -41,7 +42,10 @@ function RaceRow(props: {
           <TeamEntityLink
             saveId={props.saveId}
             teamId={team.teamId}
-            className="min-w-0 truncate hover:text-team-ink"
+            className={cn(
+              rowLinkPlainClass,
+              "min-w-0 truncate hover:text-team-ink",
+            )}
           >
             <TeamIdentityInline
               city={team.city}

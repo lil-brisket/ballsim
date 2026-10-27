@@ -1,4 +1,5 @@
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import type { AwardsHubRow } from "@/state/awards-hub-selectors";
 
@@ -10,6 +11,7 @@ export function AwardWinnerName(props: { saveId: string; row: AwardsHubRow }) {
     <PlayerEntityLink
       saveId={props.saveId}
       playerId={props.row.winnerSubjectId}
+      className={rowLinkClass}
     >
       {props.row.winnerName}
     </PlayerEntityLink>
@@ -21,7 +23,11 @@ export function AwardWinnerTeam(props: { saveId: string; row: AwardsHubRow }) {
     return <span className="text-faint">{props.row.teamName ?? "—"}</span>;
   }
   return (
-    <TeamEntityLink saveId={props.saveId} teamId={props.row.winnerTeamId}>
+    <TeamEntityLink
+      saveId={props.saveId}
+      teamId={props.row.winnerTeamId}
+      className={rowLinkClass}
+    >
       {props.row.teamName}
     </TeamEntityLink>
   );

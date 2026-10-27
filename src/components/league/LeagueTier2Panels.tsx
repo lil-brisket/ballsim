@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { rowLinkPlainClass } from "@/components/league/row-link-class";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -9,7 +10,11 @@ import type {
   LeagueTransactionBrief,
 } from "@/state/league-hub-selectors";
 import type { LeagueInjuryRow } from "@/state/league-injury-selectors";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { formatGameDate } from "@/presentation/game-date";
 
 export function LeagueRecentResultsPanel(props: {
@@ -71,6 +76,7 @@ export function LeagueTransactionsBriefing(props: {
         <Link
           href={href}
           className={cn(
+            touchTargetTextClass,
             "text-sm text-team-ink underline-offset-4 hover:underline",
             focusRingClass,
           )}
@@ -119,7 +125,10 @@ export function LeagueInjuriesBriefing(props: {
                 <PlayerEntityLink
                   saveId={props.saveId}
                   playerId={row.playerId}
-                  className={cn("text-ink hover:text-team-ink", focusRingClass)}
+                  className={cn(
+                    rowLinkPlainClass,
+                    "text-ink hover:text-team-ink",
+                  )}
                 >
                   {row.playerName}
                 </PlayerEntityLink>
@@ -129,8 +138,8 @@ export function LeagueInjuriesBriefing(props: {
                       saveId={props.saveId}
                       teamId={row.teamId}
                       className={cn(
+                        rowLinkPlainClass,
                         "text-muted hover:text-team-ink",
-                        focusRingClass,
                       )}
                     >
                       {row.teamAbbreviation}

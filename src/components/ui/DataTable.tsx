@@ -73,6 +73,7 @@ export function DataTable(props: {
 }) {
   return (
     <TableKeys
+      aria-label={props.caption ?? "Table"}
       className={cn(
         "rounded-xl border border-line",
         props.maxHeight ? "overflow-auto" : "overflow-x-auto",

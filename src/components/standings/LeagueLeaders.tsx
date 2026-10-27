@@ -1,4 +1,5 @@
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { rowLinkPlainClass } from "@/components/league/row-link-class";
 import { Section } from "@/components/ui/Section";
 import { cn, panelClass } from "@/components/ui/styles";
 import type { LeagueLeadersView } from "@/state/league-leaders-selectors";
@@ -33,7 +34,7 @@ export function LeagueLeaders(props: {
                   <PlayerEntityLink
                     saveId={props.saveId}
                     playerId={card.leader.playerId}
-                    className="hover:text-team-ink"
+                    className={cn(rowLinkPlainClass, "hover:text-team-ink")}
                   >
                     {`${card.leader.firstName} ${card.leader.lastName}`.trim()}
                   </PlayerEntityLink>

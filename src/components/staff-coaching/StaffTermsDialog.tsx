@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { NumberStepper } from "@/components/ui/NumberStepper";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useDialogFocus } from "@/components/management/use-dialog-focus";
 import { Overlay } from "@/components/ui/Overlay";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 
@@ -29,6 +30,8 @@ export function StaffTermsDialog(props: {
   const [annualSalary, setAnnualSalary] = useState(props.defaultAnnualSalary);
   const [years, setYears] = useState(props.defaultYears);
   const total = annualSalary * years;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(open, dialogRef, () => setOpen(false));
 
   return (
     <>
@@ -50,11 +53,11 @@ export function StaffTermsDialog(props: {
           onClick={() => setOpen(false)}
         >
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="staff-terms-dialog-title"
             className="relative z-10 w-full max-w-md rounded-xl border border-line-strong bg-surface-raised p-5 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
           >
             <h3
               id="staff-terms-dialog-title"

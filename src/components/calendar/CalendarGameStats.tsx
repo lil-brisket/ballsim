@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { CalendarGameStatsView } from "@/state/selectors/calendar-game-stats";
@@ -50,7 +51,7 @@ export function CalendarGameStats(props: {
 
   return (
     <div
-      className="space-y-3 rounded-md border border-surface-line bg-surface-raised px-3 py-3 text-xs text-soft"
+      className="space-y-3 rounded-md border border-surface-line bg-surface-raised px-3 py-3 text-sm text-soft"
       aria-label="Game stats"
     >
       <table className="w-full text-center tabular-nums">
@@ -115,6 +116,7 @@ export function CalendarGameStats(props: {
                   <PlayerEntityLink
                     saveId={props.saveId}
                     playerId={player.playerId}
+                    className={rowLinkClass}
                   >
                     {player.playerName}
                   </PlayerEntityLink>

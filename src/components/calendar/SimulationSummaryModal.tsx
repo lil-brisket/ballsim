@@ -3,13 +3,20 @@
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { useModalKeys } from "@/components/calendar/use-modal-keys";
 import type { CalendarPageMediaHighlight } from "@/application/game-service";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScoreNumeral } from "@/components/ui/ScoreNumeral";
 import { CountUp, prefersReducedMotion } from "@/components/ui/CountUp";
 import { playUiSound } from "@/components/ui/sound/ui-sound";
-import { focusRingClass } from "@/components/ui/styles";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import { formatGameDate } from "@/presentation/game-date";
 import { parseGameResultHeadline } from "@/presentation/game-result-headline";
 
@@ -154,6 +161,7 @@ export function SimulationSummaryModal(props: {
   const router = useRouter();
   const [dismissed, setDismissed] = useState(false);
   const visible = props.open && !dismissed;
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const grouped = useMemo(() => {
     const byDate = new Map<string, CalendarPageMediaHighlight[]>();
@@ -180,6 +188,8 @@ export function SimulationSummaryModal(props: {
       (url.searchParams.toString() ? `?${url.searchParams.toString()}` : "");
     router.replace(next);
   }
+
+  useModalKeys(panelRef, visible, dismiss);
 
   if (!visible) {
     return null;
@@ -221,6 +231,8 @@ export function SimulationSummaryModal(props: {
         onClick={dismiss}
       />
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="simulation-summary-title"
@@ -337,7 +349,10 @@ export function SimulationSummaryModal(props: {
                     className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-ink"
                   >
                     {item.href ? (
-                      <Link href={item.href} className="hover:text-team-ink">
+                      <Link
+                        href={item.href}
+                        className={cn("hover:text-team-ink", focusRingClass)}
+                      >
                         {item.title}
                       </Link>
                     ) : (

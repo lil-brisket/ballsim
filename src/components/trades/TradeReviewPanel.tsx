@@ -1,5 +1,6 @@
 "use client";
 
+import { DataTable, numericCellClass } from "@/components/ui/DataTable";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
@@ -122,24 +123,25 @@ export function TradeReviewPanel(props: {
 
       <section className="rounded-md border border-line-strong bg-surface-base/50 px-4 py-3">
         <SectionHeading as="h3" title="Roster impact" />
-        <table className="mt-2 w-full text-left text-sm">
-          <thead className="text-faint">
-            <tr>
-              <th className="py-1">Position</th>
-              <th>Before</th>
-              <th>After</th>
-            </tr>
-          </thead>
-          <tbody>
+        <div className="mt-2">
+          <DataTable
+            headers={[
+              "Position",
+              { label: "Before", numeric: true },
+              { label: "After", numeric: true },
+            ]}
+          >
             {review.rosterImpact.map((row) => (
-              <tr key={row.position} className="border-t border-line">
-                <td className="py-1">{row.position}</td>
-                <td>{row.before}</td>
-                <td>{row.after}</td>
+              <tr key={row.position}>
+                <td className="px-3 py-2">{row.position}</td>
+                <td className={`px-3 py-2 ${numericCellClass}`}>
+                  {row.before}
+                </td>
+                <td className={`px-3 py-2 ${numericCellClass}`}>{row.after}</td>
               </tr>
             ))}
-          </tbody>
-        </table>
+          </DataTable>
+        </div>
         {review.rosterImpact.some((row) => row.after > row.before) ? (
           <p className="mt-2 text-sm text-win">
             Incoming depth may push a player into the rotation.

@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { cn, linkClass } from "@/components/ui/styles";
+import { rowLinkClass } from "@/components/league/row-link-class";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { TaxLineNote } from "@/components/finances/PayrollRulesPanel";
 import Link from "next/link";
@@ -15,7 +21,7 @@ import { getRequestSaveStore } from "@/application/request-save-store";
 import { ConfirmDialog } from "@/components/owner/ConfirmDialog";
 import { buttonClass } from "@/components/ui/Button";
 import { NumberStepper } from "@/components/ui/NumberStepper";
-import { DataTable } from "@/components/ui/DataTable";
+import { DataTable, numericCellClass } from "@/components/ui/DataTable";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -178,6 +184,7 @@ export default async function FreeAgencyPage({
                             <PlayerEntityLink
                               saveId={saveId}
                               playerId={offer.playerId}
+                              className={rowLinkClass}
                             >
                               {offer.playerName}
                             </PlayerEntityLink>
@@ -248,14 +255,22 @@ export default async function FreeAgencyPage({
             {hub.market.length === 0 ? (
               <EmptyState message="No free agents available." />
             ) : (
-              <DataTable headers={["Player", "Pos", "Age", "OVR", "Actions"]}>
+              <DataTable
+                headers={[
+                  "Player",
+                  "Pos",
+                  { label: "Age", numeric: true },
+                  "OVR",
+                  "Actions",
+                ]}
+              >
                 {hub.market.slice(0, 40).map((agent) => {
                   const rfaTag = hub.rfa.enabled
                     ? (hub.rfaTags[agent.playerId] ?? null)
                     : null;
                   const interest = hub.interest[agent.playerId] ?? null;
                   return (
-                    <tr key={agent.playerId} className="border-t border-line">
+                    <tr key={agent.playerId}>
                       <td className="px-3 py-2 text-ink">
                         <span className="flex items-center gap-2">
                           <PlayerPortrait
@@ -271,6 +286,7 @@ export default async function FreeAgencyPage({
                           <PlayerEntityLink
                             saveId={saveId}
                             playerId={agent.playerId}
+                            className={rowLinkClass}
                           >
                             {agent.firstName} {agent.lastName}
                           </PlayerEntityLink>
@@ -279,7 +295,11 @@ export default async function FreeAgencyPage({
                         {interest ? <FreeAgentInterest {...interest} /> : null}
                       </td>
                       <td className="px-3 py-2 text-muted">{agent.position}</td>
-                      <td className="px-3 py-2 text-muted">{agent.age}</td>
+                      <td
+                        className={cn("px-3 py-2 text-muted", numericCellClass)}
+                      >
+                        {agent.age}
+                      </td>
                       <td className="px-3 py-2">
                         <OvrBadge
                           overall={agent.overall}
@@ -335,7 +355,12 @@ export default async function FreeAgencyPage({
                               />
                               <button
                                 type="submit"
-                                className={cn(linkClass, "text-sm")}
+                                className={cn(
+                                  linkClass,
+                                  touchTargetTextClass,
+                                  focusRingClass,
+                                  "text-sm",
+                                )}
                               >
                                 Sign
                               </button>
@@ -368,7 +393,11 @@ export default async function FreeAgencyPage({
                                 <input type="hidden" name="years" value={1} />
                                 <button
                                   type="submit"
-                                  className="text-sm text-muted hover:text-team-ink"
+                                  className={cn(
+                                    touchTargetTextClass,
+                                    focusRingClass,
+                                    "text-sm text-muted hover:text-team-ink",
+                                  )}
                                 >
                                   Offer
                                 </button>
@@ -386,7 +415,12 @@ export default async function FreeAgencyPage({
 
           {hub.inSeason ? null : (
             <details className="rounded-lg border border-line px-4 py-3 text-sm text-muted">
-              <summary className="cursor-pointer text-soft">
+              <summary
+                className={cn(
+                  "flex min-h-11 cursor-pointer items-center text-soft",
+                  focusRingClass,
+                )}
+              >
                 Finish free agency (legacy domain action)
               </summary>
               <p className="mt-2 text-sm text-faint">

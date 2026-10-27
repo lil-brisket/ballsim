@@ -26,6 +26,7 @@ import {
   AUTO_MANAGE_AFTER_DAYS_OPTIONS,
 } from "@/domain/participation";
 import { InviteCreator } from "@/components/game/InviteCreator";
+import { DataTable } from "@/components/ui/DataTable";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
@@ -148,114 +149,101 @@ export default async function LeagueMembersPage({
       {error ? <ErrorState message={error} /> : null}
 
       <Section title="Players">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-ink">
-            <thead className="text-sm text-muted">
-              <tr>
-                <th className="py-2 pr-4">Player</th>
-                <th className="py-2 pr-4">Teams</th>
-                <th className="py-2 pr-4">Status</th>
-                <th className="py-2 pr-4">Last active</th>
-                {isHost ? <th className="py-2">Actions</th> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {participation.participants.map((p) => (
-                <tr key={p.id} className="border-t border-surface-line">
-                  <td className="py-2 pr-4 align-top">
-                    <span className="font-medium">{p.displayName}</span>
-                    {p.isHost ? (
-                      <span className="ml-2">
-                        <StatusBadge label="Commissioner" tone="info" />
-                      </span>
-                    ) : null}
-                    {p.isActive ? (
-                      <span className="ml-2 text-sm text-muted">(You)</span>
-                    ) : null}
-                  </td>
-                  <td className="py-2 pr-4 align-top">
-                    {p.teamIds.length > 0
-                      ? p.teamIds
-                          .map((id) => teamNames.get(id) ?? id)
-                          .join(", ")
-                      : "—"}
-                  </td>
-                  <td className="py-2 pr-4 align-top">
-                    {p.autoManaged
-                      ? `AI-managed (${AUTO_REASON_LABEL[p.autoManaged.reason]})`
-                      : p.isReady
-                        ? "✓ ready"
-                        : "waiting"}
-                  </td>
-                  <td className="py-2 pr-4 align-top">
-                    {p.lastActiveAt ? formatDateTime(p.lastActiveAt) : "—"}
-                  </td>
-                  {isHost ? (
-                    <td className="py-2 align-top">
-                      {p.isActive ? null : (
-                        <div className="flex flex-wrap gap-2">
-                          {p.autoManaged ? (
-                            <form action={setParticipantAutoManagedAction}>
-                              <input
-                                type="hidden"
-                                name="saveId"
-                                value={saveId}
-                              />
-                              <input
-                                type="hidden"
-                                name="participantId"
-                                value={p.id}
-                              />
-                              <input
-                                type="hidden"
-                                name="autoManaged"
-                                value="false"
-                              />
-                              <button
-                                type="submit"
-                                className={memberButtonClass}
-                              >
-                                Return control
-                              </button>
-                            </form>
-                          ) : (
-                            <ConfirmForm
-                              action={setParticipantAutoManagedAction}
-                              saveId={saveId}
-                              fields={{
-                                participantId: p.id,
-                                autoManaged: "true",
-                              }}
-                              label="Auto-manage"
-                              warning={`Let the AI manage ${p.displayName}'s teams until they take back control?`}
-                              confirmLabel="Confirm auto-manage"
-                            />
-                          )}
-                          <ConfirmForm
-                            action={transferOnlineHostAction}
-                            saveId={saveId}
-                            fields={{ participantId: p.id }}
-                            label="Make host"
-                            warning={`Make ${p.displayName} the host?`}
-                            confirmLabel="Confirm make host"
+        <DataTable
+          caption="League members"
+          headers={[
+            "Player",
+            "Teams",
+            "Status",
+            "Last active",
+            ...(isHost ? ["Actions"] : []),
+          ]}
+        >
+          {participation.participants.map((p) => (
+            <tr key={p.id}>
+              <td className="px-3 py-2 align-top">
+                <span className="font-medium">{p.displayName}</span>
+                {p.isHost ? (
+                  <span className="ml-2">
+                    <StatusBadge label="Commissioner" tone="info" />
+                  </span>
+                ) : null}
+                {p.isActive ? (
+                  <span className="ml-2 text-sm text-muted">(You)</span>
+                ) : null}
+              </td>
+              <td className="px-3 py-2 align-top">
+                {p.teamIds.length > 0
+                  ? p.teamIds.map((id) => teamNames.get(id) ?? id).join(", ")
+                  : "—"}
+              </td>
+              <td className="px-3 py-2 align-top">
+                {p.autoManaged
+                  ? `AI-managed (${AUTO_REASON_LABEL[p.autoManaged.reason]})`
+                  : p.isReady
+                    ? "✓ ready"
+                    : "waiting"}
+              </td>
+              <td className="px-3 py-2 align-top">
+                {p.lastActiveAt ? formatDateTime(p.lastActiveAt) : "—"}
+              </td>
+              {isHost ? (
+                <td className="px-3 py-2 align-top">
+                  {p.isActive ? null : (
+                    <div className="flex flex-wrap gap-2">
+                      {p.autoManaged ? (
+                        <form action={setParticipantAutoManagedAction}>
+                          <input type="hidden" name="saveId" value={saveId} />
+                          <input
+                            type="hidden"
+                            name="participantId"
+                            value={p.id}
                           />
-                          <ConfirmForm
-                            action={removeOnlineParticipantAction}
-                            saveId={saveId}
-                            fields={{ participantId: p.id }}
-                            label="Remove"
-                            warning={`Remove ${p.displayName}? Their franchises return to AI control.`}
-                            confirmLabel="Confirm remove"
+                          <input
+                            type="hidden"
+                            name="autoManaged"
+                            value="false"
                           />
-                        </div>
+                          <button type="submit" className={memberButtonClass}>
+                            Return control
+                          </button>
+                        </form>
+                      ) : (
+                        <ConfirmForm
+                          action={setParticipantAutoManagedAction}
+                          saveId={saveId}
+                          fields={{
+                            participantId: p.id,
+                            autoManaged: "true",
+                          }}
+                          label="Auto-manage"
+                          warning={`Let the AI manage ${p.displayName}'s teams until they take back control?`}
+                          confirmLabel="Confirm auto-manage"
+                        />
                       )}
-                    </td>
-                  ) : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      <ConfirmForm
+                        action={transferOnlineHostAction}
+                        saveId={saveId}
+                        fields={{ participantId: p.id }}
+                        label="Make host"
+                        warning={`Make ${p.displayName} the host?`}
+                        confirmLabel="Confirm make host"
+                      />
+                      <ConfirmForm
+                        action={removeOnlineParticipantAction}
+                        saveId={saveId}
+                        fields={{ participantId: p.id }}
+                        label="Remove"
+                        warning={`Remove ${p.displayName}? Their franchises return to AI control.`}
+                        confirmLabel="Confirm remove"
+                      />
+                    </div>
+                  )}
+                </td>
+              ) : null}
+            </tr>
+          ))}
+        </DataTable>
       </Section>
 
       <Section title="Advance approvals">

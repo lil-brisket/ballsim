@@ -5,7 +5,7 @@ import {
   FinancialLedger,
   FinancialTrend,
 } from "@/components/finances/FinancialLedger";
-import { FinancesSubNav } from "@/components/finances/FinancesSubNav";
+import { FinancesViews } from "@/components/finances/FinancesViews";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -37,7 +37,7 @@ export default async function FinancesActivityPage({
         title="Finances"
         subtitle={`${view.teamName} · Season ${view.seasonYear}`}
       />
-      <FinancesSubNav saveId={saveId} active="activity" />
+      <FinancesViews saveId={saveId} active="activity" />
       {error ? <ErrorState message={error} /> : null}
 
       {lastGameDay || forecast ? (

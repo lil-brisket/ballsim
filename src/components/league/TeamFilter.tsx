@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { TeamFilterValue } from "./team-filter-utils";
@@ -31,6 +31,7 @@ export function TeamFilter(props: {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -71,13 +72,22 @@ export function TeamFilter(props: {
           "Team");
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.stopPropagation();
+          setOpen(false);
+          triggerRef.current?.focus();
+        }
+      }}
+    >
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => setTeam("all")}
           className={cn(
-            "rounded-full border px-3 py-1 text-sm",
+            "min-h-11 rounded-full border px-4 text-sm touch-manipulation",
             props.value === "all"
               ? "border-team-ink text-team-ink"
               : "border-line-strong text-muted hover:border-faint",
@@ -90,7 +100,7 @@ export function TeamFilter(props: {
           type="button"
           onClick={() => setTeam("my")}
           className={cn(
-            "rounded-full border px-3 py-1 text-sm",
+            "min-h-11 rounded-full border px-4 text-sm touch-manipulation",
             props.value === "my"
               ? "border-team-ink text-team-ink"
               : "border-line-strong text-muted hover:border-faint",
@@ -100,10 +110,12 @@ export function TeamFilter(props: {
           My Team
         </button>
         <button
+          ref={triggerRef}
           type="button"
+          aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
           className={cn(
-            "rounded-full border px-3 py-1 text-sm",
+            "min-h-11 rounded-full border px-4 text-sm touch-manipulation",
             props.value !== "all" && props.value !== "my"
               ? "border-team-ink text-team-ink"
               : "border-line-strong text-muted hover:border-faint",
@@ -119,10 +131,14 @@ export function TeamFilter(props: {
         <div className="absolute z-20 mt-2 w-64 rounded-lg border border-line-strong bg-surface-base p-2 shadow-xl">
           <input
             type="search"
+            aria-label="Search teams"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search teams…"
-            className="mb-2 w-full rounded-md border border-line-strong bg-surface-raised px-2 py-1.5 text-sm text-ink placeholder:text-disabled"
+            className={cn(
+              "mb-2 min-h-11 w-full rounded-md border border-line-strong bg-surface-raised px-2 text-sm text-ink placeholder:text-disabled",
+              focusRingClass,
+            )}
             autoFocus
           />
           <ul className="max-h-48 overflow-y-auto">
@@ -132,7 +148,7 @@ export function TeamFilter(props: {
                   type="button"
                   onClick={() => setTeam(team.teamId)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-high",
+                    "flex min-h-11 w-full items-center justify-between rounded px-2 text-left text-sm text-ink hover:bg-surface-high",
                     focusRingClass,
                   )}
                 >

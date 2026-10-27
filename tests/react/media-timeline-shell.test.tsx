@@ -250,14 +250,16 @@ describe("feed atmosphere", () => {
 });
 
 describe("TimelineFeed", () => {
-  it("is a labelled feed", () => {
+  it("is a labelled region of posts", () => {
     render(
       <TimelineFeed>
         <TimelinePostShell post={post()} context={context} />
       </TimelineFeed>,
     );
-    const feed = screen.getByRole("feed", { name: "League timeline" });
-    expect(feed.getAttribute("aria-busy")).toBe("false");
+    // Not role="feed": that pattern needs article-only children and page keys.
+    const region = screen.getByRole("region", { name: "League timeline" });
+    expect(region.querySelector("[role=feed]")).toBeNull();
+    expect(region.textContent).not.toBe("");
   });
 
   it("renders Load more as a link only when href is set", () => {

@@ -1,3 +1,8 @@
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -36,7 +41,11 @@ export default async function StaffDetailPage({ params }: PageProps) {
       <p className="mb-4 text-sm text-muted">
         <Link
           href={`/dashboard/${saveId}/staff-coaching/staff`}
-          className="hover:text-team-ink"
+          className={cn(
+            touchTargetTextClass,
+            "hover:text-team-ink",
+            focusRingClass,
+          )}
         >
           ← Back to staff
         </Link>

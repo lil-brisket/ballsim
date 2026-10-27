@@ -1,3 +1,4 @@
+import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import { OvrBadge } from "@/components/ui/OvrBadge";
 import Link from "next/link";
 import { CardTable } from "@/components/player-profile/CardTable";
@@ -177,7 +178,7 @@ export function PlayerCareer(props: {
                 <td className="px-3 py-2">
                   <Link
                     href={`/dashboard/${props.saveId}/games/${high.gameId}`}
-                    className="text-team-ink underline-offset-4 hover:underline"
+                    className={cn(linkClass, focusRingClass)}
                   >
                     Box score
                   </Link>

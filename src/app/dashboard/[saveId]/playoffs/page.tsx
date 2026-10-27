@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,6 +8,12 @@ import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import { Metric } from "@/components/ui/Metric";
 import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
 import {
@@ -50,7 +57,12 @@ export default async function PlayoffsPage({
         actions={
           <Link
             href={`/dashboard/${saveId}/league/standings`}
-            className="text-sm text-team-ink underline-offset-4 hover:underline"
+            className={cn(
+              linkClass,
+              touchTargetTextClass,
+              focusRingClass,
+              "text-sm",
+            )}
           >
             Standings
           </Link>
@@ -180,7 +192,7 @@ function RoundGrid(props: {
             size="sm"
             tone="muted"
             className="mb-2"
-            titleClassName="uppercase tracking-wide"
+
             title={round.label}
           />
           <ul className="space-y-2">
@@ -223,7 +235,11 @@ function SeriesCard(props: {
         <span className="text-ink">
           {series.higherSeed != null ? `#${series.higherSeed} ` : ""}
           {series.higherSeedTeamId && series.higherSeedTeamName ? (
-            <TeamEntityLink saveId={saveId} teamId={series.higherSeedTeamId}>
+            <TeamEntityLink
+              saveId={saveId}
+              teamId={series.higherSeedTeamId}
+              className={rowLinkClass}
+            >
               {series.higherSeedTeamName}
             </TeamEntityLink>
           ) : (
@@ -236,7 +252,11 @@ function SeriesCard(props: {
         <span className="text-ink">
           {series.lowerSeed != null ? `#${series.lowerSeed} ` : ""}
           {series.lowerSeedTeamId && series.lowerSeedTeamName ? (
-            <TeamEntityLink saveId={saveId} teamId={series.lowerSeedTeamId}>
+            <TeamEntityLink
+              saveId={saveId}
+              teamId={series.lowerSeedTeamId}
+              className={rowLinkClass}
+            >
               {series.lowerSeedTeamName}
             </TeamEntityLink>
           ) : (

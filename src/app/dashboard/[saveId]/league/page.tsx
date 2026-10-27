@@ -13,7 +13,11 @@ import {
   LeagueTransactionsBriefing,
 } from "@/components/league/LeagueTier2Panels";
 import { ErrorState } from "@/components/ui/EmptyState";
-import { cn, focusRingClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 
 export const metadata: Metadata = { title: "League" };
 
@@ -49,6 +53,7 @@ export default async function LeagueHubPage({
           <Link
             href={`/dashboard/${saveId}/league/expansion`}
             className={cn(
+              touchTargetTextClass,
               "text-team-ink underline-offset-4 hover:underline",
               focusRingClass,
             )}

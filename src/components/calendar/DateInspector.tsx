@@ -187,7 +187,7 @@ export function DateInspector(props: {
                     ) : null}
                   </div>
                   {inspector.date > props.currentDate ? (
-                    <p className="text-xs text-muted">
+                    <p className="text-sm text-muted">
                       Sim stops before tip-off.
                     </p>
                   ) : null}
@@ -211,7 +211,13 @@ export function DateInspector(props: {
                   className="rounded-md border border-surface-line bg-surface-raised px-3 py-2"
                 >
                   {event.href ? (
-                    <Link href={event.href} className="block text-sm text-ink">
+                    <Link
+                      href={event.href}
+                      className={cn(
+                        "block min-h-11 py-2 text-sm text-ink hover:text-team-ink",
+                        focusRingClass,
+                      )}
+                    >
                       {event.title}
                     </Link>
                   ) : (
@@ -248,7 +254,7 @@ export function DateInspector(props: {
               ))}
             </ul>
             {inspector.simulationPreview.blockReason ? (
-              <p className="text-sm text-red-300">
+              <p className="text-sm text-loss">
                 {inspector.simulationPreview.blockReason}
               </p>
             ) : null}

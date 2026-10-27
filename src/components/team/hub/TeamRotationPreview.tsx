@@ -3,7 +3,13 @@ import Link from "next/link";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
-import { cn, panelClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  panelClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
 import type { TeamHubView } from "@/state/team-hub-selectors";
 
 export function TeamRotationPreview(props: {
@@ -17,7 +23,10 @@ export function TeamRotationPreview(props: {
     <Section
       title="Rotation"
       action={
-        <Link href={rotationHref} className="text-sm text-team-ink">
+        <Link
+          href={rotationHref}
+          className={cn(linkClass, touchTargetTextClass, focusRingClass)}
+        >
           Manage Lineup & Rotation
         </Link>
       }

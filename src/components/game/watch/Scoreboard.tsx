@@ -1,3 +1,6 @@
+import { useRef } from "react";
+import { useOverflowFocusable } from "@/components/ui/focus/use-overflow-focusable";
+import { focusRingClass } from "@/components/ui/styles";
 import { ScoreNumeral, TeamBadge, TeamThemeScope } from "@/components/ui";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { periodLabel } from "@/state/watch-game-selectors";
@@ -72,6 +75,8 @@ function Linescore(props: {
   byPeriod: { away: number[]; home: number[] };
   currentPeriod: number;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useOverflowFocusable(scrollRef);
   const columns = Math.max(REGULATION_COLUMNS, props.currentPeriod);
   const periods = Array.from({ length: columns }, (_, index) => index + 1);
   const rows = [
@@ -87,7 +92,12 @@ function Linescore(props: {
     },
   ];
   return (
-    <div className="mt-4 overflow-x-auto sm:flex sm:justify-center">
+    <div
+      ref={scrollRef}
+      role="region"
+      aria-label="Line score, scrollable"
+      className={`mt-4 overflow-x-auto sm:flex sm:justify-center ${focusRingClass}`}
+    >
       <table className="w-full text-sm sm:w-auto">
         <caption className="sr-only">Points by quarter</caption>
         <thead>

@@ -1,6 +1,12 @@
 import { buttonClass } from "@/components/ui/Button";
 import type { Metadata } from "next";
-import { linkClass } from "@/components/ui/styles";
+import {
+  cn,
+  focusRingClass,
+  linkClass,
+  touchTargetTextClass,
+} from "@/components/ui/styles";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { notFound } from "next/navigation";
 import {
   markNotificationsReadAction,
@@ -29,7 +35,8 @@ export default async function NotificationsPage({
     notFound();
   }
 
-  const returnPath = `/dashboard/${saveId}/notifications`;
+  const base = `/dashboard/${saveId}/notifications`;
+  const returnPath = base;
   const ownedTeams = view.dashboard.ownedTeams;
   const types = Array.from(
     new Set(view.notifications.map((notification) => notification.type)),
@@ -63,63 +70,40 @@ export default async function NotificationsPage({
       />
       {error ? <ErrorState message={error} /> : null}
 
-      <div className="flex flex-wrap gap-2">
-        <a
-          href={`/dashboard/${saveId}/notifications`}
-          className={`rounded-full border px-3 py-1 text-xs ${
-            !team
-              ? "border-team-ink text-team-ink"
-              : "border-line-strong text-muted"
-          }`}
-        >
-          All Teams
-        </a>
-        {ownedTeams.map((owned) => (
-          <a
-            key={owned.id}
-            href={`/dashboard/${saveId}/notifications?team=${owned.id}`}
-            className={`rounded-full border px-3 py-1 text-xs ${
-              team === owned.id
-                ? "border-team-ink text-team-ink"
-                : "border-line-strong text-muted"
-            }`}
-          >
-            {owned.abbreviation}
-          </a>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <a
-          href={
-            team
-              ? `/dashboard/${saveId}/notifications?team=${team}`
-              : `/dashboard/${saveId}/notifications`
-          }
-          className={`rounded-full border px-3 py-1 text-xs ${
-            !type
-              ? "border-team-ink text-team-ink"
-              : "border-line-strong text-muted"
-          }`}
-        >
-          All types
-        </a>
-        {types.map((notificationType) => (
-          <a
-            key={notificationType}
-            href={`/dashboard/${saveId}/notifications?${new URLSearchParams({
-              ...(team ? { team } : {}),
-              type: notificationType,
-            }).toString()}`}
-            className={`rounded-full border px-3 py-1 text-xs ${
-              type === notificationType
-                ? "border-team-ink text-team-ink"
-                : "border-line-strong text-muted"
-            }`}
-          >
-            {notificationType}
-          </a>
-        ))}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <ViewSwitch
+          aria-label="Filter by team"
+          className="max-w-full flex-wrap"
+          activeKey={team && ownedTeams.some((o) => o.id === team) ? team : ""}
+          items={[
+            { key: "", label: "All Teams", href: base },
+            ...ownedTeams.map((owned) => ({
+              key: owned.id,
+              label: owned.abbreviation,
+              href: `${base}?team=${owned.id}`,
+            })),
+          ]}
+        />
+        <ViewSwitch
+          aria-label="Filter by type"
+          className="max-w-full flex-wrap"
+          activeKey={type && types.includes(type) ? type : ""}
+          items={[
+            {
+              key: "",
+              label: "All types",
+              href: team ? `${base}?team=${team}` : base,
+            },
+            ...types.map((notificationType) => ({
+              key: notificationType,
+              label: notificationType,
+              href: `${base}?${new URLSearchParams({
+                ...(team ? { team } : {}),
+                type: notificationType,
+              }).toString()}`,
+            })),
+          ]}
+        />
       </div>
 
       {filtered.length === 0 ? (
@@ -138,7 +122,14 @@ export default async function NotificationsPage({
                       name="teamId"
                       value={notification.teamId}
                     />
-                    <button type="submit" className={linkClass}>
+                    <button
+                      type="submit"
+                      className={cn(
+                        linkClass,
+                        touchTargetTextClass,
+                        focusRingClass,
+                      )}
+                    >
                       Switch to team
                     </button>
                   </form>

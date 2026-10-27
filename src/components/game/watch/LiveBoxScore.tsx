@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useOverflowFocusable } from "@/components/ui/focus/use-overflow-focusable";
 import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 import type { PlayerId } from "@/domain/ids";
 import type {
@@ -103,14 +104,14 @@ function PlayerRow(props: {
             aria-hidden
             className={cn(
               "h-2 w-2 shrink-0 rounded-full",
-              row.onCourt ? "bg-emerald-400" : "bg-transparent",
+              row.onCourt ? "bg-live" : "bg-transparent",
             )}
           />
           {row.onCourt ? <span className="sr-only">on court</span> : null}
           <span>{row.shortName}</span>
           {selected ? <span className="sr-only">selected</span> : null}
           {row.fouledOut ? (
-            <span className="rounded border border-rose-700/50 px-1 text-xs text-rose-300">
+            <span className="rounded border border-loss/50 px-1 text-sm text-loss">
               FO
             </span>
           ) : null}
@@ -143,6 +144,8 @@ function TeamTable(props: {
     (sum, row) => sum + (minutes.get(row.playerId) ?? 0),
     0,
   );
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useOverflowFocusable(scrollRef);
   const headers = [
     "Player",
     ...(props.isFinal ? ["MIN"] : []),
@@ -158,7 +161,15 @@ function TeamTable(props: {
     />
   );
   return (
-    <div className="overflow-x-auto rounded-xl border border-line">
+    <div
+      ref={scrollRef}
+      role="region"
+      aria-label={`${props.team.abbreviation} box score, scrollable`}
+      className={cn(
+        "overflow-x-auto rounded-xl border border-line",
+        focusRingClass,
+      )}
+    >
       <table className="min-w-full text-left text-sm">
         <caption className="sr-only">
           {props.team.abbreviation} live box score

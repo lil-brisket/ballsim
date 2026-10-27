@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -97,21 +98,25 @@ export default async function FanVotingPage({ params }: PageProps) {
                         </PlayerEntityLink>
                         {row.teamId && row.teamName ? (
                           <div className="text-sm text-faint">
-                            <TeamEntityLink saveId={saveId} teamId={row.teamId}>
+                            <TeamEntityLink
+                              saveId={saveId}
+                              teamId={row.teamId}
+                              className={rowLinkClass}
+                            >
                               {row.teamName}
                             </TeamEntityLink>
                           </div>
                         ) : null}
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3 font-mono text-soft">
+                    <div className="flex shrink-0 items-center gap-3 font-mono tabular-nums text-soft">
                       <span>{row.voteTotal.toLocaleString()}</span>
                       <span
                         className={
                           row.movement === "up"
-                            ? "text-emerald-400"
+                            ? "text-win"
                             : row.movement === "down"
-                              ? "text-rose-400"
+                              ? "text-loss"
                               : "text-faint"
                         }
                         title={
@@ -120,7 +125,12 @@ export default async function FanVotingPage({ params }: PageProps) {
                             : "New"
                         }
                       >
-                        {movementGlyph(row.movement)}
+                        <span aria-hidden>{movementGlyph(row.movement)}</span>
+                        <span className="sr-only">
+                          {row.previousRank != null
+                            ? `Was #${row.previousRank}`
+                            : "New"}
+                        </span>
                       </span>
                     </div>
                   </li>

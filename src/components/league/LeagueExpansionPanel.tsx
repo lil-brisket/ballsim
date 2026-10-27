@@ -8,6 +8,7 @@ import type { ExpansionAssessment } from "@/state/expansion-assessment";
 import type { ExpansionState } from "@/domain/entities/expansion";
 import type { LeagueEconomy } from "@/domain/entities/league-economy";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
+import { DataTable } from "@/components/ui/DataTable";
 import { buttonClass } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
@@ -100,33 +101,26 @@ export function LeagueExpansionPanel(props: {
         </div>
 
         {assessment.marketOpportunity.destinations.length > 0 ? (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[28rem] text-left text-sm text-soft">
-              <thead className="text-faint">
-                <tr>
-                  <th className="py-1 pr-3 font-medium">Market</th>
-                  <th className="py-1 pr-3 font-medium">Size</th>
-                  <th className="py-1 pr-3 font-medium">Opportunity</th>
-                  <th className="py-1 pr-3 font-medium">Risk</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assessment.marketOpportunity.destinations
-                  .slice(0, 5)
-                  .map((destination) => (
-                    <tr key={destination.city} className="border-t border-line">
-                      <td className="py-1.5 pr-3">
-                        {destination.city} {destination.name}
-                      </td>
-                      <td className="py-1.5 pr-3">{destination.marketSize}</td>
-                      <td className="py-1.5 pr-3">
-                        {destination.opportunity.replaceAll("_", " ")}
-                      </td>
-                      <td className="py-1.5 pr-3">{destination.risk}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+          <div className="mt-4">
+            <DataTable
+              caption="Candidate markets"
+              headers={["Market", "Size", "Opportunity", "Risk"]}
+            >
+              {assessment.marketOpportunity.destinations
+                .slice(0, 5)
+                .map((destination) => (
+                  <tr key={destination.city}>
+                    <td className="px-3 py-2 text-ink">
+                      {destination.city} {destination.name}
+                    </td>
+                    <td className="px-3 py-2">{destination.marketSize}</td>
+                    <td className="px-3 py-2">
+                      {destination.opportunity.replaceAll("_", " ")}
+                    </td>
+                    <td className="px-3 py-2">{destination.risk}</td>
+                  </tr>
+                ))}
+            </DataTable>
           </div>
         ) : null}
       </Section>

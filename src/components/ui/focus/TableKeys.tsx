@@ -1,5 +1,8 @@
 "use client";
 
+import { useRef } from "react";
+import { useOverflowFocusable } from "@/components/ui/focus/use-overflow-focusable";
+import { cn, focusRingClass } from "@/components/ui/styles";
 import {
   nextRowControlIndex,
   nextSortIndex,
@@ -46,7 +49,12 @@ export function TableKeys(props: {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  /** Names the region when it scrolls and so becomes focusable. */
+  "aria-label"?: string;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // A wide table scrolls sideways; let keyboard users reach and scroll it.
+  useOverflowFocusable(ref);
   function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     const { key } = event;
     const vertical = key === "ArrowDown" || key === "ArrowUp";
@@ -111,7 +119,13 @@ export function TableKeys(props: {
   }
 
   return (
-    <div className={props.className} style={props.style} onKeyDown={onKeyDown}>
+    <div
+      ref={ref}
+      aria-label={props["aria-label"]}
+      className={cn(focusRingClass, props.className)}
+      style={props.style}
+      onKeyDown={onKeyDown}
+    >
       {props.children}
     </div>
   );

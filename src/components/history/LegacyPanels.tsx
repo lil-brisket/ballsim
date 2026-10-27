@@ -1,4 +1,5 @@
 import { retireJerseyNumberAction } from "@/application/actions";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { Button } from "@/components/ui/Button";
@@ -24,9 +25,13 @@ function EntryList(props: {
 }) {
   return (
     <div className="min-w-0">
-      <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-faint">
-        {props.title}
-      </h4>
+      <SectionHeading
+        as="h3"
+        size="sm"
+        tone="muted"
+        className="mb-1"
+        title={props.title}
+      />
       {props.entries.length === 0 ? (
         <p className="text-sm text-disabled">No games yet.</p>
       ) : (
@@ -40,10 +45,11 @@ function EntryList(props: {
                 <PlayerEntityLink
                   saveId={props.saveId}
                   playerId={entry.playerId}
+                  className={rowLinkClass}
                 >
                   {entry.playerName}
                 </PlayerEntityLink>
-                <span className="ml-1 text-xs text-faint">{entry.context}</span>
+                <span className="ml-1 text-sm text-faint">{entry.context}</span>
               </span>
               <span className="tabular-nums font-medium text-ink">
                 {entry.value}
@@ -123,7 +129,11 @@ export function HallOfFame(props: { saveId: string; legacy: LegacyView }) {
         <ul className="divide-y divide-line">
           {legacy.hallOfFame.map((inductee) => (
             <li key={inductee.playerId} className="py-2 text-sm">
-              <PlayerEntityLink saveId={saveId} playerId={inductee.playerId}>
+              <PlayerEntityLink
+                saveId={saveId}
+                playerId={inductee.playerId}
+                className={rowLinkClass}
+              >
                 {inductee.playerName}
               </PlayerEntityLink>
               <span className="ml-2 text-faint">
@@ -162,7 +172,7 @@ export function RetiredJerseysPanel(props: {
               <span className="font-mono text-2xl font-semibold text-team-ink">
                 {entry.number}
               </span>
-              <span className="text-xs text-soft">{entry.playerName}</span>
+              <span className="text-sm text-soft">{entry.playerName}</span>
             </li>
           ))}
         </ul>
@@ -185,7 +195,11 @@ export function RetiredJerseysPanel(props: {
               className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"
             >
               <div className="min-w-0">
-                <PlayerEntityLink saveId={saveId} playerId={legend.playerId}>
+                <PlayerEntityLink
+                  saveId={saveId}
+                  playerId={legend.playerId}
+                  className={rowLinkClass}
+                >
                   {legend.playerName}
                 </PlayerEntityLink>
                 <span className="ml-2 text-faint">
@@ -193,7 +207,7 @@ export function RetiredJerseysPanel(props: {
                 </span>
                 <p className="text-muted">{legend.summary}</p>
                 {legend.blockedReason ? (
-                  <p className="text-xs text-faint">{legend.blockedReason}</p>
+                  <p className="text-sm text-faint">{legend.blockedReason}</p>
                 ) : null}
               </div>
               <form action={retireJerseyNumberAction}>

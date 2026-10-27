@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadFinanceHubView } from "@/application/game-service";
-import { FinancesSubNav } from "@/components/finances/FinancesSubNav";
+import { FinancesViews } from "@/components/finances/FinancesViews";
 import { PayrollRulesPanel } from "@/components/finances/PayrollRulesPanel";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -34,7 +34,7 @@ export default async function FinancesPayrollPage({
         title="Finances"
         subtitle={`${view.teamName} · Season ${view.seasonYear}`}
       />
-      <FinancesSubNav saveId={saveId} active="payroll" />
+      <FinancesViews saveId={saveId} active="payroll" />
       {error ? <ErrorState message={error} /> : null}
 
       <Section title="Commitments">

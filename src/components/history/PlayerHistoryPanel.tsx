@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { rowLinkClass } from "@/components/league/row-link-class";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Metric } from "@/components/ui/Metric";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -9,6 +10,7 @@ import {
   focusRingClass,
   linkClass,
   panelClass,
+  touchTargetTextClass,
 } from "@/components/ui/styles";
 import { PlayerHistorySearch } from "@/components/history/PlayerHistorySearch";
 import type { HistoryHubRoute } from "@/state/history-hub-selectors";
@@ -28,7 +30,12 @@ function PlayerHistoryDetail(props: {
       action={
         <Link
           href={player.profileHref}
-          className={cn("text-sm", linkClass, focusRingClass)}
+          className={cn(
+            "text-sm",
+            linkClass,
+            touchTargetTextClass,
+            focusRingClass,
+          )}
         >
           View player profile
         </Link>
@@ -67,6 +74,7 @@ function PlayerHistoryDetail(props: {
                       <TeamEntityLink
                         saveId={props.saveId}
                         teamId={stop.teamId}
+                        className={rowLinkClass}
                       >
                         {stop.teamName ?? stop.teamId}
                       </TeamEntityLink>

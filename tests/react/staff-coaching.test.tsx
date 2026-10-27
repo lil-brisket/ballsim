@@ -23,7 +23,7 @@ vi.mock("@/application/actions", () => ({
 }));
 
 import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
-import { StaffCoachingNav } from "@/components/staff-coaching/StaffCoachingNav";
+import { StaffCoachingViews } from "@/components/staff-coaching/StaffCoachingViews";
 import { StaffPageView } from "@/components/staff-coaching/StaffPageView";
 import { CoachingPageView } from "@/components/staff-coaching/CoachingPageView";
 import type { CoachingView } from "@/state/team-management-selectors";
@@ -137,7 +137,7 @@ const staffDrawerView = {
 
 describe("staff-coaching UI", () => {
   it("renders Staff / Hiring Market / Coaching tabs", () => {
-    const { unmount } = render(<StaffCoachingNav saveId="save_test" />);
+    const { unmount } = render(<StaffCoachingViews saveId="save_test" />);
     expect(
       screen.getByRole("link", { name: "Staff" }).getAttribute("href"),
     ).toBe("/dashboard/save_test/staff-coaching/staff");
