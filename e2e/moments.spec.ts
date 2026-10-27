@@ -1,26 +1,33 @@
 import { expect, test } from "./fixtures";
 
 /**
- * Moments in the seeded offseason save (free agency, development has run):
- * the progression reveal opens by itself once, closes with Escape and stays
- * closed after a reload. The page keeps a replay button.
+ * Moments in the seeded offseason save (free agency: the Finals are over and
+ * development has run). They open by themselves one at a time (championship,
+ * then progression), close with Escape and stay closed after a reload. Their
+ * pages keep replay buttons. The suite runs with reduced motion, so each
+ * moment is one summary card ending in Done.
  */
 test.beforeEach(({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "moments: desktop only");
 });
 
-test("progression reveal opens once after development", async ({
+test("championship then progression open once, in order", async ({
   page,
   offseasonSave,
 }) => {
   await page.goto(offseasonSave(), { waitUntil: "networkidle" });
-  const reveal = page.getByRole("dialog", { name: "Progression reveal" });
-  await expect(reveal).toBeVisible();
-  // The suite runs with reduced motion: one summary card, so Done.
-  await expect(reveal.getByRole("button", { name: /^Done/ })).toBeFocused();
+  const champion = page.getByRole("dialog", { name: "Championship" });
+  const progression = page.getByRole("dialog", { name: "Progression reveal" });
 
+  await expect(champion).toBeVisible();
+  await expect(progression).toHaveCount(0);
+  await expect(champion.getByRole("button", { name: /^Done/ })).toBeFocused();
   await page.keyboard.press("Escape");
-  await expect(reveal).toHaveCount(0);
+  await expect(champion).toHaveCount(0);
+
+  await expect(progression).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(progression).toHaveCount(0);
 
   await page.reload({ waitUntil: "networkidle" });
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -29,10 +36,15 @@ test("progression reveal opens once after development", async ({
     waitUntil: "networkidle",
   });
   await page.getByRole("button", { name: /Replay progression/ }).click();
-  await expect(reveal).toBeVisible();
+  await expect(progression).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.goto(offseasonSave("/playoffs"), { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Replay championship/ }).click();
+  await expect(champion).toBeVisible();
 });
 
-test("no reveal before the season has ended", async ({
+test("no moments before the season has ended", async ({
   page,
   regularSeasonSave,
 }) => {

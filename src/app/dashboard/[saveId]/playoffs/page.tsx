@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
-import { rowLinkClass } from "@/components/league/row-link-class";
-import { SectionHeading } from "@/components/ui/SectionHeading";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Section } from "@/components/ui/Section";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import {
   cn,
   focusRingClass,
@@ -15,11 +11,11 @@ import {
   touchTargetTextClass,
 } from "@/components/ui/styles";
 import { Metric } from "@/components/ui/Metric";
-import { TeamEntityLink } from "@/components/entity/TeamEntityLink";
-import {
-  toPlayoffHubView,
-  type PlayoffRoundView,
-} from "@/state/playoff-hub-selectors";
+import { BracketTree } from "@/components/playoffs/BracketTree";
+import { ChampionReplay } from "@/components/playoffs/ChampionReplay";
+import { toChampionMomentView } from "@/state/champion-moment-selectors";
+import { layoutBracket } from "@/state/playoff-bracket-layout";
+import { toPlayoffHubView } from "@/state/playoff-hub-selectors";
 
 export const metadata: Metadata = { title: "Playoffs" };
 
@@ -48,6 +44,9 @@ export default async function PlayoffsPage({
   }
 
   const hub = toPlayoffHubView(loaded.state);
+  const champion = hub.championTeamId
+    ? toChampionMomentView(loaded.state)
+    : null;
 
   return (
     <div className="space-y-4">
@@ -107,164 +106,19 @@ export default async function PlayoffsPage({
             ) : null}
           </div>
 
-          {hub.isConferenceBracket ? (
-            <>
-              {hub.conferenceSections.map((conference) => (
-                <Section
-                  key={conference.conferenceId}
-                  title={conference.conferenceName}
-                >
-                  <RoundGrid
-                    saveId={saveId}
-                    rounds={conference.rounds}
-                    className="xl:grid-cols-3"
-                  />
-                </Section>
-              ))}
-              {hub.crossConferenceRounds.map((round) => (
-                <Section key={round.round} title={round.label}>
-                  <ul className="space-y-2 md:max-w-sm">
-                    {round.series.map((series) => (
-                      <SeriesCard
-                        key={series.id}
-                        saveId={saveId}
-                        series={series}
-                      />
-                    ))}
-                  </ul>
-                </Section>
-              ))}
-            </>
-          ) : (
-            <>
-              {/* Desktop / tablet: columns; mobile: stacked rounds */}
-              <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
-                {hub.rounds.map((round) => (
-                  <Section key={round.round} title={round.label}>
-                    <ul className="space-y-2">
-                      {round.series.map((series) => (
-                        <SeriesCard
-                          key={series.id}
-                          saveId={saveId}
-                          series={series}
-                        />
-                      ))}
-                    </ul>
-                  </Section>
-                ))}
-              </div>
+          {champion ? (
+            <div>
+              <ChampionReplay
+                saveId={saveId}
+                teamId={hub.userTeamId}
+                view={champion}
+              />
+            </div>
+          ) : null}
 
-              <div className="space-y-4 md:hidden">
-                {hub.rounds.map((round) => (
-                  <Section key={round.round} title={round.label}>
-                    <ul className="space-y-2">
-                      {round.series.map((series) => (
-                        <SeriesCard
-                          key={series.id}
-                          saveId={saveId}
-                          series={series}
-                        />
-                      ))}
-                    </ul>
-                  </Section>
-                ))}
-              </div>
-            </>
-          )}
+          <BracketTree saveId={saveId} hub={hub} layout={layoutBracket(hub)} />
         </>
       )}
     </div>
-  );
-}
-
-/** A conference's rounds as columns (stacked on mobile). */
-function RoundGrid(props: {
-  saveId: string;
-  rounds: PlayoffRoundView[];
-  className?: string;
-}) {
-  return (
-    <div className={`grid gap-4 md:grid-cols-2 ${props.className ?? ""}`}>
-      {props.rounds.map((round) => (
-        <div key={round.round}>
-          <SectionHeading
-            as="h3"
-            size="sm"
-            tone="muted"
-            className="mb-2"
-
-            title={round.label}
-          />
-          <ul className="space-y-2">
-            {round.series.map((series) => (
-              <SeriesCard
-                key={series.id}
-                saveId={props.saveId}
-                series={series}
-              />
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SeriesCard(props: {
-  saveId: string;
-  series: {
-    id: string;
-    status: string;
-    higherSeed: number | null;
-    lowerSeed: number | null;
-    higherSeedTeamId: string | null;
-    lowerSeedTeamId: string | null;
-    higherSeedTeamName: string | null;
-    lowerSeedTeamName: string | null;
-    higherWins: number;
-    lowerWins: number;
-  };
-}) {
-  const { series, saveId } = props;
-  return (
-    <li className="rounded-lg border border-line px-3 py-2 text-sm">
-      <div className="mb-1 flex justify-end">
-        <StatusBadge label={series.status} />
-      </div>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-ink">
-          {series.higherSeed != null ? `#${series.higherSeed} ` : ""}
-          {series.higherSeedTeamId && series.higherSeedTeamName ? (
-            <TeamEntityLink
-              saveId={saveId}
-              teamId={series.higherSeedTeamId}
-              className={rowLinkClass}
-            >
-              {series.higherSeedTeamName}
-            </TeamEntityLink>
-          ) : (
-            <span className="text-disabled">TBD</span>
-          )}
-        </span>
-        <span className="font-mono text-ink">{series.higherWins}</span>
-      </div>
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <span className="text-ink">
-          {series.lowerSeed != null ? `#${series.lowerSeed} ` : ""}
-          {series.lowerSeedTeamId && series.lowerSeedTeamName ? (
-            <TeamEntityLink
-              saveId={saveId}
-              teamId={series.lowerSeedTeamId}
-              className={rowLinkClass}
-            >
-              {series.lowerSeedTeamName}
-            </TeamEntityLink>
-          ) : (
-            <span className="text-disabled">TBD</span>
-          )}
-        </span>
-        <span className="font-mono text-ink">{series.lowerWins}</span>
-      </div>
-    </li>
   );
 }
