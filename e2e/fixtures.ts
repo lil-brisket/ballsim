@@ -1,16 +1,29 @@
 import { createClient } from "@libsql/client";
-import { test as base, expect, type Page } from "@playwright/test";
+import {
+  test as base,
+  expect,
+  type Page,
+  type TestInfo,
+} from "@playwright/test";
 import "dotenv/config";
+import { E2E_SAVES, type E2ESaveKey } from "./seed-saves";
 
 let cachedSaveId: Promise<string> | undefined;
 
-/** E2E_SAVE_ID, or the most recently updated save in the local database. */
+function database() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("Set DATABASE_URL or E2E_SAVE_ID.");
+  return createClient({ url });
+}
+
+/**
+ * E2E_SAVE_ID (CI sets it to the seeded regular-season save), or the most
+ * recently updated save in the local database.
+ */
 export function saveId(): Promise<string> {
   cachedSaveId ??= (async () => {
     if (process.env.E2E_SAVE_ID) return process.env.E2E_SAVE_ID;
-    const url = process.env.DATABASE_URL;
-    if (!url) throw new Error("Set DATABASE_URL or E2E_SAVE_ID.");
-    const result = await createClient({ url }).execute(
+    const result = await database().execute(
       'select id from "SaveGame" order by updatedAt desc limit 1',
     );
     const id = result.rows[0]?.id;
@@ -20,6 +33,38 @@ export function saveId(): Promise<string> {
     return id;
   })();
   return cachedSaveId;
+}
+
+let cachedSeeded: Promise<Set<string>> | undefined;
+
+/** Which `npm run e2e:seed` saves exist in the database the specs read. */
+function seededSaveIds(): Promise<Set<string>> {
+  cachedSeeded ??= (async () => {
+    const ids = Object.values(E2E_SAVES);
+    const result = await database().execute({
+      sql: `select id from "SaveGame" where id in (${ids.map(() => "?").join(", ")})`,
+      args: ids,
+    });
+    return new Set(result.rows.map((row) => String(row.id)));
+  })();
+  return cachedSeeded;
+}
+
+type SaveUrl = (path?: string) => string;
+
+/**
+ * URL builder for one seeded save. Skips the test when the save is not in
+ * the database (a local run against your own saves instead of e2e.db).
+ */
+async function seededSave(key: E2ESaveKey, testInfo: TestInfo) {
+  const id = E2E_SAVES[key];
+  if (!(await seededSaveIds()).has(id)) {
+    testInfo.skip(
+      true,
+      `${id} not found: run npm run e2e:seed and point DATABASE_URL (app and tests) at prisma/e2e.db`,
+    );
+  }
+  return (path = "") => `/dashboard/${id}${path}`;
 }
 
 /** Console errors, uncaught exceptions and 5xx responses seen by a page. */
@@ -72,12 +117,26 @@ export async function horizontalOverflow(page: Page): Promise<string[]> {
   });
 }
 
-export const test = base.extend<{ dashboard: (path?: string) => string }>({
+export const test = base.extend<{
+  dashboard: SaveUrl;
+  regularSeasonSave: SaveUrl;
+  playoffsSave: SaveUrl;
+  offseasonSave: SaveUrl;
+}>({
   // `provide` is Playwright's fixture `use`; renamed so the React hooks lint
   // rule does not mistake it for a hook.
   dashboard: async ({}, provide) => {
     const id = await saveId();
     await provide((path = "") => `/dashboard/${id}${path}`);
+  },
+  regularSeasonSave: async ({}, provide, testInfo) => {
+    await provide(await seededSave("regularSeason", testInfo));
+  },
+  playoffsSave: async ({}, provide, testInfo) => {
+    await provide(await seededSave("playoffs", testInfo));
+  },
+  offseasonSave: async ({}, provide, testInfo) => {
+    await provide(await seededSave("offseason", testInfo));
   },
 });
 

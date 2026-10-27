@@ -56,6 +56,9 @@ export const SAVE_ROUTES: readonly string[] = [
   "/settings/tools",
 ];
 
+/** CI serves `npm run start`, where /dev pages are not found. */
+export const PRODUCTION_SERVER = Boolean(process.env.CI);
+
 /** Pages outside a save. */
 export const OUTER_ROUTES: readonly string[] = [
   "/home",
