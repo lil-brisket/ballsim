@@ -7,7 +7,10 @@ import {
   evaluateSixthMan,
 } from "@/systems/awards/evaluate-awards";
 import { runYearlyAwards } from "@/systems/awards/award-pipeline";
-import { AWARD_ELIGIBILITY_CONFIG } from "@/systems/awards/awards-config";
+import {
+  AWARD_ELIGIBILITY_CONFIG,
+  scaleSeasonMinimum,
+} from "@/systems/awards/awards-config";
 import {
   addPlayerToState,
   awardWinnerId,
@@ -73,8 +76,12 @@ describe("yearly awards", () => {
     );
     // Winner must meet min games
     const winnerAggGames = result!.context.statSnapshot.games;
+    // The fixture league is CBL-length: the minimum scales with it.
     expect(winnerAggGames).toBeGreaterThanOrEqual(
-      AWARD_ELIGIBILITY_CONFIG.mvp.minGames,
+      scaleSeasonMinimum(
+        AWARD_ELIGIBILITY_CONFIG.mvp.minGames,
+        state.settings.regularSeason.gamesPerTeam,
+      ),
     );
   });
 

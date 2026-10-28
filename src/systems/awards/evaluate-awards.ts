@@ -43,6 +43,7 @@ import {
   AWARD_METRIC_VERSION,
   AWARD_SCORING_CONFIG,
   AWARD_VOTING_CONFIG,
+  scaleSeasonMinimums,
 } from "@/systems/awards/awards-config";
 import {
   aggregateAllPlayersInGames,
@@ -425,9 +426,12 @@ export function evaluateMvp(
     throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
-  const cfg = options?.throughDate
-    ? { minGames: 10, minMinutes: 200 }
-    : AWARD_ELIGIBILITY_CONFIG.mvp;
+  const cfg = scaleSeasonMinimums(
+    options?.throughDate
+      ? { minGames: 10, minMinutes: 200 }
+      : AWARD_ELIGIBILITY_CONFIG.mvp,
+    state.settings.regularSeason.gamesPerTeam,
+  );
   const pool = buildPlayerPool(
     listPlayersInGames(games),
     games,
@@ -508,9 +512,12 @@ export function evaluateDpoy(
     throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
-  const cfg = options?.throughDate
-    ? { minGames: 10, minMinutes: 200 }
-    : AWARD_ELIGIBILITY_CONFIG.dpoy;
+  const cfg = scaleSeasonMinimums(
+    options?.throughDate
+      ? { minGames: 10, minMinutes: 200 }
+      : AWARD_ELIGIBILITY_CONFIG.dpoy,
+    state.settings.regularSeason.gamesPerTeam,
+  );
   const pool = buildPlayerPool(
     listPlayersInGames(games),
     games,
@@ -583,9 +590,15 @@ export function evaluateRoy(
     throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
-  const cfg = options?.throughDate
-    ? { minGames: 10, minMinutes: 200 }
-    : AWARD_ELIGIBILITY_CONFIG.rookieOfYear;
+  const cfg = scaleSeasonMinimums(
+    options?.throughDate
+      ? { minGames: 10, minMinutes: 200 }
+      : {
+          minGames: AWARD_ELIGIBILITY_CONFIG.rookieOfYear.minGames,
+          minMinutes: AWARD_ELIGIBILITY_CONFIG.rookieOfYear.minMinutes,
+        },
+    state.settings.regularSeason.gamesPerTeam,
+  );
   const seasonYear = state.competition.season.year;
   const rookies = listPlayersInGames(games).filter((id) =>
     isRookieEligible(state, id, seasonYear),
@@ -618,19 +631,32 @@ export function evaluateSixthMan(
     throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
-  const minGames = options?.throughDate
-    ? 10
-    : AWARD_ELIGIBILITY_CONFIG.sixthMan.minGames;
-  const minMinutes = options?.throughDate
-    ? 200
-    : AWARD_ELIGIBILITY_CONFIG.sixthMan.minMinutes;
+  const gamesPerTeam = state.settings.regularSeason.gamesPerTeam;
+  const { minGames, minMinutes } = scaleSeasonMinimums(
+    options?.throughDate
+      ? { minGames: 10, minMinutes: 200 }
+      : {
+          minGames: AWARD_ELIGIBILITY_CONFIG.sixthMan.minGames,
+          minMinutes: AWARD_ELIGIBILITY_CONFIG.sixthMan.minMinutes,
+        },
+    gamesPerTeam,
+  );
   const all = buildPlayerPool(
     listPlayersInGames(games),
     games,
     minGames,
     minMinutes,
   );
-  const pool = all.filter(isSixthManEligible);
+  // The bench check keeps the full-season minimums (also at midseason), as
+  // before; only their scale follows the season length.
+  const fullSeason = scaleSeasonMinimums(
+    {
+      minGames: AWARD_ELIGIBILITY_CONFIG.sixthMan.minGames,
+      minMinutes: AWARD_ELIGIBILITY_CONFIG.sixthMan.minMinutes,
+    },
+    gamesPerTeam,
+  );
+  const pool = all.filter((agg) => isSixthManEligible(agg, fullSeason));
   if (pool.length === 0) return null;
   const teamRecords = aggregateTeamPeriodRecords(games);
   const teamRanks = rankTeamsByWinPct(teamRecords);
@@ -713,14 +739,18 @@ export function evaluateMostImproved(
     throughDate: options?.throughDate,
   });
   if (games.length === 0) return null;
-  const cfg = options?.throughDate
-    ? {
-        minCurrentSeasonGames: 10,
-        minCurrentSeasonMinutes: 200,
-        minPreviousSeasonGames: 10,
-        minPreviousSeasonMinutes: 200,
-      }
-    : AWARD_ELIGIBILITY_CONFIG.mostImproved;
+  const cfg = scaleSeasonMinimums(
+    options?.throughDate
+      ? {
+          minCurrentSeasonGames: 10,
+          minCurrentSeasonMinutes: 200,
+          minPreviousSeasonGames: 10,
+          minPreviousSeasonMinutes: 200,
+        }
+      : // Last season's minimums use today's length as well.
+        AWARD_ELIGIBILITY_CONFIG.mostImproved,
+    state.settings.regularSeason.gamesPerTeam,
+  );
   const candidates = listPlayersInGames(games);
   const pool: Array<{
     agg: PeriodPlayerAgg;
