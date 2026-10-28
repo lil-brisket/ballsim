@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { loadOwnerSave } from "@/application/game-service";
 import { resolveOnboardingRoute } from "@/application/onboarding-routing";
 import { GameShell } from "@/components/game/GameShell";
-import { DashboardMoments } from "@/components/moments/DashboardMoments";
+import { LazyDashboardMoments } from "@/components/moments/LazyDashboardMoments";
 
 type OwnerLayoutProps = {
   children: React.ReactNode;
@@ -58,7 +58,7 @@ export default async function OwnerLayout({
       ticker={loaded.ticker ?? null}
     >
       {children}
-      <DashboardMoments saveId={saveId} moments={loaded.moments} />
+      <LazyDashboardMoments saveId={saveId} moments={loaded.moments} />
     </GameShell>
   );
 }

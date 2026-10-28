@@ -100,6 +100,8 @@ export function loadSearchIndex(saveId: string): Promise<SearchIndex> {
 export function CommandPalette(props: {
   saveId: string;
   groups: readonly OwnerNavGroup[];
+  /** Open as soon as it mounts (loaded on demand by the first request). */
+  openOnMount?: boolean;
 }) {
   const { saveId, groups } = props;
   const router = useRouter();
@@ -117,6 +119,7 @@ export function CommandPalette(props: {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const openRef = useRef(false);
+  const openOnMountRef = useRef(props.openOnMount === true);
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -144,6 +147,10 @@ export function CommandPalette(props: {
       );
     }
     window.addEventListener(OPEN_COMMAND_PALETTE, onOpen);
+    if (openOnMountRef.current) {
+      openOnMountRef.current = false;
+      window.dispatchEvent(new Event(OPEN_COMMAND_PALETTE));
+    }
     return () => window.removeEventListener(OPEN_COMMAND_PALETTE, onOpen);
   }, [saveId]);
 
