@@ -58,7 +58,7 @@ const SIZE_CLASS: Record<PlayerPortraitSize, string> = {
 
 const INITIALS_CLASS: Record<PlayerPortraitSize, string> = {
   xs: "text-[8px]",
-  sm: "text-[10px]",
+  sm: "text-xs",
   ms: "text-xs",
   md: "text-lg",
   lg: "text-2xl",

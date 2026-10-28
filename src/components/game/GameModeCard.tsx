@@ -3,7 +3,8 @@ import type {
   GameModeDefinition,
 } from "@/application/game-mode-catalog";
 import { HubTile } from "@/components/ui/HubTile";
-import { clipCornerClass, displayClass } from "@/components/ui/styles";
+import { clipCornerClass } from "@/components/ui/styles";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 /**
  * Mode icons share one style: 24 grid, 1.75 stroke, currentColor, round caps.
@@ -96,9 +97,12 @@ export function GameModeCard(props: {
         <div className="relative flex h-full min-h-[inherit] flex-col justify-between gap-4 p-4">
           <div className="flex items-start gap-3 pr-6">
             <ModeIcon id={mode.id} className="h-8 w-8 shrink-0 text-faint" />
-            <h2 className={`${displayClass} text-xl text-muted`}>
-              {mode.name}
-            </h2>
+            <SectionHeading
+              as="h2"
+              size="display"
+              titleClassName="text-xl font-bold leading-none text-muted"
+              title={mode.name}
+            />
           </div>
           <p className="flex items-center gap-2 text-sm text-muted">
             <LockIcon />

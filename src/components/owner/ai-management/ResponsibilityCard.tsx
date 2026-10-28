@@ -37,7 +37,7 @@ export function ResponsibilityCard({
         <span
           aria-hidden="true"
           className={[
-            "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border text-[10px] leading-none",
+            "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border text-xs leading-none",
             delegated
               ? "border-team-ink bg-team-ink text-surface-base"
               : "border-faint",

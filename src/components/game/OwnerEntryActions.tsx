@@ -66,10 +66,12 @@ export function OwnerEntryActions(props: {
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-team-ink">
                     Continue
                   </p>
-                  <h2 className="font-display text-3xl font-extrabold uppercase leading-none tracking-wide text-ink">
-                    {continueSave.controlledTeam.city}{" "}
-                    {continueSave.controlledTeam.name}
-                  </h2>
+                  <SectionHeading
+                    as="h2"
+                    size="display"
+                    titleClassName="text-3xl font-extrabold leading-none text-ink"
+                    title={`${continueSave.controlledTeam.city} ${continueSave.controlledTeam.name}`}
+                  />
                   <p className="text-sm text-soft">{continueSave.name}</p>
                   <p className="text-sm text-soft">
                     Season {continueSave.seasonYear} ·{" "}

@@ -14,6 +14,7 @@ import {
 } from "@/presentation/player-compare";
 import { ratingTier } from "@/presentation/rating-tier";
 import type { PlayerCompareView } from "@/state/player-compare";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 const TONE_CLASS = {
   win: "text-win",
@@ -58,14 +59,19 @@ function SlotCard(props: {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="font-display truncate text-2xl font-extrabold uppercase leading-tight tracking-wide text-ink">
-            <Link
-              href={`/dashboard/${props.saveId}/players/${player.playerId}`}
-              className="hover:text-team-ink"
-            >
-              {player.firstName} {player.lastName}
-            </Link>
-          </h2>
+          <SectionHeading
+            as="h2"
+            size="display"
+            titleClassName="truncate text-2xl font-extrabold leading-tight text-ink"
+            title={
+              <Link
+                href={`/dashboard/${props.saveId}/players/${player.playerId}`}
+                className="hover:text-team-ink"
+              >
+                {player.firstName} {player.lastName}
+              </Link>
+            }
+          />
           <p className={cn(displayClass, "mt-1 truncate text-base text-soft")}>
             {player.archetypeLabel}
           </p>
