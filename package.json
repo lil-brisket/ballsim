@@ -21,6 +21,7 @@
     "test:simulation": "node scripts/vitest.mjs run --project simulation",
     "test:all": "node scripts/vitest.mjs run",
     "test:e2e": "playwright test",
+    "e2e:seed": "tsx --conditions=react-server scripts/e2e-seed.ts",
     "test:e2e:update": "playwright test --update-snapshots",
     "sim": "tsx scripts/sim.ts",
     "test:offseason-soak": "tsx scripts/offseason-soak.ts",

@@ -53,7 +53,7 @@ function LeagueMilestoneChips(props: {
           key={milestone.key}
           title={milestone.label}
           className={[
-            "inline-block max-w-full truncate rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide sm:text-[10px]",
+            "inline-block max-w-full truncate rounded px-1 py-0.5 text-xs font-semibold uppercase tracking-wide",
             milestone.chipClass,
             milestone.reached && !milestone.active ? "opacity-70" : "",
           ]
@@ -65,7 +65,7 @@ function LeagueMilestoneChips(props: {
       ))}
       {hiddenCount > 0 ? (
         <span
-          className="inline-block rounded bg-surface-high px-1 py-0.5 text-[9px] font-medium text-muted sm:text-[10px]"
+          className="inline-block rounded bg-surface-high px-1 py-0.5 text-xs font-medium text-muted"
           title={props.milestones
             .slice(2)
             .map((milestone) => milestone.label)
@@ -208,7 +208,7 @@ export function CalendarDayCell(props: {
               className="!h-6 !w-6 sm:!h-8 sm:!w-8"
             />
             <span
-              className="text-[10px] font-semibold uppercase text-muted"
+              className="text-xs font-semibold uppercase text-muted"
               title={teamGame.home ? "Home" : "Away"}
               aria-hidden
             >
@@ -221,7 +221,7 @@ export function CalendarDayCell(props: {
           {teamGame.resultLabel ? (
             <p
               className={[
-                "font-display text-[11px] font-extrabold leading-tight tabular-nums sm:whitespace-nowrap sm:text-sm",
+                "font-display text-xs font-extrabold leading-tight tabular-nums sm:whitespace-nowrap sm:text-sm",
                 tone === "win"
                   ? "text-win"
                   : tone === "loss"

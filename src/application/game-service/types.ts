@@ -1,4 +1,6 @@
 import "server-only";
+import type { DashboardMomentsView } from "@/state/dashboard-moments";
+import type { TransactionTickerView } from "@/state/transaction-ticker-selectors";
 import type { SaveGameSummary } from "@/persistence/save-game-store";
 import type {
   DashboardSnapshot,
@@ -45,6 +47,10 @@ export type CreateGameResult = {
   save: SaveGameSummary;
   dashboard: DashboardSnapshot;
   navGroups?: readonly OwnerNavGroup[];
+  /** Moments the dashboard layout may auto-open (loadOwnerSave only). */
+  moments?: DashboardMomentsView;
+  /** Deadline / free agency ticker (loadOwnerSave only). */
+  ticker?: TransactionTickerView | null;
 };
 
 export type OwnerCommandSuccess<T extends object = object> = {

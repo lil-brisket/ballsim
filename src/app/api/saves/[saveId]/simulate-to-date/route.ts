@@ -9,6 +9,7 @@ import {
   clearSimulationStopRequest,
   isSimulationStopRequested,
 } from "@/application/simulation-stop-requests";
+import { toTransactionTickerView } from "@/state/transaction-ticker-selectors";
 import { toCalendarLeagueContext } from "@/state/standings-selectors";
 import { parseCalendarDate } from "@/domain/calendar-date";
 import {
@@ -85,6 +86,7 @@ export async function POST(
                 ...progress,
                 leagueContext: toCalendarLeagueContext(state),
                 monthGrid,
+                ticker: toTransactionTickerView(state),
                 inspector: buildCalendarDateInspectorView(
                   state,
                   progress.currentDate,

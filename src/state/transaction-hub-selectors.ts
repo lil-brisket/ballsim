@@ -3,6 +3,7 @@
  * Presentation-only; badges driven by DomainEventType.
  */
 
+import { withoutDuplicateSigningEvents } from "@/state/transaction-events";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import type { DomainEvent, DomainEventType } from "@/domain/events";
@@ -662,9 +663,9 @@ export function toTransactionHubView(
 ): TransactionHubView {
   const myTeamId = getActiveOwnerTeamId(state);
 
-  let events = [...state.competition.seasonEventLog].filter((event) =>
-    eventMatchesGroup(event, filters.group),
-  );
+  let events = withoutDuplicateSigningEvents(
+    state.competition.seasonEventLog,
+  ).filter((event) => eventMatchesGroup(event, filters.group));
 
   if (filters.range === "custom") {
     if (customDateRangeError(filters.start, filters.end)) {
@@ -779,4 +780,13 @@ export function transactionTypeLabel(type: DomainEventType): string {
     default:
       return type;
   }
+}
+
+/** Hub row builder (same-day trade grouping), shared with the deadline ticker. */
+export function buildTransactionRows(
+  state: GameState,
+  events: DomainEvent[],
+  myTeamId: TeamId,
+): TransactionRowView[] {
+  return buildRows(state, events, myTeamId);
 }

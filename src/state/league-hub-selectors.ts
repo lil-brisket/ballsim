@@ -3,6 +3,7 @@
  * Tier 1 (snapshot, standings, results) + Tier 2 previews (max 3 each).
  */
 
+import { withoutDuplicateSigningEvents } from "@/state/transaction-events";
 import type { GameState } from "@/state/game-state";
 import { getFinalGamesForSeason } from "@/state/game-access";
 import { getActiveOwnerTeamId, getActiveTeam } from "@/state/owner-context";
@@ -253,7 +254,9 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
   });
 
   // Transactions briefing
-  const txnEvents = [...state.competition.seasonEventLog]
+  const txnEvents = withoutDuplicateSigningEvents(
+    state.competition.seasonEventLog,
+  )
     .filter((e) => TEAM_TRANSACTION_EVENT_TYPES.includes(e.type))
     .sort((a, b) => {
       const d = b.occurredOn.localeCompare(a.occurredOn);

@@ -4,6 +4,7 @@
  * Warnings only when business health is critical/tight or Action Center has financial items.
  */
 
+import { toCapSheetView, type CapSheetView } from "@/state/cap-sheet-selectors";
 import {
   toPayrollRulesView,
   type PayrollRulesView,
@@ -60,6 +61,8 @@ export type FinanceHubView = {
   trend: FinanceTrendPoint[];
   /** Luxury tax / salary floor projection and last assessment. */
   payrollRules: PayrollRulesView;
+  /** Multi-season payroll grid with cap / tax / floor markers. */
+  capSheet: CapSheetView;
   /** Facility levels and upgrade costs for the Arena & Facilities tab. */
   facilities: FacilityRowView[];
 };
@@ -160,6 +163,7 @@ export function toFinanceHubView(state: GameState): FinanceHubView {
 
   return {
     payrollRules: toPayrollRulesView(state),
+    capSheet: toCapSheetView(state, teamId),
     saveId,
     teamName: team ? `${team.city} ${team.name}` : "Team",
     currentDate: owner.currentDate,

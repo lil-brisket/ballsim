@@ -2,6 +2,7 @@ import type {
   SimulationProgress,
   SimulationStopReason,
 } from "@/systems/simulation/types";
+import type { TransactionTickerView } from "@/state/transaction-ticker-selectors";
 import type { CalendarLeagueContextView } from "@/state/standings-selectors";
 import type {
   CalendarDateInspectorView,
@@ -16,6 +17,8 @@ export type SimulateToDateProgressEvent = {
   monthGrid?: CalendarMonthGrid;
   /** Date inspector for currentDate, so the side panel follows playback. */
   inspector?: CalendarDateInspectorView;
+  /** Deadline / free agency ticker after this day, for the shell strip. */
+  ticker?: TransactionTickerView | null;
 } & SimulationProgress;
 
 export type SimulateToDateDoneEvent = {

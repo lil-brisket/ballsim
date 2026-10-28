@@ -29,7 +29,10 @@ async function settle(page: Page) {
 }
 
 test.beforeEach(({}, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop", "keyboard journey: desktop");
+  test.skip(
+    testInfo.project.name !== "desktop" && testInfo.project.name !== "wide",
+    "keyboard journey: desktop and wide",
+  );
 });
 
 test("Home to Sim with the keyboard only", async ({ page, dashboard }) => {
@@ -41,11 +44,12 @@ test("Home to Sim with the keyboard only", async ({ page, dashboard }) => {
   await settle(page);
 
   // Tab to the Roster sub-tab and open it.
+  // Matched by href: a sub-tab's text includes its attention badge.
   await tabTo(
     page,
     (el) =>
       el.tagName === "A" &&
-      el.textContent?.trim().toLowerCase() === "roster" &&
+      (el.getAttribute("href") ?? "").endsWith("/roster") &&
       el.closest('nav[aria-label="Team sections"]') !== null,
   );
   await page.keyboard.press("Enter");
@@ -80,7 +84,7 @@ test("Home to Sim with the keyboard only", async ({ page, dashboard }) => {
     page,
     (el) =>
       el.tagName === "A" &&
-      el.textContent?.trim().toLowerCase() === "trades" &&
+      (el.getAttribute("href") ?? "").endsWith("/trades") &&
       el.closest('nav[aria-label="Front Office sections"]') !== null,
   );
   await page.keyboard.press("Enter");
@@ -113,7 +117,10 @@ test("Every hub and its sub-tabs are reachable by keyboard", async ({
   const count = await hubs.count();
   expect(count).toBeGreaterThan(4);
   for (let key = 1; key <= Math.min(count, 5); key += 1) {
+    // Wait for the hub itself: the client navigation outlasts networkidle.
+    const href = await hubs.nth(key - 1).getAttribute("href");
     await page.keyboard.press(String(key));
+    await page.waitForURL((url) => url.pathname === href);
     await settle(page);
     const tabs = page.locator('nav[aria-label$=" sections"] a');
     for (let i = 0; i < (await tabs.count()); i += 1) {

@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadDevelopmentHubView } from "@/application/game-service";
+import { ProgressionPanel } from "@/components/development/ProgressionPanel";
 import { SkillRatingsTable } from "@/components/development/SkillRatingsTable";
 import { TrainingCamps } from "@/components/development/TrainingCamps";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
@@ -31,7 +32,12 @@ export default async function DevelopmentHubPage({
 }: PageProps) {
   const { saveId } = await params;
   const { error, tab } = await searchParams;
-  const activeTab = tab === "ratings" ? "ratings" : "camps";
+  const activeTab =
+    tab === "ratings"
+      ? "ratings"
+      : tab === "progression"
+        ? "progression"
+        : "camps";
   const view = await loadDevelopmentHubView(saveId);
   if (!view) {
     notFound();
@@ -108,11 +114,18 @@ export default async function DevelopmentHubPage({
             label: "Ratings",
             href: `/dashboard/${saveId}/development?tab=ratings`,
           },
+          {
+            key: "progression",
+            label: "Progression",
+            href: `/dashboard/${saveId}/development?tab=progression`,
+          },
         ]}
       />
 
       {activeTab === "ratings" ? (
         <SkillRatingsTable saveId={saveId} rows={view.ratings} />
+      ) : activeTab === "progression" ? (
+        <ProgressionPanel saveId={saveId} view={view.progression} />
       ) : (
         <>
           <ManagementDecisionPanel

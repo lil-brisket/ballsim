@@ -52,9 +52,7 @@ export function PendingOwnerDecisionPanel(props: {
   const negotiateHref = `/dashboard/${props.saveId}/trades/${offer.decisionId}/negotiate`;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <section
       aria-labelledby="pending-trade-title"
       className="space-y-3 rounded-md border border-warning/40 bg-warning/10 px-4 py-4 text-sm text-ink"
     >
@@ -206,6 +204,6 @@ export function PendingOwnerDecisionPanel(props: {
           </form>
         ) : null}
       </div>
-    </div>
+    </section>
   );
 }

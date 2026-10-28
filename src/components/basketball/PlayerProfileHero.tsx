@@ -10,6 +10,7 @@ import {
 import { cn, displayClass } from "@/components/ui/styles";
 import { ratingTier } from "@/presentation/rating-tier";
 import type { TeamBrandingView } from "@/state/team-branding-view";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 /**
  * Banner: team-colour gradient, a bottom-anchored portrait, the last name as the dominant headline and a
@@ -159,9 +160,12 @@ export function PlayerProfileHero(props: {
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-ink">
               {props.firstName}
             </p>
-            <h3 className="font-display break-words text-4xl font-extrabold uppercase leading-none tracking-wide text-white [text-shadow:0_2px_12px_rgb(0_0_0_/_0.5)] sm:text-6xl">
-              {props.lastName}
-            </h3>
+            <SectionHeading
+              as="h3"
+              size="display"
+              titleClassName="break-words text-4xl font-extrabold leading-none text-white [text-shadow:0_2px_12px_rgb(0_0_0_/_0.5)] sm:text-6xl"
+              title={props.lastName}
+            />
             {props.archetypeLabel ? (
               <p className={cn(displayClass, "mt-2 text-xl text-ink")}>
                 {props.archetypeLabel}

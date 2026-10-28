@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { loadSaveWithHistory } from "@/application/game-service";
+import { AwardsNightReplay } from "@/components/history/AwardsNightReplay";
 import { HistoryHub } from "@/components/history/HistoryHub";
 import { AwardsViewSwitch } from "@/components/history/AwardsViewSwitch";
 import { historyHubHref } from "@/components/history/history-hub-links";
+import { getActiveOwnerTeamId } from "@/state/owner-context";
+import { toAwardsNightView } from "@/state/awards-night-selectors";
 import {
   misroutedHistoryHubTab,
   toHistoryHubView,
@@ -30,9 +33,17 @@ export default async function AwardsPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
+  const awardsNight = toAwardsNightView(loaded.state);
   return (
     <>
       <AwardsViewSwitch saveId={saveId} active="awards" />
+      {awardsNight ? (
+        <AwardsNightReplay
+          saveId={saveId}
+          teamId={getActiveOwnerTeamId(loaded.state)}
+          view={awardsNight}
+        />
+      ) : null}
       <HistoryHub view={toHistoryHubView(loaded.state, "awards", query)} />
     </>
   );

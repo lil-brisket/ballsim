@@ -110,4 +110,32 @@ describe("style guard", () => {
     );
     expect(hits).toEqual([]);
   });
+
+  it("renders headings through SectionHeading, not raw <h1-3 className>", () => {
+    // SectionHeading defines the heading styles; the drawer's dialog title is
+    // sized for its header; visually hidden headings carry no style.
+    const allowed = /components\/ui\/(SectionHeading|Drawer)\.tsx$/;
+    expect(
+      offenders(
+        /<h[1-3]\b[^>]*\bclassName=(?!"sr-only")/,
+        ({ file }) => file.endsWith(".tsx") && !allowed.test(file),
+      ),
+    ).toEqual([]);
+  });
+
+  it("uses the type scale, not arbitrary pixel font sizes", () => {
+    // Micro labels drawn inside a fixed-size box, where text-xs would
+    // overflow it: portrait initials (xs), the 3-letter team chip, the
+    // calendar "Next" tag and the identity editor's check dot.
+    const allowed = new Set([
+      "src/components/basketball/PlayerPortrait.tsx",
+      "src/components/basketball/LeagueGameRow.tsx",
+      "src/components/calendar/CalendarDayCell.tsx",
+      "src/components/owner/ControlledFranchiseIdentityEditor.tsx",
+    ]);
+    expect(offenders(/\btext-\[1[01]px\]/)).toEqual([]);
+    expect(
+      offenders(/\btext-\[\d+px\]/, ({ file }) => !allowed.has(file)),
+    ).toEqual([]);
+  });
 });

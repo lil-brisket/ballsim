@@ -38,9 +38,12 @@ export function DepthChart(props: {
                   {entries.slice(0, 5).map((entry, index) => (
                     <li
                       key={`${position}-${entry.playerId}`}
-                      className={cn("text-sm", !entry.canPlay && "opacity-60")}
+                      className="text-sm"
                     >
                       <div className="flex items-center justify-between gap-1">
+                        {/* Unavailable players are marked by the status line
+                            below, not a faded row: fading drops the OVR badge
+                            below contrast. */}
                         <span className="min-w-0 truncate">
                           <span className="mr-1 tabular-nums text-sm text-faint">
                             {index + 1}.

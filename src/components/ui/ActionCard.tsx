@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import {
   cn,
   densityPadding,
@@ -41,7 +42,7 @@ export function ActionCard(
   const main = (
     <>
       {props.badge ? <div className="mb-2">{props.badge}</div> : null}
-      <h3 className="text-sm font-medium text-ink">{props.title}</h3>
+      <SectionHeading as="h3" size="sm" title={props.title} />
       {props.description ? (
         <p className="mt-1 text-sm text-muted">{props.description}</p>
       ) : null}

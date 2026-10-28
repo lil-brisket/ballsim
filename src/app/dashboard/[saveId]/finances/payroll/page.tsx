@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadFinanceHubView } from "@/application/game-service";
+import { CapSheet } from "@/components/finances/CapSheet";
 import { FinancesViews } from "@/components/finances/FinancesViews";
 import { PayrollRulesPanel } from "@/components/finances/PayrollRulesPanel";
 import { ErrorState } from "@/components/ui/EmptyState";
@@ -71,6 +72,10 @@ export default async function FinancesPayrollPage({
             <MoneyDisplay amount={finances.staffBudgetSpace} />
           </li>
         </ul>
+      </Section>
+
+      <Section title="Cap sheet">
+        <CapSheet view={view.capSheet} saveId={saveId} />
       </Section>
 
       <PayrollRulesPanel rules={view.payrollRules} />

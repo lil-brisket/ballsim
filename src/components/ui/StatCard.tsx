@@ -1,4 +1,5 @@
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, type Density } from "@/components/ui/styles";
 
 /**
@@ -19,7 +20,7 @@ export function StatCard(props: {
       density={props.density ?? "comfortable"}
       className={props.className}
     >
-      <h2 className="text-sm font-medium text-muted">{props.label}</h2>
+      <SectionHeading as="h2" size="sm" tone="muted" title={props.label} />
       <div
         className={cn(
           "mt-2 text-ink",

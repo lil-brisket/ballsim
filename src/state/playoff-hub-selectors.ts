@@ -5,6 +5,11 @@
 
 import type { GameState } from "@/state/game-state";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
+import type { Game } from "@/domain/entities/game";
+import {
+  toBrandingView,
+  type TeamBrandingView,
+} from "@/state/team-branding-view";
 import {
   playoffRoundLabel,
   type PlayoffSeries,
@@ -17,6 +22,26 @@ import {
 
 export type UserPlayoffStatus =
   "not_in_playoffs" | "in_playoffs" | "eliminated" | "advanced" | "champion";
+
+export type PlayoffSeriesBye = {
+  seed: number;
+  teamId: string;
+  teamName: string;
+  abbreviation: string;
+  branding: TeamBrandingView | null;
+};
+
+export type PlayoffSeriesGameView = {
+  gameId: string;
+  /** 1-based position in the series. */
+  number: number;
+  date: string;
+  homeAbbreviation: string;
+  awayAbbreviation: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  final: boolean;
+};
 
 export type PlayoffSeriesView = {
   id: string;
@@ -41,6 +66,18 @@ export type PlayoffSeriesView = {
   lowerWins: number;
   winnerTeamId: string | null;
   gameIds: string[];
+  /** Series that feed this one; empty for opening-round series. */
+  feederSeriesIds: string[];
+  /** Team that skipped the opening round into this series, if any. */
+  bye: PlayoffSeriesBye | null;
+  higherSeedAbbreviation: string | null;
+  lowerSeedAbbreviation: string | null;
+  higherSeedBranding: TeamBrandingView | null;
+  lowerSeedBranding: TeamBrandingView | null;
+  /** The series' games in order; unknown games keep a row (null scores). */
+  games: PlayoffSeriesGameView[];
+  /** True when the active owner's team plays (or has the bye) in this series. */
+  involvesUser: boolean;
 };
 
 export type PlayoffRoundView = {
@@ -143,12 +180,30 @@ export function conferenceBracketRoundLabel(
   return "First Round";
 }
 
+function teamAbbreviation(
+  state: GameState,
+  teamId: string | null,
+): string | null {
+  if (!teamId) return null;
+  return state.world.teams[teamId]?.abbreviation ?? teamId;
+}
+
+function teamBranding(
+  state: GameState,
+  teamId: string | null,
+): TeamBrandingView | null {
+  if (!teamId) return null;
+  return toBrandingView(state.world.teams[teamId]?.branding);
+}
+
 function toSeriesView(
   state: GameState,
   series: PlayoffSeries,
   fieldSize: number,
   bracket: PlayoffBracketAnalysis,
   seedByTeam: Map<string, number>,
+  gamesById: { get(gameId: string): Game | undefined },
+  userTeamId: string,
 ): PlayoffSeriesView {
   const conferenceId = bracket.isConferenceBracket
     ? (bracket.conferenceBySeriesId.get(series.id) ?? null)
@@ -196,6 +251,47 @@ function toSeriesView(
     lowerWins: lowerId ? (series.wins[lowerId] ?? 0) : 0,
     winnerTeamId: series.winnerTeamId ?? null,
     gameIds: [...series.gameIds],
+    feederSeriesIds: [...(series.feederSeriesIds ?? [])],
+    bye: series.byeParticipant
+      ? {
+          seed:
+            seedByTeam.get(series.byeParticipant.teamId) ??
+            series.byeParticipant.seed,
+          teamId: series.byeParticipant.teamId,
+          teamName:
+            teamName(state, series.byeParticipant.teamId) ??
+            series.byeParticipant.teamId,
+          abbreviation:
+            teamAbbreviation(state, series.byeParticipant.teamId) ?? "",
+          branding: teamBranding(state, series.byeParticipant.teamId),
+        }
+      : null,
+    higherSeedAbbreviation: teamAbbreviation(state, higherId),
+    lowerSeedAbbreviation: teamAbbreviation(state, lowerId),
+    higherSeedBranding: teamBranding(state, higherId),
+    lowerSeedBranding: teamBranding(state, lowerId),
+    games: series.gameIds.map((gameId, index) => {
+      const game = gamesById.get(gameId);
+      const final = game?.status === "final";
+      return {
+        gameId,
+        number: index + 1,
+        date: game?.date ?? "",
+        homeAbbreviation: game
+          ? (teamAbbreviation(state, game.homeTeamId) ?? "")
+          : "",
+        awayAbbreviation: game
+          ? (teamAbbreviation(state, game.awayTeamId) ?? "")
+          : "",
+        homeScore: game && final ? game.score.home : null,
+        awayScore: game && final ? game.score.away : null,
+        final,
+      };
+    }),
+    involvesUser:
+      higherId === userTeamId ||
+      lowerId === userTeamId ||
+      series.byeParticipant?.teamId === userTeamId,
   };
 }
 
@@ -224,8 +320,23 @@ export function toPlayoffHubView(state: GameState): PlayoffHubView {
 
   const bracket = analyzePlayoffBracket(playoffs, state);
   const seedByTeam = conferenceSeedByTeam(state);
+  // Direct lookups: the archive can hold thousands of games.
+  const gamesById = {
+    get: (gameId: string): Game | undefined =>
+      state.competition.games[gameId] ?? state.business.gameArchive[gameId],
+  };
   const seriesViews = playoffs.series
-    .map((s) => toSeriesView(state, s, playoffs.fieldSize, bracket, seedByTeam))
+    .map((s) =>
+      toSeriesView(
+        state,
+        s,
+        playoffs.fieldSize,
+        bracket,
+        seedByTeam,
+        gamesById,
+        teamId,
+      ),
+    )
     .sort((a, b) => a.round - b.round || a.slot - b.slot);
 
   const rounds = groupRounds(seriesViews);

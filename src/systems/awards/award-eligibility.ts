@@ -1,18 +1,35 @@
 import type { PlayerId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
-import { AWARD_ELIGIBILITY_CONFIG } from "@/systems/awards/awards-config";
+import {
+  AWARD_ELIGIBILITY_CONFIG,
+  scaleSeasonMinimums,
+} from "@/systems/awards/awards-config";
 import {
   getPrimaryLeagueFinalGames,
   type PeriodPlayerAgg,
 } from "@/systems/awards/award-stat-sources";
+
+/**
+ * ROY games/minutes for this league's season length. Earlier seasons are
+ * judged by today's length too: a league that changed its schedule length in
+ * an offseason measures its old seasons by the new one.
+ */
+function rookieMinimums(state: GameState) {
+  return scaleSeasonMinimums(
+    {
+      minGames: AWARD_ELIGIBILITY_CONFIG.rookieOfYear.minGames,
+      minMinutes: AWARD_ELIGIBILITY_CONFIG.rookieOfYear.minMinutes,
+    },
+    state.settings.regularSeason.gamesPerTeam,
+  );
+}
 
 function hasPriorQualifyingPrimarySeason(
   state: GameState,
   playerId: PlayerId,
   beforeSeasonYear: number,
 ): boolean {
-  const minGames = AWARD_ELIGIBILITY_CONFIG.rookieOfYear.minGames;
-  const minMinutes = AWARD_ELIGIBILITY_CONFIG.rookieOfYear.minMinutes;
+  const { minGames, minMinutes } = rookieMinimums(state);
   const history = state.business.playerHistory[playerId];
   if (!history) return false;
   return history.seasons.some((season) => {
@@ -30,8 +47,7 @@ export function getPlayerRookieSeasonYear(
   state: GameState,
   playerId: PlayerId,
 ): number | null {
-  const minGames = AWARD_ELIGIBILITY_CONFIG.rookieOfYear.minGames;
-  const minMinutes = AWARD_ELIGIBILITY_CONFIG.rookieOfYear.minMinutes;
+  const { minGames, minMinutes } = rookieMinimums(state);
 
   const history = state.business.playerHistory[playerId];
   if (history) {
@@ -146,10 +162,16 @@ export function sixthManStartPct(agg: PeriodPlayerAgg): number {
   return agg.starts / agg.games;
 }
 
-export function isSixthManEligible(agg: PeriodPlayerAgg): boolean {
-  const cfg = AWARD_ELIGIBILITY_CONFIG.sixthMan;
-  if (!meetsMinGamesMinutes(agg, cfg.minGames, cfg.minMinutes)) {
+/** `minimums` default to the full-season config (scale them for short seasons). */
+export function isSixthManEligible(
+  agg: PeriodPlayerAgg,
+  minimums: {
+    minGames: number;
+    minMinutes: number;
+  } = AWARD_ELIGIBILITY_CONFIG.sixthMan,
+): boolean {
+  if (!meetsMinGamesMinutes(agg, minimums.minGames, minimums.minMinutes)) {
     return false;
   }
-  return sixthManStartPct(agg) <= cfg.maxStartPct;
+  return sixthManStartPct(agg) <= AWARD_ELIGIBILITY_CONFIG.sixthMan.maxStartPct;
 }

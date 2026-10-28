@@ -7,6 +7,7 @@
 
 import { SectionHeading, TeamThemeScope } from "@/components/ui";
 import { FullCourtShowcase } from "./FullCourtShowcase";
+import { MomentShowcase } from "./MomentShowcase";
 import { TeamShowcase } from "./TeamShowcase";
 
 const TEAMS = [
@@ -69,6 +70,15 @@ export default function BroadcastUiShowcasePage() {
       >
         <SectionHeading as="h2" eyebrow="Court replay" title="Full court" />
         <FullCourtShowcase />
+      </TeamThemeScope>
+
+      <TeamThemeScope
+        branding={TEAMS[2].branding}
+        as="section"
+        className="mt-10 max-w-4xl space-y-3"
+      >
+        <SectionHeading as="h2" eyebrow="Moments" title="Moment overlay" />
+        <MomentShowcase />
       </TeamThemeScope>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-2 xl:grid-cols-3">

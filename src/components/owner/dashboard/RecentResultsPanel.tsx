@@ -22,7 +22,9 @@ export function RecentResultsPanel(props: {
       aria-label="Recent results"
       tabIndex={0}
       className={cn(
-        "-mx-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        // relative: the score bugs' sr-only labels are absolutely
+        // positioned and would otherwise escape the scroller and widen the page.
+        "relative -mx-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         focusRingClass,
       )}
     >

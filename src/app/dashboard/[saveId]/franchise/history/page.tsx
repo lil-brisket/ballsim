@@ -6,6 +6,7 @@ import {
   FranchiseLedgerTable,
   toFranchiseIdentityChanges,
 } from "@/components/franchise/FranchiseLedgerTable";
+import { SeasonRecapPanel } from "@/components/franchise/SeasonRecapPanel";
 import { FranchiseViews } from "@/components/franchise/FranchiseViews";
 import { FranchiseHistorySummary } from "@/components/owner/FranchiseHistorySummary";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
@@ -15,12 +16,16 @@ import { Section } from "@/components/ui/Section";
 import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
 import { getActiveTeam } from "@/state/owner-context";
 import { toFranchiseHistoryView } from "@/state/franchise-selectors";
+import {
+  listRecapSeasons,
+  toSeasonRecapView,
+} from "@/state/season-recap-selectors";
 
 export const metadata: Metadata = { title: "Franchise History" };
 
 type PageProps = {
   params: Promise<{ saveId: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; season?: string }>;
 };
 
 /**
@@ -33,7 +38,7 @@ export default async function FranchiseHistoryPage({
   searchParams,
 }: PageProps) {
   const { saveId } = await params;
-  const { error } = await searchParams;
+  const { error, season } = await searchParams;
   // Old seasons live in the stored history.
   const loaded = await loadSaveWithHistory(saveId);
   if (!loaded) {
@@ -41,6 +46,13 @@ export default async function FranchiseHistoryPage({
   }
   const team = getActiveTeam(loaded.state);
   const history = toFranchiseHistoryView(loaded.state);
+  const recapSeasons = listRecapSeasons(loaded.state);
+  const requested = Number(season);
+  const recapYear = recapSeasons.includes(requested)
+    ? requested
+    : recapSeasons[0];
+  const recap =
+    recapYear === undefined ? null : toSeasonRecapView(loaded.state, recapYear);
   const identityChanges = toFranchiseIdentityChanges(history.seasons);
 
   return (
@@ -56,6 +68,36 @@ export default async function FranchiseHistoryPage({
         <EmptyState message="No franchise history recorded yet." />
       ) : (
         <>
+          {recap ? (
+            <Section title="Season recap">
+              {recapSeasons.length > 1 ? (
+                <nav aria-label="Recap season" className="mb-4">
+                  <ul className="flex flex-wrap gap-3 text-sm">
+                    {recapSeasons.map((year) => (
+                      <li key={year}>
+                        <Link
+                          href={`/dashboard/${saveId}/franchise/history?season=${year}`}
+                          aria-current={
+                            year === recap.seasonYear ? "page" : undefined
+                          }
+                          className={cn(
+                            linkClass,
+                            focusRingClass,
+                            year === recap.seasonYear
+                              ? "font-semibold"
+                              : "font-medium",
+                          )}
+                        >
+                          {year}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              ) : null}
+              <SeasonRecapPanel saveId={saveId} view={recap} />
+            </Section>
+          ) : null}
           <Section title="Milestones">
             <FranchiseHistorySummary view={history} />
           </Section>

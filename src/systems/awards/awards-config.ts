@@ -17,6 +17,58 @@ export const AWARD_VOTING_CONFIG = {
   maxScoreGap: 5,
 } as const;
 
+/** Season length the season-level minimums below are set for. */
+export const AWARD_REFERENCE_SEASON_GAMES = 82;
+
+/**
+ * A season-level minimum (games or minutes) for a league that plays
+ * `gamesPerTeam` regular-season games: proportional below the reference
+ * length, unchanged at or above it, never below 1. Without this a short
+ * season (CBL plays 22) could never produce a qualifying player. Monthly
+ * minimums are per month and do not scale.
+ */
+export function scaleSeasonMinimum(
+  minimum: number,
+  gamesPerTeam: number,
+): number {
+  if (!(gamesPerTeam > 0) || gamesPerTeam >= AWARD_REFERENCE_SEASON_GAMES) {
+    return minimum;
+  }
+  return Math.max(
+    1,
+    Math.round((minimum * gamesPerTeam) / AWARD_REFERENCE_SEASON_GAMES),
+  );
+}
+
+/**
+ * Share of a full-length season a league plays (1 at 82 games or more).
+ * Year-end award reputation is weighted by it: an award won over a short
+ * season is a smaller sample and proves less in free agency.
+ */
+export function seasonLengthFactor(gamesPerTeam: number): number {
+  if (!(gamesPerTeam > 0) || gamesPerTeam >= AWARD_REFERENCE_SEASON_GAMES) {
+    return 1;
+  }
+  return gamesPerTeam / AWARD_REFERENCE_SEASON_GAMES;
+}
+
+/**
+ * Copy of a threshold group with every `min*` field scaled by
+ * {@link scaleSeasonMinimum}; other fields (maxAge, maxStartPct) unchanged.
+ */
+export function scaleSeasonMinimums<T extends Record<string, number>>(
+  thresholds: T,
+  gamesPerTeam: number,
+): T {
+  const scaled: Record<string, number> = { ...thresholds };
+  for (const [key, value] of Object.entries(thresholds)) {
+    if (key.startsWith("min")) {
+      scaled[key] = scaleSeasonMinimum(value, gamesPerTeam);
+    }
+  }
+  return scaled as T;
+}
+
 export const AWARD_ELIGIBILITY_CONFIG = {
   playerOfMonth: { minGames: 5, minMinutes: 100 },
   rookieOfMonth: { minGames: 4, minMinutes: 80 },

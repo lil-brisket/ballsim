@@ -15,8 +15,7 @@ export type TeamIdentityInlineProps = {
  */
 export function TeamIdentityInline(props: TeamIdentityInlineProps) {
   const size = props.size ?? "sm";
-  const monogramClass =
-    size === "md" ? "h-8 w-8 text-xs" : "h-6 w-6 text-[10px]";
+  const monogramClass = size === "md" ? "h-8 w-8 text-xs" : "h-6 w-6 text-xs";
 
   return (
     <span className="inline-flex items-center gap-2">

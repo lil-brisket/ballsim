@@ -7,6 +7,7 @@ import {
   AWARD_METRIC_VERSION,
   AWARD_REPUTATION_CONFIG,
 } from "@/systems/awards/awards-config";
+import type { GameState } from "@/state/game-state";
 import { defaultEvaluatePlayerInterest } from "@/systems/free-agency";
 import {
   addPlayerToState,
@@ -167,5 +168,64 @@ describe("award reputation / FA", () => {
     }
     const bonus = computeAwardReputationBonus(asPlayerId("goat"), state);
     expect(bonus).toBeLessThanOrEqual(AWARD_REPUTATION_CONFIG.maxBonus);
+  });
+
+  it("weights year-end awards by the season they were won in", () => {
+    const withLength = (state: GameState, gamesPerTeam: number): GameState => ({
+      ...state,
+      settings: {
+        ...state.settings,
+        regularSeason: { ...state.settings.regularSeason, gamesPerTeam },
+      },
+    });
+    /** Award won over a season of `wonOver` games; league plays `today`. */
+    const bonusFor = (
+      today: number,
+      wonOver: number,
+      awardId: "mvp" | "player_of_month",
+      period: string | null = null,
+    ) => {
+      let state = withLength(
+        createAwardsTestState({ seasonYear: 2030 }),
+        today,
+      );
+      const [teamA] = primaryTeamIds(state);
+      state = addPlayerToState(state, "winner", teamA);
+      state = seedAward(state, "winner", awardId, 2030, period);
+      const results = Object.fromEntries(
+        Object.entries(state.business.awards.results).map(([id, result]) => [
+          id,
+          {
+            ...result,
+            context: {
+              ...result.context,
+              statSnapshot: {
+                ...result.context.statSnapshot,
+                teamRecord: {
+                  wins: Math.ceil(wonOver / 2),
+                  losses: Math.floor(wonOver / 2),
+                  winPct: 0.5,
+                },
+              },
+            },
+          },
+        ]),
+      );
+      state = {
+        ...state,
+        business: { ...state.business, awards: { results } },
+      };
+      return computeAwardReputationBonus(asPlayerId("winner"), state);
+    };
+
+    const mvp = AWARD_REPUTATION_CONFIG.weights.mvp;
+    expect(bonusFor(82, 82, "mvp")).toBeCloseTo(mvp);
+    expect(bonusFor(22, 22, "mvp")).toBeCloseTo((mvp * 22) / 82);
+    // A later change of schedule length does not re-weight past awards.
+    expect(bonusFor(22, 82, "mvp")).toBeCloseTo(mvp);
+    expect(bonusFor(82, 22, "mvp")).toBeCloseTo((mvp * 22) / 82);
+    const monthly = AWARD_REPUTATION_CONFIG.weights.player_of_month;
+    expect(bonusFor(82, 82, "player_of_month", "2030-01")).toBeCloseTo(monthly);
+    expect(bonusFor(22, 22, "player_of_month", "2030-01")).toBeCloseTo(monthly);
   });
 });

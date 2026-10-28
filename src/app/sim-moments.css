@@ -84,3 +84,39 @@
     animation: none;
   }
 }
+
+/* Moments (components/moments): full-screen backdrop in team colours and a
+   short entrance per step. Under reduced motion the overlay shows one static
+   summary card and nothing moves. */
+
+.moment-overlay {
+  background:
+    radial-gradient(
+      ellipse 90% 80% at 50% 40%,
+      rgb(var(--team-primary-rgb) / 0.55) 0%,
+      rgb(var(--team-primary-rgb) / 0.2) 50%,
+      rgb(9 9 11 / 0.94) 100%
+    ),
+    rgb(9 9 11 / 0.9);
+}
+
+.moment-step {
+  animation: moment-step-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes moment-step-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moment-step {
+    animation: none;
+  }
+}

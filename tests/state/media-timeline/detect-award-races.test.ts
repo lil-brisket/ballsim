@@ -42,12 +42,27 @@ function setup() {
   );
   const state: GameState = {
     ...base,
+    // A full-length season: race minimums are the unscaled 10 games.
+    settings: {
+      ...base.settings,
+      regularSeason: { ...base.settings.regularSeason, gamesPerTeam: 82 },
+    },
     world: {
       ...base.world,
       players: { ...base.world.players, ...players },
     },
   };
   return { state, teamA, teamB };
+}
+
+function withSeasonLength(state: GameState, gamesPerTeam: number): GameState {
+  return {
+    ...state,
+    settings: {
+      ...state.settings,
+      regularSeason: { ...state.settings.regularSeason, gamesPerTeam },
+    },
+  };
 }
 
 /** One game a day on days [from, to]; `lines(day)` gives each player's line. */
@@ -146,6 +161,20 @@ describe("detectAwardRaces", () => {
       b: ROLE,
     }));
     expect(racePosts(withDate(played, "2026-10-12"))).toEqual([]);
+  });
+
+  it("opens the race sooner in a short season (minimums scale)", () => {
+    const { state, teamA, teamB } = setup();
+    // A 22-game season needs 3 games (10 scaled), so eight games qualify.
+    const played = season(
+      withSeasonLength(state, 22),
+      teamA,
+      teamB,
+      1,
+      8,
+      () => ({ a: STAR, b: ROLE }),
+    );
+    expect(racePosts(withDate(played, "2026-10-12")).length).toBeGreaterThan(0);
   });
 
   it("keeps only the latest awardRaceWeeks weeks", () => {
