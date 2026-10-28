@@ -92,6 +92,7 @@ function moments(
     awards: null,
     champion: champion(),
     progression: progression(),
+    recap: null,
     ...overrides,
   };
 }

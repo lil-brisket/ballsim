@@ -170,6 +170,7 @@ function moments(
     awards: view(),
     champion: champion(),
     progression: progression(),
+    recap: null,
     ...overrides,
   };
 }

@@ -3,21 +3,22 @@ import { expect, test } from "./fixtures";
 /**
  * Moments in the seeded offseason save (free agency: the Finals are over and
  * development has run). They open by themselves one at a time (awards night,
- * championship, then progression), close with Escape and stay closed after a
- * reload. Their pages keep replay buttons. The suite runs with reduced
- * motion, so each moment is one summary card ending in Done.
+ * championship, season recap, then progression), close with Escape and stay
+ * closed after a reload. Their pages keep replay buttons. The suite runs with
+ * reduced motion, so each moment is one summary card ending in Done.
  */
 test.beforeEach(({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "moments: desktop only");
 });
 
-test("awards, championship and progression open once, in order", async ({
+test("awards, championship, recap and progression open once, in order", async ({
   page,
   offseasonSave,
 }) => {
   await page.goto(offseasonSave(), { waitUntil: "networkidle" });
   const awards = page.getByRole("dialog", { name: "Awards night" });
   const champion = page.getByRole("dialog", { name: "Championship" });
+  const recap = page.getByRole("dialog", { name: "Season recap" });
   const progression = page.getByRole("dialog", { name: "Progression reveal" });
 
   await expect(awards).toBeVisible();
@@ -30,6 +31,11 @@ test("awards, championship and progression open once, in order", async ({
   await expect(champion.getByRole("button", { name: /^Done/ })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(champion).toHaveCount(0);
+
+  await expect(recap).toBeVisible();
+  await expect(progression).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(recap).toHaveCount(0);
 
   await expect(progression).toBeVisible();
   await page.keyboard.press("Escape");
@@ -53,6 +59,13 @@ test("awards, championship and progression open once, in order", async ({
   await page.goto(offseasonSave("/awards"), { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /awards night/ }).click();
   await expect(awards).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.goto(offseasonSave("/franchise/history"), {
+    waitUntil: "networkidle",
+  });
+  await page.getByRole("button", { name: /recap/i }).click();
+  await expect(recap).toBeVisible();
 });
 
 test("no moments before the season has ended", async ({
