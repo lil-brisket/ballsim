@@ -318,28 +318,45 @@ describe("toSeasonRecapView", () => {
     expect(toSeasonRecapView(setup())!.awardWinners).toEqual([]);
   });
 
-  it("picks the best player by overall with per-game numbers", () => {
-    const line = (games: number) => ({
-      ...playerSeason({ year: 2027, teamId }).competition.regular,
-      games,
-      points: games * 20.26,
-      rebounds: games * 7,
-      assists: games * 4.04,
-    });
-    function season(overall: number, games: number, team: string | null) {
+  it("picks the best player by production per game, over enough games", () => {
+    // Per game: PTS + REB + AST + STL + BLK − TOV.
+    function season(
+      overall: number,
+      games: number,
+      team: string | null,
+      perGame: { pts: number; reb: number; ast: number; tov?: number },
+    ) {
       const record = playerSeason({ year: 2027, teamId: team });
       return {
         ...record,
         overall,
-        competition: { ...record.competition, regular: line(games) },
+        competition: {
+          ...record.competition,
+          regular: {
+            ...record.competition.regular,
+            games,
+            points: games * perGame.pts,
+            rebounds: games * perGame.reb,
+            assists: games * perGame.ast,
+            steals: 0,
+            blocks: 0,
+            turnovers: games * (perGame.tov ?? 0),
+          },
+        },
       };
     }
     const state = withPlayerHistory(setup(), {
-      [rosterIds[0]!]: [season(80, 50, teamId)],
-      [rosterIds[1]!]: [season(90, 0, teamId)],
-      [rosterIds[2]!]: [season(95, 60, otherId)],
-      [rosterIds[4]!]: [season(80, 10, teamId)],
-      [rosterIds[3]!]: [season(85, 40, teamId)],
+      // Highest rated but less productive.
+      [rosterIds[0]!]: [season(90, 50, teamId, { pts: 8, reb: 9, ast: 1 })],
+      // Most productive over a full season: the pick.
+      [rosterIds[3]!]: [
+        season(78, 40, teamId, { pts: 20.26, reb: 7, ast: 4.04, tov: 2 }),
+      ],
+      // A hot streak under half the games of the busiest player: excluded.
+      [rosterIds[4]!]: [season(70, 20, teamId, { pts: 40, reb: 10, ast: 10 })],
+      // Other team and no games: ignored.
+      [rosterIds[2]!]: [season(95, 60, otherId, { pts: 35, reb: 10, ast: 9 })],
+      [rosterIds[1]!]: [season(85, 0, teamId, { pts: 0, reb: 0, ast: 0 })],
     });
     const view = toSeasonRecapView(state)!;
     const player = base.world.players[rosterIds[3]!]!;
@@ -353,9 +370,15 @@ describe("toSeasonRecapView", () => {
       assists: 4,
     });
 
+    // Equal per game: the higher season total, then the player id.
+    const byTotal = withPlayerHistory(setup(), {
+      [rosterIds[0]!]: [season(80, 30, teamId, { pts: 20, reb: 5, ast: 5 })],
+      [rosterIds[4]!]: [season(80, 40, teamId, { pts: 20, reb: 5, ast: 5 })],
+    });
+    expect(toSeasonRecapView(byTotal)!.bestPlayer!.playerId).toBe(rosterIds[4]);
     const tie = withPlayerHistory(setup(), {
-      [rosterIds[4]!]: [season(80, 10, teamId)],
-      [rosterIds[0]!]: [season(80, 50, teamId)],
+      [rosterIds[4]!]: [season(80, 40, teamId, { pts: 20, reb: 5, ast: 5 })],
+      [rosterIds[0]!]: [season(80, 40, teamId, { pts: 20, reb: 5, ast: 5 })],
     });
     const expected = [rosterIds[0]!, rosterIds[4]!].sort()[0];
     expect(toSeasonRecapView(tie)!.bestPlayer!.playerId).toBe(expected);

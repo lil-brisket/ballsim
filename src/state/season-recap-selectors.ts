@@ -89,6 +89,9 @@ type PlayerLine = {
   points: number;
   rebounds: number;
   assists: number;
+  steals: number;
+  blocks: number;
+  turnovers: number;
 };
 
 function compareText(a: string, b: string): number {
@@ -174,13 +177,29 @@ function selectBestGames(
   return wins.slice(0, BEST_GAMES);
 }
 
+/** Box-score production: PTS + REB + AST + STL + BLK − TOV. */
+function production(line: PlayerLine): number {
+  return (
+    line.points +
+    line.rebounds +
+    line.assists +
+    line.steals +
+    line.blocks -
+    line.turnovers
+  );
+}
+
+/**
+ * Most productive player of the season (per game), among those who played at
+ * least half as many games as the team's busiest player, so a short hot
+ * streak cannot top a full season. Ties: higher season total, then id.
+ */
 function selectBestPlayer(
   state: GameState,
   teamId: string,
   seasonYear: number,
 ): SeasonRecapBestPlayer | null {
-  let best: { playerId: string; overall: number; line: PlayerLine } | null =
-    null;
+  const lines: Array<{ playerId: string; line: PlayerLine }> = [];
   for (const [playerId, history] of Object.entries(
     state.business.playerHistory,
   )) {
@@ -189,16 +208,28 @@ function selectBestPlayer(
         season.seasonYear === seasonYear &&
         season.contractSnapshot.teamId === teamId,
     );
-    if (!record) continue;
-    const line = record.competition.regular;
-    if (line.games <= 0) continue;
+    if (!record || record.competition.regular.games <= 0) continue;
+    lines.push({ playerId, line: record.competition.regular });
+  }
+  const mostGames = Math.max(0, ...lines.map((entry) => entry.line.games));
+  let best: {
+    playerId: string;
+    perGame: number;
+    total: number;
+    line: PlayerLine;
+  } | null = null;
+  for (const { playerId, line } of lines) {
+    if (line.games * 2 < mostGames) continue;
+    const total = production(line);
+    const perGame = total / line.games;
     if (
       best === null ||
-      record.overall > best.overall ||
-      (record.overall === best.overall &&
-        compareText(playerId, best.playerId) < 0)
+      perGame > best.perGame ||
+      (perGame === best.perGame &&
+        (total > best.total ||
+          (total === best.total && compareText(playerId, best.playerId) < 0)))
     ) {
-      best = { playerId, overall: record.overall, line };
+      best = { playerId, perGame, total, line };
     }
   }
   if (!best) return null;
