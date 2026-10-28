@@ -2,6 +2,7 @@
  * View models for Team Management hub screens.
  */
 
+import { withoutDuplicateSigningEvents } from "@/state/transaction-events";
 import {
   matchCoachingPreset,
   COACHING_PRESETS,
@@ -819,8 +820,8 @@ export function toSeasonTransactionsView(
   let events =
     filters.scope === "team"
       ? getTeamTransactions(state, activeTeamId).map((row) => row.event)
-      : [...state.competition.seasonEventLog].filter((event) =>
-          TRANSACTION_TYPES.includes(event.type),
+      : withoutDuplicateSigningEvents(state.competition.seasonEventLog).filter(
+          (event) => TRANSACTION_TYPES.includes(event.type),
         );
 
   if (filters.type && filters.type !== "all") {

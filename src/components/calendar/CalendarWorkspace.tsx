@@ -2,6 +2,8 @@
 
 import { formatGameDate } from "@/presentation/game-date";
 import { buttonClass } from "@/components/ui/Button";
+import { dispatchTickerUpdate } from "@/components/game/TransactionTicker";
+import type { TransactionTickerView } from "@/state/transaction-ticker-selectors";
 import {
   useEffect,
   useMemo,
@@ -136,6 +138,8 @@ type PlaybackFrame = {
   leagueContext?: CalendarLeagueContextView | null;
   monthGrid?: CalendarMonthGrid;
   inspector?: CalendarDateInspectorView;
+  /** undefined = event carried no ticker; null = no ticker window. */
+  ticker?: TransactionTickerView | null;
 };
 
 export function CalendarWorkspace(props: {
@@ -489,6 +493,9 @@ export function CalendarWorkspace(props: {
             return merged;
           });
         }
+        if (next.ticker !== undefined) {
+          dispatchTickerUpdate(next.ticker);
+        }
         if (next.leagueContext !== undefined) {
           setLiveLeagueContext({
             source: props.view.leagueContext,
@@ -513,6 +520,7 @@ export function CalendarWorkspace(props: {
       leagueContext?: CalendarLeagueContextView | null;
       monthGrid?: CalendarMonthGrid;
       inspector?: CalendarDateInspectorView;
+      ticker?: TransactionTickerView | null;
     },
   ) {
     queueRef.current.push({
@@ -534,6 +542,7 @@ export function CalendarWorkspace(props: {
       leagueContext: progress.leagueContext,
       monthGrid: progress.monthGrid,
       inspector: progress.inspector,
+      ticker: "ticker" in progress ? (progress.ticker ?? null) : undefined,
     });
     drainQueue();
   }

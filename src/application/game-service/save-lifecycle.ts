@@ -22,6 +22,7 @@ import type {
 import type { CustomContentStore } from "@/persistence/custom-content-store";
 import { validateGameSettings } from "@/domain/game-settings-validation";
 import { toDashboardMomentsView } from "@/state/dashboard-moments";
+import { toTransactionTickerView } from "@/state/transaction-ticker-selectors";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { validateRosterPackage } from "@/systems/custom-content";
 import { createSeededRng } from "@/domain/rng";
@@ -234,6 +235,7 @@ export async function loadOwnerSave(
     dashboard: toDashboardSnapshot(loaded.state),
     navGroups: ownerNavGroupsForState(loaded.state),
     moments: toDashboardMomentsView(loaded.state),
+    ticker: toTransactionTickerView(loaded.state),
   };
 }
 

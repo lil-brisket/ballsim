@@ -3,6 +3,7 @@
  * Used by calendar, simulation summary, team management, and media surfaces.
  */
 
+import { withoutDuplicateSigningEvents } from "@/state/transaction-events";
 import type { DomainEvent, DomainEventType } from "@/domain/events";
 import type { TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -87,7 +88,7 @@ export function getTeamTransactions(
   }
 
   const rows: TeamTransactionRef[] = [];
-  for (const event of merged.values()) {
+  for (const event of withoutDuplicateSigningEvents([...merged.values()])) {
     if (!TEAM_TRANSACTION_EVENT_TYPES.includes(event.type)) {
       continue;
     }

@@ -5,6 +5,8 @@ import {
   OWNER_NAV_GROUPS,
   type OwnerNavGroup,
 } from "@/application/owner-nav-config";
+import { TransactionTicker } from "@/components/game/TransactionTicker";
+import type { TransactionTickerView } from "@/state/transaction-ticker-selectors";
 import { RouteTransition } from "@/components/game/RouteTransition";
 import { CommandPalette } from "@/components/game/shell/CommandPalette";
 import { ControlLegend } from "@/components/game/shell/ControlLegend";
@@ -31,6 +33,7 @@ export function GameShell(props: {
   saveName: string;
   dashboard: DashboardSnapshot;
   navGroups?: readonly OwnerNavGroup[];
+  ticker?: TransactionTickerView | null;
   children: React.ReactNode;
 }) {
   const branding = props.dashboard.controlledTeam.branding;
@@ -56,6 +59,10 @@ export function GameShell(props: {
                 groups={groups}
               />
               <SubTabBar saveId={props.saveId} groups={groups} />
+              <TransactionTicker
+                saveId={props.saveId}
+                ticker={props.ticker ?? null}
+              />
             </SimulationLockRegion>
           </ShellOffset>
 

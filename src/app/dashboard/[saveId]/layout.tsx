@@ -55,6 +55,7 @@ export default async function OwnerLayout({
       saveName={save.name}
       dashboard={dashboard}
       navGroups={navGroups}
+      ticker={loaded.ticker ?? null}
     >
       {children}
       <DashboardMoments saveId={saveId} moments={loaded.moments} />

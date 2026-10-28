@@ -23,7 +23,12 @@ vi.mock("@/application/game-service", () => ({
       await new Promise<void>((resolve) => {
         releaseAdvance = resolve;
       });
-      options.onProgress?.({ daysAdvanced: 1, currentDate: "2026-10-02" }, {});
+      // A real state, so per-day selectors such as the ticker really run.
+      const { createTestGameState } = await import("../factories/game-state");
+      options.onProgress?.(
+        { daysAdvanced: 1, currentDate: "2026-10-02" },
+        createTestGameState({ saveId: "route_disconnect" }),
+      );
       progressAfterDisconnect();
       return {
         ok: true,
