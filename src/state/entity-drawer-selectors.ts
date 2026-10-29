@@ -20,7 +20,6 @@ import { STAFF_ROLE_DISPLAY } from "@/domain/entities/staff-roles";
 import type { StaffRole } from "@/domain/entities/staff";
 import { asStaffId, type PlayerId, type TeamId } from "@/domain/ids";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
-import { createEmptyPlayerStatLine } from "@/domain/player-stat-aggregation";
 import {
   toPlayerCareerStatsView,
   toPlayerGameSeries,
@@ -30,6 +29,10 @@ import {
   type PlayerStatsBundle,
 } from "@/state/player-profile-selectors";
 import type { GameState } from "@/state/game-state";
+import {
+  toPlayerPerformanceView,
+  type PlayerPerformanceView,
+} from "@/state/player-performance";
 import { getActiveOwnerTeamId, isOwnedFranchise } from "@/state/owner-context";
 import { resolveTeamHref } from "@/state/resolve-team-href";
 import { getControlledTeam } from "@/state/selectors";
@@ -90,15 +93,7 @@ export type PlayerDrawerView = {
     status: string;
   } | null;
   /** Current-season top-league averages (regular + playoffs). */
-  performance: {
-    games: number;
-    mpg: number | null;
-    ppg: number | null;
-    rpg: number | null;
-    apg: number | null;
-    spg: number | null;
-    bpg: number | null;
-  };
+  performance: PlayerPerformanceView;
   stats: PlayerStatsBundle;
   development: PlayerDevelopmentBundle;
   /** Mood chip; null for players not on a roster. */
@@ -198,12 +193,6 @@ export function toPlayerDrawerView(
     age: player.age,
     overall,
   });
-  const currentLine =
-    seasons.find((entry) => entry.current)?.combined ??
-    createEmptyPlayerStatLine();
-  const games = currentLine.games;
-  const perGame = (total: number) => (games > 0 ? round1(total / games) : null);
-
   let contract: PlayerDrawerView["contract"] = null;
   if (onControlledRoster && player.contractId) {
     const c = state.business.contracts[player.contractId];
@@ -250,15 +239,7 @@ export function toPlayerDrawerView(
       attributes: { ...player.attributes },
     },
     contract,
-    performance: {
-      games,
-      mpg: perGame(currentLine.minutes),
-      ppg: perGame(currentLine.points),
-      rpg: perGame(currentLine.rebounds),
-      apg: perGame(currentLine.assists),
-      spg: perGame(currentLine.steals),
-      bpg: perGame(currentLine.blocks),
-    },
+    performance: toPlayerPerformanceView(state, playerId, seasons),
     stats: {
       currentSeasonId: String(season.id),
       seasons,

@@ -10,8 +10,14 @@ import {
 import {
   PLAYER_POSITIONS,
   type Player,
+  type PlayerAttributes,
   type PlayerPosition,
 } from "@/domain/entities/player";
+import { ARCHETYPE_LABELS } from "@/domain/entities/player-archetype";
+import {
+  toPlayerPerformanceView,
+  type PlayerPerformanceView,
+} from "@/state/player-performance";
 import {
   ROTATION_ROLES,
   type RotationRole,
@@ -85,6 +91,13 @@ export type RosterPagePlayerView = RosterPlayerView & {
   availabilityLabel: string;
   roleDisplayLabel: string;
   mood: PlayerMoodView;
+  /** For the roster sheet; same values as the player card. */
+  attributes: PlayerAttributes;
+  potential: number;
+  heightInches: number;
+  weightPounds: number;
+  archetypeLabel: string;
+  performance: PlayerPerformanceView;
 };
 
 export type TradeBlockPlayerView = {
@@ -491,6 +504,7 @@ function enrichRosterPlayers(
 
   return base.map((row) => {
     const playerId = row.playerId as PlayerId;
+    const player = state.world.players[playerId]!;
     const resolved = resolveRotationRole(playerId, team.rosterManagement);
     const availability = getPlayerAvailability(state, playerId, teamId);
     const blockStatus = onBlock.get(playerId);
@@ -510,6 +524,12 @@ function enrichRosterPlayers(
         resolved.isInactive,
       ),
       mood: toPlayerMoodView(state, playerId),
+      attributes: { ...player.attributes },
+      potential: player.potential.overall,
+      heightInches: player.heightInches,
+      weightPounds: player.weightPounds,
+      archetypeLabel: ARCHETYPE_LABELS[player.archetype],
+      performance: toPlayerPerformanceView(state, playerId),
     };
   });
 }

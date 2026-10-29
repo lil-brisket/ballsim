@@ -24,41 +24,13 @@ import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
 import { RosterManagementTable } from "@/components/roster/RosterManagementTable";
 import { TeamRosterPreview } from "@/components/team/hub/TeamRosterPreview";
 import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
+import { createRosterPagePlayer } from "../factories/roster-page-player";
 import type { TeamHubView } from "@/state/team-hub-selectors";
 
 function rosterPlayer(
   overrides: Partial<RosterPagePlayerView> = {},
 ): RosterPagePlayerView {
-  return {
-    playerId: "player_1",
-    portrait: null,
-    firstName: "Alex",
-    lastName: "Rivera",
-    jerseyNumber: 23,
-    position: "PG",
-    age: 24,
-    overall: 78,
-    contractSalary: 5_000_000,
-    contractEndYear: 2030,
-    contractYearsRemaining: 3,
-    injuryKind: "available",
-    developmentStage: "growth",
-    primaryPosition: "PG",
-    rotationRole: "starter",
-    isInactive: false,
-    mood: {
-      value: 60,
-      band: "content",
-      label: "Content",
-      reason: "Settled",
-      tradeRequested: false,
-    },
-    onTradeBlock: false,
-    canPlay: true,
-    availabilityLabel: "Available",
-    roleDisplayLabel: "Starter",
-    ...overrides,
-  };
+  return createRosterPagePlayer(overrides);
 }
 
 describe("jersey number display", () => {

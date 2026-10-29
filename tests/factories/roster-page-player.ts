@@ -1,0 +1,77 @@
+import type { PlayerAttributes } from "@/domain/entities/player";
+import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
+
+export const FLAT_ATTRIBUTES: PlayerAttributes = {
+  speed: 60,
+  strength: 60,
+  athleticism: 60,
+  stamina: 60,
+  finishing: 60,
+  midRange: 60,
+  threePoint: 60,
+  freeThrow: 60,
+  ballHandling: 60,
+  passing: 60,
+  perimeterDefense: 60,
+  interiorDefense: 60,
+  steal: 60,
+  block: 60,
+  rebounding: 60,
+  basketballIq: 60,
+  offensiveIq: 60,
+  defensiveIq: 60,
+  consistency: 60,
+};
+
+/** A complete roster row for component tests. */
+export function createRosterPagePlayer(
+  overrides: Partial<RosterPagePlayerView> = {},
+): RosterPagePlayerView {
+  return {
+    playerId: "player_1",
+    portrait: null,
+    firstName: "Alex",
+    lastName: "Rivera",
+    jerseyNumber: 23,
+    position: "PG",
+    age: 24,
+    overall: 78,
+    contractSalary: 5_000_000,
+    contractEndYear: 2030,
+    contractYearsRemaining: 3,
+    injuryKind: "available",
+    developmentStage: "growth",
+    primaryPosition: "PG",
+    rotationRole: "starter",
+    isInactive: false,
+    mood: {
+      value: 60,
+      band: "content",
+      label: "Content",
+      reason: "Settled",
+      tradeRequested: false,
+    },
+    onTradeBlock: false,
+    canPlay: true,
+    availabilityLabel: "Available",
+    roleDisplayLabel: "Starter",
+    attributes: { ...FLAT_ATTRIBUTES },
+    potential: 82,
+    heightInches: 76,
+    weightPounds: 195,
+    archetypeLabel: "Playmaker",
+    performance: {
+      games: 0,
+      mpg: null,
+      ppg: null,
+      rpg: null,
+      apg: null,
+      spg: null,
+      bpg: null,
+      fgPct: null,
+      threePct: null,
+      ftPct: null,
+    },
+    ...overrides,
+  };
+}

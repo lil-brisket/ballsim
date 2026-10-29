@@ -79,6 +79,9 @@ function playerView(
       apg: 6.5,
       spg: 1.3,
       bpg: 0.4,
+      fgPct: null,
+      threePct: null,
+      ftPct: null,
     },
     stats: {
       currentSeasonId: "season_2026",
@@ -331,6 +334,9 @@ describe("PlayerDrawer modal", () => {
         apg: null,
         spg: null,
         bpg: null,
+        fgPct: null,
+        threePct: null,
+        ftPct: null,
       },
     });
     const { unmount } = render(
@@ -451,6 +457,9 @@ describe("PlayerDrawer modal", () => {
         apg: 1.2,
         spg: 0.5,
         bpg: 0.8,
+        fgPct: null,
+        threePct: null,
+        ftPct: null,
       },
       ratings: {
         attributes: {
