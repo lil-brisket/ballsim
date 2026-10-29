@@ -139,7 +139,12 @@ function TeamSummaryPanel(props: {
           {summary.teamOutlook.longTerm}
         </p>
         <div className="mt-4 space-y-2">
-          <h4 className="text-sm font-medium text-soft">Roster Balance</h4>
+          <SectionHeading
+            as="h4"
+            size="sm"
+            tone="soft"
+            title="Roster Balance"
+          />
           {summary.positionBalance.map((row) => (
             <div key={row.position} className="flex items-center gap-3 text-sm">
               <span className="w-8 text-soft">{row.position}</span>

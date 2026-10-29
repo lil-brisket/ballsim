@@ -22,7 +22,7 @@ export function StatusBadge(props: { label: string; tone?: string }) {
   const toneClass = TONE[props.tone ?? props.label] ?? TONE.info;
   return (
     <span
-      className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${toneClass}`}
+      className={`inline-flex rounded-full border px-2 py-0.5 text-sm font-medium capitalize ${toneClass}`}
     >
       {props.label}
     </span>

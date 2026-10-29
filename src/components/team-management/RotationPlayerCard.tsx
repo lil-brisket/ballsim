@@ -270,15 +270,25 @@ export function RotationPlayerCard(props: {
 
         <div className="space-y-4 overflow-y-auto px-5 py-4">
           <section>
-            <h4 className="mb-2 text-sm font-medium text-soft">Availability</h4>
+            <SectionHeading
+              as="h4"
+              size="sm"
+              tone="soft"
+              title="Availability"
+              className="mb-2"
+            />
             <AvailabilitySection player={player} />
           </section>
 
           {stats ? (
             <section>
-              <h4 className="mb-2 text-sm font-medium text-soft">
-                Performance
-              </h4>
+              <SectionHeading
+                as="h4"
+                size="sm"
+                tone="soft"
+                title="Performance"
+                className="mb-2"
+              />
               <div className="grid grid-cols-3 gap-2 text-center sm:grid-cols-4">
                 {(
                   [
@@ -309,7 +319,13 @@ export function RotationPlayerCard(props: {
           ) : null}
 
           <section>
-            <h4 className="mb-2 text-sm font-medium text-soft">Rotation</h4>
+            <SectionHeading
+              as="h4"
+              size="sm"
+              tone="soft"
+              title="Rotation"
+              className="mb-2"
+            />
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <div className="rounded border border-line px-3 py-2">
                 <dt className="text-sm text-muted">Target MPG</dt>

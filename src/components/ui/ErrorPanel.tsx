@@ -77,10 +77,10 @@ export function ErrorPanel(props: {
           </Link>
         </div>
         {digest ? (
-          <p className="text-xs text-faint">Error reference: {digest}</p>
+          <p className="text-sm text-faint">Error reference: {digest}</p>
         ) : null}
         {message ? (
-          <p className="break-words text-xs text-faint">
+          <p className="break-words text-sm text-faint">
             Development only: {message}
           </p>
         ) : null}

@@ -109,7 +109,7 @@ export function ToggleField({
         className="size-5 rounded border-disabled bg-surface-base text-team-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-team-ink"
       />
       {label}
-      {note ? <span className="text-xs text-faint">{note}</span> : null}
+      {note ? <span className="text-sm text-faint">{note}</span> : null}
     </label>
   );
 }

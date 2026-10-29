@@ -54,7 +54,7 @@ export function CourtPlayerCard(props: {
       <dl className="mt-3 grid grid-cols-6 gap-2 text-center">
         {STATS.map(([label, key]) => (
           <div key={label} className="min-w-0">
-            <dt className="text-xs text-faint">{label}</dt>
+            <dt className="text-sm text-faint">{label}</dt>
             <dd className="font-mono text-base tabular-nums text-ink">
               {row[key] as number}
             </dd>

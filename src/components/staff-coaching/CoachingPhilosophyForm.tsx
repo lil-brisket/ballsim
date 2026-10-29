@@ -17,7 +17,7 @@ import {
 import type { CoachingView } from "@/state/team-management-selectors";
 
 function Hint(props: { children: React.ReactNode }) {
-  return <span className="text-xs text-faint">{props.children}</span>;
+  return <span className="text-sm text-faint">{props.children}</span>;
 }
 
 export function CoachingPhilosophyForm(props: {

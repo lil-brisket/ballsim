@@ -210,7 +210,7 @@ export function PlayByPlayFeed(props: {
                 {play.periodLabel} {play.clockLabel}
               </span>
               <span
-                className="inline-block rounded border-l-4 bg-surface-high px-1.5 py-0.5 text-xs font-semibold uppercase text-ink"
+                className="inline-block rounded border-l-4 bg-surface-high px-1.5 py-0.5 text-sm font-semibold uppercase text-ink"
                 style={{ borderLeftColor: team.branding.primaryColor }}
               >
                 {team.abbreviation}

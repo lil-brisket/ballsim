@@ -42,9 +42,7 @@ function AssetColumn(props: {
 }) {
   return (
     <div className="min-w-0 flex-1 rounded-lg border border-line bg-surface-base/40 p-3">
-      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-faint">
-        {props.title}
-      </h4>
+      <SectionHeading as="h4" size="xs" title={props.title} className="mb-2" />
       {props.assets.length === 0 ? (
         <p className="text-sm text-faint">Nothing</p>
       ) : (
@@ -66,7 +64,7 @@ function AssetColumn(props: {
                     >
                       {asset.name}
                     </Link>
-                    <p className="flex items-center gap-1.5 text-xs text-faint">
+                    <p className="flex items-center gap-1.5 text-sm text-faint">
                       <span>{asset.position}</span>
                       <OvrBadge overall={asset.overall} size="sm" />
                       <span>
@@ -81,7 +79,7 @@ function AssetColumn(props: {
                   <>
                     <span className="text-ink">{asset.name}</span>
                     {asset.viaAbbreviation ? (
-                      <span className="ml-2 text-xs text-faint">
+                      <span className="ml-2 text-sm text-faint">
                         via {asset.viaAbbreviation}
                       </span>
                     ) : null}
@@ -213,7 +211,7 @@ export function TradeOfferCard(props: {
                     type="button"
                     onClick={() => setSend([...send, asset])}
                     className={cn(
-                      "min-h-11 rounded-full border border-line px-3 text-xs text-muted hover:border-disabled",
+                      "min-h-11 rounded-full border border-line px-3 text-sm text-muted hover:border-disabled",
                       focusRingClass,
                     )}
                   >

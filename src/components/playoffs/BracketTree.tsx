@@ -163,7 +163,7 @@ function TeamRow(props: {
       </span>
       {mine ? <span className="sr-only">(your team)</span> : null}
       {row.bye ? (
-        <span className="text-xs font-normal text-muted">Bye</span>
+        <span className="text-sm font-normal text-muted">Bye</span>
       ) : null}
       {won ? (
         <>
@@ -353,7 +353,7 @@ function DesktopTree(props: TreeProps) {
             {layout.columns.map((column) => (
               <div key={column.key}>
                 <p
-                  className="flex items-center text-xs font-semibold uppercase tracking-wide text-muted"
+                  className="flex items-center text-sm font-semibold uppercase tracking-wide text-muted"
                   style={{ height: HEADER_H }}
                 >
                   {column.conferenceName

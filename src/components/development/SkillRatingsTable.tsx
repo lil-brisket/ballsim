@@ -28,7 +28,7 @@ function Delta(props: { delta: number | null; injured: boolean }) {
   return (
     <span
       className={cn(
-        "ml-1 text-xs",
+        "ml-1 text-sm",
         gain
           ? "text-success-ink"
           : injured
@@ -81,12 +81,12 @@ export function SkillRatingsTable(props: {
                     {row.position} · {row.age}
                   </p>
                   {row.focus !== "balanced" ? (
-                    <p className="text-xs text-faint">
+                    <p className="text-sm text-faint">
                       {DEVELOPMENT_FOCUS_LABELS[row.focus]} camp
                     </p>
                   ) : null}
                   {row.injury ? (
-                    <span className="mt-0.5 inline-block rounded-full border border-caution/40 bg-caution/10 px-2 py-0.5 text-xs text-caution-ink">
+                    <span className="mt-0.5 inline-block rounded-full border border-caution/40 bg-caution/10 px-2 py-0.5 text-sm text-caution-ink">
                       Injured · {row.injury.label}
                     </span>
                   ) : null}

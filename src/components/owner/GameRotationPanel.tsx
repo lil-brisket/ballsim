@@ -1,5 +1,6 @@
 import type { GameRotationPanelView } from "@/state/selectors";
 import { Section } from "@/components/ui/Section";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export function GameRotationPanel(props: {
   rotation: GameRotationPanelView;
@@ -20,7 +21,7 @@ export function GameRotationPanel(props: {
       </div>
       {props.rotation.substitutions.length > 0 ? (
         <div className="mt-6">
-          <h4 className="text-sm font-medium text-soft">Substitutions</h4>
+          <SectionHeading as="h4" size="sm" tone="soft" title="Substitutions" />
           <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto text-sm text-faint">
             {props.rotation.substitutions.map((entry, index) => (
               <li key={`${entry.clockLabel}-${index}`}>
@@ -42,7 +43,7 @@ function MinuteCompare(props: {
 }) {
   return (
     <div>
-      <h4 className="text-sm font-medium text-soft">{props.title}</h4>
+      <SectionHeading as="h4" size="sm" tone="soft" title={props.title} />
       <ul className="mt-2 space-y-2 text-sm">
         {props.players.slice(0, 12).map((player) => (
           <li key={player.playerId} className="border-b border-line pb-2">

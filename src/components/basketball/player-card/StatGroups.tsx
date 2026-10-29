@@ -40,7 +40,7 @@ export function StatGroups(props: {
           </section>
         ))}
       </div>
-      <div className="space-y-1 text-xs text-muted">
+      <div className="space-y-1 text-sm text-muted">
         <p>
           ‡ GS: older saves did not record starters, so seasons played before
           that update may undercount games started.

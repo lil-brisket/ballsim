@@ -448,7 +448,12 @@ export function SimulationSummaryModal(props: {
               <p className="text-sm font-medium text-muted">Media highlights</p>
               {grouped.map(([date, items]) => (
                 <section key={date} className="space-y-1.5">
-                  <h4 className="text-sm text-muted">{formatGameDate(date)}</h4>
+                  <SectionHeading
+                    as="h4"
+                    size="sm"
+                    tone="muted"
+                    title={formatGameDate(date)}
+                  />
                   <ul className="space-y-1.5">
                     {items.slice(0, 3).map((item, index) => (
                       <li

@@ -132,7 +132,7 @@ export function ControlLegend(props: { hubCount: number }) {
                 </li>
               ))}
             </ul>
-            <p className="mb-2 mt-4 border-t border-surface-line pt-3 text-xs font-semibold uppercase tracking-wide text-muted">
+            <p className="mb-2 mt-4 border-t border-surface-line pt-3 text-sm font-semibold uppercase tracking-wide text-muted">
               Gamepad
             </p>
             <ul className="space-y-2" aria-label="Gamepad controls">

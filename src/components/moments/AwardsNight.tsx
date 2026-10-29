@@ -20,7 +20,7 @@ function splitName(name: string): [string, string] {
 /** Text marker, so the user's team is never shown by colour alone. */
 function YourTeam() {
   return (
-    <span className="rounded-full border border-team-ink/50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-team-ink">
+    <span className="rounded-full border border-team-ink/50 px-2 py-0.5 text-sm font-semibold uppercase tracking-wide text-team-ink">
       Your team
     </span>
   );

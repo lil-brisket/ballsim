@@ -63,7 +63,7 @@ function CalendarMilestoneLegend(props: { grid: CalendarMonthGrid }) {
           >
             <span
               className={[
-                "inline-block rounded px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide",
+                "inline-block rounded px-1.5 py-0.5 text-sm font-semibold uppercase tracking-wide",
                 milestone.chipClass,
               ].join(" ")}
             >

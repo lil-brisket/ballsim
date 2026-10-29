@@ -51,7 +51,7 @@ export function ResponsibilityCard({
         <span
           aria-hidden="true"
           className={[
-            "shrink-0 rounded px-1.5 py-0.5 text-xs font-medium",
+            "shrink-0 rounded px-1.5 py-0.5 text-sm font-medium",
             delegated
               ? "bg-team/30 text-team-ink"
               : "bg-surface-high text-muted",

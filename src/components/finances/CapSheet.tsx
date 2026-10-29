@@ -143,7 +143,7 @@ function CapCell(props: { cell: CapSheetCell; row: CapSheetRow }) {
       return (
         <span className="text-muted italic">
           {formatMoney(cell.amount)}{" "}
-          <abbr title={label} className="text-xs no-underline">
+          <abbr title={label} className="text-sm no-underline">
             {cell.option === "team" ? "TO" : "PO"}
           </abbr>
           <span className="sr-only"> ({label}, pending, not counted)</span>
@@ -159,7 +159,7 @@ function TotalCell(props: { total: CapSheetView["totals"][number] }) {
     <>
       <div>{formatMoney(total.payroll)}</div>
       {total.cap !== null && total.room !== null ? (
-        <div className="text-xs font-normal text-muted">
+        <div className="text-sm font-normal text-muted">
           Cap {formatMoney(total.cap)} ·{" "}
           {total.room >= 0
             ? `Room ${formatMoney(total.room)}`
@@ -194,10 +194,10 @@ export function CapSheet(props: { view: CapSheetView; saveId: string }) {
                 {row.name}
               </PlayerEntityLink>
               {row.position ? (
-                <span className="ml-2 text-xs text-muted">{row.position}</span>
+                <span className="ml-2 text-sm text-muted">{row.position}</span>
               ) : null}
               {row.note ? (
-                <span className="ml-2 text-xs text-muted">{row.note}</span>
+                <span className="ml-2 text-sm text-muted">{row.note}</span>
               ) : null}
             </td>
             {row.cells.map((cell, index) => (
