@@ -45,7 +45,7 @@ export function DelegationCategorySection({
 
   return (
     <section className="space-y-3 rounded-md border border-line bg-surface-base/40 p-3">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="text-base" aria-hidden="true">
           {category.icon}
         </span>
