@@ -25,7 +25,7 @@ export function ErrorState(props: { message: string }) {
   return (
     <p
       role="alert"
-      className="rounded-md border border-rose-800/60 bg-rose-950/40 px-4 py-3 text-sm text-rose-200"
+      className="rounded-md border border-danger/50 bg-danger-soft px-4 py-3 text-sm text-danger-ink"
     >
       {props.message}
     </p>
