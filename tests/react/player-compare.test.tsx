@@ -21,6 +21,7 @@ import {
   PlayerComparePicker,
   rankPickerPlayers,
 } from "@/components/player-compare/PlayerComparePicker";
+import { setRatingDisplay } from "@/components/ui/rating-display";
 import { PlayerCompareBoard } from "@/components/player-compare/PlayerCompareBoard";
 import type { PlayerAttributes } from "@/domain/entities/player";
 import type { PlayerCompareView } from "@/state/player-compare";
@@ -87,9 +88,14 @@ const INDEX = {
 };
 
 describe("PlayerCompareBoard", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    setRatingDisplay("grades");
+  });
 
   it("shows both values and signed, coloured deltas (b minus a)", () => {
+    // Ratings mode: every cell then carries the number as visible text.
+    setRatingDisplay("ratings");
     render(
       <PlayerCompareBoard
         saveId="save_test"
@@ -106,8 +112,8 @@ describe("PlayerCompareBoard", () => {
     const finishing = within(table).getByRole("row", { name: /Finishing/ });
     const loss = within(finishing).getByText("−2");
     expect(loss.className).toContain("text-loss");
-    expect(within(finishing).getByText("60")).toBeTruthy();
-    expect(within(finishing).getByText("58")).toBeTruthy();
+    expect(within(finishing).getAllByText("60").length).toBeGreaterThan(0);
+    expect(within(finishing).getAllByText("58").length).toBeGreaterThan(0);
     expect(within(table).getAllByText("Inside Scoring")).toHaveLength(1);
   });
 

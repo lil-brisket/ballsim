@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 
 import { PlayerCard } from "@/components/basketball/PlayerCard";
 import { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
-import { PlayerRatingGrid } from "@/components/basketball/PlayerRatingGrid";
+import { CategoryBoxes } from "@/components/basketball/PlayerBoxes";
 import type { PlayerAttributes } from "@/domain/entities/player";
 
 function heroProps(overrides: Record<string, unknown> = {}) {
@@ -106,25 +106,24 @@ describe("attribute group rows", () => {
     consistency: 60,
   };
 
-  it("renders a tier-coloured bar and the group average per row", () => {
-    render(<PlayerRatingGrid attributes={attrs} />);
+  it("renders a tier-coloured box and the group grade per category", () => {
+    render(<CategoryBoxes attributes={attrs} />);
     const list = screen.getByRole("list", { name: "Category ratings" });
-    const rows = Array.from(
-      list.querySelectorAll<HTMLElement>("li[data-category]"),
+    const boxes = Array.from(
+      list.querySelectorAll<HTMLElement>(":scope > li[data-category]"),
     );
-    expect(rows).toHaveLength(7);
+    expect(boxes).toHaveLength(7);
     const byKey = (key: string) =>
-      rows.find((row) => row.getAttribute("data-category") === key)!;
+      boxes.find((box) => box.getAttribute("data-category") === key)!;
     const inside = byKey("insideScoring");
-    expect(inside.getAttribute("data-tier")).toBe("legend");
-    const average = inside.querySelector("button .font-display")!;
-    expect(average.textContent).toBe("96");
-    expect(average.className).toContain("text-tier");
+    expect(inside.getAttribute("data-tier")).toBe("elite");
+    const value = inside.querySelector(".font-display")!;
+    expect(value.textContent).toContain("A+");
+    expect(value.className).toContain("text-tier");
     const playmaking = byKey("playmaking");
     expect(playmaking.getAttribute("data-tier")).toBe("star");
-    expect(playmaking.querySelector("button .font-display")?.textContent).toBe(
-      "80",
+    expect(playmaking.querySelector(".font-display")?.textContent).toContain(
+      "B+",
     );
-    expect(playmaking.querySelector(".bg-tier")).not.toBeNull();
   });
 });

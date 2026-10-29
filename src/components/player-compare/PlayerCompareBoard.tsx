@@ -3,6 +3,8 @@ import {
   formatContractSummary,
   PlayerIdentityLine,
 } from "@/components/basketball/PlayerIdentityLine";
+import { CompareValue } from "@/components/player-compare/CompareValue";
+import { RatingDisplaySwitch } from "@/components/ui/RatingDisplaySwitch";
 import { PlayerComparePicker } from "@/components/player-compare/PlayerComparePicker";
 import { OvrBadge } from "@/components/ui/OvrBadge";
 import { cn, displayClass } from "@/components/ui/styles";
@@ -124,8 +126,12 @@ function Row(props: { row: CompareRow }) {
       >
         {row.label}
       </th>
-      <td className={valueClass}>{row.a}</td>
-      <td className={valueClass}>{row.b}</td>
+      <td className={valueClass}>
+        {row.kind === "overall" ? row.a : <CompareValue value={row.a} />}
+      </td>
+      <td className={valueClass}>
+        {row.kind === "overall" ? row.b : <CompareValue value={row.b} />}
+      </td>
       <td
         data-tone={tone}
         className={cn(
@@ -170,42 +176,45 @@ export function PlayerCompareBoard(props: {
         />
       </div>
       {a && b && rows ? (
-        <table className="w-full max-w-3xl border-collapse">
-          <caption className="sr-only">
-            Ratings for {a.firstName} {a.lastName} and {b.firstName}{" "}
-            {b.lastName}, with the difference
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col" className="py-2 text-left text-sm text-muted">
-                Rating
-              </th>
-              <th
-                scope="col"
-                className="max-w-24 truncate py-2 text-right text-sm text-muted"
-              >
-                {a.lastName}
-              </th>
-              <th
-                scope="col"
-                className="max-w-24 truncate py-2 text-right text-sm text-muted"
-              >
-                {b.lastName}
-              </th>
-              <th
-                scope="col"
-                className="py-2 pl-3 text-right text-sm text-muted"
-              >
-                Diff
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <Row key={row.key} row={row} />
-            ))}
-          </tbody>
-        </table>
+        <div className="space-y-3">
+          <RatingDisplaySwitch />
+          <table className="w-full max-w-3xl border-collapse">
+            <caption className="sr-only">
+              Ratings for {a.firstName} {a.lastName} and {b.firstName}{" "}
+              {b.lastName}, with the difference
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col" className="py-2 text-left text-sm text-muted">
+                  Rating
+                </th>
+                <th
+                  scope="col"
+                  className="max-w-24 truncate py-2 text-right text-sm text-muted"
+                >
+                  {a.lastName}
+                </th>
+                <th
+                  scope="col"
+                  className="max-w-24 truncate py-2 text-right text-sm text-muted"
+                >
+                  {b.lastName}
+                </th>
+                <th
+                  scope="col"
+                  className="py-2 pl-3 text-right text-sm text-muted"
+                >
+                  Diff
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <Row key={row.key} row={row} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <p className="text-sm text-muted">
           Pick two players to compare their ratings.

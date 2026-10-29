@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "./fixtures";
 
 /**
@@ -130,3 +131,83 @@ for (const tab of ["Simple", "Detail"]) {
     expect(overflow.scroll).toBeLessThanOrEqual(overflow.client);
   });
 }
+
+/** Serious or critical axe (WCAG 2.1 AA) findings on the current page. */
+async function blockingAxe(page: Page) {
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  return results.violations
+    .filter((v) => v.impact === "serious" || v.impact === "critical")
+    .map(
+      (v) =>
+        `${v.impact} ${v.id}: ${v.help} (${v.nodes.length}x, e.g. ${v.nodes[0]?.target.join(" ")})`,
+    );
+}
+
+async function noSidewaysScroll(page: Page) {
+  const overflow = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollWidth,
+    client: document.documentElement.clientWidth,
+  }));
+  expect(overflow.scroll).toBeLessThanOrEqual(overflow.client);
+}
+
+test("Player card Attributes tab shows seven category boxes that follow the rating display", async ({
+  page,
+  dashboard,
+}) => {
+  await openSheet(page, dashboard("/roster"));
+  await grid(page).focus();
+  await page.keyboard.press("Enter");
+  const card = page.getByRole("dialog").first();
+  await expect(card).toBeVisible();
+  await card.getByRole("tab", { name: "Attributes" }).click();
+
+  const boxes = card.locator('[aria-label="Category ratings"] > li');
+  await expect(boxes).toHaveCount(7);
+  const firstValue = boxes.first().locator(".font-display > [aria-hidden]");
+  await expect(firstValue).toHaveText(/^[A-F][+-]?$/);
+
+  await card
+    .getByRole("group", { name: "Rating display" })
+    .getByRole("button", { name: "Ratings" })
+    .click();
+  await expect(firstValue).toHaveText(/^\d+$/);
+
+  // The best category starts open; its sub-ratings follow the display too.
+  await expect(card.getByRole("button", { name: /^Hide details/ })).toHaveCount(
+    1,
+  );
+  await noSidewaysScroll(page);
+  expect(await blockingAxe(page)).toEqual([]);
+});
+
+test("Player profile and compare pages keep the boxes and table accessible", async ({
+  page,
+  dashboard,
+}) => {
+  await openSheet(page, dashboard("/roster"));
+  const ids = await grid(page)
+    .locator("tbody tr[data-player-id]")
+    .evaluateAll((rows) =>
+      rows.slice(0, 2).map((row) => row.getAttribute("data-player-id")),
+    );
+  expect(ids.length).toBe(2);
+
+  await page.goto(dashboard(`/players/${ids[0]}?tab=attributes`), {
+    waitUntil: "networkidle",
+  });
+  await expect(
+    page.locator('[aria-label="Category ratings"] > li'),
+  ).toHaveCount(7);
+  await noSidewaysScroll(page);
+  expect(await blockingAxe(page)).toEqual([]);
+
+  await page.goto(dashboard(`/players/compare?a=${ids[0]}&b=${ids[1]}`), {
+    waitUntil: "networkidle",
+  });
+  await expect(page.getByRole("table")).toBeVisible();
+  await noSidewaysScroll(page);
+  expect(await blockingAxe(page)).toEqual([]);
+});

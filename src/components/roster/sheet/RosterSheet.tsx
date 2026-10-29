@@ -6,7 +6,7 @@ import { SheetHeader } from "@/components/roster/sheet/SheetHeader";
 import { SheetTable } from "@/components/roster/sheet/SheetTable";
 import { KeyHint } from "@/components/ui/KeyHint";
 import { SlantTabs } from "@/components/ui/Tabs";
-import { ViewSwitch } from "@/components/ui/ViewSwitch";
+import { RatingDisplaySwitch } from "@/components/ui/RatingDisplaySwitch";
 import { useRatingDisplay } from "@/components/ui/rating-display";
 import {
   bestInColumn,
@@ -43,7 +43,7 @@ export function RosterSheet(props: {
   returnPath: string;
 }) {
   const { openPlayer } = useEntityDrawer();
-  const [mode, setMode] = useRatingDisplay();
+  const [mode] = useRatingDisplay();
   const [tab, setTab] = useState<SheetTab>("simple");
   const [sortState, setSortState] = useState<SheetSort>(DEFAULT_SHEET_SORT);
   const [selectedState, setSelectedState] = useState<string | null>(null);
@@ -152,22 +152,7 @@ export function RosterSheet(props: {
             onSelect: () => setTab(entry.id),
           }))}
         />
-        <ViewSwitch
-          aria-label="Rating display"
-          activeKey={mode}
-          items={[
-            {
-              key: "grades",
-              label: "Grades",
-              onSelect: () => setMode("grades"),
-            },
-            {
-              key: "ratings",
-              label: "Ratings",
-              onSelect: () => setMode("ratings"),
-            },
-          ]}
-        />
+        <RatingDisplaySwitch />
       </div>
 
       {selected ? (
