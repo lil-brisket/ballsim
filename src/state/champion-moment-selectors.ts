@@ -24,6 +24,15 @@ export type ChampionMomentView = {
   isCurrent: boolean;
 };
 
+/** The title was just decided: postseason or offseason of a complete run. */
+export function isChampionMomentCurrent(state: GameState): boolean {
+  const phase = state.competition.season.phase;
+  return (
+    state.competition.playoffs.status === "complete" &&
+    (phase === "postseason" || phase === "offseason")
+  );
+}
+
 function fullName(state: GameState, teamId: string): string {
   const team = state.world.teams[teamId];
   return team ? `${team.city} ${team.name}` : teamId;
@@ -57,7 +66,6 @@ export function toChampionMomentView(
   const championWins = final?.wins[championTeamId] ?? 0;
   const opponentWins = opponentId ? (final?.wins[opponentId] ?? 0) : 0;
   const team = state.world.teams[championTeamId];
-  const phase = state.competition.season.phase;
 
   return {
     seasonYear: state.competition.season.year,
@@ -68,8 +76,6 @@ export function toChampionMomentView(
     finalsOpponentName: opponentId ? fullName(state, opponentId) : null,
     finalsWins: `${championWins}–${opponentWins}`,
     userTeamIsChampion: getActiveOwnerTeamId(state) === championTeamId,
-    isCurrent:
-      playoffs.status === "complete" &&
-      (phase === "postseason" || phase === "offseason"),
+    isCurrent: isChampionMomentCurrent(state),
   };
 }

@@ -114,6 +114,22 @@ export function listRecapSeasons(state: GameState, teamId?: string): number[] {
     .sort((a, b) => b - a);
 }
 
+/**
+ * Offseason, and `year` (default: the team's latest annual report) is the
+ * current season.
+ */
+export function isSeasonRecapCurrent(
+  state: GameState,
+  teamId?: string,
+  year?: number,
+): boolean {
+  const season = state.competition.season;
+  return (
+    season.phase === "offseason" &&
+    (year ?? listRecapSeasons(state, teamId)[0]) === season.year
+  );
+}
+
 function toRecapGame(
   state: GameState,
   game: Game,
@@ -303,6 +319,6 @@ export function toSeasonRecapView(
       financial: franchiseTrajectory.financial,
       brand: franchiseTrajectory.brand,
     },
-    isCurrent: bracketLoaded && season.phase === "offseason",
+    isCurrent: isSeasonRecapCurrent(state, resolvedTeamId, year),
   };
 }

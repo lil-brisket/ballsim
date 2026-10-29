@@ -77,6 +77,17 @@ function isYearlyMajor(result: AwardResult): boolean {
   );
 }
 
+/** Awards for the current season exist and the season is in a news phase. */
+export function isAwardsNightCurrent(state: GameState): boolean {
+  const season = state.competition.season;
+  return (
+    CURRENT_PHASES.has(season.phase) &&
+    Object.values(state.business.awards.results).some(
+      (result) => result.seasonYear === season.year && isYearlyMajor(result),
+    )
+  );
+}
+
 function oneDecimal(value: number): string {
   return value.toFixed(1);
 }
@@ -212,6 +223,6 @@ export function toAwardsNightView(
     seasonYear: year,
     awards,
     userWinners: awards.filter((award) => award.userWon).length,
-    isCurrent: year === season.year && CURRENT_PHASES.has(season.phase),
+    isCurrent: year === season.year && isAwardsNightCurrent(state),
   };
 }

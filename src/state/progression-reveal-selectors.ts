@@ -79,6 +79,13 @@ function isSeasonFinalized(state: GameState): boolean {
   );
 }
 
+/** Offseason with the current season finalized: this is news. */
+export function isProgressionRevealCurrent(state: GameState): boolean {
+  return (
+    state.competition.season.phase === "offseason" && isSeasonFinalized(state)
+  );
+}
+
 function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
@@ -212,6 +219,6 @@ export function toProgressionRevealView(
     unchangedPlayers,
     risers,
     fallers,
-    isCurrent: state.competition.season.phase === "offseason" && finalized,
+    isCurrent: isProgressionRevealCurrent(state),
   };
 }
