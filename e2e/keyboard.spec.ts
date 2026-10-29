@@ -56,14 +56,9 @@ test("Home to Sim with the keyboard only", async ({ page, dashboard }) => {
   await page.waitForURL((url) => url.pathname === dashboard("/roster"));
   await settle(page);
 
-  // Tab to the first player name and open the drawer.
-  await tabTo(
-    page,
-    (el) =>
-      el.tagName === "BUTTON" &&
-      el.classList.contains("font-display") &&
-      el.classList.contains("text-xl"),
-  );
+  // Tab to the roster sheet and open the selected player's card.
+  await tabTo(page, (el) => el.getAttribute("role") === "grid");
+  await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   const drawer = page.getByRole("dialog").first();
   await expect(drawer).toBeVisible();
