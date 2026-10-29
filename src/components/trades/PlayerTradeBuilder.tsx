@@ -87,7 +87,7 @@ export function PlayerTradeBuilder(props: Props) {
       {error ? (
         <p
           role="alert"
-          className="rounded-md border border-red-700 bg-red-950/40 px-3 py-2 text-red-200"
+          className="rounded-md border border-danger/50 bg-danger-soft px-3 py-2 text-danger-ink"
         >
           {error}
         </p>
