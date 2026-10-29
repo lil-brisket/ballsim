@@ -79,8 +79,8 @@ export function toFranchiseTrends(
 }
 
 const DIRECTION_CLASS: Record<FranchiseTrend["direction"], string> = {
-  up: "text-emerald-400",
-  down: "text-rose-400",
+  up: "text-success",
+  down: "text-danger",
   flat: "text-faint",
 };
 

@@ -61,9 +61,9 @@ export function TeamDecisionPanel(props: {
         </dl>
 
         {team.rosterProblems.length > 0 ? (
-          <div className="rounded-lg border border-rose-900/40 bg-rose-950/20 px-3 py-2 text-sm text-rose-200">
+          <div className="rounded-lg border border-danger/40 bg-danger-soft px-3 py-2 text-sm text-danger-ink">
             <p className="font-medium">Roster concerns</p>
-            <ul className="mt-1 space-y-0.5 text-sm text-rose-300/90">
+            <ul className="mt-1 space-y-0.5 text-sm text-danger-ink/90">
               {team.rosterProblems.slice(0, 3).map((problem) => (
                 <li key={problem.playerId}>
                   {problem.name} — {problem.kind}

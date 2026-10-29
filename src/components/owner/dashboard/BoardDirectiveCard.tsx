@@ -25,7 +25,7 @@ export function BoardDirectiveCard(props: {
         "rounded-xl border px-4 py-3",
         board.stage === "warning"
           ? "border-warning/40 bg-warning/10"
-          : "border-rose-900/60 bg-rose-950/20",
+          : "border-danger/50 bg-danger-soft",
       )}
     >
       <p className="text-sm text-muted">The board</p>

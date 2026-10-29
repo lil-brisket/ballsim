@@ -107,7 +107,7 @@ function PayrollBar(props: { view: CapSheetView }) {
         {view.lines.map((line) => (
           <li key={line.key}>
             <span className="text-muted">{line.label}:</span>{" "}
-            <span className={cn(isBad(line) && "text-red-400")}>
+            <span className={cn(isBad(line) && "text-danger")}>
               {lineStatus(line)}
             </span>
           </li>

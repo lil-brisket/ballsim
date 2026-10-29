@@ -173,13 +173,13 @@ export function ExtendContractDialog(props: {
                     </p>
                   )}
                   {extension.testingMarket ? (
-                    <p className="text-rose-300">
+                    <p className="text-danger-ink">
                       He has decided to test free agency.
                     </p>
                   ) : null}
                 </div>
               ) : extension.testingMarket ? (
-                <p className="text-sm text-rose-300">
+                <p className="text-sm text-danger-ink">
                   He has decided to test free agency.
                 </p>
               ) : null}
@@ -246,7 +246,7 @@ export function ExtendContractDialog(props: {
                         className={cn(
                           "px-3 py-2",
                           numericCellClass,
-                          row.room < 0 && "text-rose-300",
+                          row.room < 0 && "text-danger-ink",
                         )}
                       >
                         <MoneyDisplay amount={row.room} />
@@ -257,7 +257,7 @@ export function ExtendContractDialog(props: {
               </DataTable>
 
               {blocked ? (
-                <p role="alert" className="text-sm text-rose-300">
+                <p role="alert" className="text-sm text-danger-ink">
                   {extension.blockedReason}
                 </p>
               ) : null}

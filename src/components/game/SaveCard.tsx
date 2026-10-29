@@ -46,10 +46,10 @@ export function SaveCard(props: {
 
   if (!preview.ok) {
     return (
-      <li className="flex flex-col gap-3 rounded-xl border border-rose-900/50 bg-rose-950/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <li className="flex flex-col gap-3 rounded-xl border border-danger/50 bg-danger-soft px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-medium text-ink">{preview.name}</p>
-          <p className="mt-1 text-sm text-rose-300" role="status">
+          <p className="mt-1 text-sm text-danger-ink" role="status">
             {preview.error}
           </p>
           <p className="mt-1 text-sm text-muted">
@@ -73,7 +73,7 @@ export function SaveCard(props: {
           edge="left"
           raised
           className={`hover-lift flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between${
-            isOnline ? " ring-2 ring-emerald-500/60" : ""
+            isOnline ? " ring-2 ring-success/60" : ""
           }`}
         >
           <div className="flex min-w-0 items-center gap-4">

@@ -356,14 +356,14 @@ describe("development screen", () => {
     render(withDrawer(<SkillRatingsTable saveId="save_test" rows={rows} />));
     const [healthy, hurt] = screen.getAllByRole("row").slice(1);
     const gain = within(healthy!).getByText("+3");
-    expect(gain.className).toContain("text-emerald-300");
+    expect(gain.className).toContain("text-success-ink");
     const drop = within(healthy!).getByText("−2");
-    expect(drop.className).toContain("text-rose-300");
+    expect(drop.className).toContain("text-danger-ink");
     expect(within(hurt!).getByText("−2").className).toContain(
-      "text-orange-300",
+      "text-caution-ink",
     );
     expect(within(hurt!).getByText("+3").className).toContain(
-      "text-emerald-300",
+      "text-success-ink",
     );
     expect(within(hurt!).getByText("Injured · Sprained Ankle")).toBeTruthy();
   });

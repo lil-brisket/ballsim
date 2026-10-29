@@ -86,7 +86,7 @@ export function TrainingCamps(props: {
                     className="ml-2 align-middle"
                   />
                   {row.injury ? (
-                    <span className="ml-2 rounded-full border border-orange-400/40 bg-orange-500/10 px-2 py-0.5 text-xs text-orange-300">
+                    <span className="ml-2 rounded-full border border-caution/40 bg-caution/10 px-2 py-0.5 text-xs text-caution-ink">
                       Injured · {row.injury.label}
                     </span>
                   ) : null}

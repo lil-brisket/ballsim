@@ -95,7 +95,7 @@ function AssetColumn(props: {
                   onClick={() => props.onRemove?.(asset)}
                   className={cn(
                     touchTargetClass,
-                    "shrink-0 text-faint hover:text-rose-400",
+                    "shrink-0 text-faint hover:text-danger",
                     focusRingClass,
                   )}
                 >

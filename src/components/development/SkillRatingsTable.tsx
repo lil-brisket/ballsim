@@ -30,10 +30,10 @@ function Delta(props: { delta: number | null; injured: boolean }) {
       className={cn(
         "ml-1 text-xs",
         gain
-          ? "text-emerald-300"
+          ? "text-success-ink"
           : injured
-            ? "text-orange-300"
-            : "text-rose-300",
+            ? "text-caution-ink"
+            : "text-danger-ink",
       )}
     >
       {gain ? `+${delta}` : `−${Math.abs(delta)}`}
@@ -51,9 +51,9 @@ export function SkillRatingsTable(props: {
     <Section title="Skill ratings">
       <p className="mb-3 text-sm text-muted">
         Change since last season:{" "}
-        <span className="text-emerald-300">green</span> improved,{" "}
-        <span className="text-rose-300">red</span> declined,{" "}
-        <span className="text-orange-300">orange</span> declined while injured.
+        <span className="text-success-ink">green</span> improved,{" "}
+        <span className="text-danger-ink">red</span> declined,{" "}
+        <span className="text-caution-ink">amber</span> declined while injured.
       </p>
       {rows.length === 0 ? (
         <EmptyState message="No players on the roster." />
@@ -86,7 +86,7 @@ export function SkillRatingsTable(props: {
                     </p>
                   ) : null}
                   {row.injury ? (
-                    <span className="mt-0.5 inline-block rounded-full border border-orange-400/40 bg-orange-500/10 px-2 py-0.5 text-xs text-orange-300">
+                    <span className="mt-0.5 inline-block rounded-full border border-caution/40 bg-caution/10 px-2 py-0.5 text-xs text-caution-ink">
                       Injured · {row.injury.label}
                     </span>
                   ) : null}

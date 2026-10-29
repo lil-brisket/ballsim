@@ -25,7 +25,7 @@ export function AttentionRequiredPanel(props: {
   if (props.items.length === 0 && unresolved.length === 0) {
     return (
       <section
-        className="rounded-xl border border-emerald-800/40 bg-emerald-950/20 px-4 py-5"
+        className="rounded-xl border border-success/40 bg-success-soft px-4 py-5"
         aria-label="Attention required"
       >
         <SectionHeading title="You're in good shape" />
@@ -62,7 +62,7 @@ export function AttentionRequiredPanel(props: {
       </div>
 
       {props.aiCanHandle ? (
-        <p className="text-sm text-emerald-400/90">
+        <p className="text-sm text-success/90">
           AI can handle these automatically
         </p>
       ) : null}

@@ -88,7 +88,7 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
       <DraftHeader draft={draft} />
 
       {error ? (
-        <p className="rounded-md border border-red-800 bg-red-950/40 px-3 py-2 text-sm text-red-200">
+        <p className="rounded-md border border-danger/50 bg-danger-soft px-3 py-2 text-sm text-danger-ink">
           {error}
         </p>
       ) : null}

@@ -90,14 +90,14 @@ export function InviteCreator(props: {
       {error ? (
         <p
           role="alert"
-          className="rounded-md border border-rose-800/60 bg-rose-950/40 px-4 py-3 text-sm text-rose-200"
+          className="rounded-md border border-danger/50 bg-danger-soft px-4 py-3 text-sm text-danger-ink"
         >
           {error}
         </p>
       ) : null}
 
       {link ? (
-        <div className="space-y-2 rounded-lg border border-emerald-800/60 bg-emerald-950/20 p-3">
+        <div className="space-y-2 rounded-lg border border-success/50 bg-success-soft p-3">
           <input
             readOnly
             aria-label="Invite link"

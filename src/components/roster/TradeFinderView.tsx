@@ -224,7 +224,7 @@ export function TradeFinderView(props: {
                     onClick={() => toggle(asset)}
                     className={cn(
                       touchTargetClass,
-                      "shrink-0 text-faint hover:text-rose-400",
+                      "shrink-0 text-faint hover:text-danger",
                       focusRingClass,
                     )}
                   >
@@ -323,7 +323,7 @@ export function TradeFinderView(props: {
         <p className="text-sm text-faint">Searching for offers…</p>
       ) : null}
       {error ? (
-        <p className="text-sm text-rose-400" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {error}
         </p>
       ) : null}

@@ -131,7 +131,7 @@ export function PerformanceChart(props: {
   } else if (hasFailed && seasonId) {
     body = (
       <div role="alert" className="space-y-2 py-6 text-center">
-        <p className="text-sm text-rose-200">Unable to load games.</p>
+        <p className="text-sm text-danger-ink">Unable to load games.</p>
         <Button
           type="button"
           variant="secondary"

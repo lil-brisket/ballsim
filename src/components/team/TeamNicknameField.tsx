@@ -47,7 +47,7 @@ export function TeamNicknameField(props: {
         ) : null}
       </div>
       {props.error ? (
-        <p id={errorId} className="text-sm text-red-400" role="alert">
+        <p id={errorId} className="text-sm text-danger" role="alert">
           {props.error}
         </p>
       ) : props.helperText ? (

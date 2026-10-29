@@ -126,11 +126,11 @@ export function FantasyDraftPlayerPanel(props: {
           {detail.strengths.length > 0 ? (
             <div>
               <h4 className="mb-1 text-sm font-medium text-soft">Strengths</h4>
-              <ul className="flex flex-wrap gap-1.5 text-sm text-emerald-300/90">
+              <ul className="flex flex-wrap gap-1.5 text-sm text-success-ink/90">
                 {detail.strengths.map((s) => (
                   <li
                     key={s.label}
-                    className="rounded border border-emerald-900/50 px-2 py-0.5"
+                    className="rounded border border-success/50 px-2 py-0.5"
                   >
                     {s.label}
                   </li>

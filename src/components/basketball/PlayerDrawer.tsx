@@ -193,7 +193,7 @@ export function PlayerDrawer(props: {
 
       {props.status === "error" ? (
         <div className="space-y-3" role="alert">
-          <p className="text-sm text-rose-200">Unable to load player.</p>
+          <p className="text-sm text-danger-ink">Unable to load player.</p>
           {props.onRetry ? (
             <Button type="button" variant="secondary" onClick={props.onRetry}>
               Try again

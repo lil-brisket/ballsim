@@ -33,7 +33,7 @@ export function DraftHeader(props: { draft: FantasyDraftView }) {
                 ? "text-muted"
                 : draft.onClockIsUser
                   ? "text-team-ink"
-                  : "text-sky-300"
+                  : "text-info-ink"
             }`}
           >
             {statusLabel}

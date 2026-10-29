@@ -762,7 +762,7 @@ export function FullCourtView(props: {
             >
               <span className="absolute -ml-1.5 -mt-1 h-3 w-3 rounded-full bg-black/40 blur-[1px]" />
               <div data-ball-lift className="absolute">
-                <div className="-ml-1.5 -mt-1.5 h-3 w-3 rounded-full border border-black/50 bg-orange-500" />
+                <div className="-ml-1.5 -mt-1.5 h-3 w-3 rounded-full border border-black/50 bg-caution" />
               </div>
             </div>
 

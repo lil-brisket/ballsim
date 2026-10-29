@@ -19,7 +19,7 @@ export function MultiTeamPhaseSwitcher(props: {
         {props.teams.map((team) => (
           <li key={team.teamId}>
             {team.isActive ? (
-              <span className="inline-flex items-center gap-2 rounded-md border border-emerald-700/60 bg-emerald-950/40 px-3 py-1.5 text-sm text-emerald-200">
+              <span className="inline-flex items-center gap-2 rounded-md border border-success/50 bg-success-soft px-3 py-1.5 text-sm text-success-ink">
                 {team.teamLabel}
                 <AttentionCounts team={team} />
               </span>
@@ -56,7 +56,7 @@ function AttentionCounts(props: { team: PhaseTeamAttentionView }) {
   return (
     <span className="text-sm text-muted">
       {requiredCount > 0 ? (
-        <span className="text-red-400">{requiredCount} req</span>
+        <span className="text-danger">{requiredCount} req</span>
       ) : null}
       {requiredCount > 0 && recommendedCount > 0 ? " · " : null}
       {recommendedCount > 0 ? (

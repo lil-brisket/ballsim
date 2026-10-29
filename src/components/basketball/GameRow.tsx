@@ -83,7 +83,7 @@ export function GameRow(props: GameRowProps) {
         className={cn(
           touchTargetTextClass,
           "font-mono text-sm",
-          props.won ? "text-emerald-400" : "text-rose-400",
+          props.won ? "text-success" : "text-danger",
           focusRingClass,
         )}
       >
@@ -93,7 +93,7 @@ export function GameRow(props: GameRowProps) {
       <span
         className={cn(
           "font-mono text-sm",
-          props.won ? "text-emerald-400" : "text-rose-400",
+          props.won ? "text-success" : "text-danger",
         )}
       >
         {props.won ? "W" : "L"} {props.teamScore}–{props.opponentScore}

@@ -95,7 +95,7 @@ export function TeamDrawer(props: {
 
       {props.status === "error" ? (
         <div className="space-y-3" role="alert">
-          <p className="text-sm text-rose-200">Unable to load team.</p>
+          <p className="text-sm text-danger-ink">Unable to load team.</p>
           {props.onRetry ? (
             <Button type="button" variant="secondary" onClick={props.onRetry}>
               Try again
@@ -214,8 +214,8 @@ export function TeamDrawer(props: {
                     <span
                       className={
                         game.won
-                          ? "font-mono text-emerald-400"
-                          : "font-mono text-rose-300"
+                          ? "font-mono text-success"
+                          : "font-mono text-danger-ink"
                       }
                     >
                       {game.teamScore}–{game.opponentScore}

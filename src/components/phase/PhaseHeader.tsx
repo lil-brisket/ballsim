@@ -29,9 +29,7 @@ export function PhaseHeader(props: {
             titleClassName="text-lg!"
             title={view.nowLabel}
           />
-          <p className="mt-1 text-sm text-emerald-400/90">
-            {view.resolved.theme}
-          </p>
+          <p className="mt-1 text-sm text-success/90">{view.resolved.theme}</p>
         </div>
         <div>
           <p className="text-sm text-muted">Next</p>
