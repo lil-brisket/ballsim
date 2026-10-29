@@ -47,7 +47,7 @@ export function AuthForm({ mode, action, next, error }: AuthFormProps) {
       {error ? (
         <div
           role="alert"
-          className="rounded-lg border border-red-900 bg-red-950/40 p-3 text-sm text-red-200"
+          className="rounded-lg border border-danger/50 bg-danger-soft p-3 text-sm text-danger-ink"
         >
           {error}
         </div>
