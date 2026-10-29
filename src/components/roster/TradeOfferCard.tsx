@@ -108,6 +108,18 @@ function AssetColumn(props: {
   );
 }
 
+const assetKeys = (assets: TradeAssetView[]) =>
+  new Set(assets.map((a) => `${a.kind}-${a.id}`));
+
+function sameAssets(a: TradeAssetView[], b: TradeAssetView[]): boolean {
+  const keys = assetKeys(a);
+  return (
+    keys.size === a.length &&
+    a.length === b.length &&
+    b.every((x) => keys.has(`${x.kind}-${x.id}`))
+  );
+}
+
 const withoutAsset = (assets: TradeAssetView[], asset: TradeAssetView) =>
   assets.filter((a) => !(a.kind === asset.kind && a.id === asset.id));
 
@@ -138,7 +150,8 @@ export function TradeOfferCard(props: {
   const [receive, setReceive] = useState(offer.receive);
 
   const max = TRADE_OFFER_MAX_ASSETS_PER_SIDE;
-  const modified = send !== offer.send || receive !== offer.receive;
+  const modified =
+    !sameAssets(send, offer.send) || !sameAssets(receive, offer.receive);
   const proposal: TradeProposal = modified
     ? {
         sideA: toSide(offer.proposal.sideA.teamId, send),
@@ -169,14 +182,23 @@ export function TradeOfferCard(props: {
             titleClassName="text-lg!"
             title={offer.counterpartyName}
           />
-          <span className="text-sm text-team-ink">
-            {INTEREST_LABELS[offer.interestLevel]}
-          </span>
+          {modified ? null : (
+            <span className="text-sm text-team-ink">
+              {INTEREST_LABELS[offer.interestLevel]}
+            </span>
+          )}
         </div>
-        <ProgressBar
-          value={offer.interest}
-          aria-label={`Interest ${Math.round(offer.interest)} of 100`}
-        />
+        {modified ? (
+          <p className="text-sm text-muted">
+            Changed offer: {offer.counterpartyName} will decide when you propose
+            it.
+          </p>
+        ) : (
+          <ProgressBar
+            value={offer.interest}
+            aria-label={`Interest ${Math.round(offer.interest)} of 100`}
+          />
+        )}
       </div>
       <div className="flex flex-col gap-3 sm:flex-row">
         <AssetColumn
