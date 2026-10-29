@@ -81,7 +81,7 @@ function RotationRows(props: {
                 {row.firstName} {row.lastName}
               </button>
               {row.workloadWarning ? (
-                <p className="mt-0.5 text-sm text-orange-400">
+                <p className="mt-0.5 text-sm text-caution">
                   {row.workloadWarning}
                 </p>
               ) : null}
