@@ -61,6 +61,20 @@ export function TradeFinderView(props: {
           : [...current, asset],
     );
 
+  const ownAssets: TradeAssetView[] = [
+    ...roster.map((p): TradeAssetView => ({
+      kind: "player",
+      id: p.playerId,
+      name: `${p.firstName} ${p.lastName}`,
+      position: p.position,
+      overall: p.overall,
+      age: p.age,
+      salary: p.contractSalary,
+      href: `/dashboard/${props.saveId}/players/${p.playerId}`,
+    })),
+    ...picks,
+  ];
+
   const sortedPlayers = [...roster].sort((a, b) => b.overall - a.overall);
 
   const slotLabel = (asset: Selected): string => {
@@ -174,7 +188,12 @@ export function TradeFinderView(props: {
             Next team
           </button>
         </div>
-        <TradeOfferCard saveId={props.saveId} offer={offers[active]} />
+        <TradeOfferCard
+          key={offers[active].counterpartyTeamId}
+          saveId={props.saveId}
+          offer={offers[active]}
+          ownAssets={ownAssets}
+        />
       </div>
     );
   }

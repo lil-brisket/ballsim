@@ -74,7 +74,10 @@ const offer = (
     receive: [
       { kind: "draftPick", id: "k9", name: "2028 2nd", viaAbbreviation: null },
     ],
-    proposal: {},
+    proposal: {
+      sideA: { teamId: "me", playerIds: ["p1"], draftPickIds: [] },
+      sideB: { teamId: `t-${abbr}`, playerIds: [], draftPickIds: ["k9"] },
+    },
   }) as unknown as TradeOfferView;
 
 const offers = [
@@ -150,6 +153,27 @@ describe("TradeFinderView", () => {
     expect(screen.getByText("Very interested")).toBeTruthy();
     expect(screen.getByLabelText("Interest 80 of 100")).toBeTruthy();
     expect(screen.getByText("1 of 3")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Accept trade" })).toBeTruthy();
+  });
+
+  it("lets an offer be modified on both sides and reset", async () => {
+    findTradeOffersAction.mockResolvedValue({ ok: true, offers });
+    renderView("p1");
+    await findOffers();
+
+    fireEvent.click(screen.getByRole("button", { name: "Modify offer" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Bob Test" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove Ann Test" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove 2028 2nd" }));
+    expect(
+      screen.getByRole("button", { name: "Remove Bob Test" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Nothing")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Propose trade" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel changes" }));
+    expect(screen.getByText("2028 2nd")).toBeTruthy();
+    expect(screen.queryByText("Bob Test")).toBeNull();
     expect(screen.getByRole("button", { name: "Accept trade" })).toBeTruthy();
   });
 
