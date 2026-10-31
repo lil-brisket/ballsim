@@ -87,6 +87,22 @@ test("Rating display switches grades to ratings and persists", async ({
   ).toHaveAttribute("aria-pressed", "true");
 });
 
+test("C marks a player and a second C compares the two", async ({
+  page,
+  dashboard,
+}) => {
+  await openSheet(page, dashboard("/roster"));
+  await grid(page).focus();
+  await page.keyboard.press("c");
+  await expect(page.getByRole("status")).toContainText(/^Comparing /);
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("c");
+  await page.waitForURL(/\/players\/compare\?a=[^&]+&b=[^&]+$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Compare players" }),
+  ).toBeVisible();
+});
+
 test("Enter opens the player card and Escape closes it", async ({
   page,
   dashboard,

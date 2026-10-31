@@ -9,10 +9,11 @@ import {
 } from "@testing-library/react";
 
 const openPlayer = vi.fn();
+const push = vi.fn();
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/save_test/roster",
-  useRouter: () => ({ replace: vi.fn(), push: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ replace: vi.fn(), push, refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(""),
 }));
 
@@ -141,6 +142,7 @@ describe("RosterSheet", () => {
     cleanup();
     vi.restoreAllMocks();
     openPlayer.mockClear();
+    push.mockClear();
     setRatingDisplay("grades");
     window.localStorage.clear();
   });
@@ -369,5 +371,52 @@ describe("RosterSheet", () => {
       />,
     );
     expect(selectedName()).toBe("Alex Rivera");
+  });
+  describe("compare key", () => {
+    it("marks on the first C and opens the compare page on the second", () => {
+      renderSheet();
+      fireEvent.click(row("p2"));
+      fireEvent.keyDown(grid(), { key: "c" });
+      expect(push).not.toHaveBeenCalled();
+      expect(screen.getByRole("status").textContent).toMatch(
+        /Comparing Ben Adams/,
+      );
+
+      fireEvent.click(row("p1"));
+      fireEvent.keyDown(grid(), { key: "C" });
+      expect(push).toHaveBeenCalledWith(
+        "/dashboard/save_test/players/compare?a=p2&b=p1",
+      );
+    });
+
+    it("clears the mark on C for the same player or Cancel compare", () => {
+      renderSheet();
+      fireEvent.keyDown(grid(), { key: "c" });
+      expect(screen.getByRole("status")).toBeTruthy();
+      fireEvent.keyDown(grid(), { key: "c" });
+      expect(screen.queryByRole("status")).toBeNull();
+      expect(push).not.toHaveBeenCalled();
+
+      fireEvent.keyDown(grid(), { key: "c" });
+      fireEvent.click(screen.getByRole("button", { name: "Cancel compare" }));
+      expect(screen.queryByRole("status")).toBeNull();
+    });
+
+    it("works from the header button too", () => {
+      renderSheet();
+      fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+      fireEvent.click(row("p3"));
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Compare with Rivera$/ }),
+      );
+      expect(push).toHaveBeenCalledWith(
+        expect.stringMatching(/\/players\/compare\?a=p1&b=p3$/),
+      );
+    });
+
+    it("lists the key in the hints", () => {
+      renderSheet();
+      expect(screen.getByText("Compare", { selector: "span" })).toBeTruthy();
+    });
   });
 });

@@ -74,6 +74,9 @@ export function SheetHeader(props: {
   variant?: "roster" | "market" | "league";
   /** Where the market variant's "View in Free Agency" link goes. */
   marketHref?: string;
+  /** Compare button wording; the button is hidden without `onCompare`. */
+  compareLabel?: string;
+  onCompare?: () => void;
 }) {
   const { player } = props;
   const { openPlayer } = useEntityDrawer();
@@ -160,6 +163,11 @@ export function SheetHeader(props: {
             >
               Open card
             </Button>
+            {props.onCompare ? (
+              <Button type="button" variant="quiet" onClick={props.onCompare}>
+                {props.compareLabel ?? "Compare"}
+              </Button>
+            ) : null}
             {market ? (
               props.marketHref ? (
                 <Link

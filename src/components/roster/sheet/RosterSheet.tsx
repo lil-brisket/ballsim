@@ -1,17 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useEntityDrawer } from "@/components/entity/EntityDrawerProvider";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { BestMarker, RatingCell } from "@/components/roster/sheet/RatingCell";
 import { SheetHeader } from "@/components/roster/sheet/SheetHeader";
 import { SheetTable } from "@/components/roster/sheet/SheetTable";
+import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { KeyHint } from "@/components/ui/KeyHint";
 import { SlantTabs } from "@/components/ui/Tabs";
 import { RatingDisplaySwitch } from "@/components/ui/RatingDisplaySwitch";
 import { useRatingDisplay } from "@/components/ui/rating-display";
 import type { RatingDisplayMode } from "@/presentation/rating-grade";
+import { compareHref } from "@/presentation/player-compare";
 import { formatSheetStat } from "@/presentation/roster-sheet-columns";
 import {
   bestInColumn,
@@ -93,6 +96,16 @@ const TABS: ReadonlyArray<{ id: SheetTab; label: string }> = [
   { id: "stats", label: "Stats" },
 ];
 
+/** The header button's wording for the current compare state. */
+function compareLabel(
+  marked: SheetPlayerView | null,
+  selected: SheetPlayerView | null,
+): string {
+  if (!marked) return "Compare";
+  if (selected && marked.playerId === selected.playerId) return "Clear compare";
+  return `Compare with ${marked.lastName}`;
+}
+
 /** Skill, stat and rating columns sort best-first; text and age ascending. */
 function firstDirection(kind: string | undefined): SheetSort["direction"] {
   return kind === "rating" || kind === "stat" ? "desc" : "asc";
@@ -119,11 +132,13 @@ export function RosterSheet(props: {
   label?: string;
 }) {
   const { openPlayer } = useEntityDrawer();
+  const router = useRouter();
   const variant = props.variant ?? "roster";
   const [mode] = useRatingDisplay();
   const [tab, setTab] = useState<SheetTab>("simple");
   const [sortState, setSortState] = useState<SheetSort>(DEFAULT_SHEET_SORT);
   const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [markedId, setMarkedId] = useState<string | null>(null);
 
   const columns = sheetColumns(tab);
   // A sort on a column the current tab lacks falls back to the default order.
@@ -150,6 +165,29 @@ export function RosterSheet(props: {
     props.players.find((player) => player.playerId === selectedState) ??
     sortSheetRows(props.players, columns, DEFAULT_SHEET_SORT)[0] ??
     null;
+
+  const marked =
+    props.players.find((player) => player.playerId === markedId) ?? null;
+
+  /**
+   * First press marks the selected player; pressing again on another player
+   * opens the compare page (marked first), and on the marked player clears it.
+   */
+  function toggleCompare() {
+    if (!selected) return;
+    if (!marked) {
+      setMarkedId(selected.playerId);
+    } else if (marked.playerId === selected.playerId) {
+      setMarkedId(null);
+    } else {
+      router.push(
+        compareHref(props.saveId, {
+          a: marked.playerId,
+          b: selected.playerId,
+        }),
+      );
+    }
+  }
 
   function applySort(columnId: string, direction: SheetSort["direction"]) {
     setSortState({ columnId, direction });
@@ -204,6 +242,10 @@ export function RosterSheet(props: {
       case "Enter":
         if (selected) openPlayer(selected.playerId);
         break;
+      case "c":
+      case "C":
+        toggleCompare();
+        break;
       case "[":
       case "]": {
         const at = TABS.findIndex((entry) => entry.id === tab);
@@ -232,6 +274,25 @@ export function RosterSheet(props: {
         <RatingDisplaySwitch />
       </div>
 
+      {marked ? (
+        <p
+          role="status"
+          className="flex flex-wrap items-center gap-2 text-sm text-soft"
+        >
+          <span>
+            Comparing {marked.firstName} {marked.lastName}. Select another
+            player and press C to compare.
+          </span>
+          <Button
+            type="button"
+            variant="quiet"
+            onClick={() => setMarkedId(null)}
+          >
+            Cancel compare
+          </Button>
+        </p>
+      ) : null}
+
       {selected ? (
         <SheetHeader
           saveId={props.saveId}
@@ -240,6 +301,8 @@ export function RosterSheet(props: {
           mode={mode}
           variant={variant}
           marketHref={props.marketHref}
+          compareLabel={compareLabel(marked, selected)}
+          onCompare={toggleCompare}
         />
       ) : null}
 
@@ -270,6 +333,7 @@ export function RosterSheet(props: {
         <KeyHint keys={["←", "→"]} label="Sort" />
         <KeyHint keys="Enter" label="Player card" />
         <KeyHint keys={["[", "]"]} label="Tabs" />
+        <KeyHint keys="C" label="Compare" />
       </div>
     </div>
   );
