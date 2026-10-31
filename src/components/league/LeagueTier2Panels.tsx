@@ -7,6 +7,7 @@ import { ScoreBug } from "@/components/ui/ScoreBug";
 import { Section } from "@/components/ui/Section";
 import type {
   LeagueGameResultRow,
+  LeagueHubTeamLink,
   LeagueTransactionBrief,
 } from "@/state/league-hub-selectors";
 import type { LeagueInjuryRow } from "@/state/league-injury-selectors";
@@ -16,6 +17,36 @@ import {
   touchTargetTextClass,
 } from "@/components/ui/styles";
 import { formatGameDate } from "@/presentation/game-date";
+
+/** One link per team to its roster; other teams open the read-only sheet. */
+export function LeagueTeamRostersPanel(props: { teams: LeagueHubTeamLink[] }) {
+  return (
+    <Section title="Team Rosters">
+      <nav aria-label="Team rosters">
+        <ul className="flex flex-wrap gap-1.5">
+          {props.teams.map((team) => (
+            <li key={team.teamId}>
+              <Link
+                href={team.rosterHref}
+                title={`${team.name} roster`}
+                className={cn(
+                  "inline-flex min-h-11 items-center rounded-md border px-3 font-mono text-sm",
+                  team.isUserTeam
+                    ? "border-team-ink text-team-ink"
+                    : "border-line-strong text-soft hover:border-faint",
+                  focusRingClass,
+                )}
+              >
+                {team.abbreviation}
+                <span className="sr-only"> roster</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </Section>
+  );
+}
 
 export function LeagueRecentResultsPanel(props: {
   saveId: string;

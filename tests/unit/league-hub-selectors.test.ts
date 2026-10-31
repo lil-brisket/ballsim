@@ -24,6 +24,24 @@ describe("league-hub-selectors", () => {
     expect(hub.snapshot.userRank).toBeNull();
   });
 
+  it("links every team's roster: the user's team to /roster, others to the scouting sheet", () => {
+    let state = createTestGameState({ saveId: "league_hub_rosters" });
+    state = bootstrapWorld(state, createSeededRng(state.meta.rngState)).state;
+
+    const hub = toLeagueHubView(state);
+    expect(hub.teamRosters).toHaveLength(Object.keys(state.world.teams).length);
+    const mine = hub.teamRosters.filter((team) => team.isUserTeam);
+    expect(mine).toHaveLength(1);
+    expect(mine[0]!.rosterHref).toBe("/dashboard/league_hub_rosters/roster");
+    for (const team of hub.teamRosters.filter((entry) => !entry.isUserTeam)) {
+      expect(team.rosterHref).toBe(
+        `/dashboard/league_hub_rosters/league/teams/${team.teamId}`,
+      );
+    }
+    const cities = hub.teamRosters.map((team) => team.name);
+    expect(cities).toEqual([...cities].sort((a, b) => a.localeCompare(b)));
+  });
+
   it("highlights user team in standings preview", () => {
     let state = createTestGameState({ saveId: "league_hub_user" });
     const rng = createSeededRng(state.meta.rngState);

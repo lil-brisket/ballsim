@@ -10,6 +10,7 @@ import {
 import {
   LeagueInjuriesBriefing,
   LeagueRecentResultsPanel,
+  LeagueTeamRostersPanel,
   LeagueTransactionsBriefing,
 } from "@/components/league/LeagueTier2Panels";
 import { ErrorState } from "@/components/ui/EmptyState";
@@ -83,6 +84,7 @@ export default async function LeagueHubPage({
         <LeagueTransactionsBriefing saveId={saveId} rows={view.transactions} />
         <LeagueInjuriesBriefing saveId={saveId} rows={view.injuries} />
       </div>
+      <LeagueTeamRostersPanel teams={view.teamRosters} />
     </div>
   );
 }

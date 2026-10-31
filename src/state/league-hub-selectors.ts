@@ -71,6 +71,15 @@ export type LeagueHubSnapshot = {
   championAbbreviation: string | null;
 };
 
+export type LeagueHubTeamLink = {
+  teamId: string;
+  abbreviation: string;
+  name: string;
+  isUserTeam: boolean;
+  /** The user's team opens the Roster page; others open the scouting sheet. */
+  rosterHref: string;
+};
+
 export type LeagueHubView = {
   saveId: string;
   leagueName: string;
@@ -90,6 +99,8 @@ export type LeagueHubView = {
   recentResults: LeagueGameResultRow[];
   transactions: LeagueTransactionBrief[];
   injuries: LeagueInjuryRow[];
+  /** Every team, alphabetical by city, for the roster links. */
+  teamRosters: LeagueHubTeamLink[];
   expansionActive: boolean;
   playoffBanner: string | null;
 };
@@ -320,6 +331,20 @@ export function toLeagueHubView(state: GameState): LeagueHubView {
     recentResults,
     transactions,
     injuries,
+    teamRosters: Object.values(state.world.teams)
+      .sort(
+        (a, b) => a.city.localeCompare(b.city) || a.name.localeCompare(b.name),
+      )
+      .map((entry) => ({
+        teamId: entry.id,
+        abbreviation: entry.abbreviation,
+        name: `${entry.city} ${entry.name}`,
+        isUserTeam: entry.id === teamId,
+        rosterHref:
+          entry.id === teamId
+            ? `/dashboard/${saveId}/roster`
+            : `/dashboard/${saveId}/league/teams/${entry.id}`,
+      })),
     expansionActive,
     playoffBanner,
   };
