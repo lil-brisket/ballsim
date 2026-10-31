@@ -257,7 +257,9 @@ describe("toTeamDrawerView", () => {
     expect(unowned).toBeTruthy();
     const publicView = toTeamDrawerView(state, unowned!.id, "save_drawer");
     expect(publicView!.context).toBeNull();
-    expect(publicView!.navigation.rosterHref).toBeNull();
+    expect(publicView!.navigation.rosterHref).toBe(
+      `/dashboard/save_drawer/league/teams/${unowned!.id}`,
+    );
   });
 });
 

@@ -43,6 +43,10 @@ import { toOwnerDashboardView } from "@/state/owner-dashboard";
 import { toPhaseDashboardView } from "@/state/phase-dashboard";
 import { toLeagueAwardsView } from "@/state/award-selectors";
 import { toTeamHubView } from "@/state/team-hub-selectors";
+import {
+  toTeamRosterView,
+  type TeamRosterView,
+} from "@/state/team-roster-view";
 import { ownerNavGroupsForState } from "@/application/owner-nav-config";
 import {
   type RosterPageView,
@@ -299,6 +303,19 @@ export async function loadTeamDrawerView(
     return null;
   }
   return toTeamDrawerView(loaded.state, asTeamId(teamId), saveId);
+}
+
+/** Read-only roster sheet for any league team; null for a missing save/team. */
+export async function loadTeamRosterView(
+  saveId: string,
+  teamId: string,
+  store?: SaveGameStore,
+): Promise<TeamRosterView | null> {
+  const loaded = await getStore(store).load(saveId);
+  if (!loaded) {
+    return null;
+  }
+  return toTeamRosterView(loaded.state, asTeamId(teamId), saveId);
 }
 
 /** Quick-view drawer payload for a staff member. */

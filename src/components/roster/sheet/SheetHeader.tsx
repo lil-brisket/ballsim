@@ -70,7 +70,8 @@ export function SheetHeader(props: {
   player: SheetPlayerView;
   returnPath: string;
   mode: RatingDisplayMode;
-  variant?: "roster" | "market";
+  /** "league" is another team's read-only roster: no Contracts, no actions. */
+  variant?: "roster" | "market" | "league";
   /** Where the market variant's "View in Free Agency" link goes. */
   marketHref?: string;
 }) {
@@ -168,7 +169,7 @@ export function SheetHeader(props: {
                   View in Free Agency
                 </Link>
               ) : null
-            ) : (
+            ) : props.variant === "league" ? null : (
               <>
                 <Link
                   href={`/dashboard/${props.saveId}/team/contracts`}

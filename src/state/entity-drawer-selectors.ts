@@ -378,7 +378,9 @@ export function toTeamDrawerView(
     recentGames: recentGamesForTeam(state, teamId, 3),
     navigation: {
       teamHref: resolveTeamHref(state, teamId, saveId),
-      rosterHref: isActive ? `/dashboard/${saveId}/roster` : null,
+      rosterHref: isActive
+        ? `/dashboard/${saveId}/roster`
+        : `/dashboard/${saveId}/league/teams/${teamId}`,
       scheduleHref: `/dashboard/${saveId}/schedule`,
     },
   };

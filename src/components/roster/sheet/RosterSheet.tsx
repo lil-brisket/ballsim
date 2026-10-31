@@ -108,8 +108,11 @@ export function RosterSheet(props: {
   saveId: string;
   players: SheetPlayerView[];
   returnPath: string;
-  /** "market" drops role groups and the roster actions (free agents). */
-  variant?: "roster" | "market";
+  /**
+   * "market" drops role groups and the roster actions (free agents); "league"
+   * is another team's read-only roster (no Contracts link or actions).
+   */
+  variant?: "roster" | "market" | "league";
   /** Link target for the market variant's "View in Free Agency". */
   marketHref?: string;
   /** Grid aria-label; defaults to "Roster sheet". */
