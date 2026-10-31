@@ -209,7 +209,8 @@ export function sortSheetRows<T extends SheetPlayerView>(
   });
 }
 
-export type SheetGroup<T extends SheetPlayerView = SheetPlayerView> = {
+/** Rows of one group; generic so other sheets (prospects) reuse the grid. */
+export type SheetGroup<T extends { playerId: string } = SheetPlayerView> = {
   id: "starters" | "rotation" | "bench" | "all";
   /** Null for the single ungrouped list. */
   label: string | null;
@@ -293,7 +294,7 @@ export function bestInColumn(
  * the last.
  */
 export function moveSortColumn(
-  columns: readonly SheetColumn[],
+  columns: readonly { id: string }[],
   sort: SheetSort,
   delta: -1 | 1,
 ): string {

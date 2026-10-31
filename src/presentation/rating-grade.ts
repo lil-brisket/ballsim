@@ -108,3 +108,53 @@ export function formatRating(
     band: gradeBand(grade),
   };
 }
+
+export type FormattedRatingRange = {
+  /** What the cell shows: "B+–A-" / "B" or "74–86" / "74". */
+  text: string;
+  /** Screen-reader and tooltip text: "B plus to A minus, 74 to 86". */
+  label: string;
+  /** Lowest and highest grade of the range (equal when it sits in one). */
+  lowGrade: Grade;
+  highGrade: Grade;
+  /** Tier id for the colour: the band of the range midpoint's grade. */
+  band: RatingTierId;
+};
+
+/**
+ * A scouting estimate (a min-max range) as a letter-grade span or a number
+ * span. Low end first, joined by an en dash; one letter or number when both
+ * ends agree. The colour band comes from the midpoint so a wide range does not
+ * look more certain than it is.
+ */
+export function formatRatingRange(
+  range: { min: number; max: number },
+  mode: RatingDisplayMode,
+): FormattedRatingRange {
+  const low = Math.round(Math.min(range.min, range.max));
+  const high = Math.round(Math.max(range.min, range.max));
+  const lowGrade = gradeFor(low);
+  const highGrade = gradeFor(high);
+  const band = gradeBand(gradeFor(Math.round((low + high) / 2)));
+  const numbers = low === high ? String(low) : `${low} to ${high}`;
+
+  if (mode === "ratings") {
+    return {
+      text: low === high ? String(low) : `${low}–${high}`,
+      label: numbers,
+      lowGrade,
+      highGrade,
+      band,
+    };
+  }
+  return {
+    text: lowGrade === highGrade ? lowGrade : `${lowGrade}–${highGrade}`,
+    label:
+      lowGrade === highGrade
+        ? `${spokenGrade(lowGrade)}, ${numbers}`
+        : `${spokenGrade(lowGrade)} to ${spokenGrade(highGrade)}, ${numbers}`,
+    lowGrade,
+    highGrade,
+    band,
+  };
+}

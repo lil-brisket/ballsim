@@ -2,12 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { useEntityDrawer } from "@/components/entity/EntityDrawerProvider";
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
+import { BestMarker, RatingCell } from "@/components/roster/sheet/RatingCell";
 import { SheetHeader } from "@/components/roster/sheet/SheetHeader";
 import { SheetTable } from "@/components/roster/sheet/SheetTable";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { KeyHint } from "@/components/ui/KeyHint";
 import { SlantTabs } from "@/components/ui/Tabs";
 import { RatingDisplaySwitch } from "@/components/ui/RatingDisplaySwitch";
 import { useRatingDisplay } from "@/components/ui/rating-display";
+import type { RatingDisplayMode } from "@/presentation/rating-grade";
+import { formatSheetStat } from "@/presentation/roster-sheet-columns";
 import {
   bestInColumn,
   DEFAULT_SHEET_SORT,
@@ -15,10 +20,72 @@ import {
   moveSortColumn,
   sheetColumns,
   sortSheetRows,
+  type SheetColumn,
   type SheetSort,
   type SheetTab,
 } from "@/presentation/roster-sheet-model";
 import type { SheetPlayerView } from "@/state/roster-sheet-view";
+
+/** Rating columns shown as plain numbers whatever the grade/rating display. */
+const PLAIN_RATING_IDS = new Set(["ovr", "pot"]);
+
+function RosterName(props: { player: SheetPlayerView }) {
+  const { player } = props;
+  return (
+    <span className="flex items-center gap-2">
+      <PlayerPortrait
+        playerId={player.playerId}
+        portrait={player.portrait}
+        firstName={player.firstName}
+        lastName={player.lastName}
+        size="sm"
+      />
+      <span className="font-mono tabular-nums text-soft">
+        {player.jerseyNumber}
+      </span>
+      <span className="font-semibold text-ink">
+        {player.firstName} {player.lastName}
+      </span>
+      {!player.canPlay ? (
+        <StatusBadge
+          label={player.availabilityLabel}
+          tone={player.injuryKind}
+        />
+      ) : null}
+    </span>
+  );
+}
+
+function RosterCell(props: {
+  column: SheetColumn;
+  player: SheetPlayerView;
+  best: boolean;
+  mode: RatingDisplayMode;
+}) {
+  const { column, player } = props;
+  const value = column.get(player);
+  if (value === null) return <>—</>;
+  if (column.kind === "rating" && typeof value === "number") {
+    return (
+      <RatingCell
+        value={value}
+        mode={props.mode}
+        best={props.best}
+        plain={PLAIN_RATING_IDS.has(column.id)}
+      />
+    );
+  }
+  if (column.kind === "stat" && typeof value === "number") {
+    return (
+      <span className="inline-flex items-center justify-end gap-1">
+        {props.best ? <BestMarker /> : null}
+        <span>{formatSheetStat(value)}</span>
+        {props.best ? <span className="sr-only">best on team</span> : null}
+      </span>
+    );
+  }
+  return <>{value}</>;
+}
 
 const TABS: ReadonlyArray<{ id: SheetTab; label: string }> = [
   { id: "simple", label: "Simple" },
@@ -181,8 +248,16 @@ export function RosterSheet(props: {
         onOpen={(playerId) => openPlayer(playerId)}
         sort={sort}
         onSort={onSort}
-        bests={bests}
-        mode={mode}
+        renderName={(player) => <RosterName player={player} />}
+        renderCell={(column, player) => (
+          <RosterCell
+            column={column}
+            player={player}
+            best={bests.get(column.id)?.has(player.playerId) ?? false}
+            mode={mode}
+          />
+        )}
+        rowClassName={(player) => (!player.canPlay ? "opacity-70" : undefined)}
         label={props.label}
         onKeyDown={onKeyDown}
       />

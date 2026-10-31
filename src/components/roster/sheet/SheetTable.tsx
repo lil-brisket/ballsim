@@ -1,25 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
-import { BestMarker, RatingCell } from "@/components/roster/sheet/RatingCell";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { useEffect, useRef, type ReactNode } from "react";
 import { cn, focusRingClass } from "@/components/ui/styles";
-import type { RatingDisplayMode } from "@/presentation/rating-grade";
-import { formatSheetStat } from "@/presentation/roster-sheet-columns";
-import type {
-  SheetColumn,
-  SheetGroup,
-  SheetSort,
-} from "@/presentation/roster-sheet-model";
-import type { SheetPlayerView } from "@/state/roster-sheet-view";
+import type { SheetGroup, SheetSort } from "@/presentation/roster-sheet-model";
 
 export function sheetRowId(playerId: string): string {
   return `sheet-row-${playerId}`;
 }
-
-/** Rating columns shown as plain numbers whatever the grade/rating display. */
-const PLAIN_RATING_IDS = new Set(["ovr", "pot"]);
 
 function ariaSort(
   sort: SheetSort,
@@ -68,58 +55,52 @@ function SortHeader(props: {
   );
 }
 
-function Cell(props: {
-  column: SheetColumn;
-  player: SheetPlayerView;
-  best: boolean;
-  mode: RatingDisplayMode;
-}) {
-  const { column, player } = props;
-  const value = column.get(player);
-  if (value === null) return <>—</>;
-  if (column.kind === "rating" && typeof value === "number") {
-    return (
-      <RatingCell
-        value={value}
-        mode={props.mode}
-        best={props.best}
-        plain={PLAIN_RATING_IDS.has(column.id)}
-      />
-    );
-  }
-  if (column.kind === "stat" && typeof value === "number") {
-    return (
-      <span className="inline-flex items-center justify-end gap-1">
-        {props.best ? <BestMarker /> : null}
-        <span>{formatSheetStat(value)}</span>
-        {props.best ? <span className="sr-only">best on team</span> : null}
-      </span>
-    );
-  }
-  return <>{value}</>;
-}
+/** What the grid needs of a row: an id; the callers render the rest. */
+export type SheetRowBase = { playerId: string };
+
+/** What the grid needs of a column: header text and an alignment kind. */
+export type SheetColumnBase = {
+  id: string;
+  short: string;
+  long: string;
+  /** "text" columns align left, every other kind right. */
+  kind: string;
+};
 
 /**
- * The roster sheet grid. Rows select on click (never navigate) and open the
+ * The sheet grid shared by the roster and prospect sheets, generic over the
+ * row and column types. Rows select on click (never navigate) and open the
  * player card on double-click. Keyboard handling is the parent's, on the
  * focused grid. The scroll container scrolls sideways so the page never does;
- * the name column stays put.
+ * the name column stays put. The caller renders the name cell and each data
+ * cell, so this holds no roster- or scouting-specific knowledge.
  */
-export function SheetTable(props: {
-  columns: readonly SheetColumn[];
-  groups: readonly SheetGroup[];
+export function SheetTable<
+  Row extends SheetRowBase,
+  Column extends SheetColumnBase,
+>(props: {
+  columns: readonly Column[];
+  groups: readonly SheetGroup<Row>[];
   selectedId: string | null;
   onSelect: (playerId: string) => void;
   onOpen: (playerId: string) => void;
   sort: SheetSort;
   onSort: (columnId: string) => void;
-  bests: Map<string, Set<string>>;
-  mode: RatingDisplayMode;
+  renderName: (row: Row) => ReactNode;
+  renderCell: (column: Column, row: Row) => ReactNode;
+  /** Extra classes for a row (the roster dims unavailable players). */
+  rowClassName?: (row: Row) => string | undefined;
   label?: string;
+  /** Header of the name column; defaults to "Player". */
+  nameHeader?: { short: string; long: string };
   onKeyDown?: (event: React.KeyboardEvent<HTMLTableElement>) => void;
 }) {
   const gridRef = useRef<HTMLTableElement>(null);
   const firstRender = useRef(true);
+  const nameHeader = props.nameHeader ?? {
+    short: "Player",
+    long: "Player name",
+  };
 
   useEffect(() => {
     // Keep the selected row visible, but never move the page on first paint.
@@ -156,8 +137,8 @@ export function SheetTable(props: {
           <tr>
             <SortHeader
               id="name"
-              short="Player"
-              long="Player name"
+              short={nameHeader.short}
+              long={nameHeader.long}
               sort={props.sort}
               align="left"
               sticky
@@ -189,24 +170,21 @@ export function SheetTable(props: {
                 </th>
               </tr>
             ) : null}
-            {group.rows.map((player) => {
-              const selected = player.playerId === props.selectedId;
+            {group.rows.map((row) => {
+              const selected = row.playerId === props.selectedId;
               return (
                 <tr
-                  key={player.playerId}
-                  id={sheetRowId(player.playerId)}
+                  key={row.playerId}
+                  id={sheetRowId(row.playerId)}
                   role="row"
-                  data-player-id={player.playerId}
+                  data-player-id={row.playerId}
                   aria-selected={selected}
                   onClick={() => {
-                    props.onSelect(player.playerId);
+                    props.onSelect(row.playerId);
                     gridRef.current?.focus({ preventScroll: true });
                   }}
-                  onDoubleClick={() => props.onOpen(player.playerId)}
-                  className={cn(
-                    "cursor-pointer",
-                    !player.canPlay && "opacity-70",
-                  )}
+                  onDoubleClick={() => props.onOpen(row.playerId)}
+                  className={cn("cursor-pointer", props.rowClassName?.(row))}
                 >
                   <td
                     className={cn(
@@ -216,27 +194,7 @@ export function SheetTable(props: {
                         : "border-l-transparent bg-surface-raised",
                     )}
                   >
-                    <span className="flex items-center gap-2">
-                      <PlayerPortrait
-                        playerId={player.playerId}
-                        portrait={player.portrait}
-                        firstName={player.firstName}
-                        lastName={player.lastName}
-                        size="sm"
-                      />
-                      <span className="font-mono tabular-nums text-soft">
-                        {player.jerseyNumber}
-                      </span>
-                      <span className="font-semibold text-ink">
-                        {player.firstName} {player.lastName}
-                      </span>
-                      {!player.canPlay ? (
-                        <StatusBadge
-                          label={player.availabilityLabel}
-                          tone={player.injuryKind}
-                        />
-                      ) : null}
-                    </span>
+                    {props.renderName(row)}
                   </td>
                   {props.columns.map((column) => (
                     <td
@@ -250,15 +208,7 @@ export function SheetTable(props: {
                               "bg-surface-high/40",
                       )}
                     >
-                      <Cell
-                        column={column}
-                        player={player}
-                        best={
-                          props.bests.get(column.id)?.has(player.playerId) ??
-                          false
-                        }
-                        mode={props.mode}
-                      />
+                      {props.renderCell(column, row)}
                     </td>
                   ))}
                 </tr>

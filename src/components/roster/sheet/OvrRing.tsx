@@ -16,6 +16,8 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  */
 export function OvrRing(props: {
   overall: number;
+  /** Spoken label; defaults to "Overall <n>". Scouted estimates override it. */
+  label?: string;
   size?: keyof typeof SIZES;
   className?: string;
 }) {
@@ -24,7 +26,7 @@ export function OvrRing(props: {
   return (
     <span
       role="img"
-      aria-label={`Overall ${props.overall}`}
+      aria-label={props.label ?? `Overall ${props.overall}`}
       data-tier={ratingTier(props.overall).id}
       className={cn(
         "relative inline-flex shrink-0 items-center justify-center",

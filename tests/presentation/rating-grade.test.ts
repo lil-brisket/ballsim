@@ -3,6 +3,7 @@ import {
   GRADES,
   GRADE_MINIMUMS,
   formatRating,
+  formatRatingRange,
   gradeBand,
   gradeFor,
 } from "@/presentation/rating-grade";
@@ -83,5 +84,47 @@ describe("formatRating", () => {
   it("rounds before grading", () => {
     expect(formatRating(79.6, "grades").text).toBe("B+");
     expect(formatRating(79.4, "ratings").text).toBe("79");
+  });
+});
+
+describe("formatRatingRange", () => {
+  it("shows the low grade first, joined by an en dash", () => {
+    const range = formatRatingRange({ min: 80, max: 84 }, "grades");
+    expect(range.text).toBe("B+–A-");
+    expect(range.label).toBe("B plus to A minus, 80 to 84");
+    expect(range.lowGrade).toBe("B+");
+    expect(range.highGrade).toBe("A-");
+  });
+
+  it("collapses to one letter when both ends share a grade", () => {
+    const range = formatRatingRange({ min: 76, max: 79 }, "grades");
+    expect(range.text).toBe("B");
+    expect(range.label).toBe("B, 76 to 79");
+  });
+
+  it("shows numbers in ratings mode, one number when min equals max", () => {
+    const wide = formatRatingRange({ min: 74, max: 86 }, "ratings");
+    expect(wide.text).toBe("74–86");
+    expect(wide.label).toBe("74 to 86");
+    const point = formatRatingRange({ min: 80, max: 80 }, "ratings");
+    expect(point.text).toBe("80");
+    expect(point.label).toBe("80");
+    expect(formatRatingRange({ min: 80, max: 80 }, "grades").label).toBe(
+      "B plus, 80",
+    );
+  });
+
+  it("colours by the midpoint's grade in both modes", () => {
+    // 64..96 spans C to A+, midpoint 80 is B+ (star).
+    const grades = formatRatingRange({ min: 64, max: 96 }, "grades");
+    const ratings = formatRatingRange({ min: 64, max: 96 }, "ratings");
+    expect(grades.band).toBe(gradeBand(gradeFor(80)));
+    expect(ratings.band).toBe(grades.band);
+  });
+
+  it("tolerates a reversed range and rounds the ends", () => {
+    expect(formatRatingRange({ min: 85.6, max: 73.6 }, "ratings").text).toBe(
+      "74–86",
+    );
   });
 });
