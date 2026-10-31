@@ -18,7 +18,7 @@ import {
   type SheetSort,
   type SheetTab,
 } from "@/presentation/roster-sheet-model";
-import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
+import type { SheetPlayerView } from "@/state/roster-sheet-view";
 
 const TABS: ReadonlyArray<{ id: SheetTab; label: string }> = [
   { id: "simple", label: "Simple" },
@@ -39,10 +39,17 @@ function firstDirection(kind: string | undefined): SheetSort["direction"] {
  */
 export function RosterSheet(props: {
   saveId: string;
-  players: RosterPagePlayerView[];
+  players: SheetPlayerView[];
   returnPath: string;
+  /** "market" drops role groups and the roster actions (free agents). */
+  variant?: "roster" | "market";
+  /** Link target for the market variant's "View in Free Agency". */
+  marketHref?: string;
+  /** Grid aria-label; defaults to "Roster sheet". */
+  label?: string;
 }) {
   const { openPlayer } = useEntityDrawer();
+  const variant = props.variant ?? "roster";
   const [mode] = useRatingDisplay();
   const [tab, setTab] = useState<SheetTab>("simple");
   const [sortState, setSortState] = useState<SheetSort>(DEFAULT_SHEET_SORT);
@@ -161,6 +168,8 @@ export function RosterSheet(props: {
           player={selected}
           returnPath={props.returnPath}
           mode={mode}
+          variant={variant}
+          marketHref={props.marketHref}
         />
       ) : null}
 
@@ -174,6 +183,7 @@ export function RosterSheet(props: {
         onSort={onSort}
         bests={bests}
         mode={mode}
+        label={props.label}
         onKeyDown={onKeyDown}
       />
 

@@ -145,6 +145,7 @@ export function RosterPage(props: { view: RosterPageView }) {
         <FreeAgentRosterView
           saveId={view.saveId}
           freeAgents={view.freeAgents}
+          freeAgentCount={view.freeAgentCount}
           freeAgencyHubHref={view.freeAgencyHubHref}
           freeAgencyActive={view.freeAgencyActive}
         />

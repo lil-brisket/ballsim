@@ -4,7 +4,7 @@
  */
 
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
-import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
+import type { SheetPlayerView } from "@/state/roster-sheet-view";
 import { rotationRoleSortKey } from "@/state/roster-page-selectors";
 import {
   SHEET_ATTRIBUTE_COLUMNS,
@@ -22,7 +22,7 @@ export type SheetColumn = {
   short: string;
   long: string;
   kind: SheetColumnKind;
-  get: (player: RosterPagePlayerView) => number | string | null;
+  get: (player: SheetPlayerView) => number | string | null;
   higherIsBetter?: boolean;
 };
 
@@ -132,12 +132,17 @@ export function sheetColumns(tab: SheetTab): readonly SheetColumn[] {
  * the sheet groups by role, so role leads here).
  */
 export function defaultSheetCompare(
-  a: RosterPagePlayerView,
-  b: RosterPagePlayerView,
+  a: SheetPlayerView,
+  b: SheetPlayerView,
 ): number {
-  const roleCmp =
-    rotationRoleSortKey(a.rotationRole) - rotationRoleSortKey(b.rotationRole);
-  if (roleCmp !== 0) return roleCmp;
+  if (a.rotationRole != null && b.rotationRole != null) {
+    const roleCmp =
+      rotationRoleSortKey(a.rotationRole) - rotationRoleSortKey(b.rotationRole);
+    if (roleCmp !== 0) return roleCmp;
+  } else {
+    // Rows without a role (market lists): overall, then name.
+    return tieBreak(a, b);
+  }
   if (b.overall !== a.overall) return b.overall - a.overall;
   const posCmp =
     (POSITION_ORDER[a.primaryPosition] ?? 99) -
@@ -146,14 +151,14 @@ export function defaultSheetCompare(
   return a.lastName.localeCompare(b.lastName);
 }
 
-function nameCompare(a: RosterPagePlayerView, b: RosterPagePlayerView): number {
+function nameCompare(a: SheetPlayerView, b: SheetPlayerView): number {
   return `${a.lastName}${a.firstName}`.localeCompare(
     `${b.lastName}${b.firstName}`,
   );
 }
 
 /** Overall high first, then name: the tie-break for every column sort. */
-function tieBreak(a: RosterPagePlayerView, b: RosterPagePlayerView): number {
+function tieBreak(a: SheetPlayerView, b: SheetPlayerView): number {
   if (b.overall !== a.overall) return b.overall - a.overall;
   return nameCompare(a, b);
 }
@@ -180,11 +185,11 @@ function compareValues(
  * Sorted copy. Missing values (null) are always last whatever the direction;
  * ties fall back to overall (high first) then name.
  */
-export function sortSheetRows(
-  rows: readonly RosterPagePlayerView[],
+export function sortSheetRows<T extends SheetPlayerView>(
+  rows: readonly T[],
   columns: readonly SheetColumn[],
   sort: SheetSort,
-): RosterPagePlayerView[] {
+): T[] {
   const copy = [...rows];
   if (sort.columnId === "default") return copy.sort(defaultSheetCompare);
   const sign = sort.direction === "asc" ? 1 : -1;
@@ -204,17 +209,17 @@ export function sortSheetRows(
   });
 }
 
-export type SheetGroup = {
+export type SheetGroup<T extends SheetPlayerView = SheetPlayerView> = {
   id: "starters" | "rotation" | "bench" | "all";
   /** Null for the single ungrouped list. */
   label: string | null;
-  rows: RosterPagePlayerView[];
+  rows: T[];
 };
 
 const GROUPS: ReadonlyArray<{
   id: "starters" | "rotation" | "bench";
   label: string;
-  roles: ReadonlyArray<RosterPagePlayerView["rotationRole"]>;
+  roles: ReadonlyArray<NonNullable<SheetPlayerView["rotationRole"]>>;
 }> = [
   { id: "starters", label: "Starters", roles: ["starter"] },
   { id: "rotation", label: "Rotation", roles: ["sixth_man", "rotation"] },
@@ -230,17 +235,23 @@ const GROUPS: ReadonlyArray<{
  * already be sorted). Any other sort is one ungrouped list. Empty groups are
  * omitted.
  */
-export function groupSheetRows(
-  rows: readonly RosterPagePlayerView[],
+export function groupSheetRows<T extends SheetPlayerView>(
+  rows: readonly T[],
   sort: SheetSort,
-): SheetGroup[] {
-  if (sort.columnId !== "default") {
+): SheetGroup<T>[] {
+  if (
+    sort.columnId !== "default" ||
+    !rows.some((row) => row.rotationRole != null)
+  ) {
     return [{ id: "all", label: null, rows: [...rows] }];
   }
   return GROUPS.map((group) => ({
     id: group.id,
     label: group.label,
-    rows: rows.filter((row) => group.roles.includes(row.rotationRole)),
+    rows: rows.filter(
+      (row) =>
+        row.rotationRole != null && group.roles.includes(row.rotationRole),
+    ),
   })).filter((group) => group.rows.length > 0);
 }
 
@@ -250,7 +261,7 @@ export function groupSheetRows(
  * fewer than two values or all-equal values have no best.
  */
 export function bestInColumn(
-  rows: readonly RosterPagePlayerView[],
+  rows: readonly SheetPlayerView[],
   columns: readonly SheetColumn[],
 ): Map<string, Set<string>> {
   const best = new Map<string, Set<string>>();

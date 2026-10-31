@@ -8,6 +8,7 @@ const SCREENS = [
   "",
   "/roster",
   "/roster?view=table",
+  "/roster?tab=free-agents",
   "/league",
   "/finances",
   "/media",

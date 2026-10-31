@@ -16,12 +16,12 @@ import {
   SHEET_SKILL_COLUMNS,
   toRosterSheetRow,
 } from "@/presentation/roster-sheet-columns";
-import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
+import type { SheetPlayerView } from "@/state/roster-sheet-view";
 
 const STRENGTH_COUNT = 3;
 
 /** The player's best skill areas, highest first (list order breaks ties). */
-export function topStrengths(player: RosterPagePlayerView) {
+export function topStrengths(player: SheetPlayerView) {
   const row = toRosterSheetRow(player);
   return SHEET_SKILL_COLUMNS.map((column, index) => ({
     key: column.key,
@@ -39,14 +39,18 @@ export function topStrengths(player: RosterPagePlayerView) {
  */
 export function SheetHeader(props: {
   saveId: string;
-  player: RosterPagePlayerView;
+  player: SheetPlayerView;
   returnPath: string;
   mode: RatingDisplayMode;
+  variant?: "roster" | "market";
+  /** Where the market variant's "View in Free Agency" link goes. */
+  marketHref?: string;
 }) {
   const { player } = props;
   const { openPlayer } = useEntityDrawer();
   const name = `${player.firstName} ${player.lastName}`;
   const strengths = topStrengths(player);
+  const market = props.variant === "market";
 
   return (
     <section
@@ -95,18 +99,24 @@ export function SheetHeader(props: {
 
       <div className="ml-auto flex flex-wrap items-center gap-3">
         <div className="text-right text-sm">
-          <p className="font-semibold tabular-nums text-ink">
-            {player.contractSalary != null
-              ? formatMoney(player.contractSalary)
-              : "—"}
-          </p>
-          <p className="text-muted">
-            {player.contractYearsRemaining != null
-              ? `${player.contractYearsRemaining} ${
-                  player.contractYearsRemaining === 1 ? "year" : "years"
-                } left`
-              : "No contract"}
-          </p>
+          {market ? (
+            <p className="font-semibold text-ink">Free agent</p>
+          ) : (
+            <>
+              <p className="font-semibold tabular-nums text-ink">
+                {player.contractSalary != null
+                  ? formatMoney(player.contractSalary)
+                  : "—"}
+              </p>
+              <p className="text-muted">
+                {player.contractYearsRemaining != null
+                  ? `${player.contractYearsRemaining} ${
+                      player.contractYearsRemaining === 1 ? "year" : "years"
+                    } left`
+                  : "No contract"}
+              </p>
+            </>
+          )}
         </div>
         <StatusBadge
           label={player.availabilityLabel}
@@ -120,19 +130,32 @@ export function SheetHeader(props: {
           >
             Open card
           </Button>
-          <Link
-            href={`/dashboard/${props.saveId}/team/contracts`}
-            className={cn(buttonClass({ variant: "quiet" }))}
-          >
-            Contracts
-          </Link>
-          <PlayerActionMenu
-            saveId={props.saveId}
-            playerId={player.playerId}
-            playerName={name}
-            onTradeBlock={player.onTradeBlock}
-            returnPath={props.returnPath}
-          />
+          {market ? (
+            props.marketHref ? (
+              <Link
+                href={props.marketHref}
+                className={cn(buttonClass({ variant: "quiet" }))}
+              >
+                View in Free Agency
+              </Link>
+            ) : null
+          ) : (
+            <>
+              <Link
+                href={`/dashboard/${props.saveId}/team/contracts`}
+                className={cn(buttonClass({ variant: "quiet" }))}
+              >
+                Contracts
+              </Link>
+              <PlayerActionMenu
+                saveId={props.saveId}
+                playerId={player.playerId}
+                playerName={name}
+                onTradeBlock={player.onTradeBlock ?? false}
+                returnPath={props.returnPath}
+              />
+            </>
+          )}
         </div>
       </div>
     </section>

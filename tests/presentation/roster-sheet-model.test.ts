@@ -153,6 +153,22 @@ describe("sortSheetRows", () => {
   });
 });
 
+describe("rows without a rotation role (market lists)", () => {
+  const market = [
+    player("z", { lastName: "Zed", overall: 70, rotationRole: undefined }),
+    player("a", { lastName: "Ash", overall: 70, rotationRole: undefined }),
+    player("t", { lastName: "Top", overall: 80, rotationRole: undefined }),
+  ];
+
+  it("sorts by overall then name and stays ungrouped", () => {
+    const sorted = sortSheetRows(market, sheetColumns("simple"), DEFAULT);
+    expect(ids(sorted)).toEqual(["t", "a", "z"]);
+    const groups = groupSheetRows(sorted, DEFAULT);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.label).toBeNull();
+  });
+});
+
 describe("groupSheetRows", () => {
   const rows = [
     player("s", { rotationRole: "starter" }),

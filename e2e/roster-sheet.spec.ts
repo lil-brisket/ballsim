@@ -211,3 +211,29 @@ test("Player profile and compare pages keep the boxes and table accessible", asy
   await noSidewaysScroll(page);
   expect(await blockingAxe(page)).toEqual([]);
 });
+
+test("Free Agents tab shows the same sheet without roster actions", async ({
+  page,
+  dashboard,
+}) => {
+  await page.goto(dashboard("/roster?tab=free-agents"), {
+    waitUntil: "networkidle",
+  });
+  const faGrid = page.getByRole("grid", { name: "Free agent sheet" });
+  await expect(faGrid).toBeVisible();
+  const header = page.getByRole("region", { name: "Selected player" });
+  await expect(selectedName(page)).not.toHaveText("");
+  await expect(header.getByText("Free agent", { exact: true })).toBeVisible();
+  await expect(
+    header.getByRole("link", { name: "View in Free Agency" }),
+  ).toBeVisible();
+  await expect(header.getByRole("link", { name: "Contracts" })).toHaveCount(0);
+
+  const before = (await selectedName(page).textContent()) ?? "";
+  await faGrid.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(selectedName(page)).not.toHaveText(before);
+
+  await noSidewaysScroll(page);
+  expect(await blockingAxe(page)).toEqual([]);
+});

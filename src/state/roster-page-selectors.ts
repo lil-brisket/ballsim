@@ -31,9 +31,12 @@ import {
   toFinancesView,
   toFreeAgentViews,
   toRosterView,
-  type FreeAgentView,
   type RosterPlayerView,
 } from "@/state/selectors";
+import {
+  toSheetPlayerView,
+  type SheetPlayerView,
+} from "@/state/roster-sheet-view";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 import { toBrandingView } from "@/state/team-branding-view";
 import { getPlayerAvailability } from "@/systems/player-availability";
@@ -120,6 +123,9 @@ export type TradeBlockView = {
   picks: TradeBlockPickView[];
 };
 
+/** Free agents shown on the Roster page's Free Agents tab. */
+export const FREE_AGENT_SHEET_LIMIT = 40;
+
 export type RosterPageSummary = {
   rosterCount: number;
   rosterMax: number;
@@ -146,7 +152,10 @@ export type RosterPageView = {
   roster: RosterPagePlayerView[];
   rosterNeeds: RosterNeed[];
   depthChart: DepthChartView;
-  freeAgents: FreeAgentView[];
+  /** Top FREE_AGENT_SHEET_LIMIT free agents by overall, as sheet rows. */
+  freeAgents: SheetPlayerView[];
+  /** All free agents, so the page can say when the list is cut short. */
+  freeAgentCount: number;
   freeAgencyActive: boolean;
   freeAgencyHubHref: string;
   tradeBlock: TradeBlockView;
@@ -671,7 +680,13 @@ export function toRosterPageView(state: GameState): RosterPageView {
   const roster = enrichRosterPlayers(state, teamId);
   const rosterNeeds = evaluateRosterNeeds(state, teamId);
   const depthChart = toDepthChartView(state, teamId);
-  const freeAgents = toFreeAgentViews(state);
+  const allFreeAgents = toFreeAgentViews(state);
+  const freeAgents = allFreeAgents
+    .slice(0, FREE_AGENT_SHEET_LIMIT)
+    .flatMap((agent) => {
+      const row = toSheetPlayerView(state, agent.playerId as PlayerId);
+      return row ? [row] : [];
+    });
   const tradeBlock = toTradeBlockView(state, teamId);
   const summary = buildSummary(state, teamId, roster, tradeBlock);
   const freeAgencyActive = isInLeaguePhase(state, "offseason.free_agency");
@@ -690,6 +705,7 @@ export function toRosterPageView(state: GameState): RosterPageView {
     rosterNeeds,
     depthChart,
     freeAgents,
+    freeAgentCount: allFreeAgents.length,
     freeAgencyActive,
     freeAgencyHubHref: `/dashboard/${saveId}/free-agency`,
     tradeBlock,

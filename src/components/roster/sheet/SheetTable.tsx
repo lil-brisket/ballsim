@@ -12,7 +12,7 @@ import type {
   SheetGroup,
   SheetSort,
 } from "@/presentation/roster-sheet-model";
-import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
+import type { SheetPlayerView } from "@/state/roster-sheet-view";
 
 export function sheetRowId(playerId: string): string {
   return `sheet-row-${playerId}`;
@@ -70,7 +70,7 @@ function SortHeader(props: {
 
 function Cell(props: {
   column: SheetColumn;
-  player: RosterPagePlayerView;
+  player: SheetPlayerView;
   best: boolean;
   mode: RatingDisplayMode;
 }) {
@@ -115,6 +115,7 @@ export function SheetTable(props: {
   onSort: (columnId: string) => void;
   bests: Map<string, Set<string>>;
   mode: RatingDisplayMode;
+  label?: string;
   onKeyDown?: (event: React.KeyboardEvent<HTMLTableElement>) => void;
 }) {
   const gridRef = useRef<HTMLTableElement>(null);
@@ -141,7 +142,7 @@ export function SheetTable(props: {
         ref={gridRef}
         role="grid"
         tabIndex={0}
-        aria-label="Roster sheet"
+        aria-label={props.label ?? "Roster sheet"}
         aria-activedescendant={
           props.selectedId ? sheetRowId(props.selectedId) : undefined
         }
