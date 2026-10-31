@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadSettingsView } from "@/application/game-service";
 import { Section } from "@/components/ui/Section";
+import { RatingDisplaySetting } from "@/components/settings/RatingDisplaySetting";
 import { RenameLeagueForm } from "@/components/settings/RenameLeagueForm";
 import { SeasonFormatForm } from "@/components/settings/SeasonFormatForm";
 import { SettingRow } from "@/components/settings/SettingRow";
@@ -36,6 +37,10 @@ export default async function InGameSettingsPage({
 
   return (
     <SettingsPageShell saveId={saveId} active="league" error={error}>
+      <Section title="Display">
+        <RatingDisplaySetting />
+      </Section>
+
       <Section title="League">
         {view.canEditLeague ? null : (
           <HostOnlyNotice>
