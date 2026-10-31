@@ -2,11 +2,9 @@
 
 import type { ReactNode } from "react";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
-import { useEntityDrawer } from "@/components/entity/EntityDrawerProvider";
 import { OvrRing } from "@/components/roster/sheet/OvrRing";
 import { RatingRangeCell } from "@/components/roster/sheet/RatingRangeCell";
 import { SheetHeaderFrame } from "@/components/roster/sheet/SheetHeader";
-import { Button } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn } from "@/components/ui/styles";
 import { formatRatingRange } from "@/presentation/rating-grade";
@@ -46,7 +44,6 @@ export function ProspectSheetHeader(props: {
   actions?: ReactNode;
 }) {
   const { prospect } = props;
-  const { openPlayer } = useEntityDrawer();
   const overall = prospect.overall;
   const midpoint = overall ? Math.round((overall.min + overall.max) / 2) : null;
   const delta =
@@ -94,7 +91,7 @@ export function ProspectSheetHeader(props: {
         </>
       }
       middle={
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="min-w-0 basis-full flex-1 space-y-2 sm:basis-0">
           <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
             <Fact label="Scout grade">{prospect.scoutGrade ?? "—"}</Fact>
             <Fact label="Confidence">
@@ -147,16 +144,7 @@ export function ProspectSheetHeader(props: {
         </div>
       }
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => openPlayer(prospect.playerId)}
-          >
-            Open card
-          </Button>
-          {props.actions}
-        </div>
+        <div className="flex flex-wrap items-center gap-2">{props.actions}</div>
       }
     />
   );

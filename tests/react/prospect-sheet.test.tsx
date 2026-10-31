@@ -261,16 +261,14 @@ describe("ProspectSheet", () => {
     expect(grid().querySelector("[data-best]")).toBeNull();
   });
 
-  it("opens the card on Enter and double-click, not on a single click", () => {
+  it("never opens a player card: undrafted prospects have none", () => {
     renderSheet();
     fireEvent.click(row("p2"));
-    expect(openPlayer).not.toHaveBeenCalled();
     fireEvent.keyDown(grid(), { key: "Enter" });
-    expect(openPlayer).toHaveBeenCalledWith("p2");
     fireEvent.doubleClick(row("p4"));
-    expect(openPlayer).toHaveBeenLastCalledWith("p4");
-    fireEvent.click(screen.getByRole("button", { name: "Open card" }));
-    expect(openPlayer).toHaveBeenLastCalledWith("p2");
+    expect(openPlayer).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Open card" })).toBeNull();
+    expect(screen.queryByText("Player card")).toBeNull();
   });
 
   it("shows the selected prospect's estimate facts once, and only theirs", () => {

@@ -2,8 +2,8 @@
  * Build the browser-test saves into a fresh prisma/e2e.db (`npm run e2e:seed`).
  *
  * Creates one CBL league from a fixed seed through the real Owner Mode
- * services, plays it unattended and snapshots it at three points (see
- * e2e/seed-saves.ts): regular season, playoffs, free agency. Same seed, same
+ * services, plays it unattended and snapshots it at four points (see
+ * e2e/seed-saves.ts): regular season, playoffs, draft, free agency. Same seed, same
  * league: ratings, schedule, results and transactions match run to run.
  * Only wall-clock timestamps differ.
  *
@@ -52,6 +52,7 @@ async function main(): Promise<void> {
   const { calendarDaysBetween } = await import("@/domain/calendar-date");
   const { hasPendingBoardDirective } = await import("@/systems/board-pressure");
   const { isUserOnDraftClock } = await import("@/systems/draft");
+  const { toDraftBoardView } = await import("@/state/selectors/market");
   const { canAdvancePhase, getActivePhaseId } =
     await import("@/systems/phase-engine");
   type GameState = import("@/state/game-state").GameState;
@@ -176,6 +177,7 @@ async function main(): Promise<void> {
 
   let copiedRegular = false;
   let copiedPlayoffs = false;
+  let copiedDraft = false;
   for (let step = 0; step < 1_000; step += 1) {
     const state = await load();
     const phaseId = getActivePhaseId(state);
@@ -207,13 +209,19 @@ async function main(): Promise<void> {
       await copy(E2E_SAVES.playoffs, "E2E Playoffs", state);
       copiedPlayoffs = true;
     }
+    if (
+      !copiedDraft &&
+      phaseId === "offseason.draft" &&
+      (toDraftBoardView(state)?.eligibleProspects.length ?? 0) > 0
+    ) {
+      await copy(E2E_SAVES.draft, "E2E Draft", state);
+      copiedDraft = true;
+    }
     if (phaseId === "offseason.free_agency") {
       const entered = state.competition.phase?.enteredDate ?? date;
       if (calendarDaysBetween(entered, date) >= 1) {
-        if (!copiedRegular || !copiedPlayoffs) {
-          throw new Error(
-            "Reached free agency without both earlier snapshots.",
-          );
+        if (!copiedRegular || !copiedPlayoffs || !copiedDraft) {
+          throw new Error("Reached free agency without all earlier snapshots.");
         }
         console.log(`${saveId}: ${date}`);
         console.log(

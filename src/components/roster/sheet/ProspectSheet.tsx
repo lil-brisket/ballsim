@@ -2,7 +2,6 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
-import { useEntityDrawer } from "@/components/entity/EntityDrawerProvider";
 import { ProspectSheetHeader } from "@/components/roster/sheet/ProspectSheetHeader";
 import { RatingRangeCell } from "@/components/roster/sheet/RatingRangeCell";
 import { SheetTable } from "@/components/roster/sheet/SheetTable";
@@ -77,7 +76,6 @@ export function ProspectSheet(props: {
   actionsById: Record<string, ReactNode>;
   label?: string;
 }) {
-  const { openPlayer } = useEntityDrawer();
   const [mode] = useRatingDisplay();
   const [sort, setSort] = useState<SheetSort>(DEFAULT_SHEET_SORT);
   const [selectedState, setSelectedState] = useState<string | null>(null);
@@ -141,9 +139,6 @@ export function ProspectSheet(props: {
         setSort({ columnId: next, direction: firstDirection(next) });
         break;
       }
-      case "Enter":
-        if (selected) openPlayer(selected.playerId);
-        break;
       default:
         return;
     }
@@ -171,7 +166,6 @@ export function ProspectSheet(props: {
         groups={groups}
         selectedId={selected?.playerId ?? null}
         onSelect={setSelectedState}
-        onOpen={(playerId) => openPlayer(playerId)}
         sort={sort}
         onSort={onSort}
         renderName={(prospect) => <ProspectName prospect={prospect} />}
@@ -193,7 +187,6 @@ export function ProspectSheet(props: {
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
         <KeyHint keys={["↑", "↓"]} label="Select" />
         <KeyHint keys={["←", "→"]} label="Sort" />
-        <KeyHint keys="Enter" label="Player card" />
       </div>
     </div>
   );

@@ -83,7 +83,8 @@ export function SheetTable<
   groups: readonly SheetGroup<Row>[];
   selectedId: string | null;
   onSelect: (playerId: string) => void;
-  onOpen: (playerId: string) => void;
+  /** Double-click action; omit when the rows have no card to open. */
+  onOpen?: (playerId: string) => void;
   sort: SheetSort;
   onSort: (columnId: string) => void;
   renderName: (row: Row) => ReactNode;
@@ -183,7 +184,7 @@ export function SheetTable<
                     props.onSelect(row.playerId);
                     gridRef.current?.focus({ preventScroll: true });
                   }}
-                  onDoubleClick={() => props.onOpen(row.playerId)}
+                  onDoubleClick={() => props.onOpen?.(row.playerId)}
                   className={cn("cursor-pointer", props.rowClassName?.(row))}
                 >
                   <td

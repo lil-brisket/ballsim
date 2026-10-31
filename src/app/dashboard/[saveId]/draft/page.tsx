@@ -279,7 +279,7 @@ export default async function DraftPage({
             </p>
           )}
 
-          <div className="grid gap-6 xl:grid-cols-[240px_1fr_280px]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[240px_minmax(0,1fr)_280px]">
             <aside className="space-y-4">
               <Section title="Draft order">
                 <ul className="max-h-[28rem] space-y-1 overflow-y-auto text-sm">
