@@ -155,7 +155,7 @@ export function TradeFinderView(props: {
               aria-label={`${offer.counterpartyName}, interest ${Math.round(offer.interest)}`}
               onClick={() => setIndex(i)}
               className={cn(
-                "inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full border px-3 text-xs touch-manipulation",
+                "inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full border px-3 text-sm touch-manipulation",
                 i === active
                   ? "border-team-ink bg-surface-high text-ink"
                   : "border-line text-muted hover:border-disabled",
@@ -224,7 +224,7 @@ export function TradeFinderView(props: {
                     onClick={() => toggle(asset)}
                     className={cn(
                       touchTargetClass,
-                      "shrink-0 text-faint hover:text-rose-400",
+                      "shrink-0 text-faint hover:text-danger",
                       focusRingClass,
                     )}
                   >
@@ -261,12 +261,12 @@ export function TradeFinderView(props: {
                       <span className="min-w-0 truncate">
                         {player.firstName} {player.lastName}
                         {player.onTradeBlock ? (
-                          <span className="ml-2 rounded bg-surface-high px-1.5 py-0.5 text-xs text-muted">
+                          <span className="ml-2 rounded bg-surface-high px-1.5 py-0.5 text-sm text-muted">
                             on block
                           </span>
                         ) : null}
                       </span>
-                      <span className="flex shrink-0 items-center gap-1.5 text-xs tabular-nums text-faint">
+                      <span className="flex shrink-0 items-center gap-1.5 text-sm tabular-nums text-faint">
                         <span>{player.position}</span>
                         <OvrBadge overall={player.overall} size="sm" />
                         <span>
@@ -306,7 +306,7 @@ export function TradeFinderView(props: {
                     >
                       <span>{pick.name}</span>
                       {pick.viaAbbreviation ? (
-                        <span className="text-xs text-faint">
+                        <span className="text-sm text-faint">
                           via {pick.viaAbbreviation}
                         </span>
                       ) : null}
@@ -323,7 +323,7 @@ export function TradeFinderView(props: {
         <p className="text-sm text-faint">Searching for offers…</p>
       ) : null}
       {error ? (
-        <p className="text-sm text-rose-400" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {error}
         </p>
       ) : null}

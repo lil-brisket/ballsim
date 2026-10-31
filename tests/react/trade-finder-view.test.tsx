@@ -177,6 +177,74 @@ describe("TradeFinderView", () => {
     expect(screen.getByRole("button", { name: "Accept trade" })).toBeTruthy();
   });
 
+  it("hides the interest read while the offer is changed and restores it on cancel", async () => {
+    findTradeOffersAction.mockResolvedValue({ ok: true, offers });
+    renderView("p1");
+    await findOffers();
+
+    fireEvent.click(screen.getByRole("button", { name: "Modify offer" }));
+    expect(screen.getByText("Very interested")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Remove 2028 2nd" }));
+    expect(screen.queryByText("Very interested")).toBeNull();
+    expect(screen.queryByLabelText("Interest 80 of 100")).toBeNull();
+    expect(
+      screen.getByText(
+        "Changed offer: Austin Owls will decide when you propose it.",
+      ),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel changes" }));
+    expect(screen.getByText("Very interested")).toBeTruthy();
+    expect(screen.getByLabelText("Interest 80 of 100")).toBeTruthy();
+    expect(screen.queryByText(/Changed offer/)).toBeNull();
+  });
+
+  it("treats add-then-remove of the same asset as unmodified", async () => {
+    findTradeOffersAction.mockResolvedValue({ ok: true, offers });
+    renderView("p1");
+    await findOffers();
+
+    fireEvent.click(screen.getByRole("button", { name: "Modify offer" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Bob Test" }));
+    expect(screen.getByRole("button", { name: "Propose trade" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Remove Bob Test" }));
+    expect(screen.getByRole("button", { name: "Accept trade" })).toBeTruthy();
+    expect(screen.getByText("Very interested")).toBeTruthy();
+  });
+
+  function submittedProposal(): unknown {
+    fireEvent.click(
+      screen.getByRole("button", { name: /^(Accept|Propose) trade$/ }),
+    );
+    const input = document.querySelector<HTMLInputElement>(
+      'input[name="proposalJson"]',
+    );
+    return JSON.parse(input!.value);
+  }
+
+  it("submits the original proposal when unchanged", async () => {
+    findTradeOffersAction.mockResolvedValue({ ok: true, offers });
+    renderView("p1");
+    await findOffers();
+    expect(submittedProposal()).toEqual(offers[0]!.proposal);
+  });
+
+  it("submits a proposal matching the edited assets", async () => {
+    findTradeOffersAction.mockResolvedValue({ ok: true, offers });
+    renderView("p1");
+    await findOffers();
+
+    fireEvent.click(screen.getByRole("button", { name: "Modify offer" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Bob Test" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove 2028 2nd" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove Ann Test" }));
+    // Receive side is now empty, so the proposal is invalid but reflects the view.
+    expect(submittedProposal()).toEqual({
+      sideA: { teamId: "me", playerIds: ["p2"], draftPickIds: [] },
+      sideB: { teamId: "t-AUS", playerIds: [], draftPickIds: [] },
+    });
+  });
+
   it("rotates teams with wraparound and returns to the picker", async () => {
     findTradeOffersAction.mockResolvedValue({ ok: true, offers });
     renderView("p1");

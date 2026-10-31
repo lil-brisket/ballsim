@@ -7,7 +7,7 @@ export function ErrorList({ errors }: { errors: readonly string[] }) {
   return (
     <ul
       role="alert"
-      className="space-y-1 rounded-md border border-red-900/60 bg-red-950/40 p-3 text-sm text-red-300"
+      className="space-y-1 rounded-md border border-danger/50 bg-danger-soft p-3 text-sm text-danger-ink"
     >
       {errors.map((error) => (
         <li key={error}>{error}</li>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { rowLinkClass } from "@/components/league/row-link-class";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { CalendarGameStatsView } from "@/state/selectors/calendar-game-stats";
 
@@ -103,7 +104,7 @@ export function CalendarGameStats(props: {
       </dl>
 
       <div className="space-y-2">
-        <h5 className="font-medium text-muted">Top performers</h5>
+        <SectionHeading as="h5" size="sm" tone="muted" title="Top performers" />
         {sides.map((side) => (
           <div key={side.teamId} className="space-y-1">
             <p className="font-semibold text-ink">{side.abbreviation}</p>

@@ -111,7 +111,7 @@ describe("style guard", () => {
     expect(hits).toEqual([]);
   });
 
-  it("renders headings through SectionHeading, not raw <h1-3 className>", () => {
+  it("renders headings through SectionHeading, not raw <h1-6 className>", () => {
     // SectionHeading defines the heading styles; the drawer's dialog title is
     // sized for its header; visually hidden headings carry no style.
     const allowed = /components\/ui\/(SectionHeading|Drawer)\.tsx$/;
@@ -137,5 +137,50 @@ describe("style guard", () => {
     expect(
       offenders(/\btext-\[\d+px\]/, ({ file }) => !allowed.has(file)),
     ).toEqual([]);
+  });
+
+  it("takes status colours from the danger/success/caution/info tokens, not raw palette classes", () => {
+    // Chart series colours and team logo art need literal palette values; the
+    // milestone marker table lives in src/systems, which presentation-only
+    // work does not edit.
+    const allowed =
+      /^src\/(components\/ui\/chart-theme\.ts|components\/team\/logos\/|data\/team-branding\/|app\/dev\/logo-showcase\/|systems\/calendar\/league-milestone-markers\.ts)/;
+    expect(
+      offenders(
+        /(text|bg|border|ring|from|via|to|divide|fill|stroke|outline|decoration|shadow)-(rose|red|emerald|green|yellow|amber|sky|blue|orange|purple|pink)-\d/,
+        ({ file }) => !allowed.test(file),
+      ),
+    ).toEqual([]);
+  });
+
+  it("keeps text-xs to table footnotes, axis ticks, timestamps and fixed-size boxes", () => {
+    // Everything a player reads is text-sm (see ui/styles.ts). These files
+    // hold the allowed uses: numeric counter badges, monograms and avatars,
+    // glyph boxes, calendar and bracket cells, table footnotes, <time> tags.
+    const allowed = new Set([
+      "src/components/ui/SectionHeading.tsx",
+      "src/components/ui/styles.ts",
+      "src/components/ui/TeamBadge.tsx",
+      "src/components/ui/KeyHint.tsx",
+      "src/components/ui/InfoTip.tsx",
+      "src/components/ui/DataTable.tsx",
+      "src/components/team/TeamIdentityInline.tsx",
+      "src/components/basketball/PlayerPortrait.tsx",
+      "src/components/media-hub/timeline/AccountAvatar.tsx",
+      "src/components/calendar/CalendarDayCell.tsx",
+      "src/components/calendar/CalendarMonthView.tsx",
+      "src/components/standings/StandingsTable.tsx",
+      "src/components/playoffs/BracketTree.tsx",
+      "src/components/game/GameHeader.tsx",
+      "src/components/game/shell/NavBadge.tsx",
+      "src/components/game/shell/MobileHubBar.tsx",
+      "src/components/media-hub/MediaUnreadBadge.tsx",
+      "src/components/owner/dashboard/HomeTileBoard.tsx",
+      "src/components/owner/ai-management/ResponsibilityCard.tsx",
+      "src/components/media-hub/stories/StorySlide.tsx",
+      "src/components/media-hub/timeline/TopStoryHero.tsx",
+      "src/components/media-hub/timeline/TimelinePostShell.tsx",
+    ]);
+    expect(offenders(/text-xs/, ({ file }) => !allowed.has(file))).toEqual([]);
   });
 });

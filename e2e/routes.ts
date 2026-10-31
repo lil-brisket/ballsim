@@ -9,6 +9,7 @@ export const SAVE_ROUTES: readonly string[] = [
   // Team
   "/team",
   "/roster",
+  "/roster?view=table",
   "/roster/injuries",
   "/team-management/lineups",
   "/team/contracts",

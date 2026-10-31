@@ -51,11 +51,11 @@ export function TrainingCamps(props: {
           >
             <p className="flex items-baseline justify-between gap-2 text-sm font-medium text-ink">
               <span className="truncate">{camp.label}</span>
-              <span className="shrink-0 text-xs tabular-nums text-muted">
+              <span className="shrink-0 text-sm tabular-nums text-muted">
                 {camp.attendees}
               </span>
             </p>
-            <p className="mt-0.5 text-xs text-faint">
+            <p className="mt-0.5 text-sm text-faint">
               {camp.skills.join(", ")}
             </p>
           </li>
@@ -86,7 +86,7 @@ export function TrainingCamps(props: {
                     className="ml-2 align-middle"
                   />
                   {row.injury ? (
-                    <span className="ml-2 rounded-full border border-orange-400/40 bg-orange-500/10 px-2 py-0.5 text-xs text-orange-300">
+                    <span className="ml-2 rounded-full border border-caution/40 bg-caution/10 px-2 py-0.5 text-sm text-caution-ink">
                       Injured · {row.injury.label}
                     </span>
                   ) : null}

@@ -206,7 +206,7 @@ export async function findTradeOffersAction(
   return { ok: true, offers: result.offers };
 }
 
-/** Execute one Trade Finder offer exactly as shown. */
+/** Execute one Trade Finder offer, possibly edited by the owner first. */
 export async function executeTradeOfferAction(
   formData: FormData,
 ): Promise<void> {

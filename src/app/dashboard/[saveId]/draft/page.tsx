@@ -21,6 +21,8 @@ import { DraftHeaderStrip } from "@/components/draft/DraftHeaderStrip";
 import { DraftPickSummary } from "@/components/draft/DraftPickSummary";
 import { PostDraftDevelopmentReview } from "@/components/draft/PostDraftDevelopmentReview";
 import { ProspectCard } from "@/components/draft/ProspectCard";
+import { ProspectPoolView } from "@/components/draft/ProspectPoolView";
+import { ProspectSheet } from "@/components/roster/sheet/ProspectSheet";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
@@ -33,6 +35,10 @@ import { getActivePhaseId } from "@/systems/phase-engine/resolve-current-phase";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { toDraftHubView } from "@/state/draft-hub-selectors";
 import { toDraftLotteryView } from "@/state/draft-lottery-selectors";
+import {
+  toProspectSheet,
+  type ProspectSheetData,
+} from "@/state/prospect-sheet-view";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/Button";
 import {
@@ -51,6 +57,62 @@ type DraftPageProps = {
   params: Promise<{ saveId: string }>;
   searchParams: Promise<{ error?: string; resumeTo?: string }>;
 };
+
+/**
+ * The per-prospect forms (draft when on the clock, add to board). Built on the
+ * server because they use server actions; the Cards layout renders them under
+ * each card and the scouting sheet passes them into its header.
+ */
+function ProspectActionForms(props: {
+  saveId: string;
+  playerId: string;
+  onBoard: boolean;
+  userOnClock: boolean;
+  returnPath: string;
+  pickReturnPath: string;
+  resumeTo?: string;
+}) {
+  return (
+    <div className="mt-1 flex flex-wrap gap-2 px-1">
+      {props.userOnClock ? (
+        <form action={draftProspectAction}>
+          <input type="hidden" name="saveId" value={props.saveId} />
+          <input type="hidden" name="prospectPlayerId" value={props.playerId} />
+          <input type="hidden" name="returnPath" value={props.pickReturnPath} />
+          {props.resumeTo ? (
+            <input type="hidden" name="resumeTo" value={props.resumeTo} />
+          ) : null}
+          <button
+            type="submit"
+            className={cn(
+              linkClass,
+              touchTargetTextClass,
+              focusRingClass,
+              "text-sm font-medium",
+            )}
+          >
+            Draft
+          </button>
+        </form>
+      ) : null}
+      <form action={addDraftBoardAction}>
+        <input type="hidden" name="saveId" value={props.saveId} />
+        <input type="hidden" name="prospectPlayerId" value={props.playerId} />
+        <input type="hidden" name="returnPath" value={props.returnPath} />
+        <button
+          type="submit"
+          className={cn(
+            touchTargetTextClass,
+            focusRingClass,
+            "text-sm text-muted hover:underline",
+          )}
+        >
+          {props.onBoard ? "On board" : "Add to board"}
+        </button>
+      </form>
+    </div>
+  );
+}
 
 export default async function DraftPage({
   params,
@@ -105,6 +167,8 @@ export default async function DraftPage({
     { projected: number; previous: number | null; availability: string }
   >();
 
+  let sheet: ProspectSheetData = { rows: [], total: 0 };
+
   if (state && draft && teamId) {
     const ensured = ensureMockDrafts(state, draft);
     const liveDraft = ensured.draft;
@@ -138,6 +202,7 @@ export default async function DraftPage({
       });
     }
     void leagueArea;
+    sheet = toProspectSheet(state, { projections: mockByProspect });
   }
 
   return (
@@ -214,7 +279,7 @@ export default async function DraftPage({
             </p>
           )}
 
-          <div className="grid gap-6 xl:grid-cols-[240px_1fr_280px]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[240px_minmax(0,1fr)_280px]">
             <aside className="space-y-4">
               <Section title="Draft order">
                 <ul className="max-h-[28rem] space-y-1 overflow-y-auto text-sm">
@@ -283,121 +348,93 @@ export default async function DraftPage({
                 {!board.userOnClock ? (
                   <EmptyState message="Selection unlocks when you are on the clock. You can still scout and build your board." />
                 ) : null}
-                <div className="grid gap-3 md:grid-cols-2">
-                  {board.eligibleProspects.slice(0, 24).map((prospect) => {
-                    const full = draft.prospects[prospect.playerId];
-                    const estimate = draft.teamDraftState[
-                      teamId
-                    ]?.scouting.find(
-                      (s) => s.prospectPlayerId === prospect.playerId,
-                    );
-                    const report = toScoutingReportView(estimate);
-                    const mock = mockByProspect.get(prospect.playerId);
-                    const funFact = full
-                      ? prospectFunFact(
-                          full,
-                          state.settings.league.area ?? "north_america",
-                        )
-                      : null;
-                    const onBoard = boardEntries.some(
-                      (e) => e.prospectPlayerId === prospect.playerId,
-                    );
-                    return (
-                      <div key={prospect.playerId}>
-                        <ProspectCard
-                          saveId={saveId}
-                          playerId={prospect.playerId}
-                          portrait={selectPlayerPortrait(
-                            state,
-                            prospect.playerId,
-                          )}
-                          firstName={prospect.firstName}
-                          lastName={prospect.lastName}
-                          position={prospect.position}
-                          age={full?.player.age}
-                          nationality={full?.player.nationality}
-                          scoutGrade={prospect.scoutGrade}
-                          estimatedOverallMin={prospect.estimatedOverallMin}
-                          estimatedOverallMax={prospect.estimatedOverallMax}
-                          confidence={prospect.confidence}
-                          projectedPick={mock?.projected}
-                          previousProjectedPick={mock?.previous}
-                          funFact={funFact}
-                          strengths={report.strengths.map((s) => s.label)}
-                          weaknesses={report.weaknesses.map((w) => w.label)}
-                          onBoard={onBoard}
-                        />
-                        <div className="mt-1 flex flex-wrap gap-2 px-1">
-                          {board.userOnClock ? (
-                            <form action={draftProspectAction}>
-                              <input
-                                type="hidden"
-                                name="saveId"
-                                value={saveId}
-                              />
-                              <input
-                                type="hidden"
-                                name="prospectPlayerId"
-                                value={prospect.playerId}
-                              />
-                              <input
-                                type="hidden"
-                                name="returnPath"
-                                value={pickReturnPath}
-                              />
-                              {resumeTo ? (
-                                <input
-                                  type="hidden"
-                                  name="resumeTo"
-                                  value={resumeTo}
-                                />
-                              ) : null}
-                              <button
-                                type="submit"
-                                className={cn(
-                                  linkClass,
-                                  touchTargetTextClass,
-                                  focusRingClass,
-                                  "text-sm font-medium",
-                                )}
-                              >
-                                Draft
-                              </button>
-                            </form>
-                          ) : null}
-                          <form action={addDraftBoardAction}>
-                            <input type="hidden" name="saveId" value={saveId} />
-                            <input
-                              type="hidden"
-                              name="prospectPlayerId"
-                              value={prospect.playerId}
-                            />
-                            <input
-                              type="hidden"
-                              name="returnPath"
-                              value={returnPath}
-                            />
-                            <button
-                              type="submit"
-                              className={cn(
-                                touchTargetTextClass,
-                                focusRingClass,
-                                "text-sm text-muted hover:underline",
+                <ProspectPoolView
+                  sheet={
+                    <ProspectSheet
+                      rows={sheet.rows}
+                      total={sheet.total}
+                      actionsById={Object.fromEntries(
+                        sheet.rows.map((row) => [
+                          row.playerId,
+                          <ProspectActionForms
+                            key={row.playerId}
+                            saveId={saveId}
+                            playerId={row.playerId}
+                            onBoard={row.onBoard}
+                            userOnClock={board.userOnClock}
+                            returnPath={returnPath}
+                            pickReturnPath={pickReturnPath}
+                            resumeTo={resumeTo}
+                          />,
+                        ]),
+                      )}
+                    />
+                  }
+                  cards={
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {board.eligibleProspects.slice(0, 24).map((prospect) => {
+                        const full = draft.prospects[prospect.playerId];
+                        const estimate = draft.teamDraftState[
+                          teamId
+                        ]?.scouting.find(
+                          (s) => s.prospectPlayerId === prospect.playerId,
+                        );
+                        const report = toScoutingReportView(estimate);
+                        const mock = mockByProspect.get(prospect.playerId);
+                        const funFact = full
+                          ? prospectFunFact(
+                              full,
+                              state.settings.league.area ?? "north_america",
+                            )
+                          : null;
+                        const onBoard = boardEntries.some(
+                          (e) => e.prospectPlayerId === prospect.playerId,
+                        );
+                        return (
+                          <div key={prospect.playerId}>
+                            <ProspectCard
+                              saveId={saveId}
+                              playerId={prospect.playerId}
+                              portrait={selectPlayerPortrait(
+                                state,
+                                prospect.playerId,
                               )}
-                            >
-                              {onBoard ? "On board" : "Add to board"}
-                            </button>
-                          </form>
-                        </div>
-                        {mock?.availability ? (
-                          <p className="px-1 text-sm text-muted">
-                            {mock.availability}
-                          </p>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
+                              firstName={prospect.firstName}
+                              lastName={prospect.lastName}
+                              position={prospect.position}
+                              age={full?.player.age}
+                              nationality={full?.player.nationality}
+                              scoutGrade={prospect.scoutGrade}
+                              estimatedOverallMin={prospect.estimatedOverallMin}
+                              estimatedOverallMax={prospect.estimatedOverallMax}
+                              confidence={prospect.confidence}
+                              projectedPick={mock?.projected}
+                              previousProjectedPick={mock?.previous}
+                              funFact={funFact}
+                              strengths={report.strengths.map((s) => s.label)}
+                              weaknesses={report.weaknesses.map((w) => w.label)}
+                              onBoard={onBoard}
+                            />
+                            <ProspectActionForms
+                              saveId={saveId}
+                              playerId={prospect.playerId}
+                              onBoard={onBoard}
+                              userOnClock={board.userOnClock}
+                              returnPath={returnPath}
+                              pickReturnPath={pickReturnPath}
+                              resumeTo={resumeTo}
+                            />
+                            {mock?.availability ? (
+                              <p className="px-1 text-sm text-muted">
+                                {mock.availability}
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  }
+                />
               </Section>
             </div>
 

@@ -246,8 +246,9 @@ export async function findOwnerTradeOffers(
 }
 
 /**
- * Execute a Trade Finder offer exactly as shown. Re-checks the per-side
- * asset cap here; ownership, validity and acceptance in commitOwnerTrade.
+ * Execute a Trade Finder offer. The owner may have edited the offer before
+ * proposing it, so nothing is trusted from the client: re-checks the per-side
+ * asset cap here; ownership, rules and CPU acceptance in commitOwnerTrade.
  */
 export async function executeOwnerTradeOffer(
   saveId: string,

@@ -42,9 +42,7 @@ function AssetColumn(props: {
 }) {
   return (
     <div className="min-w-0 flex-1 rounded-lg border border-line bg-surface-base/40 p-3">
-      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-faint">
-        {props.title}
-      </h4>
+      <SectionHeading as="h4" size="xs" title={props.title} className="mb-2" />
       {props.assets.length === 0 ? (
         <p className="text-sm text-faint">Nothing</p>
       ) : (
@@ -66,7 +64,7 @@ function AssetColumn(props: {
                     >
                       {asset.name}
                     </Link>
-                    <p className="flex items-center gap-1.5 text-xs text-faint">
+                    <p className="flex items-center gap-1.5 text-sm text-faint">
                       <span>{asset.position}</span>
                       <OvrBadge overall={asset.overall} size="sm" />
                       <span>
@@ -81,7 +79,7 @@ function AssetColumn(props: {
                   <>
                     <span className="text-ink">{asset.name}</span>
                     {asset.viaAbbreviation ? (
-                      <span className="ml-2 text-xs text-faint">
+                      <span className="ml-2 text-sm text-faint">
                         via {asset.viaAbbreviation}
                       </span>
                     ) : null}
@@ -95,7 +93,7 @@ function AssetColumn(props: {
                   onClick={() => props.onRemove?.(asset)}
                   className={cn(
                     touchTargetClass,
-                    "shrink-0 text-faint hover:text-rose-400",
+                    "shrink-0 text-faint hover:text-danger",
                     focusRingClass,
                   )}
                 >
@@ -107,6 +105,18 @@ function AssetColumn(props: {
         </ul>
       )}
     </div>
+  );
+}
+
+const assetKeys = (assets: TradeAssetView[]) =>
+  new Set(assets.map((a) => `${a.kind}-${a.id}`));
+
+function sameAssets(a: TradeAssetView[], b: TradeAssetView[]): boolean {
+  const keys = assetKeys(a);
+  return (
+    keys.size === a.length &&
+    a.length === b.length &&
+    b.every((x) => keys.has(`${x.kind}-${x.id}`))
   );
 }
 
@@ -140,7 +150,8 @@ export function TradeOfferCard(props: {
   const [receive, setReceive] = useState(offer.receive);
 
   const max = TRADE_OFFER_MAX_ASSETS_PER_SIDE;
-  const modified = send !== offer.send || receive !== offer.receive;
+  const modified =
+    !sameAssets(send, offer.send) || !sameAssets(receive, offer.receive);
   const proposal: TradeProposal = modified
     ? {
         sideA: toSide(offer.proposal.sideA.teamId, send),
@@ -171,14 +182,23 @@ export function TradeOfferCard(props: {
             titleClassName="text-lg!"
             title={offer.counterpartyName}
           />
-          <span className="text-sm text-team-ink">
-            {INTEREST_LABELS[offer.interestLevel]}
-          </span>
+          {modified ? null : (
+            <span className="text-sm text-team-ink">
+              {INTEREST_LABELS[offer.interestLevel]}
+            </span>
+          )}
         </div>
-        <ProgressBar
-          value={offer.interest}
-          aria-label={`Interest ${Math.round(offer.interest)} of 100`}
-        />
+        {modified ? (
+          <p className="text-sm text-muted">
+            Changed offer: {offer.counterpartyName} will decide when you propose
+            it.
+          </p>
+        ) : (
+          <ProgressBar
+            value={offer.interest}
+            aria-label={`Interest ${Math.round(offer.interest)} of 100`}
+          />
+        )}
       </div>
       <div className="flex flex-col gap-3 sm:flex-row">
         <AssetColumn
@@ -213,7 +233,7 @@ export function TradeOfferCard(props: {
                     type="button"
                     onClick={() => setSend([...send, asset])}
                     className={cn(
-                      "min-h-11 rounded-full border border-line px-3 text-xs text-muted hover:border-disabled",
+                      "min-h-11 rounded-full border border-line px-3 text-sm text-muted hover:border-disabled",
                       focusRingClass,
                     )}
                   >

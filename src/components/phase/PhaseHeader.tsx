@@ -15,7 +15,7 @@ export function PhaseHeader(props: {
       className="rounded-xl border border-line-strong bg-surface-raised/60 px-4 py-4"
       aria-label="Current phase"
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-team-ink">
+      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-team-ink">
         {stage} · {seasonYear} ·{" "}
         {formatGameDate(currentDate, { weekday: true })}
       </p>
@@ -29,9 +29,7 @@ export function PhaseHeader(props: {
             titleClassName="text-lg!"
             title={view.nowLabel}
           />
-          <p className="mt-1 text-sm text-emerald-400/90">
-            {view.resolved.theme}
-          </p>
+          <p className="mt-1 text-sm text-success/90">{view.resolved.theme}</p>
         </div>
         <div>
           <p className="text-sm text-muted">Next</p>

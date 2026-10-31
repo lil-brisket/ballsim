@@ -11,9 +11,9 @@ export function MetricBlock(props: {
 }) {
   const directionClass =
     props.direction === "up"
-      ? "text-emerald-400"
+      ? "text-success"
       : props.direction === "down"
-        ? "text-rose-400"
+        ? "text-danger"
         : "text-muted";
 
   return (

@@ -98,7 +98,7 @@ export function ParticipantBar(props: {
           {online ? "Signed in as" : "Playing as"}{" "}
           <strong>{active?.displayName ?? "Unknown"}</strong>
           {activeIsHost ? (
-            <span className="ml-2 rounded-full border border-team-ink px-2 py-0.5 text-xs font-medium text-team-ink">
+            <span className="ml-2 rounded-full border border-team-ink px-2 py-0.5 text-sm font-medium text-team-ink">
               {online ? "Commissioner" : "Host"}
             </span>
           ) : null}

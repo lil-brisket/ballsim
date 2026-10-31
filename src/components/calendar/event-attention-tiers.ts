@@ -19,7 +19,7 @@ const INDICATOR_ORDER: AttentionIndicatorKind[] = [
 ];
 
 export const ATTENTION_INDICATOR_DOT: Record<AttentionIndicatorKind, string> = {
-  team_game: "bg-sky-400 ring-1 ring-sky-300/60",
+  team_game: "bg-info ring-1 ring-info/60",
   user_impact: "bg-team-ink",
   league: "bg-faint",
   background: "bg-line-strong",

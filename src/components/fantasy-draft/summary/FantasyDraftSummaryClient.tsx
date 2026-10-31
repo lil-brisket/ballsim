@@ -109,7 +109,7 @@ function TeamSummaryPanel(props: {
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="rounded-xl border border-line p-4">
           <SectionHeading as="h3" title="Strengths" />
-          <ul className="mt-2 space-y-1 text-sm text-emerald-300/90">
+          <ul className="mt-2 space-y-1 text-sm text-success-ink/90">
             {summary.strengths.length === 0 ? (
               <li className="text-faint">—</li>
             ) : (
@@ -139,7 +139,12 @@ function TeamSummaryPanel(props: {
           {summary.teamOutlook.longTerm}
         </p>
         <div className="mt-4 space-y-2">
-          <h4 className="text-sm font-medium text-soft">Roster Balance</h4>
+          <SectionHeading
+            as="h4"
+            size="sm"
+            tone="soft"
+            title="Roster Balance"
+          />
           {summary.positionBalance.map((row) => (
             <div key={row.position} className="flex items-center gap-3 text-sm">
               <span className="w-8 text-soft">{row.position}</span>

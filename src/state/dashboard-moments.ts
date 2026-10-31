@@ -1,23 +1,29 @@
 /**
  * Presentation moments the dashboard layout may open on its own. Only facts
  * that are news right now are included, to keep the layout payload small.
+ * Eligibility is decided from cheap state first, so the full selectors (which
+ * walk every player in the league) only run in the phases that show them.
  */
 
 import type { GameState } from "@/state/game-state";
 import {
+  isAwardsNightCurrent,
   toAwardsNightView,
   type AwardsNightView,
 } from "@/state/awards-night-selectors";
 import {
+  isChampionMomentCurrent,
   toChampionMomentView,
   type ChampionMomentView,
 } from "@/state/champion-moment-selectors";
 import { getActiveOwnerTeamId } from "@/state/owner-context";
 import {
+  isProgressionRevealCurrent,
   toProgressionRevealView,
   type ProgressionRevealView,
 } from "@/state/progression-reveal-selectors";
 import {
+  isSeasonRecapCurrent,
   toSeasonRecapView,
   type SeasonRecapView,
 } from "@/state/season-recap-selectors";
@@ -31,17 +37,27 @@ export type DashboardMomentsView = {
   recap: SeasonRecapView | null;
 };
 
+function currentOnly<T extends { isCurrent: boolean }>(
+  view: T | null,
+): T | null {
+  return view?.isCurrent ? view : null;
+}
+
 export function toDashboardMomentsView(state: GameState): DashboardMomentsView {
   const teamId = getActiveOwnerTeamId(state);
-  const progression = toProgressionRevealView(state, teamId);
-  const champion = toChampionMomentView(state);
-  const awards = toAwardsNightView(state);
-  const recap = toSeasonRecapView(state, undefined, teamId);
   return {
     teamId,
-    awards: awards?.isCurrent ? awards : null,
-    champion: champion?.isCurrent ? champion : null,
-    progression: progression?.isCurrent ? progression : null,
-    recap: recap?.isCurrent ? recap : null,
+    awards: isAwardsNightCurrent(state)
+      ? currentOnly(toAwardsNightView(state))
+      : null,
+    champion: isChampionMomentCurrent(state)
+      ? currentOnly(toChampionMomentView(state))
+      : null,
+    progression: isProgressionRevealCurrent(state)
+      ? currentOnly(toProgressionRevealView(state, teamId))
+      : null,
+    recap: isSeasonRecapCurrent(state, teamId)
+      ? currentOnly(toSeasonRecapView(state, undefined, teamId))
+      : null,
   };
 }

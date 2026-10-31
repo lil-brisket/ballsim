@@ -53,6 +53,25 @@
   --live: #f43f5e;
   --warning: #f59e0b;
 
+  /*
+   * Status tokens: base (text and solid fills), ink (lighter text on a soft
+   * plate) and soft (plate background). Borders use the base with an opacity
+   * modifier, e.g. border-danger/50. Redefine these four sets to recolour
+   * every status chip, alert and danger button.
+   */
+  --danger: #fb7185;
+  --danger-ink: #fda4af;
+  --danger-soft: rgb(76 5 25 / 0.4);
+  --success: #34d399;
+  --success-ink: #6ee7b7;
+  --success-soft: rgb(2 44 34 / 0.4);
+  --caution: #fbbf24;
+  --caution-ink: #fcd34d;
+  --caution-soft: rgb(69 26 3 / 0.4);
+  --info: #38bdf8;
+  --info-ink: #7dd3fc;
+  --info-soft: rgb(8 47 73 / 0.4);
+
   /* Rating tier (set per element via data-tier, see rating-tier.ts). */
   --tier: #a1a1aa;
   --tier-rgb: 161 161 170;
@@ -92,6 +111,18 @@
   --color-loss: var(--loss);
   --color-live: var(--live);
   --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-danger-ink: var(--danger-ink);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-ink: var(--success-ink);
+  --color-success-soft: var(--success-soft);
+  --color-caution: var(--caution);
+  --color-caution-ink: var(--caution-ink);
+  --color-caution-soft: var(--caution-soft);
+  --color-info: var(--info);
+  --color-info-ink: var(--info-ink);
+  --color-info-soft: var(--info-soft);
   --shadow-arena: var(--shadow-arena);
   --shadow-team-glow: var(--glow-team);
   --font-sans: var(--font-geist-sans);

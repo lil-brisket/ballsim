@@ -63,6 +63,7 @@ export {
   loadPlayerDrawerView,
   loadPlayerGameSeries,
   loadTeamDrawerView,
+  loadTeamRosterView,
   loadStaffDrawerView,
   loadOwnerGameBoxScoreView,
   loadOwnerWatchGameView,

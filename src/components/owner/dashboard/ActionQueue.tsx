@@ -8,7 +8,7 @@ export function ActionQueue(props: { items: OwnerDashboardActionItem[] }) {
   if (props.items.length === 0) {
     return (
       <section
-        className="rounded-xl border border-emerald-800/40 bg-emerald-950/20 px-4 py-5"
+        className="rounded-xl border border-success/40 bg-success-soft px-4 py-5"
         aria-label="What needs your attention"
       >
         <SectionHeading title="You're in good shape" />

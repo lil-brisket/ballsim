@@ -220,11 +220,11 @@ export function FantasyDraftOrderEditor(props: FantasyDraftOrderEditorProps) {
                 </span>
                 <span className="truncate">{entry.teamName}</span>
                 {entry.isUser ? (
-                  <span className="ml-2 shrink-0 rounded bg-team/20 px-1.5 py-0.5 text-xs text-team-ink">
+                  <span className="ml-2 shrink-0 rounded bg-team/20 px-1.5 py-0.5 text-sm text-team-ink">
                     USER
                   </span>
                 ) : (
-                  <span className="ml-2 shrink-0 rounded bg-surface-high px-1.5 py-0.5 text-xs text-muted">
+                  <span className="ml-2 shrink-0 rounded bg-surface-high px-1.5 py-0.5 text-sm text-muted">
                     CPU
                   </span>
                 )}

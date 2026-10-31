@@ -149,7 +149,7 @@ export default async function DevelopmentHubPage({
                     <PlayerEntityLink saveId={saveId} playerId={p.playerId}>
                       {p.playerName}
                     </PlayerEntityLink>
-                    <span className="tabular-nums text-emerald-300">
+                    <span className="tabular-nums text-success-ink">
                       {p.changeDelta !== null && p.changeDelta > 0
                         ? `+${p.changeDelta}`
                         : p.changeDelta}

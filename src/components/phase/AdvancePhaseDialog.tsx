@@ -38,7 +38,7 @@ export function AdvancePhaseDialog(props: {
         </p>
       ) : null}
       {blocked && preview.blockReason ? (
-        <p className="mt-2 text-sm text-red-300">{preview.blockReason}</p>
+        <p className="mt-2 text-sm text-danger-ink">{preview.blockReason}</p>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
         {blocked ? (

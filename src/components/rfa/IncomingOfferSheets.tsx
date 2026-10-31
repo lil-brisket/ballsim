@@ -36,13 +36,13 @@ export function IncomingOfferSheets(props: {
                 Match by {formatGameDate(sheet.matchDeadlineDate)} or he joins
                 them.
               </p>
-              <p className={cn("text-muted", overCap && "text-rose-300")}>
+              <p className={cn("text-muted", overCap && "text-danger-ink")}>
                 Payroll if matched {formatMoney(sheet.payrollIfMatched)} of{" "}
                 {formatMoney(sheet.salaryCap)} cap
                 {overCap ? ". Matching may go over the cap." : "."}
               </p>
               {blocked ? (
-                <p role="alert" className="text-rose-300">
+                <p role="alert" className="text-danger-ink">
                   {sheet.matchBlockedReason}
                 </p>
               ) : null}

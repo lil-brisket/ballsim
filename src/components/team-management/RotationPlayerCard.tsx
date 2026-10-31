@@ -98,8 +98,8 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
 
   if (status === "available") {
     return (
-      <div className="rounded-lg border border-emerald-800/60 bg-emerald-950/30 px-4 py-3">
-        <p className="text-sm font-medium text-emerald-300">
+      <div className="rounded-lg border border-success/50 bg-success-soft px-4 py-3">
+        <p className="text-sm font-medium text-success-ink">
           {emoji} Available
         </p>
         <p className="mt-1 text-sm text-muted">
@@ -142,8 +142,8 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
 
   if (status === "limited") {
     return (
-      <div className="rounded-lg border border-orange-800/60 bg-orange-950/30 px-4 py-3">
-        <p className="text-sm font-medium text-orange-300">{emoji} Limited</p>
+      <div className="rounded-lg border border-caution/50 bg-caution-soft px-4 py-3">
+        <p className="text-sm font-medium text-caution-ink">{emoji} Limited</p>
         <dl className="mt-2 space-y-1 text-sm text-soft">
           {player.injuryType ? (
             <div>
@@ -182,8 +182,8 @@ function AvailabilitySection(props: { player: RotationPlayerCardData }) {
   }
 
   return (
-    <div className="rounded-lg border border-rose-800/60 bg-rose-950/30 px-4 py-3">
-      <p className="text-sm font-medium text-rose-300">
+    <div className="rounded-lg border border-danger/50 bg-danger-soft px-4 py-3">
+      <p className="text-sm font-medium text-danger-ink">
         {emoji} {label}
       </p>
       <dl className="mt-2 space-y-1 text-sm text-soft">
@@ -270,15 +270,25 @@ export function RotationPlayerCard(props: {
 
         <div className="space-y-4 overflow-y-auto px-5 py-4">
           <section>
-            <h4 className="mb-2 text-sm font-medium text-soft">Availability</h4>
+            <SectionHeading
+              as="h4"
+              size="sm"
+              tone="soft"
+              title="Availability"
+              className="mb-2"
+            />
             <AvailabilitySection player={player} />
           </section>
 
           {stats ? (
             <section>
-              <h4 className="mb-2 text-sm font-medium text-soft">
-                Performance
-              </h4>
+              <SectionHeading
+                as="h4"
+                size="sm"
+                tone="soft"
+                title="Performance"
+                className="mb-2"
+              />
               <div className="grid grid-cols-3 gap-2 text-center sm:grid-cols-4">
                 {(
                   [
@@ -309,7 +319,13 @@ export function RotationPlayerCard(props: {
           ) : null}
 
           <section>
-            <h4 className="mb-2 text-sm font-medium text-soft">Rotation</h4>
+            <SectionHeading
+              as="h4"
+              size="sm"
+              tone="soft"
+              title="Rotation"
+              className="mb-2"
+            />
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <div className="rounded border border-line px-3 py-2">
                 <dt className="text-sm text-muted">Target MPG</dt>

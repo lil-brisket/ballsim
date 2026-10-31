@@ -21,7 +21,7 @@ export function FreeAgentInterest({
     (f) => Number(Math.abs(f.points).toFixed(1)) > 0,
   );
   return (
-    <div className="mt-1 text-xs text-faint">
+    <div className="mt-1 text-sm text-faint">
       {caresAbout.length > 0 ? (
         <p>Cares about: {caresAbout.join(", ")}</p>
       ) : null}

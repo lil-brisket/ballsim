@@ -58,9 +58,9 @@ export function MarketComparison(props: {
                 <span
                   className={
                     destination.marketSizeDelta > 0
-                      ? "text-emerald-400"
+                      ? "text-success"
                       : destination.marketSizeDelta < 0
-                        ? "text-rose-400"
+                        ? "text-danger"
                         : "text-faint"
                   }
                 >

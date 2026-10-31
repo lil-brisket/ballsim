@@ -58,7 +58,7 @@ export function QualifyingOffers(props: {
                   Issue qualifying offer
                 </Button>
                 {row.blockedReason ? (
-                  <p className="max-w-xs text-right text-xs text-muted">
+                  <p className="max-w-xs text-right text-sm text-muted">
                     {row.blockedReason}
                   </p>
                 ) : null}

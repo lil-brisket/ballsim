@@ -94,7 +94,7 @@ describe("DlProspectCard", () => {
   it("renders a positive emerald delta", () => {
     render(<ChangeDelta delta={3} />);
     expect(screen.getByText("+3")).toBeTruthy();
-    expect(screen.getByText("+3").className).toContain("text-emerald-300");
+    expect(screen.getByText("+3").className).toContain("text-success-ink");
   });
 });
 

@@ -121,6 +121,7 @@ export const test = base.extend<{
   dashboard: SaveUrl;
   regularSeasonSave: SaveUrl;
   playoffsSave: SaveUrl;
+  draftSave: SaveUrl;
   offseasonSave: SaveUrl;
 }>({
   // `provide` is Playwright's fixture `use`; renamed so the React hooks lint
@@ -145,6 +146,9 @@ export const test = base.extend<{
   },
   playoffsSave: async ({}, provide, testInfo) => {
     await provide(await seededSave("playoffs", testInfo));
+  },
+  draftSave: async ({}, provide, testInfo) => {
+    await provide(await seededSave("draft", testInfo));
   },
   offseasonSave: async ({}, provide, testInfo) => {
     await provide(await seededSave("offseason", testInfo));

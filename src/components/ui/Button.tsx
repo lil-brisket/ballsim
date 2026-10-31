@@ -9,7 +9,7 @@ const VARIANT: Record<ButtonVariant, string> = {
     "border border-line-strong bg-surface-raised font-medium text-ink hover:border-team-ink",
   quiet: "font-medium text-soft hover:bg-surface-high/60 hover:text-ink",
   danger:
-    "border border-rose-700/60 bg-rose-950/40 font-medium text-rose-200 hover:bg-rose-900/50",
+    "border border-danger/50 bg-danger-soft font-medium text-danger-ink hover:bg-danger/20",
 };
 
 const SIZE: Record<ButtonSize, string> = {

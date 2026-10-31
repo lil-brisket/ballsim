@@ -60,7 +60,7 @@ export function DepthChart(props: {
                       <div className="mt-0.5 flex flex-wrap gap-2 text-sm text-faint">
                         <span>{entry.label}</span>
                         {!entry.canPlay ? (
-                          <span className="text-rose-400">
+                          <span className="text-danger">
                             {entry.availabilityLabel}
                           </span>
                         ) : null}

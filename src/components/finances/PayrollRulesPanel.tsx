@@ -40,7 +40,7 @@ export function TaxLineNote(props: {
       ) : (
         <>
           Tax line {formatMoney(rules.threshold)}:{" "}
-          <span className="text-red-400">{formatMoney(-room)} over</span> —
+          <span className="text-danger">{formatMoney(-room)} over</span> —
           projected tax {formatMoney(rules.projectedTax)}
         </>
       )}
@@ -75,7 +75,7 @@ export function PayrollRulesPanel(props: { rules: PayrollRulesView }) {
               <MoneyDisplay amount={rules.threshold} />
               {" · "}
               {rules.payroll > rules.threshold ? (
-                <span className="text-red-400">
+                <span className="text-danger">
                   {formatMoney(rules.payroll - rules.threshold)} over
                 </span>
               ) : (

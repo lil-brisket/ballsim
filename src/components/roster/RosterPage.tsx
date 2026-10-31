@@ -6,6 +6,7 @@ import {
   linkClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
+import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { RosterPageView } from "@/state/roster-page-selectors";
@@ -18,6 +19,12 @@ import { RosterManagementTable } from "@/components/roster/RosterManagementTable
 import { RosterNeeds } from "@/components/roster/RosterNeeds";
 import { TradeBlockRosterView } from "@/components/roster/TradeBlockView";
 import { TradeFinderView } from "@/components/roster/TradeFinderView";
+import { RosterSheet } from "@/components/roster/sheet/RosterSheet";
+import {
+  parseRosterView,
+  useStoredRosterView,
+  type RosterViewMode,
+} from "@/components/roster/roster-view-preference";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 export type RosterManagementTab =
@@ -46,12 +53,21 @@ export function RosterPage(props: { view: RosterPageView }) {
   const tab = parseTab(searchParams.get("tab"));
   const { view } = props;
 
+  // URL param, then the viewer's stored choice, then the sheet.
+  const urlView = parseRosterView(searchParams.get("view"));
+  const [storedView, setStoredView] = useStoredRosterView();
+  const rosterView: RosterViewMode = urlView ?? storedView;
+  useEffect(() => {
+    if (urlView) setStoredView(urlView);
+  }, [urlView, setStoredView]);
+
+  const base = `/dashboard/${view.saveId}/roster`;
+  // Tab links omit the view: it resolves from the stored choice.
   function tabHref(next: RosterManagementTab): string {
-    return `/dashboard/${view.saveId}/roster${
-      next === "roster" ? "" : `?tab=${next}`
-    }`;
+    return next === "roster" ? base : `${base}?tab=${next}`;
   }
-  const returnPath = tabHref(tab);
+  const returnPath =
+    tab === "roster" ? `${base}?view=${rosterView}` : tabHref(tab);
 
   return (
     <div className="space-y-6">
@@ -77,6 +93,22 @@ export function RosterPage(props: { view: RosterPageView }) {
             <section aria-label="Roster table" className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <SectionHeading as="h2" title="Roster" />
+                <ViewSwitch
+                  aria-label="Roster view"
+                  activeKey={rosterView}
+                  items={[
+                    {
+                      key: "sheet",
+                      label: "Sheet",
+                      href: `${base}?view=sheet`,
+                    },
+                    {
+                      key: "table",
+                      label: "Table",
+                      href: `${base}?view=table`,
+                    },
+                  ]}
+                />
                 <p className="text-sm text-muted">
                   <Link
                     href={view.lineupHref}
@@ -90,11 +122,19 @@ export function RosterPage(props: { view: RosterPageView }) {
                   </Link>
                 </p>
               </div>
-              <RosterManagementTable
-                saveId={view.saveId}
-                players={view.roster}
-                returnPath={returnPath}
-              />
+              {rosterView === "sheet" ? (
+                <RosterSheet
+                  saveId={view.saveId}
+                  players={view.roster}
+                  returnPath={returnPath}
+                />
+              ) : (
+                <RosterManagementTable
+                  saveId={view.saveId}
+                  players={view.roster}
+                  returnPath={returnPath}
+                />
+              )}
             </section>
           )}
           <DepthChart saveId={view.saveId} depthChart={view.depthChart} />
@@ -105,6 +145,7 @@ export function RosterPage(props: { view: RosterPageView }) {
         <FreeAgentRosterView
           saveId={view.saveId}
           freeAgents={view.freeAgents}
+          freeAgentCount={view.freeAgentCount}
           freeAgencyHubHref={view.freeAgencyHubHref}
           freeAgencyActive={view.freeAgencyActive}
         />

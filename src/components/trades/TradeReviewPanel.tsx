@@ -150,7 +150,7 @@ export function TradeReviewPanel(props: {
       </section>
 
       {props.error ? (
-        <p role="alert" className="text-sm text-red-300">
+        <p role="alert" className="text-sm text-danger-ink">
           {props.error}
         </p>
       ) : null}

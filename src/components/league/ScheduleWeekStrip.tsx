@@ -68,7 +68,7 @@ export function ScheduleWeekStrip(props: {
               >
                 <span
                   className={cn(
-                    "text-xs font-medium uppercase tracking-wide",
+                    "text-sm font-medium uppercase tracking-wide",
                     isToday ? "text-team-ink" : "text-faint",
                   )}
                 >
@@ -82,7 +82,7 @@ export function ScheduleWeekStrip(props: {
                 >
                   {label}
                 </span>
-                <span className="flex items-center gap-1 text-xs text-faint">
+                <span className="flex items-center gap-1 text-sm text-faint">
                   {day.myTeamPlays ? (
                     <span
                       aria-label="Your team plays"

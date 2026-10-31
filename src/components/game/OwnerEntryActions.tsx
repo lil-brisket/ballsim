@@ -63,7 +63,7 @@ export function OwnerEntryActions(props: {
                   decorative
                 />
                 <div className="min-w-0 space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-team-ink">
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-team-ink">
                     Continue
                   </p>
                   <SectionHeading

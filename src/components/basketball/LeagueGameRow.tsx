@@ -113,7 +113,7 @@ export function LeagueGameRow(props: LeagueGameRowProps) {
       {props.awayScore}–{props.homeScore}
     </GameResultLink>
   ) : props.status === "in_progress" ? (
-    <span className="text-sm font-medium text-emerald-400">Live</span>
+    <span className="text-sm font-medium text-success">Live</span>
   ) : props.status === "postponed" ? (
     <span className="text-sm text-faint">Postponed</span>
   ) : props.status === "cancelled" ? (

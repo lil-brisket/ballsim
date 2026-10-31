@@ -10,8 +10,14 @@ import {
 import {
   PLAYER_POSITIONS,
   type Player,
+  type PlayerAttributes,
   type PlayerPosition,
 } from "@/domain/entities/player";
+import { ARCHETYPE_LABELS } from "@/domain/entities/player-archetype";
+import {
+  toPlayerPerformanceView,
+  type PlayerPerformanceView,
+} from "@/state/player-performance";
 import {
   ROTATION_ROLES,
   type RotationRole,
@@ -25,9 +31,12 @@ import {
   toFinancesView,
   toFreeAgentViews,
   toRosterView,
-  type FreeAgentView,
   type RosterPlayerView,
 } from "@/state/selectors";
+import {
+  toSheetPlayerView,
+  type SheetPlayerView,
+} from "@/state/roster-sheet-view";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 import { toBrandingView } from "@/state/team-branding-view";
 import { getPlayerAvailability } from "@/systems/player-availability";
@@ -85,6 +94,13 @@ export type RosterPagePlayerView = RosterPlayerView & {
   availabilityLabel: string;
   roleDisplayLabel: string;
   mood: PlayerMoodView;
+  /** For the roster sheet; same values as the player card. */
+  attributes: PlayerAttributes;
+  potential: number;
+  heightInches: number;
+  weightPounds: number;
+  archetypeLabel: string;
+  performance: PlayerPerformanceView;
 };
 
 export type TradeBlockPlayerView = {
@@ -106,6 +122,9 @@ export type TradeBlockView = {
   players: TradeBlockPlayerView[];
   picks: TradeBlockPickView[];
 };
+
+/** Free agents shown on the Roster page's Free Agents tab. */
+export const FREE_AGENT_SHEET_LIMIT = 40;
 
 export type RosterPageSummary = {
   rosterCount: number;
@@ -133,7 +152,10 @@ export type RosterPageView = {
   roster: RosterPagePlayerView[];
   rosterNeeds: RosterNeed[];
   depthChart: DepthChartView;
-  freeAgents: FreeAgentView[];
+  /** Top FREE_AGENT_SHEET_LIMIT free agents by overall, as sheet rows. */
+  freeAgents: SheetPlayerView[];
+  /** All free agents, so the page can say when the list is cut short. */
+  freeAgentCount: number;
   freeAgencyActive: boolean;
   freeAgencyHubHref: string;
   tradeBlock: TradeBlockView;
@@ -491,6 +513,7 @@ function enrichRosterPlayers(
 
   return base.map((row) => {
     const playerId = row.playerId as PlayerId;
+    const player = state.world.players[playerId]!;
     const resolved = resolveRotationRole(playerId, team.rosterManagement);
     const availability = getPlayerAvailability(state, playerId, teamId);
     const blockStatus = onBlock.get(playerId);
@@ -510,6 +533,12 @@ function enrichRosterPlayers(
         resolved.isInactive,
       ),
       mood: toPlayerMoodView(state, playerId),
+      attributes: { ...player.attributes },
+      potential: player.potential.overall,
+      heightInches: player.heightInches,
+      weightPounds: player.weightPounds,
+      archetypeLabel: ARCHETYPE_LABELS[player.archetype],
+      performance: toPlayerPerformanceView(state, playerId),
     };
   });
 }
@@ -651,7 +680,13 @@ export function toRosterPageView(state: GameState): RosterPageView {
   const roster = enrichRosterPlayers(state, teamId);
   const rosterNeeds = evaluateRosterNeeds(state, teamId);
   const depthChart = toDepthChartView(state, teamId);
-  const freeAgents = toFreeAgentViews(state);
+  const allFreeAgents = toFreeAgentViews(state);
+  const freeAgents = allFreeAgents
+    .slice(0, FREE_AGENT_SHEET_LIMIT)
+    .flatMap((agent) => {
+      const row = toSheetPlayerView(state, agent.playerId as PlayerId);
+      return row ? [row] : [];
+    });
   const tradeBlock = toTradeBlockView(state, teamId);
   const summary = buildSummary(state, teamId, roster, tradeBlock);
   const freeAgencyActive = isInLeaguePhase(state, "offseason.free_agency");
@@ -670,6 +705,7 @@ export function toRosterPageView(state: GameState): RosterPageView {
     rosterNeeds,
     depthChart,
     freeAgents,
+    freeAgentCount: allFreeAgents.length,
     freeAgencyActive,
     freeAgencyHubHref: `/dashboard/${saveId}/free-agency`,
     tradeBlock,

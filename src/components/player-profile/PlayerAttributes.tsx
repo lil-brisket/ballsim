@@ -1,5 +1,5 @@
 import { AttributeRadar } from "@/components/basketball/player-card/AttributeRadar";
-import { PlayerRatingGrid } from "@/components/basketball/PlayerRatingGrid";
+import { CategoryBoxes } from "@/components/basketball/PlayerBoxes";
 import { Section } from "@/components/ui/Section";
 import { AttributeBar } from "@/components/player-profile/AttributeBar";
 import type { PlayerAttributes } from "@/domain/entities/player";
@@ -37,7 +37,7 @@ export function PlayerAttributesPanel(props: { player: PlayerProfileView }) {
           size="md"
         />
         {/* Sub-ratings are listed per category with development below. */}
-        <PlayerRatingGrid
+        <CategoryBoxes
           key={player.playerId}
           attributes={player.attributes as PlayerAttributes}
           interactive={false}

@@ -86,10 +86,10 @@ export function PhaseTaskList(props: {
 
 function PriorityMark(props: { priority: PhaseTask["priority"] }) {
   if (props.priority === "required") {
-    return <span className="text-red-400">●</span>;
+    return <span className="text-danger">●</span>;
   }
   if (props.priority === "recommended") {
     return <span className="text-warning">●</span>;
   }
-  return <span className="text-sky-400">●</span>;
+  return <span className="text-info">●</span>;
 }

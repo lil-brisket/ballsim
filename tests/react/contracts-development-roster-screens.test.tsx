@@ -356,14 +356,14 @@ describe("development screen", () => {
     render(withDrawer(<SkillRatingsTable saveId="save_test" rows={rows} />));
     const [healthy, hurt] = screen.getAllByRole("row").slice(1);
     const gain = within(healthy!).getByText("+3");
-    expect(gain.className).toContain("text-emerald-300");
+    expect(gain.className).toContain("text-success-ink");
     const drop = within(healthy!).getByText("−2");
-    expect(drop.className).toContain("text-rose-300");
+    expect(drop.className).toContain("text-danger-ink");
     expect(within(hurt!).getByText("−2").className).toContain(
-      "text-orange-300",
+      "text-caution-ink",
     );
     expect(within(hurt!).getByText("+3").className).toContain(
-      "text-emerald-300",
+      "text-success-ink",
     );
     expect(within(hurt!).getByText("Injured · Sprained Ankle")).toBeTruthy();
   });
@@ -423,6 +423,74 @@ describe("roster screen", () => {
       unmount();
     }
     navigation.search = "";
+  });
+
+  describe("roster view (sheet or table)", () => {
+    const sheetGrid = () =>
+      screen.queryByRole("grid", { name: "Roster sheet" });
+    const tableView = () => screen.queryByRole("button", { name: "Cards" });
+
+    afterEach(() => {
+      navigation.search = "";
+      window.localStorage.clear();
+    });
+
+    it("shows the sheet by default", () => {
+      navigation.search = "";
+      render(
+        withDrawer(<RosterPage view={toRosterPageView(stateAt(phases[0]!))} />),
+      );
+      expect(sheetGrid()).not.toBeNull();
+      expect(tableView()).toBeNull();
+    });
+
+    it("shows the table with ?view=table and remembers it", () => {
+      navigation.search = "view=table";
+      const view = toRosterPageView(stateAt(phases[0]!));
+      render(withDrawer(<RosterPage view={view} />));
+      expect(sheetGrid()).toBeNull();
+      expect(tableView()).not.toBeNull();
+      expect(window.localStorage.getItem("ballsim:roster-view")).toBe("table");
+      const base = `/dashboard/${view.saveId}/roster`;
+      const nav = screen.getByRole("navigation", { name: "Roster view" });
+      expect(
+        within(nav).getByRole("link", { name: "Sheet" }).getAttribute("href"),
+      ).toBe(`${base}?view=sheet`);
+      expect(
+        within(nav).getByRole("link", { name: "Table" }).getAttribute("href"),
+      ).toBe(`${base}?view=table`);
+    });
+
+    it("honours a stored table choice without a param", () => {
+      window.localStorage.setItem("ballsim:roster-view", "table");
+      navigation.search = "";
+      render(
+        withDrawer(<RosterPage view={toRosterPageView(stateAt(phases[0]!))} />),
+      );
+      expect(sheetGrid()).toBeNull();
+      expect(tableView()).not.toBeNull();
+    });
+
+    it("lets the URL beat the stored choice", () => {
+      window.localStorage.setItem("ballsim:roster-view", "table");
+      navigation.search = "view=sheet";
+      render(
+        withDrawer(<RosterPage view={toRosterPageView(stateAt(phases[0]!))} />),
+      );
+      expect(sheetGrid()).not.toBeNull();
+      expect(window.localStorage.getItem("ballsim:roster-view")).toBe("sheet");
+    });
+
+    it("hides the view switch off the roster tab", () => {
+      navigation.search = "tab=free-agents";
+      render(
+        withDrawer(<RosterPage view={toRosterPageView(stateAt(phases[0]!))} />),
+      );
+      expect(
+        screen.queryByRole("navigation", { name: "Roster view" }),
+      ).toBeNull();
+      expect(sheetGrid()).toBeNull();
+    });
   });
 
   // Regression: in the offseason both surfaces showed payroll and cap space

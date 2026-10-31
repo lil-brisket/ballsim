@@ -85,10 +85,7 @@ export function TeamOverview(props: { hub: TeamHubView }) {
           <dd className="text-ink">
             {hub.healthyCount} healthy
             {hub.injuredCount > 0 ? (
-              <span className="text-rose-400">
-                {" "}
-                · {hub.injuredCount} injured
-              </span>
+              <span className="text-danger"> · {hub.injuredCount} injured</span>
             ) : null}
           </dd>
         </div>

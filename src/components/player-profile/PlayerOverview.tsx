@@ -16,8 +16,8 @@ function FormDelta(props: { label: string; recent: number; season: number }) {
     Math.abs(diff) < 0.3
       ? "text-muted"
       : diff > 0
-        ? "text-emerald-400"
-        : "text-red-400";
+        ? "text-success"
+        : "text-danger";
   const arrow = Math.abs(diff) < 0.3 ? "→" : diff > 0 ? "↑" : "↓";
   return (
     <div className={panelClass}>

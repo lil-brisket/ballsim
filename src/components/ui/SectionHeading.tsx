@@ -16,6 +16,9 @@ const SMALL_TONE = {
  * `size="sm"` is the quiet sub-heading for groups inside a card or list
  * (sentence case, no underline, no eyebrow); `tone` colours it.
  *
+ * `size="xs"` is a small uppercase label (text-xs, faint) for a caption over
+ * a list inside a card; it ignores `tone`.
+ *
  * `size="display"` is a display title inside a card or hero (a team or
  * player name): condensed uppercase type only, no underline or eyebrow. The
  * caller sets size, weight, leading and colour through `titleClassName`.
@@ -24,8 +27,8 @@ export function SectionHeading(props: {
   title: React.ReactNode;
   eyebrow?: React.ReactNode;
   action?: React.ReactNode;
-  as?: "h1" | "h2" | "h3";
-  size?: "sm" | "md" | "lg" | "display";
+  as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+  size?: "xs" | "sm" | "md" | "lg" | "display";
   /** Title colour for `size="sm"`. */
   tone?: keyof typeof SMALL_TONE;
   id?: string;
@@ -43,6 +46,21 @@ export function SectionHeading(props: {
         tabIndex={props.tabIndex}
         className={cn(
           "font-display uppercase tracking-wide",
+          props.titleClassName,
+          props.className,
+        )}
+      >
+        {props.title}
+      </Tag>
+    );
+  }
+  if (props.size === "xs") {
+    return (
+      <Tag
+        id={props.id}
+        tabIndex={props.tabIndex}
+        className={cn(
+          "text-xs font-semibold uppercase tracking-wide text-faint",
           props.titleClassName,
           props.className,
         )}

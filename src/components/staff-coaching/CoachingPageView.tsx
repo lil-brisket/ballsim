@@ -62,7 +62,7 @@ export function CoachingPageView(props: {
                   <span className="text-sm text-muted">
                     {preset.description}
                   </span>
-                  <span className="text-xs text-faint">
+                  <span className="text-sm text-faint">
                     {presetSummary(preset)}
                   </span>
                 </button>

@@ -125,12 +125,18 @@ export function FantasyDraftPlayerPanel(props: {
 
           {detail.strengths.length > 0 ? (
             <div>
-              <h4 className="mb-1 text-sm font-medium text-soft">Strengths</h4>
-              <ul className="flex flex-wrap gap-1.5 text-sm text-emerald-300/90">
+              <SectionHeading
+                as="h4"
+                size="sm"
+                tone="soft"
+                title="Strengths"
+                className="mb-1"
+              />
+              <ul className="flex flex-wrap gap-1.5 text-sm text-success-ink/90">
                 {detail.strengths.map((s) => (
                   <li
                     key={s.label}
-                    className="rounded border border-emerald-900/50 px-2 py-0.5"
+                    className="rounded border border-success/50 px-2 py-0.5"
                   >
                     {s.label}
                   </li>
@@ -141,7 +147,13 @@ export function FantasyDraftPlayerPanel(props: {
 
           {detail.weaknesses.length > 0 ? (
             <div>
-              <h4 className="mb-1 text-sm font-medium text-soft">Weaknesses</h4>
+              <SectionHeading
+                as="h4"
+                size="sm"
+                tone="soft"
+                title="Weaknesses"
+                className="mb-1"
+              />
               <ul className="flex flex-wrap gap-1.5 text-sm text-muted">
                 {detail.weaknesses.map((w) => (
                   <li
@@ -156,9 +168,13 @@ export function FantasyDraftPlayerPanel(props: {
           ) : null}
 
           <div>
-            <h4 className="mb-2 text-sm font-medium text-soft">
-              Key attributes
-            </h4>
+            <SectionHeading
+              as="h4"
+              size="sm"
+              tone="soft"
+              title="Key attributes"
+              className="mb-2"
+            />
             <div className="grid grid-cols-2 gap-2">
               {attributeEntries.map(([key, value]) => (
                 <AttributeBar

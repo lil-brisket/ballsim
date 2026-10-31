@@ -212,7 +212,7 @@ export function InjuryTable(props: {
             type="button"
             aria-pressed={filter === entry.id}
             onClick={() => setFilter(entry.id)}
-            className={`inline-flex min-h-11 items-center rounded-full border px-3 text-xs touch-manipulation ${focusRingClass} ${
+            className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm touch-manipulation ${focusRingClass} ${
               filter === entry.id
                 ? "border-team-ink bg-team/15 text-ink"
                 : "border-line-strong bg-surface-raised text-muted hover:border-faint"

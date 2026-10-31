@@ -112,7 +112,7 @@ export function NextGamePanel(props: {
             </div>
 
             {props.team.rosterProblems.length > 0 ? (
-              <div className="rounded-lg border border-rose-900/40 bg-rose-950/20 px-3 py-2 text-sm text-rose-200">
+              <div className="rounded-lg border border-danger/40 bg-danger-soft px-3 py-2 text-sm text-danger-ink">
                 <p className="font-medium">Availability</p>
                 <ul className="mt-1 space-y-0.5">
                   {props.team.rosterProblems.slice(0, 3).map((problem) => (
@@ -120,11 +120,11 @@ export function NextGamePanel(props: {
                       <PlayerEntityLink
                         saveId={props.saveId}
                         playerId={problem.playerId}
-                        className="text-rose-200 hover:text-team-ink"
+                        className="text-danger-ink hover:text-team-ink"
                       >
                         {problem.name}
                       </PlayerEntityLink>
-                      <span className="text-rose-300/80">
+                      <span className="text-danger-ink/80">
                         {" "}
                         — {problem.kind}
                       </span>

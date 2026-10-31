@@ -128,7 +128,7 @@ export function ContractRow(props: {
                   <input type="hidden" name="returnPath" value={returnPath} />
                   <button
                     type="submit"
-                    className="rounded-md border border-rose-700 px-2.5 py-1 text-sm text-rose-300"
+                    className="rounded-md border border-danger/50 px-2.5 py-1 text-sm text-danger-ink"
                   >
                     Decline
                   </button>

@@ -71,7 +71,12 @@ export function DateInspector(props: {
 
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
         <section className="space-y-1">
-          <h4 className="text-sm font-medium text-soft">Simulation status</h4>
+          <SectionHeading
+            as="h4"
+            size="sm"
+            tone="soft"
+            title="Simulation status"
+          />
           <p className="text-sm text-ink">{inspector.phaseLabel}</p>
           <p className="text-sm text-muted">{inspector.simulationStatus}</p>
         </section>
@@ -80,7 +85,7 @@ export function DateInspector(props: {
           className="space-y-3 rounded-xl border border-team-ink/30 bg-team/15 px-3 py-3"
           aria-label="Your team"
         >
-          <h4 className="text-sm font-medium text-team-ink">Your team</h4>
+          <SectionHeading as="h4" size="sm" tone="team" title="Your team" />
           {inspector.teamGame ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
@@ -200,7 +205,12 @@ export function DateInspector(props: {
         </section>
 
         <section className="space-y-2">
-          <h4 className="text-sm font-medium text-soft">Special events</h4>
+          <SectionHeading
+            as="h4"
+            size="sm"
+            tone="soft"
+            title="Special events"
+          />
           {inspector.specialEvents.length === 0 ? (
             <p className="text-sm text-muted">None</p>
           ) : (
@@ -236,7 +246,12 @@ export function DateInspector(props: {
 
         {inspector.leagueContextSnippet ? (
           <section className="space-y-1">
-            <h4 className="text-sm font-medium text-soft">League context</h4>
+            <SectionHeading
+              as="h4"
+              size="sm"
+              tone="soft"
+              title="League context"
+            />
             <p className="text-sm text-soft">
               {inspector.leagueContextSnippet}
             </p>
@@ -245,9 +260,12 @@ export function DateInspector(props: {
 
         {inspector.simulationPreview ? (
           <section className="space-y-2 border-t border-surface-line pt-3">
-            <h4 className="text-sm font-medium text-soft">
-              Simulation preview
-            </h4>
+            <SectionHeading
+              as="h4"
+              size="sm"
+              tone="soft"
+              title="Simulation preview"
+            />
             <ul className="space-y-1 text-sm text-soft">
               {inspector.simulationPreview.summaryLines.map((line) => (
                 <li key={line}>• {line}</li>

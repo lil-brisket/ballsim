@@ -121,7 +121,7 @@ export default async function DevelopmentLeaguePage({
                   <PlayerEntityLink saveId={saveId} playerId={p.playerId}>
                     {p.name}
                   </PlayerEntityLink>
-                  <span className="tabular-nums text-emerald-300">
+                  <span className="tabular-nums text-success-ink">
                     {p.changeDelta !== null && p.changeDelta > 0
                       ? `+${p.changeDelta}`
                       : p.changeDelta}

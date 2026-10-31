@@ -6,10 +6,10 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn, panelClass } from "@/components/ui/styles";
 
 const LEVEL_TONE: Record<RosterNeedLevel, string> = {
-  strong: "text-emerald-400",
+  strong: "text-success",
   adequate: "text-soft",
   weak: "text-warning",
-  critical: "text-rose-400",
+  critical: "text-danger",
 };
 
 const LEVEL_LABEL: Record<RosterNeedLevel, string> = {

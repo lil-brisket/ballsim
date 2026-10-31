@@ -22,7 +22,7 @@ describe("toRosterPageView", () => {
 
     expect(view.saveId).toBe("roster_page_test");
     expect(view.roster.length).toBe(toRosterView(state).length);
-    expect(view.freeAgents.length).toBe(toFreeAgentViews(state).length);
+    expect(view.freeAgentCount).toBe(toFreeAgentViews(state).length);
     expect(view.rosterNeeds).toHaveLength(5);
     expect(view.depthChart.PG).toBeDefined();
     expect(view.tradeFinder).toEqual({

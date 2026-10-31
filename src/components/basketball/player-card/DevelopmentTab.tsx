@@ -187,9 +187,9 @@ export function DevelopmentTab(props: {
                     <td
                       className={
                         row.change != null && row.change > 0
-                          ? "px-3 py-2 text-right font-mono tabular-nums text-emerald-400"
+                          ? "px-3 py-2 text-right font-mono tabular-nums text-success"
                           : row.change != null && row.change < 0
-                            ? "px-3 py-2 text-right font-mono tabular-nums text-rose-400"
+                            ? "px-3 py-2 text-right font-mono tabular-nums text-danger"
                             : "px-3 py-2 text-right font-mono tabular-nums text-muted"
                       }
                     >

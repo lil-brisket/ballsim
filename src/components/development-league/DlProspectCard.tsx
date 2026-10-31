@@ -52,13 +52,13 @@ export function ChangeDelta(props: { delta: number | null }) {
   }
   if (props.delta > 0) {
     return (
-      <span className="font-mono font-semibold text-emerald-300">
+      <span className="font-mono font-semibold text-success-ink">
         +{props.delta}
       </span>
     );
   }
   return (
-    <span className="font-mono font-semibold text-rose-300">
+    <span className="font-mono font-semibold text-danger-ink">
       −{Math.abs(props.delta)}
     </span>
   );
@@ -102,7 +102,7 @@ export function DlProspectCard(props: {
       className={cn(
         panelClass,
         densityPadding.default,
-        ready && "border-emerald-800/60",
+        ready && "border-success/50",
         row.readiness === "near_ready" && "border-warning/40",
       )}
     >

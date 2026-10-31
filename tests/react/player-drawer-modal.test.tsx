@@ -79,6 +79,9 @@ function playerView(
       apg: 6.5,
       spg: 1.3,
       bpg: 0.4,
+      fgPct: null,
+      threePct: null,
+      ftPct: null,
     },
     stats: {
       currentSeasonId: "season_2026",
@@ -331,6 +334,9 @@ describe("PlayerDrawer modal", () => {
         apg: null,
         spg: null,
         bpg: null,
+        fgPct: null,
+        threePct: null,
+        ftPct: null,
       },
     });
     const { unmount } = render(
@@ -392,26 +398,38 @@ describe("PlayerDrawer modal", () => {
     );
     fireEvent.click(screen.getByRole("tab", { name: "Attributes" }));
     const list = screen.getByRole("list", { name: "Category ratings" });
-    expect(within(list).getAllByRole("button")).toHaveLength(7);
+    expect(
+      within(list).getAllByRole("button", { name: /details/i }),
+    ).toHaveLength(7);
 
     // Best category (Playmaking) starts open.
-    const playmaking = within(list).getByRole("button", { name: /Playmaking/ });
+    const playmaking = within(list).getByRole("button", {
+      name: /for Playmaking/,
+    });
     expect(playmaking.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByText("Ball Handling")).toBeTruthy();
     expect(screen.getByText("Passing")).toBeTruthy();
     expect(screen.queryByText("Finishing")).toBeNull();
-    // Breakdown renders inside its category row, not in a separate panel.
-    const breakdown = screen.getByText("Playmaking breakdown");
-    expect(breakdown.closest("li")).toBe(playmaking.closest("li"));
-    expect(within(playmaking).getByText("Best category")).toBeTruthy();
+    // The breakdown renders inside its category box, not in a separate panel.
+    const breakdown = screen.getByRole("list", {
+      name: "Playmaking attributes",
+    });
+    expect(breakdown.closest("li[data-category]")).toBe(
+      playmaking.closest("li[data-category]"),
+    );
+    expect(
+      within(playmaking.closest("li")!).getByText("Best category"),
+    ).toBeTruthy();
 
-    const inside = within(list).getByRole("button", { name: /Inside Scoring/ });
+    const inside = within(list).getByRole("button", {
+      name: /for Inside Scoring/,
+    });
     expect(inside.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(inside);
     expect(inside.getAttribute("aria-expanded")).toBe("true");
-    expect(playmaking.getAttribute("aria-expanded")).toBe("false");
+    // Boxes open independently: Playmaking stays open.
+    expect(playmaking.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByText("Finishing")).toBeTruthy();
-    expect(screen.queryByText("Ball Handling")).toBeNull();
 
     fireEvent.click(inside);
     expect(inside.getAttribute("aria-expanded")).toBe("false");
@@ -451,6 +469,9 @@ describe("PlayerDrawer modal", () => {
         apg: 1.2,
         spg: 0.5,
         bpg: 0.8,
+        fgPct: null,
+        threePct: null,
+        ftPct: null,
       },
       ratings: {
         attributes: {
@@ -496,7 +517,9 @@ describe("PlayerDrawer modal", () => {
     expect(screen.getByText("Metro Foxes")).toBeTruthy();
     expect(screen.getByText("11.1")).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "Attributes" }));
-    expect(screen.getByText("Rebounding breakdown")).toBeTruthy();
+    expect(
+      screen.getByRole("list", { name: "Rebounding attributes" }),
+    ).toBeTruthy();
     if (body instanceof HTMLElement) {
       expect(body.scrollTop).toBe(0);
     }

@@ -2,7 +2,7 @@ import type { FantasyDraftView } from "@/state/selectors";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 const LEVEL_STYLE = {
-  HIGH: "text-red-300",
+  HIGH: "text-danger-ink",
   MEDIUM: "text-warning",
   LOW: "text-muted",
 } as const;
