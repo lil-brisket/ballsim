@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { isValidPortraitAssignment } from "@/domain/entities/player-portrait";
 import {
+  findMissingPortraitLibraryFiles,
+  portraitLibraryEntryFiles,
   validatePortraitManifest,
   type PortraitLibraryEntry,
 } from "@/domain/portrait-library";
@@ -115,5 +117,24 @@ describe("isValidPortraitAssignment libraryId", () => {
     expect(isValidPortraitAssignment({ ...withTraits, libraryId: 4 })).toBe(
       false,
     );
+  });
+});
+
+describe("findMissingPortraitLibraryFiles", () => {
+  it("lists every size and the mask an entry still needs", () => {
+    const manifest = {
+      version: 1 as const,
+      entries: [entry("p0001"), entry("p0002", 1)],
+    };
+    const present = new Set(portraitLibraryEntryFiles({ id: "p0001" }));
+    expect(
+      findMissingPortraitLibraryFiles(manifest, (p) => present.has(p)),
+    ).toEqual(portraitLibraryEntryFiles({ id: "p0002" }));
+    expect(portraitLibraryEntryFiles({ id: "p0001" })).toEqual([
+      "portraits/library/128/p0001.webp",
+      "portraits/library/256/p0001.webp",
+      "portraits/library/512/p0001.webp",
+      "portraits/library/mask/p0001.webp",
+    ]);
   });
 });

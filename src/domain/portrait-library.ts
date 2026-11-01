@@ -134,3 +134,45 @@ function withDefaultOptionalTraits(
 ): PortraitTraits {
   return { ears: 0, accessory: 0, ...traits };
 }
+
+/** Public URL root (and folder under public/) holding the library images. */
+export const PORTRAIT_LIBRARY_PUBLIC_DIR = "portraits/library";
+
+/** Square WebP widths shipped per entry; 512 is the master. */
+export const PORTRAIT_LIBRARY_IMAGE_SIZES = [128, 256, 512] as const;
+export type PortraitLibraryImageSize =
+  (typeof PORTRAIT_LIBRARY_IMAGE_SIZES)[number];
+
+/** Alpha-only jersey mask, shipped once at this width. */
+export const PORTRAIT_LIBRARY_MASK_SIZE = 256;
+
+export function portraitLibraryImagePath(
+  id: string,
+  size: PortraitLibraryImageSize,
+): string {
+  return `${PORTRAIT_LIBRARY_PUBLIC_DIR}/${size}/${id}.webp`;
+}
+
+export function portraitLibraryMaskPath(id: string): string {
+  return `${PORTRAIT_LIBRARY_PUBLIC_DIR}/mask/${id}.webp`;
+}
+
+/** Every file an entry needs, relative to public/. */
+export function portraitLibraryEntryFiles(entry: { id: string }): string[] {
+  return [
+    ...PORTRAIT_LIBRARY_IMAGE_SIZES.map((size) =>
+      portraitLibraryImagePath(entry.id, size),
+    ),
+    portraitLibraryMaskPath(entry.id),
+  ];
+}
+
+/** Files the manifest promises that `exists` cannot find (relative to public/). */
+export function findMissingPortraitLibraryFiles(
+  manifest: PortraitLibraryManifest,
+  exists: (publicRelativePath: string) => boolean,
+): string[] {
+  return manifest.entries
+    .flatMap((entry) => portraitLibraryEntryFiles(entry))
+    .filter((path) => !exists(path));
+}
