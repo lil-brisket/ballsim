@@ -198,6 +198,33 @@ describe("PlayerPortrait", () => {
       ).toBe("team");
     });
 
+    it("keeps the same image and changes only the jersey colour when the team changes", () => {
+      const home = { primaryColor: "#0B1F3A", secondaryColor: "#C4CED4" };
+      const away = { primaryColor: "#C8102E", secondaryColor: "#FDB927" };
+      const { container, rerender } = render(
+        portrait({ portrait: withLibrary(), uniform: home }),
+      );
+      const img = () => container.querySelector("img")!.outerHTML;
+      const mask = () =>
+        jerseyLayer(container)!
+          .getAttribute("style")!
+          .match(/url\([^)]*\)/)![0];
+      const before = {
+        img: img(),
+        mask: mask(),
+        jersey: jerseyLayer(container)!.style.backgroundColor,
+      };
+      rerender(portrait({ portrait: withLibrary(), uniform: away }));
+      expect(img()).toBe(before.img);
+      expect(mask()).toBe(before.mask);
+      expect(jerseyLayer(container)!.style.backgroundColor).not.toBe(
+        before.jersey,
+      );
+      expect(jerseyLayer(container)!.style.backgroundColor).toBe(
+        "rgb(200, 16, 46)",
+      );
+    });
+
     it("falls back to the procedural face when there is no library id", () => {
       const { container, unmount } = render(
         portrait({ portrait: assignment() }),

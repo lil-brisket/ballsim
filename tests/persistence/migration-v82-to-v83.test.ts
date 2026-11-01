@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { isValidPortraitAssignment } from "@/domain/entities/player-portrait";
-import type { PortraitLibraryEntry } from "@/domain/portrait-library";
 import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createSeededRng } from "@/domain/rng";
 import {
@@ -11,11 +10,9 @@ import { migrateV82ToV83 } from "@/persistence/mappers/game-state-migrations/v66
 import { validateGameState } from "@/persistence/validate-game-state";
 import { createInitialGameState } from "@/state/create-initial-state";
 import { GAME_STATE_SCHEMA_VERSION, type GameState } from "@/state/game-state";
-import {
-  derivePortraitTraits,
-  ensurePlayerPortraits,
-} from "@/systems/portraits/assign-player-portraits";
+import { ensurePlayerPortraits } from "@/systems/portraits/assign-player-portraits";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { makeTestLibrary } from "../factories/portrait-library";
 
 /** A v82 save: portrait assignments exist but none has a libraryId. */
 function v82State(): GameState {
@@ -32,24 +29,12 @@ function v82State(): GameState {
   return { ...withFaces, meta: { ...withFaces.meta, schemaVersion: 82 } };
 }
 
-function testLibrary(count: number): PortraitLibraryEntry[] {
-  return Array.from({ length: count }, (_, index) => {
-    const {
-      ears: _ears,
-      accessory: _accessory,
-      ...traits
-    } = derivePortraitTraits("library", `entry_${index}`, 0);
-    void _ears;
-    void _accessory;
-    const id = `p${String(index + 1).padStart(4, "0")}`;
-    return { id, file: `${id}.webp`, traits };
-  });
-}
-
 describe("migration v82 -> v83 (portrait library ids)", () => {
   it("links every assignment to a library image and keeps the faces", () => {
     const state = v82State();
-    const library = testLibrary(Object.keys(state.world.players).length * 2);
+    const library = makeTestLibrary(
+      Object.keys(state.world.players).length * 2,
+    );
     const ids = new Set(library.map((entry) => entry.id));
     const migrated = migrateV82ToV83(state, library);
 
@@ -66,7 +51,7 @@ describe("migration v82 -> v83 (portrait library ids)", () => {
 
   it("is deterministic across repeated loads of an un-resaved save", () => {
     const state = v82State();
-    const library = testLibrary(Object.keys(state.world.players).length);
+    const library = makeTestLibrary(Object.keys(state.world.players).length);
     expect(migrateV82ToV83(state, library).world.playerPortraits).toEqual(
       migrateV82ToV83(state, library).world.playerPortraits,
     );

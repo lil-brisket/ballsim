@@ -31,6 +31,8 @@ export const PORTRAIT_MAX_SALT_PROBES = 32;
  */
 export const PORTRAIT_LIBRARY_FALLBACK_POOL = 8;
 
+const NO_IMAGES: ReadonlySet<string> = new Set();
+
 function xorshift32(value: number): number {
   let x = value === 0 ? 0x9e3779b9 : value;
   x ^= x << 13;
@@ -105,24 +107,33 @@ function activePortraitIds(state: GameState): Set<string> {
 type LibraryPick = { id: string; shared: boolean };
 
 /**
- * Library image for fixed traits: the nearest entry nobody active uses, else
- * the least-used of the nearest few (shared). Null only for an empty library.
+ * Library image for fixed traits. Images used by teammates (`forbidden`) are
+ * never chosen unless the library has nothing else. Prefers the nearest image
+ * nobody active uses; otherwise shares the least-used of the nearest few
+ * (flagged `shared`). Null only for an empty library.
  */
 function pickLibraryEntry(
   traits: PortraitTraits,
   library: readonly PortraitLibraryEntry[],
   usage: ReadonlyMap<string, number>,
+  forbidden: ReadonlySet<string>,
 ): LibraryPick | null {
   const unused = nearestPortraitEntry(traits, library, {
-    exclude: (id) => (usage.get(id) ?? 0) > 0,
+    exclude: (id) => (usage.get(id) ?? 0) > 0 || forbidden.has(id),
   });
   if (unused !== null) {
     return { id: unused.entry.id, shared: false };
   }
-  const pool = rankPortraitLibrary(traits, library).slice(
-    0,
-    PORTRAIT_LIBRARY_FALLBACK_POOL,
-  );
+  let pool = rankPortraitLibrary(traits, library, {
+    exclude: (id) => forbidden.has(id),
+  }).slice(0, PORTRAIT_LIBRARY_FALLBACK_POOL);
+  if (pool.length === 0) {
+    // Every image is on this team already (tiny library): unavoidable.
+    pool = rankPortraitLibrary(traits, library).slice(
+      0,
+      PORTRAIT_LIBRARY_FALLBACK_POOL,
+    );
+  }
   let best = pool[0];
   if (best === undefined) return null;
   for (const candidate of pool) {
@@ -133,6 +144,53 @@ function pickLibraryEntry(
     }
   }
   return { id: best.entry.id, shared: true };
+}
+
+type TeamKey = string;
+
+/** Active player id → franchise, for players that have one (prospects don't). */
+function teamOfPlayer(state: GameState, id: string): TeamKey | null {
+  return state.world.players[id]?.teamId ?? null;
+}
+
+/**
+ * Players who must give up their image because a teammate holds the same one.
+ * The keeper is the player whose image is not flagged shared (then lowest id),
+ * so a newcomer that was handed a reused image is the one that changes.
+ */
+function findSameTeamImageConflicts(
+  state: GameState,
+  existing: Readonly<Record<string, PlayerPortraitAssignment>>,
+  active: ReadonlySet<string>,
+  libraryIds: ReadonlySet<string>,
+): Set<string> {
+  const groups = new Map<string, string[]>();
+  for (const id of active) {
+    const team = teamOfPlayer(state, id);
+    const entry = existing[id];
+    if (
+      team === null ||
+      !isValidPortraitAssignment(entry) ||
+      entry.libraryId === undefined ||
+      !libraryIds.has(entry.libraryId)
+    ) {
+      continue;
+    }
+    const key = `${team}|${entry.libraryId}`;
+    groups.set(key, [...(groups.get(key) ?? []), id]);
+  }
+  const losers = new Set<string>();
+  for (const members of groups.values()) {
+    if (members.length < 2) continue;
+    members.sort((a, b) => {
+      const flagA = existing[a]!.duplicate === true ? 1 : 0;
+      const flagB = existing[b]!.duplicate === true ? 1 : 0;
+      if (flagA !== flagB) return flagA - flagB;
+      return a < b ? -1 : a > b ? 1 : 0;
+    });
+    for (const id of members.slice(1)) losers.add(id);
+  }
+  return losers;
 }
 
 /**
@@ -157,30 +215,51 @@ export function ensurePlayerPortraits(
   const needsLibraryImage = (entry: PlayerPortraitAssignment): boolean =>
     library.length > 0 &&
     (entry.libraryId === undefined || !libraryIds.has(entry.libraryId));
+  const active = activePortraitIds(state);
+  const teammateConflicts =
+    library.length > 0
+      ? findSameTeamImageConflicts(state, existing, active, libraryIds)
+      : new Set<string>();
   const missing = candidates.filter((id) => {
     const entry = existing[id];
-    return !isValidPortraitAssignment(entry) || needsLibraryImage(entry);
+    return (
+      !isValidPortraitAssignment(entry) ||
+      needsLibraryImage(entry) ||
+      teammateConflicts.has(id)
+    );
   });
   if (missing.length === 0 && state.world.playerPortraits !== undefined) {
     return { state, assigned: 0, resolved: 0, duplicates: 0 };
   }
 
   const cardinality = options.cardinality ?? PORTRAIT_TRAIT_CARDINALITY;
-  const active = activePortraitIds(state);
   const occupied = new Set<string>();
   const usage = new Map<string, number>();
-  const claim = (entry: PlayerPortraitAssignment): void => {
+  const teamImages = new Map<TeamKey, Set<string>>();
+  const claim = (id: string, entry: PlayerPortraitAssignment): void => {
     occupied.add(portraitTraitSignature(entry.traits));
+    // Losers of a same-team clash are about to change image; don't count it.
+    if (teammateConflicts.has(id)) return;
     if (entry.libraryId !== undefined && libraryIds.has(entry.libraryId)) {
       usage.set(entry.libraryId, (usage.get(entry.libraryId) ?? 0) + 1);
+      const team = teamOfPlayer(state, id);
+      if (team !== null) {
+        const images = teamImages.get(team) ?? new Set<string>();
+        images.add(entry.libraryId);
+        teamImages.set(team, images);
+      }
     }
   };
   for (const id of active) {
     const entry = existing[id];
     if (isValidPortraitAssignment(entry)) {
-      claim(entry);
+      claim(id, entry);
     }
   }
+  const forbiddenFor = (id: string): ReadonlySet<string> => {
+    const team = teamOfPlayer(state, id);
+    return (team !== null ? teamImages.get(team) : undefined) ?? NO_IMAGES;
+  };
 
   const next: Record<string, PlayerPortraitAssignment> = { ...existing };
   let assigned = 0;
@@ -192,9 +271,15 @@ export function ensurePlayerPortraits(
 
     if (isValidPortraitAssignment(current)) {
       // Same face, new image: traits and salt never change once assigned.
-      const { libraryId: _stale, ...face } = current;
+      const { libraryId: _stale, duplicate: _wasShared, ...face } = current;
       void _stale;
-      const pick = pickLibraryEntry(current.traits, library, usage);
+      void _wasShared;
+      const pick = pickLibraryEntry(
+        current.traits,
+        library,
+        usage,
+        forbiddenFor(playerId),
+      );
       assignment = {
         ...face,
         ...(pick === null ? {} : { libraryId: pick.id }),
@@ -213,9 +298,15 @@ export function ensurePlayerPortraits(
           cardinality,
         );
         if (occupied.has(portraitTraitSignature(traits))) continue;
-        const nearest = nearestPortraitEntry(traits, library);
-        if (nearest !== null && (usage.get(nearest.entry.id) ?? 0) > 0) {
-          continue;
+        const forbidden = forbiddenFor(playerId);
+        const nearest = nearestPortraitEntry(traits, library, {
+          exclude: (id) => forbidden.has(id),
+        });
+        if (library.length > 0) {
+          // No image left for this team, or the nearest one is taken: re-probe.
+          if (nearest === null || (usage.get(nearest.entry.id) ?? 0) > 0) {
+            continue;
+          }
         }
         fresh = {
           version: PORTRAIT_GENERATOR_VERSION,
@@ -233,7 +324,12 @@ export function ensurePlayerPortraits(
           0,
           cardinality,
         );
-        const pick = pickLibraryEntry(traits, library, usage);
+        const pick = pickLibraryEntry(
+          traits,
+          library,
+          usage,
+          forbiddenFor(playerId),
+        );
         fresh = {
           version: PORTRAIT_GENERATOR_VERSION,
           traits,
@@ -246,7 +342,8 @@ export function ensurePlayerPortraits(
     }
 
     if (active.has(playerId)) {
-      claim(assignment);
+      teammateConflicts.delete(playerId);
+      claim(playerId, assignment);
     }
     next[playerId] = assignment;
   }
@@ -295,5 +392,93 @@ export function getPortraitCapacityReport(
     activeMissing,
     duplicates,
     utilization: activeAssigned / capacity,
+  };
+}
+
+export type PortraitUsageReport = {
+  libraryEntries: number;
+  /** Active players and open-draft prospects. */
+  activeSubjects: number;
+  /** Active subjects without a library image. */
+  unlinked: number;
+  imagesInUse: number;
+  /** Images worn by more than one active subject. */
+  sharedImages: number;
+  /** Active subjects wearing a shared image. */
+  sharedSubjects: number;
+  /** Uses of the busiest image. */
+  maxUses: number;
+  /** uses → number of images used that many times. */
+  histogram: Record<number, number>;
+  mostUsed: Array<{ id: string; uses: number }>;
+  /** Teammates wearing the same image (the assignment rules never allow this). */
+  sameTeamConflicts: Array<{
+    teamId: string;
+    libraryId: string;
+    playerIds: string[];
+  }>;
+};
+
+/** How often each library image is worn in this save, and any same-team clashes. */
+export function getPortraitUsageReport(
+  state: GameState,
+  library: readonly PortraitLibraryEntry[] = PORTRAIT_LIBRARY,
+): PortraitUsageReport {
+  const portraits = state.world.playerPortraits ?? {};
+  const libraryIds = new Set(library.map((entry) => entry.id));
+  const usage = new Map<string, string[]>();
+  const teamGroups = new Map<string, string[]>();
+  let unlinked = 0;
+  const active = activePortraitIds(state);
+  for (const id of [...active].sort()) {
+    const entry = portraits[id];
+    if (
+      !isValidPortraitAssignment(entry) ||
+      entry.libraryId === undefined ||
+      !libraryIds.has(entry.libraryId)
+    ) {
+      unlinked += 1;
+      continue;
+    }
+    usage.set(entry.libraryId, [...(usage.get(entry.libraryId) ?? []), id]);
+    const team = teamOfPlayer(state, id);
+    if (team !== null) {
+      const key = `${team}|${entry.libraryId}`;
+      teamGroups.set(key, [...(teamGroups.get(key) ?? []), id]);
+    }
+  }
+  const histogram: Record<number, number> = {};
+  let sharedImages = 0;
+  let sharedSubjects = 0;
+  let maxUses = 0;
+  for (const users of usage.values()) {
+    histogram[users.length] = (histogram[users.length] ?? 0) + 1;
+    maxUses = Math.max(maxUses, users.length);
+    if (users.length > 1) {
+      sharedImages += 1;
+      sharedSubjects += users.length;
+    }
+  }
+  const mostUsed = [...usage.entries()]
+    .map(([id, users]) => ({ id, uses: users.length }))
+    .sort((a, b) => b.uses - a.uses || (a.id < b.id ? -1 : 1))
+    .slice(0, 5);
+  const sameTeamConflicts = [...teamGroups.entries()]
+    .filter(([, players]) => players.length > 1)
+    .map(([key, playerIds]) => {
+      const [teamId, libraryId] = key.split("|") as [string, string];
+      return { teamId, libraryId, playerIds };
+    });
+  return {
+    libraryEntries: library.length,
+    activeSubjects: active.size,
+    unlinked,
+    imagesInUse: usage.size,
+    sharedImages,
+    sharedSubjects,
+    maxUses,
+    histogram,
+    mostUsed,
+    sameTeamConflicts,
   };
 }

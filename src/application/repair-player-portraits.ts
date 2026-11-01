@@ -4,7 +4,9 @@ import { SaveVersionConflictError } from "@/persistence/save-version-conflict";
 import {
   ensurePlayerPortraits,
   getPortraitCapacityReport,
+  getPortraitUsageReport,
   type PortraitCapacityReport,
+  type PortraitUsageReport,
 } from "@/systems/portraits/assign-player-portraits";
 
 export type PlayerPortraitRepairEntry = {
@@ -14,6 +16,8 @@ export type PlayerPortraitRepairEntry = {
   /** Existing faces that gained (or re-resolved) a library image. */
   resolved: number;
   capacity: PortraitCapacityReport | null;
+  /** Per-image usage in this save (null on failure). */
+  usage: PortraitUsageReport | null;
   error?: string;
 };
 
@@ -42,6 +46,7 @@ export async function repairPlayerPortraits(
         library: options.library,
       });
       const capacity = getPortraitCapacityReport(ensured.state);
+      const usage = getPortraitUsageReport(ensured.state, options.library);
       // Persist when a pre-v65 row still needs its migration written back.
       const needsWrite =
         ensured.state !== loaded.state || summary.schemaVersion < 65;
@@ -52,6 +57,7 @@ export async function repairPlayerPortraits(
           assigned: 0,
           resolved: 0,
           capacity,
+          usage,
         });
         continue;
       }
@@ -68,6 +74,7 @@ export async function repairPlayerPortraits(
         assigned: ensured.assigned,
         resolved: ensured.resolved,
         capacity,
+        usage,
       });
     } catch (error) {
       results.push({
@@ -77,6 +84,7 @@ export async function repairPlayerPortraits(
         assigned: 0,
         resolved: 0,
         capacity: null,
+        usage: null,
         error: error instanceof Error ? error.message : String(error),
       });
     }

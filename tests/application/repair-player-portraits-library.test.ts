@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { repairPlayerPortraits } from "@/application/repair-player-portraits";
-import type { PortraitLibraryEntry } from "@/domain/portrait-library";
 import { createSeededRng } from "@/domain/rng";
 import { createMemorySaveGameStore } from "@/persistence/memory-save-game-store";
 import {
@@ -8,21 +7,8 @@ import {
   ensurePlayerPortraits,
 } from "@/systems/portraits/assign-player-portraits";
 import { bootstrapWorld } from "@/systems/world-pipeline";
+import { makeTestLibrary } from "../factories/portrait-library";
 import { createTestGameState } from "../factories/game-state";
-
-function library(count: number): PortraitLibraryEntry[] {
-  return Array.from({ length: count }, (_, index) => {
-    const {
-      ears: _ears,
-      accessory: _accessory,
-      ...traits
-    } = derivePortraitTraits("library", `entry_${index}`, 0);
-    void _ears;
-    void _accessory;
-    const id = `p${String(index + 1).padStart(4, "0")}`;
-    return { id, file: `${id}.webp`, traits };
-  });
-}
 
 describe("repairPlayerPortraits with a library", () => {
   it("links library images, repairs removed ones, and is re-runnable", async () => {
@@ -42,7 +28,7 @@ describe("repairPlayerPortraits with a library", () => {
       state: withFaces,
     });
 
-    const full = library(players * 2);
+    const full = makeTestLibrary(players * 2);
     const first = await repairPlayerPortraits(store, { library: full });
     expect(first[0]).toMatchObject({ status: "repaired", assigned: 0 });
     expect(first[0]!.resolved).toBe(players);

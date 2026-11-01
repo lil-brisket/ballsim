@@ -10,6 +10,7 @@ import { DEFAULT_PARTICIPATION_STATE } from "@/domain/participation";
 import type { GameState } from "@/state/game-state";
 import { reconcileJerseyNumbers } from "@/systems/jersey-numbers";
 import { ensurePlayerPortraits } from "@/systems/portraits/assign-player-portraits";
+import { isValidPortraitAssignment } from "@/domain/entities/player-portrait";
 import type { PortraitLibraryEntry } from "@/domain/portrait-library";
 import type { TeamPlayStyle } from "@/persistence/mappers/game-state-migrations/legacy-team-play-style";
 
@@ -550,7 +551,14 @@ export function migrateV82ToV83(
   state: GameState,
   library?: readonly PortraitLibraryEntry[],
 ): GameState {
-  const migrated = ensurePlayerPortraits(state, { library }).state;
+  // Only existing faces gain an image; a migration never invents new faces.
+  const faces = Object.entries(state.world.playerPortraits ?? {})
+    .filter(([, entry]) => isValidPortraitAssignment(entry))
+    .map(([id]) => id);
+  const migrated = ensurePlayerPortraits(state, {
+    library,
+    playerIds: faces,
+  }).state;
   return {
     ...migrated,
     meta: {

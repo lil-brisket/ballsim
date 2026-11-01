@@ -22,9 +22,12 @@ async function main(): Promise<void> {
     const capacity = entry.capacity
       ? ` active=${entry.capacity.activeAssigned} missing=${entry.capacity.activeMissing} duplicates=${entry.capacity.duplicates} utilization=${entry.capacity.utilization.toExponential(2)}`
       : "";
+    const usage = entry.usage
+      ? ` images=${entry.usage.imagesInUse}/${entry.usage.libraryEntries} shared=${entry.usage.sharedImages} maxUses=${entry.usage.maxUses} unlinked=${entry.usage.unlinked} sameTeamConflicts=${entry.usage.sameTeamConflicts.length}`
+      : "";
     const error = entry.error ? ` error=${entry.error}` : "";
     process.stdout.write(
-      `${dryRun ? "[dry-run] " : ""}${entry.saveId} ${entry.status} assigned=${entry.assigned} resolved=${entry.resolved}${capacity}${error}\n`,
+      `${dryRun ? "[dry-run] " : ""}${entry.saveId} ${entry.status} assigned=${entry.assigned} resolved=${entry.resolved}${capacity}${usage}${error}\n`,
     );
   }
   if (results.some((entry) => entry.status === "failed")) {
