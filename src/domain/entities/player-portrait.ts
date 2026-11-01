@@ -1,7 +1,9 @@
 /**
- * Persisted procedural portrait identity for one player in one save.
+ * Persisted portrait identity for one player in one save.
  * Traits are indices into presentation layers; they never change once
- * assigned (not tied to age, ratings, team, or contract).
+ * assigned (not tied to age, ratings, team, or contract). `libraryId` links
+ * the nearest shared-library image and is only re-resolved when it goes
+ * missing or its manifest entry is removed.
  */
 
 export const PORTRAIT_GENERATOR_VERSION = 1;
@@ -46,7 +48,12 @@ export type PlayerPortraitAssignment = {
   traits: PortraitTraits;
   /** Collision-avoidance probe that produced these traits. */
   salt: number;
-  /** Set when the trait space was exhausted and a duplicate was accepted. */
+  /**
+   * Shared-library image chosen for these traits (see portrait-library.ts).
+   * Absent until the library has entries; the procedural SVG renders instead.
+   */
+  libraryId?: string;
+  /** Set when the trait space or library was exhausted and a duplicate was accepted. */
   duplicate?: true;
 };
 
@@ -78,6 +85,12 @@ export function isValidPortraitAssignment(
     return false;
   }
   if (record.duplicate !== undefined && record.duplicate !== true) {
+    return false;
+  }
+  if (
+    record.libraryId !== undefined &&
+    (typeof record.libraryId !== "string" || record.libraryId.length === 0)
+  ) {
     return false;
   }
   const traits = record.traits;
