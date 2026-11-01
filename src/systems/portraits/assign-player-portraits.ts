@@ -9,7 +9,14 @@ import {
   type PortraitTraitCardinality,
   type PortraitTraits,
 } from "@/domain/entities/player-portrait";
+import type { PortraitLibraryEntry } from "@/domain/portrait-library";
+import { portraitHash } from "@/presentation/portrait-hash";
 import type { GameState } from "@/state/game-state";
+import {
+  nearestPortraitEntry,
+  rankPortraitLibrary,
+} from "@/systems/portraits/nearest-portrait";
+import { PORTRAIT_LIBRARY } from "@/systems/portraits/portrait-library";
 
 /**
  * Probes tried per player before accepting a duplicate face.
@@ -18,18 +25,11 @@ import type { GameState } from "@/state/game-state";
  */
 export const PORTRAIT_MAX_SALT_PROBES = 32;
 
-const FNV_OFFSET = 0x811c9dc5;
-const FNV_PRIME = 0x01000193;
-
-/** FNV-1a. Presentation identity only — never domain/simulation RNG. */
-function fnv1a(input: string): number {
-  let hash = FNV_OFFSET;
-  for (let index = 0; index < input.length; index += 1) {
-    hash ^= input.charCodeAt(index);
-    hash = Math.imul(hash, FNV_PRIME);
-  }
-  return hash >>> 0;
-}
+/**
+ * When every library entry near a face is already in use, the least-used of
+ * this many nearest entries is shared (and the assignment flagged duplicate).
+ */
+export const PORTRAIT_LIBRARY_FALLBACK_POOL = 8;
 
 function xorshift32(value: number): number {
   let x = value === 0 ? 0x9e3779b9 : value;
@@ -46,7 +46,8 @@ export function derivePortraitTraits(
   salt: number,
   cardinality: PortraitTraitCardinality = PORTRAIT_TRAIT_CARDINALITY,
 ): PortraitTraits {
-  let x = fnv1a(`${saveId}:${playerId}:${salt}`);
+  // FNV-1a presentation hash. Never domain/simulation RNG.
+  let x = portraitHash(`${saveId}:${playerId}:${salt}`);
   const traits = {} as PortraitTraits;
   for (const key of PORTRAIT_TRAIT_KEYS) {
     x = xorshift32(x);
@@ -60,11 +61,17 @@ export type EnsurePlayerPortraitsOptions = {
   playerIds?: readonly string[];
   /** Test hook for a smaller trait space (exhaustion). */
   cardinality?: PortraitTraitCardinality;
+  /** Image library to resolve against; defaults to the shipped manifest. */
+  library?: readonly PortraitLibraryEntry[];
 };
 
 export type EnsurePlayerPortraitsResult = {
   state: GameState;
+  /** Players / prospects that had no valid assignment and got one. */
   assigned: number;
+  /** Existing assignments that gained (or re-resolved) a library image. */
+  resolved: number;
+  /** Assignments, new or resolved, that share a face or image. */
   duplicates: number;
 };
 
@@ -95,67 +102,152 @@ function activePortraitIds(state: GameState): Set<string> {
   return active;
 }
 
+type LibraryPick = { id: string; shared: boolean };
+
 /**
- * Assigns a persisted portrait to every player / prospect missing a valid one.
- * Idempotent: valid assignments are never overwritten, and when nothing is
- * missing the input state reference is returned unchanged.
+ * Library image for fixed traits: the nearest entry nobody active uses, else
+ * the least-used of the nearest few (shared). Null only for an empty library.
+ */
+function pickLibraryEntry(
+  traits: PortraitTraits,
+  library: readonly PortraitLibraryEntry[],
+  usage: ReadonlyMap<string, number>,
+): LibraryPick | null {
+  const unused = nearestPortraitEntry(traits, library, {
+    exclude: (id) => (usage.get(id) ?? 0) > 0,
+  });
+  if (unused !== null) {
+    return { id: unused.entry.id, shared: false };
+  }
+  const pool = rankPortraitLibrary(traits, library).slice(
+    0,
+    PORTRAIT_LIBRARY_FALLBACK_POOL,
+  );
+  let best = pool[0];
+  if (best === undefined) return null;
+  for (const candidate of pool) {
+    if (
+      (usage.get(candidate.entry.id) ?? 0) < (usage.get(best.entry.id) ?? 0)
+    ) {
+      best = candidate;
+    }
+  }
+  return { id: best.entry.id, shared: true };
+}
+
+/**
+ * Assigns a persisted portrait to every player / prospect missing a valid one,
+ * and a library image to every assignment that lacks one (or whose image left
+ * the manifest). Idempotent: valid assignments are never overwritten, an
+ * existing face keeps its traits, and when nothing is missing the input state
+ * reference is returned unchanged. Pure; no RNG, no I/O.
  */
 export function ensurePlayerPortraits(
   state: GameState,
   options: EnsurePlayerPortraitsOptions = {},
 ): EnsurePlayerPortraitsResult {
   const existing = state.world.playerPortraits ?? {};
+  const library = options.library ?? PORTRAIT_LIBRARY;
+  const libraryIds = new Set(library.map((entry) => entry.id));
   const candidates =
     options.playerIds !== undefined
       ? [...options.playerIds].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
       : portraitCandidateIds(state);
-  const missing = candidates.filter(
-    (id) => !isValidPortraitAssignment(existing[id]),
-  );
+
+  const needsLibraryImage = (entry: PlayerPortraitAssignment): boolean =>
+    library.length > 0 &&
+    (entry.libraryId === undefined || !libraryIds.has(entry.libraryId));
+  const missing = candidates.filter((id) => {
+    const entry = existing[id];
+    return !isValidPortraitAssignment(entry) || needsLibraryImage(entry);
+  });
   if (missing.length === 0 && state.world.playerPortraits !== undefined) {
-    return { state, assigned: 0, duplicates: 0 };
+    return { state, assigned: 0, resolved: 0, duplicates: 0 };
   }
 
   const cardinality = options.cardinality ?? PORTRAIT_TRAIT_CARDINALITY;
+  const active = activePortraitIds(state);
   const occupied = new Set<string>();
-  for (const id of activePortraitIds(state)) {
+  const usage = new Map<string, number>();
+  const claim = (entry: PlayerPortraitAssignment): void => {
+    occupied.add(portraitTraitSignature(entry.traits));
+    if (entry.libraryId !== undefined && libraryIds.has(entry.libraryId)) {
+      usage.set(entry.libraryId, (usage.get(entry.libraryId) ?? 0) + 1);
+    }
+  };
+  for (const id of active) {
     const entry = existing[id];
     if (isValidPortraitAssignment(entry)) {
-      occupied.add(portraitTraitSignature(entry.traits));
+      claim(entry);
     }
   }
 
   const next: Record<string, PlayerPortraitAssignment> = { ...existing };
+  let assigned = 0;
+  let resolved = 0;
   let duplicates = 0;
   for (const playerId of missing) {
-    let assignment: PlayerPortraitAssignment | null = null;
-    for (let salt = 0; salt < PORTRAIT_MAX_SALT_PROBES; salt += 1) {
-      const traits = derivePortraitTraits(
-        state.meta.saveId,
-        playerId,
-        salt,
-        cardinality,
-      );
-      if (!occupied.has(portraitTraitSignature(traits))) {
-        assignment = { version: PORTRAIT_GENERATOR_VERSION, traits, salt };
+    const current = existing[playerId];
+    let assignment: PlayerPortraitAssignment;
+
+    if (isValidPortraitAssignment(current)) {
+      // Same face, new image: traits and salt never change once assigned.
+      const { libraryId: _stale, ...face } = current;
+      void _stale;
+      const pick = pickLibraryEntry(current.traits, library, usage);
+      assignment = {
+        ...face,
+        ...(pick === null ? {} : { libraryId: pick.id }),
+        ...(pick?.shared === true ? { duplicate: true as const } : {}),
+      };
+      resolved += 1;
+      if (assignment.duplicate === true) duplicates += 1;
+    } else {
+      assigned += 1;
+      let fresh: PlayerPortraitAssignment | null = null;
+      for (let salt = 0; salt < PORTRAIT_MAX_SALT_PROBES; salt += 1) {
+        const traits = derivePortraitTraits(
+          state.meta.saveId,
+          playerId,
+          salt,
+          cardinality,
+        );
+        if (occupied.has(portraitTraitSignature(traits))) continue;
+        const nearest = nearestPortraitEntry(traits, library);
+        if (nearest !== null && (usage.get(nearest.entry.id) ?? 0) > 0) {
+          continue;
+        }
+        fresh = {
+          version: PORTRAIT_GENERATOR_VERSION,
+          traits,
+          salt,
+          ...(nearest === null ? {} : { libraryId: nearest.entry.id }),
+        };
         break;
       }
-    }
-    if (assignment === null) {
-      duplicates += 1;
-      assignment = {
-        version: PORTRAIT_GENERATOR_VERSION,
-        traits: derivePortraitTraits(
+      if (fresh === null) {
+        duplicates += 1;
+        const traits = derivePortraitTraits(
           state.meta.saveId,
           playerId,
           0,
           cardinality,
-        ),
-        salt: 0,
-        duplicate: true,
-      };
+        );
+        const pick = pickLibraryEntry(traits, library, usage);
+        fresh = {
+          version: PORTRAIT_GENERATOR_VERSION,
+          traits,
+          salt: 0,
+          ...(pick === null ? {} : { libraryId: pick.id }),
+          duplicate: true,
+        };
+      }
+      assignment = fresh;
     }
-    occupied.add(portraitTraitSignature(assignment.traits));
+
+    if (active.has(playerId)) {
+      claim(assignment);
+    }
     next[playerId] = assignment;
   }
 
@@ -164,7 +256,8 @@ export function ensurePlayerPortraits(
       ...state,
       world: { ...state.world, playerPortraits: next },
     },
-    assigned: missing.length,
+    assigned,
+    resolved,
     duplicates,
   };
 }
