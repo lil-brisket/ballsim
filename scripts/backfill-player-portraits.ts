@@ -1,6 +1,7 @@
 /**
  * Backfill / repair persisted player portraits in every local save.
- * Re-runnable and idempotent: only missing or invalid entries are assigned.
+ * Re-runnable and idempotent: assigns missing or invalid entries, links each
+ * face to a shared-library image, and re-resolves images that left the manifest.
  *
  * Usage:
  *   npx tsx --conditions=react-server scripts/backfill-player-portraits.ts [--dry-run]
@@ -23,7 +24,7 @@ async function main(): Promise<void> {
       : "";
     const error = entry.error ? ` error=${entry.error}` : "";
     process.stdout.write(
-      `${dryRun ? "[dry-run] " : ""}${entry.saveId} ${entry.status} assigned=${entry.assigned}${capacity}${error}\n`,
+      `${dryRun ? "[dry-run] " : ""}${entry.saveId} ${entry.status} assigned=${entry.assigned} resolved=${entry.resolved}${capacity}${error}\n`,
     );
   }
   if (results.some((entry) => entry.status === "failed")) {

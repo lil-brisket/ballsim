@@ -9,6 +9,8 @@ import { isJerseyNumber, preferredJerseyNumber } from "@/domain/jersey-number";
 import { DEFAULT_PARTICIPATION_STATE } from "@/domain/participation";
 import type { GameState } from "@/state/game-state";
 import { reconcileJerseyNumbers } from "@/systems/jersey-numbers";
+import { ensurePlayerPortraits } from "@/systems/portraits/assign-player-portraits";
+import type { PortraitLibraryEntry } from "@/domain/portrait-library";
 import type { TeamPlayStyle } from "@/persistence/mappers/game-state-migrations/legacy-team-play-style";
 
 export type GameStateV66 = Omit<GameState, "meta" | "user" | "competition"> & {
@@ -534,6 +536,26 @@ export function migrateV81ToV82(state: GameState): GameState {
     world: {
       ...state.world,
       teams,
+    },
+  };
+}
+
+/**
+ * Deterministic v82 → v83: link every portrait assignment to its nearest
+ * shared-library image (`libraryId`). Faces (traits, salt) are untouched. Pure
+ * (no RNG, no I/O); with an empty manifest nothing is linked and the
+ * procedural SVG keeps rendering until the next save write after images ship.
+ */
+export function migrateV82ToV83(
+  state: GameState,
+  library?: readonly PortraitLibraryEntry[],
+): GameState {
+  const migrated = ensurePlayerPortraits(state, { library }).state;
+  return {
+    ...migrated,
+    meta: {
+      ...migrated.meta,
+      schemaVersion: 83,
     },
   };
 }
