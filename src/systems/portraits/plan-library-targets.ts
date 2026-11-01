@@ -11,21 +11,15 @@ import { portraitHash } from "@/presentation/portrait-hash";
  * coverage is designed rather than random. Offline tooling only: pure,
  * deterministic, FNV-1a/xorshift (never the simulation RNG).
  *
- * Each planned trait runs its own deficit-round-robin sequence, so every
+ * Every trait is planned uniformly because player generation draws every trait
+ * uniformly: the library mirrors what the game produces (it never reshapes
+ * player generation to suit the library). Each planned trait runs its own deficit-round-robin sequence, so every
  * prefix of the plan is balanced and growing the library keeps earlier
  * entries unchanged (plan(100) is the first 100 of plan(800)).
  */
 
 export const DEFAULT_PORTRAIT_LIBRARY_SEED = "ballsim-portrait-library-v1";
 export const DEFAULT_PORTRAIT_LIBRARY_SIZE = 800;
-
-/**
- * Facial-hair shares: none, stubble, mustache, soul patch, full beard,
- * jawline beard, goatee. Mustaches and full beards (2, 4, 5, 6) total 14%.
- */
-export const LIBRARY_FACIAL_HAIR_SHARES = [
-  0.56, 0.2, 0.03, 0.1, 0.045, 0.04, 0.025,
-] as const;
 
 export type LibraryTarget = { id: string; traits: PortraitLibraryTraits };
 
@@ -52,7 +46,6 @@ function xorshift32(value: number): number {
 }
 
 function sharesFor(key: PlannedKey): readonly number[] {
-  if (key === "facialHair") return LIBRARY_FACIAL_HAIR_SHARES;
   const cardinality = PORTRAIT_TRAIT_CARDINALITY[key];
   return Array.from({ length: cardinality }, () => 1 / cardinality);
 }

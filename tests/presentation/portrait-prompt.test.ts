@@ -45,7 +45,9 @@ describe("buildPortraitLibraryPrompt", () => {
     expect(prompt).toContain("skin tone deep brown;");
     expect(prompt).toContain("face shape a square shape with a strong jaw;");
     expect(prompt).toContain("hair a full rounded afro, soft black;");
-    expect(prompt).toContain("facial hair a trimmed jawline beard.");
+    expect(prompt).toContain(
+      "facial hair a trimmed chin-strap beard tracing the jawline with no mustache.",
+    );
     expect(prompt).toContain(PORTRAIT_CHROMA_KEY_HEX);
     expect(prompt).not.toMatch(/\{[a-z_]+\}/);
   });

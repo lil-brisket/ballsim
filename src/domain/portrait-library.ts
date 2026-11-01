@@ -33,6 +33,10 @@ export type PortraitLibraryEntry = {
   /** `${id}.webp`, relative to each size directory (512/, 256/, 128/, mask/). */
   file: string;
   traits: PortraitLibraryTraits;
+  /** SHA-256 (hex) of the shipped 512 px file; also detects duplicate images. */
+  sha256: string;
+  /** ISO timestamp of the manual approval; unapproved art never reaches the manifest. */
+  approvedAt: string;
 };
 
 export type PortraitLibraryManifest = {
@@ -41,6 +45,7 @@ export type PortraitLibraryManifest = {
 };
 
 export const PORTRAIT_LIBRARY_ID_PATTERN = /^[a-z][a-z0-9]*$/;
+export const PORTRAIT_LIBRARY_SHA256_PATTERN = /^[0-9a-f]{64}$/;
 
 function isOptionalTrait(key: PortraitTraitKey): boolean {
   return (PORTRAIT_LIBRARY_OPTIONAL_TRAITS as readonly string[]).includes(key);
@@ -63,6 +68,7 @@ export function validatePortraitManifest(value: unknown): string[] {
 
   const ids = new Set<string>();
   const signatures = new Map<string, string>();
+  const hashes = new Map<string, string>();
   manifest.entries.forEach((raw: unknown, index: number) => {
     const where = `entries[${index}]`;
     if (raw === null || typeof raw !== "object") {
@@ -80,6 +86,28 @@ export function validatePortraitManifest(value: unknown): string[] {
     }
     if (typeof id === "string" && entry.file !== `${id}.webp`) {
       errors.push(`${where}.file must be "${id}.webp".`);
+    }
+
+    if (
+      typeof entry.sha256 !== "string" ||
+      !PORTRAIT_LIBRARY_SHA256_PATTERN.test(entry.sha256)
+    ) {
+      errors.push(
+        `${where}.sha256 must be a 64-character lowercase hex digest.`,
+      );
+    } else {
+      const clash = hashes.get(entry.sha256);
+      if (clash !== undefined) {
+        errors.push(`${where} is a byte-identical image of "${clash}".`);
+      } else if (typeof id === "string") {
+        hashes.set(entry.sha256, id);
+      }
+    }
+    if (
+      typeof entry.approvedAt !== "string" ||
+      Number.isNaN(Date.parse(entry.approvedAt))
+    ) {
+      errors.push(`${where}.approvedAt must be an ISO date-time string.`);
     }
 
     const traits = entry.traits;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PORTRAIT_TRAIT_CARDINALITY } from "@/domain/entities/player-portrait";
+import { libraryEntry } from "../../factories/portrait-library";
 import { validatePortraitManifest } from "@/domain/portrait-library";
 import {
   libraryTargetId,
@@ -28,11 +29,7 @@ describe("planLibraryTargets", () => {
     expect(plan.at(-1)!.id).toBe("p0800");
     const manifest = {
       version: 1,
-      entries: plan.map((target) => ({
-        id: target.id,
-        file: `${target.id}.webp`,
-        traits: target.traits,
-      })),
+      entries: plan.map((target) => libraryEntry(target.id, target.traits)),
     };
     expect(validatePortraitManifest(manifest)).toEqual([]);
   });
@@ -51,12 +48,13 @@ describe("planLibraryTargets", () => {
     }
   });
 
-  it("keeps every facial-hair option present and beards/mustaches at 10-15%", () => {
+  it("covers every facial-hair option as often as player generation draws it", () => {
     const facial = counts(plan, "facialHair");
-    for (const count of facial) expect(count).toBeGreaterThanOrEqual(20);
+    for (const count of facial) {
+      expect(Math.abs(count - plan.length / 7)).toBeLessThanOrEqual(2);
+    }
     const heavy = facial[2]! + facial[4]! + facial[5]! + facial[6]!;
-    expect(heavy / plan.length).toBeGreaterThanOrEqual(0.1);
-    expect(heavy / plan.length).toBeLessThanOrEqual(0.15);
+    expect(Math.abs(heavy / plan.length - 4 / 7)).toBeLessThan(0.01);
   });
 
   it("balances every prefix, not just the full plan", () => {

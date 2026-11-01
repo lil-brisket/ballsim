@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { libraryEntry } from "../factories/portrait-library";
 import { isValidPortraitAssignment } from "@/domain/entities/player-portrait";
 import {
   findMissingPortraitLibraryFiles,
@@ -8,21 +9,17 @@ import {
 } from "@/domain/portrait-library";
 
 function entry(id: string, skinTone = 0): PortraitLibraryEntry {
-  return {
-    id,
-    file: `${id}.webp`,
-    traits: {
-      skinTone,
-      faceShape: 0,
-      hairStyle: 2,
-      hairColor: 1,
-      facialHair: 0,
-      brows: 0,
-      eyes: 0,
-      nose: 0,
-      mouth: 0,
-    },
-  };
+  return libraryEntry(id, {
+    skinTone,
+    faceShape: 0,
+    hairStyle: 2,
+    hairColor: 1,
+    facialHair: 0,
+    brows: 0,
+    eyes: 0,
+    nose: 0,
+    mouth: 0,
+  });
 }
 
 const manifest = (entries: unknown[]) => ({ version: 1, entries });
@@ -85,6 +82,25 @@ describe("validatePortraitManifest", () => {
         'entries[3].traits has unknown trait "tattoo".',
       ]),
     );
+  });
+
+  it("rejects missing or malformed approval metadata", () => {
+    const noHash = { ...entry("p0001"), sha256: "nope" };
+    const noDate = { ...entry("p0002", 1), approvedAt: "yesterday-ish" };
+    const errors = validatePortraitManifest(manifest([noHash, noDate]));
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        "entries[0].sha256 must be a 64-character lowercase hex digest.",
+        "entries[1].approvedAt must be an ISO date-time string.",
+      ]),
+    );
+  });
+
+  it("rejects a byte-identical image under two ids", () => {
+    const twin = { ...entry("p0002", 1), sha256: entry("p0001").sha256 };
+    expect(validatePortraitManifest(manifest([entry("p0001"), twin]))).toEqual([
+      'entries[1] is a byte-identical image of "p0001".',
+    ]);
   });
 
   it("rejects two entries drawn for identical traits", () => {

@@ -43,6 +43,8 @@
     "portraits:prompts": "tsx scripts/generate-portrait-prompts.ts",
     "portraits:validate": "tsx scripts/validate-portrait-manifest.ts",
     "portraits:ingest": "tsx scripts/ingest-portrait-library.ts",
+    "portraits:approve": "tsx scripts/approve-portrait-library.ts",
+    "portraits:qa": "tsx scripts/qa-portrait-masks.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "postinstall": "prisma generate"

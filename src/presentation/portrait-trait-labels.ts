@@ -75,12 +75,12 @@ export const PORTRAIT_TRAIT_LABELS: Record<
   ],
   facialHair: [
     "none, clean-shaven",
-    "light stubble",
-    "a mustache",
-    "a soul patch",
-    "a full beard with a mustache",
-    "a trimmed jawline beard",
-    "a goatee with a mustache",
+    "light, even stubble across the jaw and upper lip",
+    "a mustache with a clean-shaven chin and jaw",
+    "a soul patch below the lower lip with a clean-shaven jaw",
+    "a full, thick beard connected to a mustache",
+    "a trimmed chin-strap beard tracing the jawline with no mustache",
+    "a goatee around the mouth and chin joined to a mustache",
   ],
   brows: [
     "thin and straight",

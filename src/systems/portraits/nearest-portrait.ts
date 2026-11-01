@@ -1,5 +1,4 @@
 import {
-  PORTRAIT_TRAIT_CARDINALITY,
   portraitTraitSignature,
   type PortraitTraits,
 } from "@/domain/entities/player-portrait";
@@ -15,8 +14,8 @@ import { portraitHash } from "@/presentation/portrait-hash";
 /** Cost of a total mismatch per trait. Ears and accessory are ignored. */
 export const PORTRAIT_MATCH_WEIGHTS = {
   skinTone: 6,
-  hairStyle: 5,
-  facialHair: 5,
+  hairStyle: 6,
+  facialHair: 6,
   hairColor: 4,
   faceShape: 4,
   brows: 1,
@@ -29,15 +28,20 @@ type WeightedTrait = keyof typeof PORTRAIT_MATCH_WEIGHTS;
 
 const WEIGHTED_TRAITS = Object.keys(PORTRAIT_MATCH_WEIGHTS) as WeightedTrait[];
 
-/** Shade and hair colour run light-to-dark, so near values cost less. */
-const ORDINAL_TRAITS: ReadonlySet<WeightedTrait> = new Set([
-  "skinTone",
-  "hairColor",
-]);
+/**
+ * Shade and hair colour run light-to-dark, so near values cost less. The cost
+ * reaches a full miss this many steps away (skin tone is the most visible
+ * trait, so it saturates fastest).
+ */
+const ORDINAL_SPAN: Partial<Record<WeightedTrait, number>> = {
+  skinTone: 3,
+  hairColor: 4,
+};
 
 /** Facial-hair variants that read alike: none / stubble / mustache-like / beard-like. */
 const FACIAL_HAIR_GROUP = [0, 1, 2, 2, 3, 3, 3] as const;
-const FACIAL_HAIR_WITHIN_GROUP = 0.4;
+/** Distinct styles (stubble, mustache, chin strap, goatee, full beard) stay distinct: a near-group fallback still costs most of a miss. */
+const FACIAL_HAIR_WITHIN_GROUP = 0.6;
 
 /** Distances are integers (thousandths of a weight) so ties are exact. */
 const SCALE = 1000;
@@ -53,17 +57,15 @@ function traitCost(
   const a = target[trait];
   const b = entry[trait];
   if (a === b) return 0;
-  if (ORDINAL_TRAITS.has(trait)) {
+  const span = ORDINAL_SPAN[trait];
+  if (span !== undefined) {
     if (
       trait === "hairColor" &&
       (target.hairStyle === 0 || entry.hairStyle === 0)
     ) {
       return 0; // a shaved head has no meaningful hair colour
     }
-    return Math.round(
-      (weight * SCALE * Math.abs(a - b)) /
-        (PORTRAIT_TRAIT_CARDINALITY[trait] - 1),
-    );
+    return Math.round(weight * SCALE * Math.min(1, Math.abs(a - b) / span));
   }
   if (trait === "facialHair") {
     return FACIAL_HAIR_GROUP[a] === FACIAL_HAIR_GROUP[b]

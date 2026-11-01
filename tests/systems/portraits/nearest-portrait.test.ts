@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PortraitTraits } from "@/domain/entities/player-portrait";
 import type { PortraitLibraryEntry } from "@/domain/portrait-library";
+import { libraryEntry } from "../../factories/portrait-library";
 import {
   nearestPortraitEntry,
   PORTRAIT_MATCH_WEIGHTS,
@@ -29,7 +30,7 @@ function entry(
   const { ears: _ears, accessory: _accessory, ...rest } = TARGET;
   void _ears;
   void _accessory;
-  return { id, file: `${id}.webp`, traits: { ...rest, ...overrides } };
+  return libraryEntry(id, { ...rest, ...overrides });
 }
 
 describe("portraitDistance", () => {
@@ -85,9 +86,37 @@ describe("portraitDistance", () => {
   });
 });
 
+describe("facial-hair distinctions", () => {
+  const styles = [0, 1, 2, 3, 4, 5, 6];
+  const library = styles.map((facialHair) =>
+    entry(`f${facialHair}`, { facialHair }),
+  );
+
+  it("maps every style to its own image when it exists", () => {
+    for (const facialHair of styles) {
+      expect(
+        nearestPortraitEntry({ ...TARGET, facialHair }, library)?.entry.id,
+      ).toBe(`f${facialHair}`);
+    }
+  });
+
+  it("falls back to a similar style, never to clean-shaven or stubble", () => {
+    const beardless = library.filter((e) => e.traits.facialHair !== 5);
+    expect(
+      nearestPortraitEntry({ ...TARGET, facialHair: 5 }, beardless)?.entry
+        .traits.facialHair,
+    ).toBeOneOf([4, 6]);
+    const noMustache = library.filter((e) => e.traits.facialHair !== 2);
+    expect(
+      nearestPortraitEntry({ ...TARGET, facialHair: 2 }, noMustache)?.entry
+        .traits.facialHair,
+    ).toBe(3);
+  });
+});
+
 describe("nearestPortraitEntry / rankPortraitLibrary", () => {
   const library = [
-    entry("p3", { skinTone: 9 }),
+    entry("p3", { skinTone: 7 }),
     entry("p1", { hairStyle: 8 }),
     entry("p2"),
   ];

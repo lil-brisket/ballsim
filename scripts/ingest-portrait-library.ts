@@ -1,19 +1,26 @@
 /**
- * Ingests hand-generated library portraits. Offline: reads images from disk,
- * calls no APIs, touches no saves.
+ * STAGES hand-generated library portraits for review. Offline: reads images
+ * from disk, calls no APIs, touches no saves. It never writes to public/ or to
+ * the manifest; generated art is only approved by `npm run portraits:approve`.
  *
  * Usage:
- *   npm run portraits:ingest -- [--dir portraits/_work/source] [--id p0001] [--replace] [--dry-run] [--contact-sheet]
- *     [--targets FILE] [--manifest FILE] [--public-dir DIR]   (defaults are the repo paths)
+ *   npm run portraits:ingest -- [--dir portraits/_work/source] [--id p0001 ...] [--restage] [--dry-run] [--contact-sheet]
+ *     [--targets FILE] [--manifest FILE] [--public-dir DIR] [--staged-dir DIR]
+ *   (defaults: portraits/_work/{source,targets.json,staged}, the repo manifest and public/)
  *
- * For each {id}.png|jpg|webp (square, at least 512px, on the #00FF00 key
- * background) whose id is in portraits/_work/targets.json (written by
- * `npm run portraits:prompts`): removes the key colour, writes 512/256/128 px
- * WebP plus a 256 px jersey mask under public/portraits/library/, and adds or
- * updates the manifest entry. An id already in the manifest is skipped unless
- * --replace is given (ids are persisted in saves, so a replacement changes
- * that face everywhere). --contact-sheet writes portraits/_work/contact-sheet.png
- * with each jersey mask tinted magenta so mask quality can be checked by eye.
+ * For each {id}.png|jpg|webp whose id is in portraits/_work/targets.json (from
+ * `npm run portraits:prompts`) it checks: the file decodes completely, is
+ * square, 512-4096 px, has a >=95% #00FF00 border, the planned traits are in
+ * range and their signature is not used by an approved or staged image. Then it
+ * removes the key colour and writes 512/256/128 WebP + a 256 px jersey mask to
+ * <staged-dir>/{512,256,128,mask}/{id}.webp, rejects exact (SHA-256) and near
+ * (64-bit dHash, Hamming <= 6) duplicates of approved and staged images, runs
+ * the jersey-mask QA, and merges a record into <staged-dir>/staged.json
+ * ("pending", or "rejected" with problems). Re-staging an id needs --restage;
+ * an id already in the manifest is never re-ingested (use a new id for new art).
+ * --dry-run validates only and writes nothing. --contact-sheet writes
+ * <staged-dir>/../contact-sheet.png with each mask tinted magenta.
+ * Exit code 1 if any file had problems; the good ones are still staged.
  */
 
 import {
@@ -23,60 +30,108 @@ import {
   readFileSync,
   writeFileSync,
 } from "node:fs";
-import { basename, extname, join } from "node:path";
+import { dirname, extname, join } from "node:path";
 import sharp, { type OverlayOptions } from "sharp";
 import {
   PORTRAIT_LIBRARY_IMAGE_SIZES,
   PORTRAIT_LIBRARY_MASK_SIZE,
-  PORTRAIT_LIBRARY_PUBLIC_DIR,
-  portraitLibraryImagePath,
-  portraitLibraryMaskPath,
-  validatePortraitManifest,
+  PORTRAIT_LIBRARY_OPTIONAL_TRAITS,
   type PortraitLibraryEntry,
-  type PortraitLibraryManifest,
 } from "@/domain/portrait-library";
 import {
+  PORTRAIT_TRAIT_CARDINALITY,
+  PORTRAIT_TRAIT_KEYS,
+  portraitTraitSignature,
+} from "@/domain/entities/player-portrait";
+import {
+  analyzeJerseyMask,
   computeJerseyMask,
+  DHASH_NEAR_DUPLICATE_DISTANCE,
+  dHashDistance,
+  jerseyMaskProblems,
+  KEY_BORDER_MIN_FRACTION,
+  keyBorderFraction,
   removeChromaKey,
   type RawImage,
 } from "@/presentation/portrait-library-image";
+import {
+  argValue,
+  argValues,
+  DEFAULT_MANIFEST_PATH,
+  DEFAULT_STAGED_DIR,
+  decodeRaw,
+  dHashOfFile,
+  errorMessage,
+  hasFlag,
+  libraryFiles,
+  publicLibraryRoot,
+  readJson,
+  readManifest,
+  readStaged,
+  sha256File,
+  sha256Of,
+  stagedJsonPath,
+  type StagedRecord,
+} from "./portrait-library-tools";
 
 const SOURCE_NAME = /^(p\d+)\.(png|jpe?g|webp)$/i;
 const MASTER_SIZE = 512;
-
-function argValue(flag: string): string | undefined {
-  const index = process.argv.indexOf(flag);
-  return index >= 0 ? process.argv[index + 1] : undefined;
-}
-
-function hasFlag(flag: string): boolean {
-  return process.argv.includes(flag);
-}
-
-function readJson<T>(path: string): T {
-  return JSON.parse(readFileSync(path, "utf8")) as T;
-}
+const MAX_SOURCE_SIZE = 4096;
 
 type Targets = {
   targets: Array<{ id: string; traits: PortraitLibraryEntry["traits"] }>;
 };
 
-async function toRaw(file: string): Promise<RawImage> {
-  const { data, info } = await sharp(file)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  if (info.width !== info.height) {
+function isOptionalTrait(key: string): boolean {
+  return (PORTRAIT_LIBRARY_OPTIONAL_TRAITS as readonly string[]).includes(key);
+}
+
+function traitSignature(traits: PortraitLibraryEntry["traits"]): string {
+  return portraitTraitSignature({ ears: 0, accessory: 0, ...traits });
+}
+
+/** Out-of-range or missing planned traits, one message each. */
+function traitProblems(traits: PortraitLibraryEntry["traits"]): string[] {
+  const problems: string[] = [];
+  const record = traits as Record<string, number | undefined>;
+  for (const key of PORTRAIT_TRAIT_KEYS) {
+    const value = record[key];
+    if (value === undefined) {
+      if (!isOptionalTrait(key)) problems.push(`trait ${key} is missing`);
+      continue;
+    }
+    if (
+      !Number.isInteger(value) ||
+      value < 0 ||
+      value >= PORTRAIT_TRAIT_CARDINALITY[key]
+    ) {
+      problems.push(
+        `trait ${key}=${value} is outside [0, ${PORTRAIT_TRAIT_CARDINALITY[key] - 1}]`,
+      );
+    }
+  }
+  return problems;
+}
+
+async function decodeSource(file: string): Promise<RawImage> {
+  const raw = await decodeRaw(file); // full decode: truncated/corrupt files throw here
+  if (raw.width !== raw.height) {
     throw new Error(
-      `${basename(file)} is ${info.width}x${info.height}; expected a square image.`,
+      `image is ${raw.width}x${raw.height}; expected a square image.`,
     );
   }
-  if (info.width < MASTER_SIZE) {
+  if (raw.width < MASTER_SIZE || raw.width > MAX_SOURCE_SIZE) {
     throw new Error(
-      `${basename(file)} is ${info.width}px; expected at least ${MASTER_SIZE}px.`,
+      `image is ${raw.width}px; expected ${MASTER_SIZE}-${MAX_SOURCE_SIZE}px.`,
     );
   }
-  return { data: new Uint8Array(data), width: info.width, height: info.height };
+  const border = keyBorderFraction(raw);
+  if (border < KEY_BORDER_MIN_FRACTION) {
+    throw new Error(
+      `background is not the #00FF00 key (${(border * 100).toFixed(1)}% of the border is green, need ${KEY_BORDER_MIN_FRACTION * 100}%).`,
+    );
+  }
+  return raw;
 }
 
 async function resizedRaw(image: RawImage, size: number): Promise<RawImage> {
@@ -89,51 +144,47 @@ async function resizedRaw(image: RawImage, size: number): Promise<RawImage> {
   return { data: new Uint8Array(data), width: info.width, height: info.height };
 }
 
-async function writeVariants(id: string, keyed: RawImage, publicDir: string) {
+/** Writes the three WebP sizes and the mask into `root`; returns the mask QA input. */
+async function writeVariants(id: string, keyed: RawImage, root: string) {
+  const files = libraryFiles(root, id);
   for (const size of PORTRAIT_LIBRARY_IMAGE_SIZES) {
-    const target = join(publicDir, portraitLibraryImagePath(id, size));
-    mkdirSync(join(target, ".."), { recursive: true });
+    mkdirSync(dirname(files[size]), { recursive: true });
     await sharp(Buffer.from(keyed.data), {
       raw: { width: keyed.width, height: keyed.height, channels: 4 },
     })
       .resize(size, size, { kernel: "lanczos3" })
       .webp({ quality: 90, alphaQuality: 100 })
-      .toFile(target);
+      .toFile(files[size]);
   }
 
   const small = await resizedRaw(keyed, PORTRAIT_LIBRARY_MASK_SIZE);
   const mask = computeJerseyMask(small);
-  if (mask.every((value) => value === 0)) {
-    throw new Error(`${id}: no white jersey found at the bottom of the image.`);
-  }
   const rgba = Buffer.alloc(mask.length * 4, 255);
   mask.forEach((value, index) => {
     rgba[index * 4 + 3] = value;
   });
-  const maskTarget = join(publicDir, portraitLibraryMaskPath(id));
-  mkdirSync(join(maskTarget, ".."), { recursive: true });
+  mkdirSync(dirname(files.mask), { recursive: true });
   await sharp(rgba, {
     raw: { width: small.width, height: small.height, channels: 4 },
   })
     .webp({ lossless: true })
-    .toFile(maskTarget);
+    .toFile(files.mask);
+  return analyzeJerseyMask(small, mask);
 }
 
-async function contactSheet(ids: string[], publicDir: string, out: string) {
+async function contactSheet(ids: string[], root: string, out: string) {
   const tile = 128;
   const columns = 8;
   const rows = Math.max(1, Math.ceil(ids.length / columns));
   const layers: OverlayOptions[] = [];
   for (const [index, id] of ids.entries()) {
+    const files = libraryFiles(root, id);
     const left = (index % columns) * tile;
     const top = Math.floor(index / columns) * tile;
-    layers.push({
-      input: join(publicDir, portraitLibraryImagePath(id, 128)),
-      left,
-      top,
-    });
-    const alpha = await sharp(join(publicDir, portraitLibraryMaskPath(id)))
+    layers.push({ input: files[128], left, top });
+    const alpha = await sharp(files.mask)
       .resize(tile, tile)
+      .ensureAlpha()
       .extractChannel("alpha")
       .toBuffer();
     const magenta = await sharp({
@@ -159,32 +210,45 @@ async function contactSheet(ids: string[], publicDir: string, out: string) {
 
 async function main(): Promise<void> {
   const dir = argValue("--dir") ?? join("portraits", "_work", "source");
-  const only = argValue("--id");
-  const replace = hasFlag("--replace");
+  const only = new Set(argValues("--id"));
+  const restage = hasFlag("--restage");
   const dryRun = hasFlag("--dry-run");
   const publicDir = argValue("--public-dir") ?? join(process.cwd(), "public");
-  const MANIFEST_PATH =
-    argValue("--manifest") ??
-    join("src", "data", "portrait-library.manifest.json");
-  const TARGETS_PATH =
+  const manifestPath = argValue("--manifest") ?? DEFAULT_MANIFEST_PATH;
+  const targetsPath =
     argValue("--targets") ?? join("portraits", "_work", "targets.json");
+  const stagedDir = argValue("--staged-dir") ?? DEFAULT_STAGED_DIR;
 
-  if (!existsSync(TARGETS_PATH)) {
+  if (!existsSync(targetsPath)) {
     throw new Error(
-      `${TARGETS_PATH} not found. Run \`npm run portraits:prompts\` first.`,
+      `${targetsPath} not found. Run \`npm run portraits:prompts\` first.`,
     );
   }
   const plan = new Map(
-    readJson<Targets>(TARGETS_PATH).targets.map((target) => [
-      target.id,
-      target,
-    ]),
+    readJson<Targets>(targetsPath).targets.map((target) => [target.id, target]),
   );
-  const manifest = readJson<PortraitLibraryManifest>(MANIFEST_PATH);
-  const entries = new Map(manifest.entries.map((entry) => [entry.id, entry]));
+  const manifest = readManifest(manifestPath);
+  const approved = new Map(manifest.entries.map((entry) => [entry.id, entry]));
+  const approvedSignatures = new Map(
+    manifest.entries.map((entry) => [traitSignature(entry.traits), entry.id]),
+  );
+  const approvedHashes = new Map(
+    manifest.entries.map((entry) => [entry.sha256, entry.id]),
+  );
+  const approvedRoot = publicLibraryRoot(publicDir);
+  const approvedDhashes = new Map<string, string>();
+  for (const entry of manifest.entries) {
+    const file = libraryFiles(approvedRoot, entry.id)[512];
+    if (existsSync(file)) {
+      approvedDhashes.set(entry.id, await dHashOfFile(file));
+    }
+  }
 
+  const staged = new Map(readStaged(stagedDir).map((r) => [r.id, r]));
   const errors: string[] = [];
-  const ingested: string[] = [];
+  const processed: string[] = [];
+  let rejected = 0;
+
   for (const name of readdirSync(dir).sort()) {
     const match = SOURCE_NAME.exec(name);
     if (match === null) {
@@ -193,54 +257,130 @@ async function main(): Promise<void> {
       continue;
     }
     const id = match[1]!.toLowerCase();
-    if (only !== undefined && id !== only) continue;
+    if (only.size > 0 && !only.has(id)) continue;
     const target = plan.get(id);
     if (target === undefined) {
-      errors.push(`${name}: ${id} is not in ${TARGETS_PATH}`);
+      errors.push(`${name}: ${id} is not in ${targetsPath}`);
       continue;
     }
-    if (entries.has(id) && !replace) {
+    if (approved.has(id)) {
       process.stdout.write(
-        `skip ${id} (already in the manifest; pass --replace)\n`,
+        `skip ${id} (already approved; replacing art needs a new id)\n`,
       );
       continue;
     }
+    if (staged.has(id) && !restage) {
+      process.stdout.write(`skip ${id} (already staged; pass --restage)\n`);
+      continue;
+    }
+
     try {
-      const raw = await toRaw(join(dir, name));
+      const sourcePath = join(dir, name);
+      const raw = await decodeSource(sourcePath);
+
+      const problems = traitProblems(target.traits);
+      if (problems.length > 0) throw new Error(problems[0]);
+      const signature = traitSignature(target.traits);
+      const approvedClash = approvedSignatures.get(signature);
+      if (approvedClash !== undefined) {
+        throw new Error(
+          `traits already used by approved image ${approvedClash}`,
+        );
+      }
+      for (const other of staged.values()) {
+        if (
+          other.id !== id &&
+          other.status !== "rejected" &&
+          traitSignature(other.traits) === signature
+        ) {
+          throw new Error(`traits already used by staged image ${other.id}`);
+        }
+      }
+      const sourceSha256 = sha256File(sourcePath);
+      const sourceClash = approvedHashes.get(sourceSha256);
+      if (sourceClash !== undefined) {
+        throw new Error(`identical to approved image ${sourceClash}`);
+      }
+      if (dryRun) {
+        process.stdout.write(`[dry-run] ${id} passes validation\n`);
+        continue;
+      }
+
       removeChromaKey(raw);
-      if (!dryRun) await writeVariants(id, raw, publicDir);
-      entries.set(id, { id, file: `${id}.webp`, traits: target.traits });
-      ingested.push(id);
-      process.stdout.write(`${dryRun ? "[dry-run] " : ""}ingested ${id}\n`);
+      const files = libraryFiles(stagedDir, id);
+      const qa = await writeVariants(id, raw, stagedDir);
+      const sha256 = sha256Of(readFileSync(files[512]));
+      const dhash = await dHashOfFile(files[512]);
+
+      const reasons = jerseyMaskProblems(qa);
+      for (const other of staged.values()) {
+        if (other.id === id || other.status === "rejected") continue;
+        if (other.sha256 === sha256 || other.sourceSha256 === sourceSha256) {
+          reasons.push(`byte-identical to staged image ${other.id}`);
+        } else if (
+          dHashDistance(dhash, other.dhash) <= DHASH_NEAR_DUPLICATE_DISTANCE
+        ) {
+          reasons.push(`near-duplicate of staged image ${other.id}`);
+        }
+      }
+      const shaClash = approvedHashes.get(sha256);
+      if (shaClash !== undefined) {
+        reasons.push(`byte-identical to approved image ${shaClash}`);
+      }
+      for (const [approvedId, hash] of approvedDhashes) {
+        if (dHashDistance(dhash, hash) <= DHASH_NEAR_DUPLICATE_DISTANCE) {
+          reasons.push(`near-duplicate of approved image ${approvedId}`);
+        }
+      }
+
+      const record: StagedRecord = {
+        id,
+        traits: target.traits,
+        sha256,
+        sourceSha256,
+        dhash,
+        qa,
+        status: reasons.length === 0 ? "pending" : "rejected",
+        problems: reasons,
+        stagedAt: new Date().toISOString(),
+      };
+      staged.set(id, record);
+      processed.push(id);
+      if (reasons.length === 0) {
+        process.stdout.write(`staged ${id} (pending review)\n`);
+      } else {
+        rejected += 1;
+        process.stdout.write(`staged ${id} as REJECTED\n`);
+        for (const reason of reasons) errors.push(`${name}: ${reason}`);
+      }
     } catch (error) {
-      errors.push(
-        `${name}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      errors.push(`${name}: ${errorMessage(error)}`);
     }
   }
 
-  const next: PortraitLibraryManifest = {
-    version: manifest.version,
-    entries: [...entries.values()].sort((a, b) =>
+  if (!dryRun && processed.length > 0) {
+    mkdirSync(stagedDir, { recursive: true });
+    const records = [...staged.values()].sort((a, b) =>
       a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
-    ),
-  };
-  const manifestErrors = validatePortraitManifest(next);
-  if (manifestErrors.length > 0) {
-    errors.push(...manifestErrors);
-  } else if (!dryRun && ingested.length > 0) {
-    writeFileSync(MANIFEST_PATH, `${JSON.stringify(next, null, 2)}\n`);
-  }
-  if (hasFlag("--contact-sheet") && !dryRun && ingested.length > 0) {
-    const out = join(dir, "..", "contact-sheet.png");
-    await contactSheet(ingested, publicDir, out);
-    process.stdout.write(`contact sheet -> ${out}\n`);
+    );
+    writeFileSync(
+      stagedJsonPath(stagedDir),
+      `${JSON.stringify(records, null, 2)}\n`,
+    );
+    if (hasFlag("--contact-sheet")) {
+      const out = join(stagedDir, "..", "contact-sheet.png");
+      await contactSheet(processed, stagedDir, out);
+      process.stdout.write(`contact sheet -> ${out}\n`);
+    }
   }
   process.stdout.write(
-    `${ingested.length} ingested into ${PORTRAIT_LIBRARY_PUBLIC_DIR}, ${errors.length} problem(s)\n`,
+    `${processed.length - rejected} staged pending, ${rejected} rejected, ${errors.length} problem(s)\n`,
   );
   for (const error of errors) process.stderr.write(`${error}\n`);
   if (errors.length > 0) process.exitCode = 1;
 }
 
-void main();
+void main().catch((error: unknown) => {
+  process.stderr.write(`${errorMessage(error)}\n`);
+  process.exitCode = 1;
+});
