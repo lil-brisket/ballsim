@@ -9,7 +9,7 @@ export {
   PORTRAIT_SIZE_PX,
   type PlayerPortraitProps,
   type PlayerPortraitSize,
-  type PortraitState,
+  type PortraitSource,
 } from "@/components/basketball/PlayerPortrait";
 export { PlayerProfileHero } from "@/components/basketball/PlayerProfileHero";
 export {

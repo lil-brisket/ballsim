@@ -15,10 +15,13 @@ import {
   isValidPortraitAssignment,
   type PlayerPortraitAssignment,
 } from "@/domain/entities/player-portrait";
+import {
+  PORTRAIT_LIBRARY_IMAGE_SIZES,
+  PORTRAIT_LIBRARY_PUBLIC_DIR,
+} from "@/domain/portrait-library";
 
-export type PortraitState =
-  /** Persisted procedural face, no raster overlay. */
-  "assigned" | "missing" | "pending" | "ready" | "failed" | "invalid";
+/** Which layer drew the portrait: shared library image, procedural SVG, or initials. */
+export type PortraitSource = "library" | "face" | "initials";
 
 export type PlayerPortraitSize = "xs" | "sm" | "ms" | "md" | "lg" | "xl";
 
@@ -27,12 +30,11 @@ export type PlayerPortraitProps = {
   firstName: string;
   lastName: string;
   size: PlayerPortraitSize;
-  /** Persisted procedural portrait (world.playerPortraits). Invalid/null → initials plate. */
+  /**
+   * Persisted portrait (world.playerPortraits). A valid `libraryId` renders the
+   * shared library image; otherwise the procedural face; invalid/null → initials plate.
+   */
   portrait?: PlayerPortraitAssignment | null;
-  /** Raster overlay state; defaults from `portrait` ("assigned" or "missing"). */
-  state?: PortraitState;
-  /** Only honored when state === "ready". */
-  src?: string;
   /** Team colours for the jersey; omit for the neutral default. */
   uniform?: PortraitUniform | null;
   className?: string;
@@ -164,55 +166,105 @@ function accentShape(compositionIndex: number, color: string): ReactNode {
   }
 }
 
-function resolveVisualState(
-  state: PortraitState,
-  src: string | undefined,
-): PortraitState {
-  if (state === "ready") {
-    if (src == null || src.length === 0) {
-      return "invalid";
-    }
-    return "ready";
-  }
-  return state;
+const LIBRARY_ROOT = `/${PORTRAIT_LIBRARY_PUBLIC_DIR}`;
+
+/** Neutral backdrop when no team colours are given. */
+const NEUTRAL_BACKDROP = "linear-gradient(160deg, #3f3f46 0%, #18181b 100%)";
+
+function librarySrcSet(libraryId: string): string {
+  return PORTRAIT_LIBRARY_IMAGE_SIZES.map(
+    (size) => `${LIBRARY_ROOT}/${size}/${libraryId}.webp ${size}w`,
+  ).join(", ");
 }
 
 /**
- * Player identity mark. Renders the persisted procedural face when `portrait`
- * is valid, else the deterministic initials plate. Pure props; no client hooks.
- * Always decorative (name is adjacent at every call site).
+ * Shared-library image, composited so team colours still apply: a team-colour
+ * backdrop behind the transparent portrait, and the team colour multiplied into
+ * the white jersey only (the per-image alpha mask keeps skin and hair untouched).
+ */
+function LibraryPortrait(props: {
+  libraryId: string;
+  px: number;
+  uniform: PortraitUniform | null | undefined;
+}): ReactNode {
+  const { jersey, trim } = uniformColors(props.uniform);
+  const mask = `url(${LIBRARY_ROOT}/mask/${props.libraryId}.webp)`;
+  const backdrop = props.uniform
+    ? `radial-gradient(circle at 50% 30%, color-mix(in srgb, ${trim} 60%, #09090b) 0%, #09090b 100%)`
+    : NEUTRAL_BACKDROP;
+  return (
+    <>
+      <span
+        className="absolute inset-0"
+        style={{ background: backdrop }}
+        data-portrait-library={props.libraryId}
+      />
+      <img
+        src={`${LIBRARY_ROOT}/256/${props.libraryId}.webp`}
+        srcSet={librarySrcSet(props.libraryId)}
+        sizes={`${props.px}px`}
+        alt=""
+        width={props.px}
+        height={props.px}
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <span
+        className="absolute inset-0"
+        style={{
+          backgroundColor: jersey,
+          mixBlendMode: "multiply",
+          maskImage: mask,
+          WebkitMaskImage: mask,
+          maskSize: "100% 100%",
+          WebkitMaskSize: "100% 100%",
+        }}
+      />
+    </>
+  );
+}
+
+/**
+ * Player identity mark. Renders the shared library image when `portrait` has a
+ * library id, else the persisted procedural face, else the deterministic
+ * initials plate. Pure props; no client hooks. Always decorative (name is
+ * adjacent at every call site).
  */
 export function PlayerPortrait(props: PlayerPortraitProps) {
   const face = isValidPortraitAssignment(props.portrait)
     ? props.portrait
     : null;
-  const state = resolveVisualState(
-    props.state ?? (face !== null ? "assigned" : "missing"),
-    props.src,
-  );
+  const libraryId = face?.libraryId;
+  const source: PortraitSource =
+    libraryId !== undefined ? "library" : face !== null ? "face" : "initials";
   const hash = hashPlayerIdForPortrait(props.playerId);
   const plateIndex = portraitPlateIndex(hash);
   const compositionIndex = portraitCompositionIndex(hash);
   const initials = initialsOf(props.firstName, props.lastName);
   const px = PORTRAIT_SIZE_PX[props.size];
-  const showOverlay =
-    state === "ready" && props.src != null && props.src.length > 0;
 
   return (
     <span
       className={cn(
-        "relative inline-flex shrink-0 overflow-hidden rounded-xl border border-line-strong",
+        "relative isolate inline-flex shrink-0 overflow-hidden rounded-xl border border-line-strong",
         SIZE_CLASS[props.size],
         props.className,
       )}
       style={{ width: px, height: px }}
       aria-hidden="true"
       data-portrait-size={props.size}
-      data-portrait-state={state}
+      data-portrait-source={source}
       data-portrait-player-id={props.playerId}
       data-portrait-uniform={props.uniform ? "team" : undefined}
     >
-      {face !== null ? (
+      {libraryId !== undefined ? (
+        <LibraryPortrait
+          libraryId={libraryId}
+          px={px}
+          uniform={props.uniform}
+        />
+      ) : face !== null ? (
         <PortraitFace traits={face.traits} uniform={props.uniform} />
       ) : (
         <>
@@ -231,18 +283,6 @@ export function PlayerPortrait(props: PlayerPortraitProps) {
           </span>
         </>
       )}
-      {showOverlay ? (
-        <img
-          src={props.src}
-          alt=""
-          width={px}
-          height={px}
-          className="absolute inset-0 z-20 h-full w-full object-cover"
-        />
-      ) : null}
-      {state === "pending" ? (
-        <span className="pointer-events-none absolute inset-0 z-30 rounded-xl ring-2 ring-inset ring-team-ink" />
-      ) : null}
     </span>
   );
 }

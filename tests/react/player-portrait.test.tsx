@@ -39,7 +39,7 @@ describe("PlayerPortrait", () => {
     expect(root).toBeTruthy();
     expect(root?.getAttribute("aria-hidden")).toBe("true");
     expect(root?.getAttribute("data-portrait-size")).toBe("lg");
-    expect(root?.getAttribute("data-portrait-state")).toBe("missing");
+    expect(root?.getAttribute("data-portrait-source")).toBe("initials");
     expect((root as HTMLElement).style.width).toBe(`${PORTRAIT_SIZE_PX.lg}px`);
     expect((root as HTMLElement).style.height).toBe(`${PORTRAIT_SIZE_PX.lg}px`);
     expect(root?.className).toMatch(/h-24/);
@@ -73,53 +73,6 @@ describe("PlayerPortrait", () => {
     unmount();
   });
 
-  it("ignores src unless state is ready", () => {
-    const { container, unmount } = render(
-      portrait({ state: "missing", src: "/portraits/x.webp" }),
-    );
-    expect(container.querySelector("img")).toBeNull();
-    expect(
-      container
-        .querySelector("[data-portrait-player-id]")
-        ?.getAttribute("data-portrait-state"),
-    ).toBe("missing");
-    unmount();
-  });
-
-  it("renders an overlay img only when state is ready and src is set", () => {
-    const { container, unmount } = render(
-      portrait({ state: "ready", src: "/portraits/x.webp" }),
-    );
-    const img = container.querySelector("img");
-    expect(img).toBeTruthy();
-    expect(img?.getAttribute("src")).toBe("/portraits/x.webp");
-    expect(img?.getAttribute("alt")).toBe("");
-    expect(img?.getAttribute("width")).toBe("96");
-    expect(img?.getAttribute("height")).toBe("96");
-    unmount();
-  });
-
-  it("treats ready without src as invalid and keeps the fallback box", () => {
-    const { container, unmount } = render(portrait({ state: "ready" }));
-    const root = container.querySelector("[data-portrait-player-id]");
-    expect(root?.getAttribute("data-portrait-state")).toBe("invalid");
-    expect(container.querySelector("img")).toBeNull();
-    expect((root as HTMLElement).style.width).toBe("96px");
-    unmount();
-  });
-
-  it("does not change dimensions for pending, failed, or invalid", () => {
-    for (const state of ["pending", "failed", "invalid"] as const) {
-      const { container, unmount } = render(portrait({ state, size: "sm" }));
-      const root = container.querySelector("[data-portrait-player-id]");
-      expect((root as HTMLElement).style.width).toBe("32px");
-      expect((root as HTMLElement).style.height).toBe("32px");
-      expect(root?.className).toMatch(/h-8/);
-      expect(container.querySelector("[class*='animate-spin']")).toBeNull();
-      unmount();
-    }
-  });
-
   it("uses exact pixel maps for xs md", () => {
     const xs = render(portrait({ size: "xs" }));
     const xsRoot = xs.container.querySelector("[data-portrait-size='xs']");
@@ -135,7 +88,7 @@ describe("PlayerPortrait", () => {
     const root = container.querySelector(
       "[data-portrait-player-id='player_1']",
     );
-    expect(root?.getAttribute("data-portrait-state")).toBe("assigned");
+    expect(root?.getAttribute("data-portrait-source")).toBe("face");
     expect(container.querySelector("[data-portrait-face='true']")).toBeTruthy();
     expect(root?.textContent).not.toContain("AR");
     expect(container.querySelector("img")).toBeNull();
@@ -175,33 +128,84 @@ describe("PlayerPortrait", () => {
       expect(
         container
           .querySelector("[data-portrait-player-id]")
-          ?.getAttribute("data-portrait-state"),
-      ).toBe("missing");
+          ?.getAttribute("data-portrait-source"),
+      ).toBe("initials");
       unmount();
     }
   });
 
-  it("keeps honoring a ready raster overlay above the face", () => {
-    const { container, unmount } = render(
-      portrait({
-        portrait: assignment(),
-        state: "ready",
-        src: "/portraits/x.webp",
-      }),
-    );
-    expect(container.querySelector("[data-portrait-face='true']")).toBeTruthy();
-    expect(container.querySelector("img")?.getAttribute("src")).toBe(
-      "/portraits/x.webp",
-    );
-    unmount();
-  });
+  describe("shared library image", () => {
+    const withLibrary = (id = "p0001") => ({
+      ...assignment(),
+      libraryId: id,
+    });
+    const jerseyLayer = (container: HTMLElement) =>
+      container.querySelector<HTMLElement>("span[style*='multiply']");
 
-  it("never renders an img without a src", () => {
-    const { container, unmount } = render(
-      portrait({ portrait: assignment(), state: "ready", src: "" }),
-    );
-    expect(container.querySelector("img")).toBeNull();
-    unmount();
+    it("renders the library image instead of the procedural face", () => {
+      const { container, unmount } = render(
+        portrait({ portrait: withLibrary() }),
+      );
+      const root = container.querySelector("[data-portrait-player-id]");
+      expect(root?.getAttribute("data-portrait-source")).toBe("library");
+      expect(container.querySelector("[data-portrait-face]")).toBeNull();
+      const img = container.querySelector("img");
+      expect(img?.getAttribute("src")).toBe(
+        "/portraits/library/256/p0001.webp",
+      );
+      expect(img?.getAttribute("alt")).toBe("");
+      expect(img?.getAttribute("width")).toBe("96");
+      unmount();
+    });
+
+    it("lazy-loads with size-appropriate sources", () => {
+      const { container, unmount } = render(
+        portrait({ portrait: withLibrary(), size: "sm" }),
+      );
+      const img = container.querySelector("img")!;
+      expect(img.getAttribute("loading")).toBe("lazy");
+      expect(img.getAttribute("decoding")).toBe("async");
+      expect(img.getAttribute("sizes")).toBe("32px");
+      expect(img.getAttribute("srcset")).toBe(
+        "/portraits/library/128/p0001.webp 128w, /portraits/library/256/p0001.webp 256w, /portraits/library/512/p0001.webp 512w",
+      );
+      unmount();
+    });
+
+    it("multiplies the team colour into the jersey through the mask only", () => {
+      const { container, rerender } = render(
+        portrait({ portrait: withLibrary() }),
+      );
+      expect(jerseyLayer(container)?.style.backgroundColor).toBe(
+        "rgb(63, 63, 70)",
+      );
+      expect(container.querySelector("[data-portrait-uniform]")).toBeNull();
+      rerender(
+        portrait({
+          portrait: withLibrary(),
+          uniform: { primaryColor: "#0B1F3A", secondaryColor: "#C4CED4" },
+        }),
+      );
+      const layer = jerseyLayer(container)!;
+      expect(layer.style.backgroundColor).toBe("rgb(11, 31, 58)");
+      expect(layer.getAttribute("style")).toContain(
+        "/portraits/library/mask/p0001.webp",
+      );
+      expect(
+        container
+          .querySelector("[data-portrait-uniform]")
+          ?.getAttribute("data-portrait-uniform"),
+      ).toBe("team");
+    });
+
+    it("falls back to the procedural face when there is no library id", () => {
+      const { container, unmount } = render(
+        portrait({ portrait: assignment() }),
+      );
+      expect(container.querySelector("img")).toBeNull();
+      expect(container.querySelector("[data-portrait-face]")).toBeTruthy();
+      unmount();
+    });
   });
 
   it("dresses the face in team colours only when a uniform is given", () => {
