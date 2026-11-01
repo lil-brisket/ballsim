@@ -29,7 +29,7 @@ Ballsim is a basketball franchise management game for the browser. You own a tea
 - **Possession-level game simulation.** Shots, passes, fouls, rebounds, injuries and fatigue are resolved from player attributes and team tendencies. A faster box-score mode, calibrated against the possession engine, is available for long simulations.
 - **A league that runs without you.** AI teams sign free agents, draft, trade and manage their own business. Players age, develop, decline and retire. Awards, the All-Star game, fan voting, conference-based playoffs and franchise history are tracked season after season.
 - **Simulation Lab.** A developer UI and CLI (`npm run lab`, `npm run sim`) for running seeded batches of games or multi-season careers, checking invariants and calibration bands, and comparing runs.
-- **Procedural portraits.** Every player gets a unique generated SVG headshot that stays with them for their whole career.
+- **Procedural portraits.** Every player gets a generated headshot that stays with them for their whole career: a procedural SVG face, linked to the nearest image in a shared anime portrait library once one is shipped.
 
 ## Quick start
 

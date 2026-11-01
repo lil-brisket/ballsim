@@ -68,7 +68,7 @@ next-env.d.ts
 /.claude/skills
 /.windsurf/skills
 
-# Generated player portrait overlays (presentation cache, not GameState)
+# Portrait library work folder: prompts, source art, contact sheet (shipped images live in public/portraits/library)
 /portraits/
 # Temporary worktrees from scripts/generate-golden-saves.ts
 /.golden-worktrees/

@@ -10,7 +10,7 @@ This is a fully fictional basketball simulation and management game.
 
 - There are no real NBA teams, players, leagues, cities, or copyrighted assets.
 - There are no traditional basketball graphics (no 2D/3D on-court simulation). The one exception is the Watch Game court replay: a hand-built SVG view that replays the recorded play-by-play with players in fixed formation spots. It is presentation only: it never reruns the simulation, and its shot spots and formations are derived deterministically from the game id and play index, never stored.
-- Front-office player portraits are presentation identity only: a procedural SVG headshot whose traits are persisted per save when a player or prospect is created, kept for the whole career, and unique among active players. An optional original raster overlay can sit on top, and an initials plate is the fallback. They are not licensed photography, not NBA 2K assets, and not simulation graphics, and they never affect gameplay.
+- Front-office player portraits are presentation identity only: a procedural SVG headshot whose traits are persisted per save when a player or prospect is created, kept for the whole career, and unique among active players. Each face is also linked to the nearest image in a shared, pre-generated anime portrait library that ships with the game and is tinted with team colours; the SVG and then an initials plate are the fallbacks. They are not licensed photography, not NBA 2K assets, and not simulation graphics, and they never affect gameplay.
 - Games are simulated through data, statistics, events, and text.
 
 Product title: **BallSim**.
