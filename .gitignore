@@ -80,3 +80,5 @@ next-env.d.ts
 # Seeded visual baselines (npm run e2e:seed): only CI's linux set is committed
 /e2e/baselines/*
 !/e2e/baselines/linux/
+# Editor settings
+/.vscode/
