@@ -115,7 +115,6 @@ describe("owner hub config invariants", () => {
       "/league",
       "/league/standings",
       "/league/player-stats",
-      "/league/team-stats",
       "/league/transactions",
       "/awards",
       "/history",

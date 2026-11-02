@@ -40,6 +40,14 @@ function snapshot(state: GameState): Snapshot {
   };
 }
 
+/** The face itself: everything except the library image it resolves to. */
+function face(entry: PlayerPortraitAssignment) {
+  const { libraryId: _image, duplicate: _shared, ...rest } = entry;
+  void _image;
+  void _shared;
+  return rest;
+}
+
 function expectCoverage(state: GameState): void {
   const ids = new Set(Object.keys(state.world.players));
   for (const draft of Object.values(state.world.drafts)) {
@@ -79,10 +87,11 @@ describe("player portraits across multiple seasons", () => {
         new Set(snapshots.flatMap((entry) => entry.draftYears)).size,
       ).toBeGreaterThanOrEqual(2);
 
-      // Append-only: every assignment ever seen is preserved verbatim.
+      // Append-only: every face ever seen is preserved. Only the library image
+      // may be re-resolved (a player joining a team that already uses it).
       for (const earlier of snapshots) {
         for (const [id, entry] of Object.entries(earlier.portraits)) {
-          expect(final.portraits[id]).toEqual(entry);
+          expect(face(final.portraits[id]!)).toEqual(face(entry));
         }
       }
 
@@ -95,7 +104,7 @@ describe("player portraits across multiple seasons", () => {
       );
       expect(moved.length).toBeGreaterThan(0);
       for (const id of moved) {
-        expect(final.portraits[id]).toEqual(first.portraits[id]);
+        expect(face(final.portraits[id]!)).toEqual(face(first.portraits[id]!));
       }
 
       // Uniqueness among active players holds after many generations.
