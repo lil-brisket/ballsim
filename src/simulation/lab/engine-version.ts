@@ -104,5 +104,18 @@
  * spread unchanged. Box score draws one shared noise term for both teams
  * (+-12) plus +-15 per team instead of +-24 per team, and rescales its
  * points model (x0.830, +17.7; home 2.0).
+ *
+ * Version 14: secondary positions. A player may only play his primary or
+ * secondary position (`playedPositions`): defenders are matched, rebounds
+ * scored and substitutions chosen by the position each player is playing.
+ * A substitute who leaves a position with no one to play it loses
+ * `openPositionSubstitutionPenalty` score per open position, a strong
+ * preference rather than a rule (~8% of Lab substitutions still pick one).
+ * Starting lineups are the best natural assignment of players to the five
+ * slots. Players gain a secondary from archetype, build and ratings (no RNG).
+ * Possession scoring on the Lab rosters falls ~111 -> ~108.3 PPG (3P%
+ * ~39.1 -> ~38.3, FG% ~45.4 -> ~44.5), inside the 2012-2019 NBA range
+ * (96-111); league rosters ~107.1 -> ~105.4. Box score lowers its three-point
+ * intercept 0.04 -> 0.011 to match.
  */
-export const ENGINE_VERSION = 13;
+export const ENGINE_VERSION = 14;
