@@ -3,7 +3,7 @@
  * entry that all four files exist (512/256/128 + mask), are decodable WebP of
  * the right size (512, 256, 128 square; mask 256), that the 512 file's SHA-256
  * equals the manifest `sha256`, that no two entries are near-duplicates
- * (64-bit dHash Hamming distance <= 6), and that no file on disk is missing
+ * (256-bit face-crop dHash Hamming distance <= 20), and that no file on disk is missing
  * from the manifest. Reports every problem and exits 1 on any. No network, no saves.
  *
  * It then checks coverage against player generation (under-represented trait

@@ -14,7 +14,7 @@
  * range and their signature is not used by an approved or staged image. Then it
  * removes the key colour and writes 512/256/128 WebP + a 256 px jersey mask to
  * <staged-dir>/{512,256,128,mask}/{id}.webp, rejects exact (SHA-256) and near
- * (64-bit dHash, Hamming <= 6) duplicates of approved and staged images, runs
+ * (256-bit face-crop dHash, Hamming <= 20) duplicates of approved and staged images, runs
  * the jersey-mask QA, and merges a record into <staged-dir>/staged.json
  * ("pending", or "rejected" with problems). Re-staging an id needs --restage;
  * an id already in the manifest is never re-ingested (use a new id for new art).
@@ -318,7 +318,12 @@ async function main(): Promise<void> {
         if (other.sha256 === sha256 || other.sourceSha256 === sourceSha256) {
           reasons.push(`byte-identical to staged image ${other.id}`);
         } else if (
-          dHashDistance(dhash, other.dhash) <= DHASH_NEAR_DUPLICATE_DISTANCE
+          // Recomputed from the staged file: the stored hash may predate the
+          // current hash algorithm.
+          dHashDistance(
+            dhash,
+            await dHashOfFile(libraryFiles(stagedDir, other.id)[512]),
+          ) <= DHASH_NEAR_DUPLICATE_DISTANCE
         ) {
           reasons.push(`near-duplicate of staged image ${other.id}`);
         }

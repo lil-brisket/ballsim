@@ -60,7 +60,7 @@ function main(): void {
   const lines = selected.map((target) =>
     JSON.stringify({
       id: target.id,
-      prompt: buildPortraitLibraryPrompt(target.traits),
+      prompt: buildPortraitLibraryPrompt(target.traits, target.id),
       traits: target.traits,
       sourcePath: `${PORTRAIT_WORK_DIR}/source/${target.id}.png`,
     }),

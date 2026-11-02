@@ -89,10 +89,10 @@ export const PORTRAIT_TRAIT_LABELS: Record<
     "softly arched",
   ],
   eyes: [
-    "small, dark and deep-set",
-    "almond-shaped",
-    "narrow and focused",
-    "rounder and open",
+    "small, dark and deep-set, with heavy hooded upper lids, a visible crease, little visible sclera, a small iris and a wide gap between brow and eye",
+    "almond-shaped, with gently curved lids, a slight upward tilt at the outer corner, a moderate lid crease, a medium iris and a balanced amount of sclera",
+    "narrow and focused, with flat, straight upper lids, slightly downturned outer corners, a thin lid crease, a partly covered iris and a close brow-to-eye gap",
+    "round and wide open, with high-arched upper lids, no hooding, a large iris, visible white sclera above and below, and a tall width-to-height ratio",
   ],
   nose: [
     "small and subtle",

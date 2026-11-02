@@ -387,14 +387,27 @@ export function jerseyMaskProblems(metrics: JerseyMaskMetrics): string[] {
   return problems;
 }
 
-export const DHASH_WIDTH = 9;
-export const DHASH_HEIGHT = 8;
-/** Hamming distance at or below which two images are treated as near-duplicates. */
-export const DHASH_NEAR_DUPLICATE_DISTANCE = 6;
+export const DHASH_WIDTH = 17;
+export const DHASH_HEIGHT = 16;
+/**
+ * Hamming distance (of 256 bits, ~8%) at or below which two images are treated
+ * as near-duplicates. Measured on the face crop (DHASH_FACE_CROP): across real
+ * library art, distinct faces differed by >= 11%, while hashing the whole
+ * frame at 9x8 flagged a third of all pairs because the shared backdrop and
+ * jersey dominated it.
+ */
+export const DHASH_NEAR_DUPLICATE_DISTANCE = 20;
+/** Fraction of the frame hashed: the head and neck, without backdrop or jersey. */
+export const DHASH_FACE_CROP = {
+  left: 0.15,
+  top: 0.1,
+  width: 0.7,
+  height: 0.62,
+} as const;
 
 /**
- * 64-bit difference hash from a 9x8 grayscale buffer (row-major, 72 bytes):
- * a bit is set where a pixel is brighter than its right neighbour. Returns 16
+ * 256-bit difference hash from a 17x16 grayscale buffer (row-major, 272 bytes):
+ * a bit is set where a pixel is brighter than its right neighbour. Returns 64
  * hex characters.
  */
 export function dHashFromGray(gray: Uint8Array): string {

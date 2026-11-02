@@ -149,16 +149,16 @@ describe("keyBorderFraction", () => {
 
 describe("dHash", () => {
   const ramp = (flip: boolean) =>
-    Uint8Array.from({ length: 72 }, (_, i) => {
-      const x = i % 9;
-      return flip ? x * 20 : 255 - x * 20;
+    Uint8Array.from({ length: 17 * 16 }, (_, i) => {
+      const x = i % 17;
+      return flip ? x * 10 : 255 - x * 10;
     });
 
-  it("is 16 hex chars and stable", () => {
+  it("is 64 hex chars and stable", () => {
     const hash = dHashFromGray(ramp(false));
-    expect(hash).toMatch(/^[0-9a-f]{16}$/);
-    expect(hash).toBe("ffffffffffffffff");
-    expect(dHashFromGray(ramp(true))).toBe("0000000000000000");
+    expect(hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(hash).toBe("f".repeat(64));
+    expect(dHashFromGray(ramp(true))).toBe("0".repeat(64));
   });
 
   it("measures Hamming distance", () => {

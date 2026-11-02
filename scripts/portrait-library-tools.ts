@@ -14,6 +14,7 @@ import {
   type PortraitLibraryManifest,
 } from "@/domain/portrait-library";
 import {
+  DHASH_FACE_CROP,
   DHASH_HEIGHT,
   DHASH_WIDTH,
   dHashFromGray,
@@ -135,10 +136,21 @@ export async function decodeAlpha(
   return { data: new Uint8Array(data), width: info.width, height: info.height };
 }
 
-/** dHash of an image file composited on mid-gray (so transparent areas are neutral). */
+/**
+ * dHash of the face region of an image file (DHASH_FACE_CROP), composited on
+ * mid-gray so transparent areas are neutral. The shared backdrop and jersey
+ * are cropped out so they cannot make different faces look alike.
+ */
 export async function dHashOfFile(file: string): Promise<string> {
+  const { width = 0, height = 0 } = await sharp(file).metadata();
   const gray = await sharp(file)
     .flatten({ background: "#808080" })
+    .extract({
+      left: Math.round(width * DHASH_FACE_CROP.left),
+      top: Math.round(height * DHASH_FACE_CROP.top),
+      width: Math.round(width * DHASH_FACE_CROP.width),
+      height: Math.round(height * DHASH_FACE_CROP.height),
+    })
     .resize(DHASH_WIDTH, DHASH_HEIGHT, { fit: "fill", kernel: "lanczos3" })
     .greyscale()
     .raw()

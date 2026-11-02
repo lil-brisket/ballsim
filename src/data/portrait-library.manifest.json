@@ -1,4 +1,90 @@
 {
   "version": 1,
-  "entries": []
+  "entries": [
+    {
+      "id": "p0001",
+      "file": "p0001.webp",
+      "traits": {
+        "skinTone": 0,
+        "faceShape": 0,
+        "hairStyle": 8,
+        "hairColor": 1,
+        "facialHair": 4,
+        "brows": 2,
+        "eyes": 3,
+        "nose": 1,
+        "mouth": 0
+      },
+      "sha256": "86422e421828176fcf67c8b9e6064f60030c96991105f973124db4fd6640081e",
+      "approvedAt": "2026-11-02T16:24:06.239Z"
+    },
+    {
+      "id": "p0002",
+      "file": "p0002.webp",
+      "traits": {
+        "skinTone": 1,
+        "faceShape": 2,
+        "hairStyle": 7,
+        "hairColor": 2,
+        "facialHair": 3,
+        "brows": 0,
+        "eyes": 2,
+        "nose": 2,
+        "mouth": 2
+      },
+      "sha256": "f39a42771dfb01fa9152fb97419cf7ebb9b63187947d1c616e4d2ffc1080e318",
+      "approvedAt": "2026-11-02T16:24:06.239Z"
+    },
+    {
+      "id": "p0003",
+      "file": "p0003.webp",
+      "traits": {
+        "skinTone": 6,
+        "faceShape": 3,
+        "hairStyle": 3,
+        "hairColor": 5,
+        "facialHair": 6,
+        "brows": 1,
+        "eyes": 1,
+        "nose": 0,
+        "mouth": 1
+      },
+      "sha256": "a7544ef44140ae74c297cd860c096a2ef7001d1b080ef4a633348e3a31095eba",
+      "approvedAt": "2026-11-02T16:48:58.405Z"
+    },
+    {
+      "id": "p0004",
+      "file": "p0004.webp",
+      "traits": {
+        "skinTone": 7,
+        "faceShape": 1,
+        "hairStyle": 4,
+        "hairColor": 3,
+        "facialHair": 0,
+        "brows": 3,
+        "eyes": 0,
+        "nose": 3,
+        "mouth": 3
+      },
+      "sha256": "8e0f5e61623e92c018b453be86d33a109e8402c9263a635ebab879008e354195",
+      "approvedAt": "2026-11-02T16:47:58.308Z"
+    },
+    {
+      "id": "p0005",
+      "file": "p0005.webp",
+      "traits": {
+        "skinTone": 3,
+        "faceShape": 3,
+        "hairStyle": 10,
+        "hairColor": 6,
+        "facialHair": 2,
+        "brows": 0,
+        "eyes": 1,
+        "nose": 3,
+        "mouth": 3
+      },
+      "sha256": "f69a1fc3edbf883b62252151162f212b95a715731bad25aee2023b96d6fa43f0",
+      "approvedAt": "2026-11-02T16:47:58.308Z"
+    }
+  ]
 }
