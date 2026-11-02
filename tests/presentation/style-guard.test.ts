@@ -113,8 +113,10 @@ describe("style guard", () => {
 
   it("renders headings through SectionHeading, not raw <h1-6 className>", () => {
     // SectionHeading defines the heading styles; the drawer's dialog title is
-    // sized for its header; visually hidden headings carry no style.
-    const allowed = /components\/ui\/(SectionHeading|Drawer)\.tsx$/;
+    // sized for its header; visually hidden headings carry no style; dev-only
+    // pages (app/dev/) are not product UI.
+    const allowed =
+      /components\/ui\/(SectionHeading|Drawer)\.tsx$|app\/dev\/.*\.tsx$/;
     expect(
       offenders(
         /<h[1-3]\b[^>]*\bclassName=(?!"sr-only")/,

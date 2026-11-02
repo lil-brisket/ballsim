@@ -57,9 +57,9 @@ describe("migration v82 -> v83 (portrait library ids)", () => {
     );
   });
 
-  it("leaves assignments alone while the shipped library is empty", () => {
+  it("leaves assignments alone when the library is empty", () => {
     const state = v82State();
-    const migrated = migrateV82ToV83(state);
+    const migrated = migrateV82ToV83(state, []);
     expect(migrated.meta.schemaVersion).toBe(83);
     expect(migrated.world.playerPortraits).toBe(state.world.playerPortraits);
   });
