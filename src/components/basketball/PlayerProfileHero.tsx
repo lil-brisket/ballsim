@@ -8,6 +8,8 @@ import {
   PlayerIdentityLine,
 } from "@/components/basketball/PlayerIdentityLine";
 import { cn, displayClass } from "@/components/ui/styles";
+import type { PlayerPosition } from "@/domain/entities/player";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { ratingTier } from "@/presentation/rating-tier";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -26,6 +28,8 @@ export function PlayerProfileHero(props: {
   /** Persisted portrait from the view model; null/absent → initials plate. */
   portrait?: PlayerPortraitAssignment | null;
   position: string;
+  /** Optional second natural position; shown as "PG/SG". */
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   overall: number;
   potential?: number;
@@ -80,7 +84,10 @@ export function PlayerProfileHero(props: {
             <PlayerIdentityLine
               className="mt-1 text-ink/80"
               jerseyNumber={props.jerseyNumber}
-              position={props.position}
+              position={formatPositionLabel(
+                props.position,
+                props.secondaryPosition,
+              )}
               age={props.age}
               heightInches={props.heightInches}
               weightPounds={props.weightPounds}
@@ -174,7 +181,10 @@ export function PlayerProfileHero(props: {
             <PlayerIdentityLine
               className="mt-2 text-ink/80"
               jerseyNumber={props.jerseyNumber}
-              position={props.position}
+              position={formatPositionLabel(
+                props.position,
+                props.secondaryPosition,
+              )}
               age={props.age}
               heightInches={props.heightInches}
               weightPounds={props.weightPounds}

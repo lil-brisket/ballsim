@@ -6,6 +6,8 @@ import {
   OvrWithPotential,
   PlayerIdentityLine,
 } from "@/components/basketball/PlayerIdentityLine";
+import type { PlayerPosition } from "@/domain/entities/player";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { ratingTier } from "@/presentation/rating-tier";
 import {
   cn,
@@ -46,6 +48,7 @@ export function PlayerCard(props: {
   /** Persisted portrait from the view model; null/absent → initials plate. */
   portrait?: PlayerPortraitAssignment | null;
   position?: string;
+  secondaryPosition?: PlayerPosition | null;
   overall?: number;
   age?: number;
   archetypeLabel?: string;
@@ -102,7 +105,14 @@ export function PlayerCard(props: {
             ) : null}
             <PlayerIdentityLine
               className="mt-0.5"
-              position={fields.position ? props.position : undefined}
+              position={
+                fields.position
+                  ? formatPositionLabel(
+                      props.position ?? "",
+                      props.secondaryPosition,
+                    )
+                  : undefined
+              }
               age={fields.age ? props.age : undefined}
               heightInches={props.heightInches}
               contractSummary={fields.contract ? props.contractLabel : null}

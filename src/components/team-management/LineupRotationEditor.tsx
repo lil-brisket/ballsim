@@ -46,6 +46,7 @@ export function LineupRotationEditor(props: {
           firstName: row.firstName,
           lastName: row.lastName,
           position: row.position,
+          secondaryPosition: row.secondaryPosition ?? null,
           overall: row.overall ?? 0,
           plannedMinutes: row.targetMinutes,
           availabilityLabel: row.availabilityLabel,

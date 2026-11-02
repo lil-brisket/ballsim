@@ -4,6 +4,7 @@ import { MoodChip } from "@/components/basketball/MoodChip";
 import { useMemo, useState } from "react";
 import type { PlayerPosition } from "@/domain/entities/player";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
+import { formatPositionLabel } from "@/presentation/position-label";
 import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
 import { rotationRoleSortKey } from "@/state/roster-page-selectors";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
@@ -92,7 +93,9 @@ export function RosterManagementTable(props: {
         const name = `${player.firstName} ${player.lastName}`.toLowerCase();
         return (
           name.includes(q) ||
-          player.position.toLowerCase().includes(q) ||
+          formatPositionLabel(player.position, player.secondaryPosition)
+            .toLowerCase()
+            .includes(q) ||
           player.roleDisplayLabel.toLowerCase().includes(q) ||
           player.injuryKind.toLowerCase().includes(q)
         );
@@ -283,7 +286,7 @@ export function RosterManagementTable(props: {
                     </PlayerEntityLink>
                   </span>
                 }
-                subtitle={`${player.position} · ${player.roleDisplayLabel} · Age ${player.age}`}
+                subtitle={`${formatPositionLabel(player.position, player.secondaryPosition)} · ${player.roleDisplayLabel} · Age ${player.age}`}
                 meta={
                   <div className="flex flex-wrap items-center gap-2">
                     <OvrBadge overall={player.overall} size="sm" />
@@ -414,7 +417,12 @@ export function RosterManagementTable(props: {
                         <span className="ml-2 text-sm team-ink">Block</span>
                       ) : null}
                     </td>
-                    <td className="px-3 py-2 text-muted">{player.position}</td>
+                    <td className="px-3 py-2 text-muted">
+                      {formatPositionLabel(
+                        player.position,
+                        player.secondaryPosition,
+                      )}
+                    </td>
                     <td className="px-3 py-2 text-right">
                       <OvrBadge
                         overall={player.overall}

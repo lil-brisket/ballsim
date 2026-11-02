@@ -5,12 +5,14 @@ import { AvailabilityDot } from "@/components/team-management/availability-dot";
 import { Drawer } from "@/components/ui/Drawer";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import { OvrBadge } from "@/components/ui/OvrBadge";
+import { formatPositionLabel } from "@/presentation/position-label";
 
 export type PickerPlayer = {
   playerId: string;
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: string | null;
   overall: number;
   availabilityLabel: string;
 };
@@ -90,7 +92,12 @@ export function PlayerPicker(props: {
                     {player.firstName} {player.lastName}
                     {current ? " (current)" : ""}
                   </span>
-                  <span className="w-8 text-muted">{player.position}</span>
+                  <span className="w-14 text-muted">
+                    {formatPositionLabel(
+                      player.position,
+                      player.secondaryPosition,
+                    )}
+                  </span>
                   <OvrBadge overall={player.overall} size="sm" />
                   <span className="flex w-28 items-center gap-1.5 text-muted">
                     <AvailabilityDot status={player.availabilityLabel} />

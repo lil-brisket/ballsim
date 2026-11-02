@@ -25,6 +25,7 @@ export type EditableRotationRow = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: string | null;
   age?: number;
   overall?: number;
   teamName?: string;
@@ -83,6 +84,7 @@ export type PlayerCardLike = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: string | null;
   overall: number;
   plannedMinutes: number;
   availabilityLabel: string;
@@ -106,6 +108,7 @@ function mapRow(row: RotationRowView): EditableRotationRow {
     firstName: row.firstName,
     lastName: row.lastName,
     position: row.position,
+    secondaryPosition: row.secondaryPosition ?? null,
     age: row.age,
     overall: row.overall,
     teamName: row.teamName,
@@ -199,14 +202,30 @@ function syncRowGroups(
 }
 
 /**
+ * A player can start only at his primary or secondary position; there is no
+ * off-position option. Mirrors the server rule, which stays authoritative.
+ */
+export function canStartAtSlot(
+  player: { position: string; secondaryPosition?: string | null },
+  slot: string,
+): boolean {
+  return player.position === slot || player.secondaryPosition === slot;
+}
+
+/**
  * Change a starter slot. Previous starter returns to bench; selected player
  * leaves bench/inactive. Display-level rotation rows stay membership-aligned.
+ * A player who does not play the slot's position is ignored (state unchanged).
  */
 export function setStarterSlot(
   state: LineupRotationEditorState,
   slot: string,
   playerId: string,
 ): LineupRotationEditorState {
+  const candidate = state.rows.find((row) => row.playerId === playerId);
+  if (candidate && !canStartAtSlot(candidate, slot)) {
+    return state;
+  }
   const previous = state.starters.find((row) => row.slot === slot)?.playerId;
   const starters = state.starters.map((row) =>
     row.slot === slot ? { ...row, playerId } : row,
@@ -294,6 +313,7 @@ export function collectPlayerCards(
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       overall: player.overall,
       plannedMinutes: player.plannedMinutes,
       availabilityLabel: player.availabilityLabel,
