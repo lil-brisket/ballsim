@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { loadLeagueTeamStatsView } from "@/application/game-service";
 import { LeagueTeamStatsTable } from "@/components/league/LeagueStatsTables";
+import { HubPageSwitch } from "@/components/game/shell/HubPageSwitch";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 export const metadata: Metadata = { title: "Team Stats" };
@@ -23,6 +24,7 @@ export default async function LeagueTeamStatsPage({
 
   return (
     <>
+      <HubPageSwitch saveId={saveId} pair="stats" active="team-stats" />
       <PageHeader
         title="Team Stats"
         subtitle="Regular-season per-game averages"

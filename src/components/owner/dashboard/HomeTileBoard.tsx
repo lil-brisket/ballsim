@@ -82,8 +82,9 @@ function tradesNote(data: HomeTileBoardData): string | null {
 
 /**
  * Home tile board: eight links to the hubs, each carrying the one fact that
- * hub owns. Single column on phones, two from `sm`, five from `xl` (the two
- * wide tiles take two cells, so the board is two rows tall).
+ * hub owns. Roster, Schedule, Trades and Media are the large tiles (four
+ * columns from `xl`, Media on its own row); Standings, Finances, Development
+ * and Owner are a compact strip of secondary facts below.
  */
 export function HomeTileBoard(props: {
   saveId: string;
@@ -99,160 +100,174 @@ export function HomeTileBoard(props: {
   const tradeNote = tradesNote(data);
 
   return (
-    <FocusGrid
-      memoryKey="home"
-      aria-label="Hub tiles"
-      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
-    >
-      <HubTile
-        enterIndex={0}
-        dense
-        href={`${base}/roster`}
-        title="Roster"
-        stat={{ value: data.team.strength, label: "Team strength" }}
-        art={topPlayer ? <TopPlayerArt player={topPlayer} /> : undefined}
+    <div className="space-y-4">
+      <FocusGrid
+        aria-label="Hub tiles"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
       >
-        {topPlayer ? `Top: ${topPlayer.name}, ${topPlayer.position}` : null}
-      </HubTile>
+        <HubTile
+          enterIndex={0}
+          dense
+          href={`${base}/roster`}
+          title="Roster"
+          stat={{ value: data.team.strength, label: "Team strength" }}
+          art={topPlayer ? <TopPlayerArt player={topPlayer} /> : undefined}
+        >
+          {topPlayer ? `Top: ${topPlayer.name}, ${topPlayer.position}` : null}
+        </HubTile>
 
-      <HubTile
-        enterIndex={1}
-        dense
-        href={`${base}/league/standings`}
-        title="Standings"
-        stat={
-          standing
-            ? {
-                value: `#${standing.conferenceRank}`,
-                label: `${standing.conferenceName} seed`,
-              }
-            : undefined
-        }
-      >
-        {standing
-          ? standing.gamesBack > 0
-            ? `${standing.gamesBack} GB`
-            : "Leading the conference"
-          : "Standings start with the season"}
-      </HubTile>
-
-      <HubTile
-        enterIndex={2}
-        dense
-        href={`${base}/media`}
-        title="Media"
-        size="wide"
-        badge={
-          data.mediaTimeline.unreadCount > 0 ? (
-            <CountChip count={data.mediaTimeline.unreadCount} label="unread" />
-          ) : undefined
-        }
-      >
-        {lead ? (
-          <span className="line-clamp-2">{lead.text}</span>
-        ) : (
-          "No league stories yet"
-        )}
-      </HubTile>
-
-      <HubTile
-        enterIndex={3}
-        dense
-        href={`${base}/finances`}
-        title="Finances"
-        stat={{ value: formatMoney(data.health.cash), label: "Cash" }}
-      >
-        {data.health.cashContext ? (
-          <>
-            {cashDirection === "up" || cashDirection === "down" ? (
-              <span
-                aria-hidden
-                className={cn(
-                  "mr-1",
-                  cashDirection === "up" ? "text-win" : "text-loss",
-                )}
-              >
-                {cashDirection === "up" ? "▲" : "▼"}
-              </span>
-            ) : null}
-            {data.health.cashContext.text}
-          </>
-        ) : null}
-      </HubTile>
-
-      <HubTile
-        enterIndex={4}
-        dense
-        href={`${base}/trades`}
-        title="Trades"
-        stat={{ value: pending, label: "Offers waiting" }}
-        badge={
-          pending > 0 ? <CountChip count={pending} label="offers" /> : undefined
-        }
-      >
-        {tradeNote}
-      </HubTile>
-
-      <HubTile
-        enterIndex={5}
-        dense
-        href={`${base}/calendar`}
-        title="Schedule"
-        size="wide"
-      >
-        {games.length === 0 ? (
-          "No games scheduled"
-        ) : (
-          <span className="flex flex-wrap gap-x-4 gap-y-2">
-            {games.map((game) => (
-              <span
-                key={game.gameId}
-                className="flex flex-col items-center gap-1"
-              >
-                <span className="flex items-center gap-1">
-                  <TeamBadge
-                    branding={game.opponentBranding}
-                    name={game.opponentName}
-                    size="sm"
-                    decorative
-                  />
-                  <span className="sr-only">{game.opponentName}</span>
+        <HubTile
+          enterIndex={1}
+          dense
+          href={`${base}/calendar`}
+          title="Schedule"
+          size="wide"
+        >
+          {games.length === 0 ? (
+            "No games scheduled"
+          ) : (
+            <span className="flex flex-wrap gap-x-4 gap-y-2">
+              {games.map((game) => (
+                <span
+                  key={game.gameId}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <span className="flex items-center gap-1">
+                    <TeamBadge
+                      branding={game.opponentBranding}
+                      name={game.opponentName}
+                      size="sm"
+                      decorative
+                    />
+                    <span className="sr-only">{game.opponentName}</span>
+                  </span>
+                  <span className="whitespace-nowrap text-sm text-soft">
+                    {game.home ? "vs" : "@"} {formatGameDate(game.date)}
+                  </span>
                 </span>
-                <span className="whitespace-nowrap text-sm text-soft">
-                  {game.home ? "vs" : "@"} {formatGameDate(game.date)}
+              ))}
+            </span>
+          )}
+        </HubTile>
+
+        <HubTile
+          enterIndex={2}
+          dense
+          href={`${base}/trades`}
+          title="Trades"
+          stat={{ value: pending, label: "Offers waiting" }}
+          badge={
+            pending > 0 ? (
+              <CountChip count={pending} label="offers" />
+            ) : undefined
+          }
+        >
+          {tradeNote}
+        </HubTile>
+
+        <HubTile
+          enterIndex={3}
+          dense
+          href={`${base}/media`}
+          title="Media"
+          size="wide"
+          className="xl:col-span-4"
+          badge={
+            data.mediaTimeline.unreadCount > 0 ? (
+              <CountChip
+                count={data.mediaTimeline.unreadCount}
+                label="unread"
+              />
+            ) : undefined
+          }
+        >
+          {lead ? (
+            <span className="line-clamp-2">{lead.text}</span>
+          ) : (
+            "No league stories yet"
+          )}
+        </HubTile>
+      </FocusGrid>
+
+      <FocusGrid
+        aria-label="More hubs"
+        className="grid grid-cols-2 gap-3 xl:grid-cols-4"
+      >
+        <HubTile
+          enterIndex={4}
+          size="compact"
+          href={`${base}/league/standings`}
+          title="Standings"
+          stat={
+            standing
+              ? {
+                  value: `#${standing.conferenceRank}`,
+                  label: `${standing.conferenceName} seed`,
+                }
+              : undefined
+          }
+        >
+          {standing
+            ? standing.gamesBack > 0
+              ? `${standing.gamesBack} GB`
+              : "Leading the conference"
+            : "Standings start with the season"}
+        </HubTile>
+
+        <HubTile
+          enterIndex={5}
+          size="compact"
+          href={`${base}/finances`}
+          title="Finances"
+          stat={{ value: formatMoney(data.health.cash), label: "Cash" }}
+        >
+          {data.health.cashContext ? (
+            <>
+              {cashDirection === "up" || cashDirection === "down" ? (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "mr-1",
+                    cashDirection === "up" ? "text-win" : "text-loss",
+                  )}
+                >
+                  {cashDirection === "up" ? "▲" : "▼"}
                 </span>
-              </span>
-            ))}
-          </span>
-        )}
-      </HubTile>
+              ) : null}
+              {data.health.cashContext.text}
+            </>
+          ) : null}
+        </HubTile>
 
-      <HubTile
-        enterIndex={6}
-        dense
-        href={`${base}/development`}
-        title="Development"
-        stat={
-          biggestRiser
-            ? {
-                value: <span className="text-win">+{biggestRiser.delta}</span>,
-                label: biggestRiser.name,
-              }
-            : undefined
-        }
-      >
-        {biggestRiser ? "Biggest riser" : "No rating changes yet"}
-      </HubTile>
+        <HubTile
+          enterIndex={6}
+          size="compact"
+          href={`${base}/development`}
+          title="Development"
+          stat={
+            biggestRiser
+              ? {
+                  value: (
+                    <span className="text-win">+{biggestRiser.delta}</span>
+                  ),
+                  label: biggestRiser.name,
+                }
+              : undefined
+          }
+        >
+          {biggestRiser ? "Biggest riser" : "No rating changes yet"}
+        </HubTile>
 
-      <HubTile
-        enterIndex={7}
-        dense
-        href={`${base}/franchise/ownership`}
-        title="Owner"
-        stat={{ value: data.owner.patience, label: "Owner patience" }}
-      >
-        {data.owner.ownership.moodLabel}
-      </HubTile>
-    </FocusGrid>
+        <HubTile
+          enterIndex={7}
+          size="compact"
+          href={`${base}/franchise/ownership`}
+          title="Owner"
+          stat={{ value: data.owner.patience, label: "Owner patience" }}
+        >
+          {data.owner.ownership.moodLabel}
+        </HubTile>
+      </FocusGrid>
+    </div>
   );
 }

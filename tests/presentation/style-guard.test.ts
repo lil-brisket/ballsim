@@ -161,7 +161,6 @@ describe("style guard", () => {
       "src/components/ui/SectionHeading.tsx",
       "src/components/ui/styles.ts",
       "src/components/ui/TeamBadge.tsx",
-      "src/components/ui/KeyHint.tsx",
       "src/components/ui/InfoTip.tsx",
       "src/components/ui/DataTable.tsx",
       "src/components/team/TeamIdentityInline.tsx",

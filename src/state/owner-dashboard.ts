@@ -360,6 +360,11 @@ function buildHealth(data: CanonicalDashboardData): OwnerDashboardHealth {
 
 function buildTeam(data: CanonicalDashboardData): OwnerDashboardTeam {
   const { snapshot, conference, strength, payroll, rosterProblems } = data;
+  const nextGame = snapshot.upcomingGames[0];
+  const opponentId = nextGame ? asTeamId(nextGame.opponentTeamId) : null;
+  const opponentStanding = opponentId
+    ? data.state.competition.standings.byTeamId[opponentId]
+    : undefined;
   return {
     wins: snapshot.controlledStanding.wins,
     losses: snapshot.controlledStanding.losses,
@@ -374,6 +379,14 @@ function buildTeam(data: CanonicalDashboardData): OwnerDashboardTeam {
       0,
       DASHBOARD_UPCOMING_GAMES_LIMIT,
     ),
+    nextOpponent: opponentId
+      ? {
+          wins: opponentStanding?.wins ?? 0,
+          losses: opponentStanding?.losses ?? 0,
+          strength:
+            Math.round(meanRosterOverall(data.state, opponentId) * 10) / 10,
+        }
+      : null,
   };
 }
 

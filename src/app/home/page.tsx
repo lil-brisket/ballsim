@@ -35,7 +35,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         {error ? <ErrorState message={error} /> : null}
 
         <FocusGrid
-          memoryKey="home-modes"
           aria-label="Game modes"
           className="grid gap-4 sm:grid-cols-3"
         >

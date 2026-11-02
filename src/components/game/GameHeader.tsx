@@ -5,7 +5,8 @@ import type { DashboardSnapshot } from "@/state/selectors";
 import { formatShortDate } from "@/components/calendar/CalendarDayCell";
 import { ParticipantBar } from "@/components/game/ParticipantBar";
 import { HubBar } from "@/components/game/shell/HubBar";
-import { simHref } from "@/components/game/shell/hub-keys";
+import { simHref } from "@/components/game/shell/shell-links";
+import { SoundMenu } from "@/components/game/shell/SoundMenu";
 import { SearchButton } from "@/components/game/shell/SearchButton";
 import { OwnerTeamSwitcher } from "@/components/game/OwnerTeamSwitcher";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
@@ -110,6 +111,7 @@ export function GameHeader(props: {
           <span className="sr-only">Record </span>
           {record}
         </p>
+        <SoundMenu className="hidden lg:flex" />
         <SearchButton />
         <NotificationsBell
           saveId={saveId}

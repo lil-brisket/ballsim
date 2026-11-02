@@ -76,15 +76,6 @@ const MoreIcon = () => (
     <circle cx="13" cy="8" r="1.5" />
   </Icon>
 );
-const KeyboardIcon = () => (
-  <Icon>
-    <path
-      fillRule="evenodd"
-      d="M1.5 3.5h13a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zm1.5 2v1.5h1.5V5.5zm3 0v1.5h1.5V5.5zm3 0v1.5h1.5V5.5zm3 0v1.5H13V5.5zM3 8.5V10h1.5V8.5zm3 0V10h4V8.5zm5.5 0V10H13V8.5z"
-    />
-  </Icon>
-);
-
 /** Closes `onClose` on outside mousedown or Escape while `open`. */
 function useDismiss(
   open: boolean,
@@ -395,49 +386,6 @@ function OverflowMenu(props: {
   );
 }
 
-const SHORTCUTS: Array<[string, string]> = [
-  ["Space", "Play or pause"],
-  ["← / →", "Previous / next possession"],
-  [", / .", "Step back / forward one play"],
-];
-
-function ShortcutsHelp() {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const tipId = useId();
-  useDismiss(open, rootRef, () => setOpen(false));
-  return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        aria-label="Keyboard shortcuts"
-        aria-expanded={open}
-        aria-describedby={open ? tipId : undefined}
-        className={ICON_BUTTON_CLASS}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <KeyboardIcon />
-      </button>
-      {open ? (
-        <div
-          id={tipId}
-          role="tooltip"
-          className="absolute bottom-full right-0 z-30 mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-left text-sm text-soft shadow-lg"
-        >
-          <dl className="space-y-1">
-            {SHORTCUTS.map(([keys, action]) => (
-              <div key={keys} className="flex justify-between gap-3">
-                <dt className="font-medium text-ink">{keys}</dt>
-                <dd>{action}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 /**
  * Video-player transport attached to the court's bottom edge: play/pause,
  * possession steps, a seekable scrubber with quarter and key-moment marks,
@@ -549,7 +497,6 @@ export function PlaybackControls(props: {
         onRestart={props.onRestart}
         onSkipToEnd={props.onSkipToEnd}
       />
-      <ShortcutsHelp />
       <p data-testid="court-status" className="sr-only" aria-live="polite">
         {STATUS_LABEL[props.status]}
       </p>

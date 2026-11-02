@@ -33,7 +33,7 @@ export function FreeAgentRosterView(props: {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted">
-          Roster shortcut — open Free Agency to sign or make offers.
+          Open Free Agency to sign or make offers.
         </p>
         <Link
           href={props.freeAgencyHubHref}

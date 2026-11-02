@@ -33,7 +33,7 @@ import {
   playUiSound,
   setAudioContextFactory,
 } from "@/components/ui/sound/ui-sound";
-import { ControlLegend } from "@/components/game/shell/ControlLegend";
+import { SoundMenu } from "@/components/game/shell/SoundMenu";
 import { FocusGrid } from "@/components/ui/focus/FocusGrid";
 import { SimulationSummaryModal } from "@/components/calendar/SimulationSummaryModal";
 import {
@@ -142,7 +142,7 @@ describe("sound settings", () => {
   });
 
   it("syncs from another tab through the storage event", () => {
-    render(<ControlLegend hubCount={5} />);
+    render(<SoundMenu />);
     expect(screen.getByRole("button", { name: "Sound: Off" })).toBeTruthy();
     act(() => {
       window.localStorage.setItem(
@@ -200,7 +200,7 @@ describe("playUiSound", () => {
 
 describe("sound toggle", () => {
   it("flips aria-pressed, persists, and confirms with a sound", () => {
-    render(<ControlLegend hubCount={5} />);
+    render(<SoundMenu />);
     const toggle = screen.getByRole("button", { name: "Sound: Off" });
     expect(toggle.getAttribute("aria-pressed")).toBe("false");
     expect(created).toHaveLength(0);
@@ -220,8 +220,8 @@ describe("sound toggle", () => {
   });
 
   it("disables the volume slider while sound is off", () => {
-    render(<ControlLegend hubCount={5} />);
-    fireEvent.click(screen.getByRole("button", { name: "Controls" }));
+    render(<SoundMenu />);
+    fireEvent.click(screen.getByRole("button", { name: "Volume settings" }));
     const slider = screen.getByLabelText("Sound volume") as HTMLInputElement;
     expect(slider.disabled).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Sound: Off" }));
@@ -366,7 +366,7 @@ describe("nothing plays on mount", () => {
     updateSoundSettings({ enabled: true });
     render(
       <SimulationActivityProvider initialPending>
-        <ControlLegend hubCount={5} />
+        <SoundMenu />
         <FocusGrid>
           <a href="/A" data-focus-item="">
             A

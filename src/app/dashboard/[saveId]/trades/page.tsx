@@ -55,10 +55,7 @@ export default async function TradesPage({ params, searchParams }: PageProps) {
 
       <section aria-labelledby="trade-start" className="space-y-3">
         <SectionHeading id="trade-start" title="Start a trade" />
-        <FocusGrid
-          memoryKey="trades"
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-        >
+        <FocusGrid className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {shared ? (
             <HubTile
               enterIndex={0}

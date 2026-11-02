@@ -9,7 +9,6 @@ import { SheetHeader } from "@/components/roster/sheet/SheetHeader";
 import { SheetTable } from "@/components/roster/sheet/SheetTable";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { KeyHint } from "@/components/ui/KeyHint";
 import { SlantTabs } from "@/components/ui/Tabs";
 import { RatingDisplaySwitch } from "@/components/ui/RatingDisplaySwitch";
 import { useRatingDisplay } from "@/components/ui/rating-display";
@@ -20,7 +19,6 @@ import {
   bestInColumn,
   DEFAULT_SHEET_SORT,
   groupSheetRows,
-  moveSortColumn,
   sheetColumns,
   sortSheetRows,
   type SheetColumn,
@@ -222,37 +220,9 @@ export function RosterSheet(props: {
       case "ArrowUp":
         pick(index - 1);
         break;
-      case "Home":
-        pick(0);
-        break;
-      case "End":
-        pick(order.length - 1);
-        break;
-      case "ArrowRight":
-      case "ArrowLeft": {
-        const next = moveSortColumn(
-          columns,
-          sort,
-          event.key === "ArrowRight" ? 1 : -1,
-        );
-        const kind = columns.find((column) => column.id === next)?.kind;
-        applySort(next, firstDirection(kind));
-        break;
-      }
       case "Enter":
         if (selected) openPlayer(selected.playerId);
         break;
-      case "c":
-      case "C":
-        toggleCompare();
-        break;
-      case "[":
-      case "]": {
-        const at = TABS.findIndex((entry) => entry.id === tab);
-        const delta = event.key === "]" ? 1 : -1;
-        setTab(TABS[(at + delta + TABS.length) % TABS.length]!.id);
-        break;
-      }
       default:
         return;
     }
@@ -327,14 +297,6 @@ export function RosterSheet(props: {
         label={props.label}
         onKeyDown={onKeyDown}
       />
-
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
-        <KeyHint keys={["↑", "↓"]} label="Select" />
-        <KeyHint keys={["←", "→"]} label="Sort" />
-        <KeyHint keys="Enter" label="Player card" />
-        <KeyHint keys={["[", "]"]} label="Tabs" />
-        <KeyHint keys="C" label="Compare" />
-      </div>
     </div>
   );
 }

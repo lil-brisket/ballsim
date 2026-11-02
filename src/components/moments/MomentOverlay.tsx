@@ -10,7 +10,6 @@ import {
 import { useModalKeys } from "@/components/calendar/use-modal-keys";
 import { prefersReducedMotion } from "@/components/ui/CountUp";
 import { Button } from "@/components/ui/Button";
-import { KeyHint } from "@/components/ui/KeyHint";
 import { Overlay } from "@/components/ui/Overlay";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { playUiSound } from "@/components/ui/sound/ui-sound";
@@ -32,7 +31,7 @@ function subscribeNever(): () => void {
 
 /**
  * Full-screen presentation beat in team colours: a sequence of steps with a
- * progress row, `Next` (Enter, pad A) and `Skip all` (Esc, pad B). Never
+ * progress row, `Next` and `Skip all` (Esc also skips). Never
  * blocks play: every step can be skipped and the same facts live on a normal
  * page. Under reduced motion only `summary` is shown, as one static card.
  * Sound follows the sound setting (off by default).
@@ -75,7 +74,7 @@ function MomentDialog(props: {
   const panelRef = useRef<HTMLDivElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   useModalKeys(panelRef, true, onClose);
-  // After useModalKeys: start on Next so Enter and pad A advance.
+  // After useModalKeys: start on Next.
   useEffect(() => {
     nextRef.current?.focus();
   }, []);
@@ -157,12 +156,10 @@ function MomentDialog(props: {
           <div className="flex items-center gap-2">
             <Button ref={nextRef} variant="primary" onClick={next}>
               {last ? "Done" : "Next"}
-              <KeyHint keys="Enter" />
             </Button>
             {!last ? (
               <Button variant="quiet" onClick={onClose}>
                 Skip all
-                <KeyHint keys="Esc" />
               </Button>
             ) : null}
           </div>

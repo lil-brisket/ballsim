@@ -104,6 +104,7 @@ function dash(overrides: Partial<HomeHeroDash> = {}): HomeHeroDash {
       payrollVsLeaguePct: null,
       rosterProblems: [],
       upcomingGames: [game("g1")],
+      nextOpponent: { wins: 3, losses: 1, strength: 66.4 },
     },
     ...overrides,
   };
@@ -266,6 +267,28 @@ describe("HomeHero precedence", () => {
     ).toBe("/dashboard/s1/calendar?focus=next-game");
     expect(screen.getByRole("link", { name: "Review rotation" })).toBeTruthy();
     expect(primaryControls(container)).toEqual(["Sim to tip-off"]);
+  });
+
+  it("shows both teams' records and ratings in the matchup", () => {
+    renderHero(dash());
+
+    const matchup = screen.getByRole("group", { name: "Matchup" });
+    expect(within(matchup).getByText("TOR")).toBeTruthy();
+    expect(within(matchup).getByText("0-2")).toBeTruthy();
+    expect(within(matchup).getByText("Avg OVR 62.1")).toBeTruthy();
+    expect(within(matchup).getByText("MON")).toBeTruthy();
+    expect(within(matchup).getByText("3-1")).toBeTruthy();
+    expect(within(matchup).getByText("Avg OVR 66.4")).toBeTruthy();
+  });
+
+  it("omits the opponent's record and rating when they are unknown", () => {
+    const base = dash();
+    renderHero(dash({ team: { ...base.team, nextOpponent: null } }));
+
+    const matchup = screen.getByRole("group", { name: "Matchup" });
+    expect(within(matchup).getByText("MON")).toBeTruthy();
+    expect(within(matchup).queryByText("3-1")).toBeNull();
+    expect(within(matchup).queryByText(/Avg OVR 66/)).toBeNull();
   });
 
   it("shows the offseason with up to three priorities when nothing is scheduled", () => {

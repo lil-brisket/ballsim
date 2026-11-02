@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/styles";
 import { playUiSound } from "@/components/ui/sound/ui-sound";
 
-export type HubTileSize = "hero" | "wide" | "square";
+export type HubTileSize = "hero" | "wide" | "square" | "compact";
 
 type HubTileBase = {
   title: string;
@@ -41,6 +41,7 @@ const SPAN: Record<HubTileSize, string> = {
   hero: "min-h-36 sm:col-span-2 sm:row-span-2 sm:min-h-72",
   wide: "min-h-36 sm:col-span-2",
   square: "min-h-36",
+  compact: "min-h-20",
 };
 
 const SPAN_DENSE: Record<HubTileSize, string> = {
@@ -52,12 +53,14 @@ const SPAN_DENSE: Record<HubTileSize, string> = {
 /**
  * Big focusable hub tile with a cut corner: a link (`href`) or a button
  * (`onSelect`). Use inside a CSS grid; hero spans 2x2 and wide spans 2 columns
- * from `sm` up, and everything is a single column on phones.
+ * from `sm` up, and everything is a single column on phones. `compact` is a
+ * short, dense tile for secondary facts.
  */
 export function HubTile(props: HubTileProps) {
   const size = props.size ?? "square";
   const hero = size === "hero";
-  const dense = props.dense === true && !hero;
+  const compact = size === "compact";
+  const dense = (props.dense === true || compact) && !hero;
   const className = cn(
     consoleFocusClass,
     "group block min-h-11 text-left touch-manipulation",
@@ -119,7 +122,9 @@ export function HubTile(props: HubTileProps) {
                 ? "text-3xl sm:text-4xl"
                 : size === "wide"
                   ? "text-xl"
-                  : "text-lg sm:text-xl",
+                  : compact
+                    ? "text-base sm:text-lg"
+                    : "text-lg sm:text-xl",
             )}
           >
             {props.title}
@@ -140,7 +145,13 @@ export function HubTile(props: HubTileProps) {
             <span
               className={cn(
                 "font-display block font-bold tabular-nums leading-none text-ink",
-                hero ? "text-6xl sm:text-7xl" : dense ? "text-3xl" : "text-4xl",
+                hero
+                  ? "text-6xl sm:text-7xl"
+                  : compact
+                    ? "text-2xl"
+                    : dense
+                      ? "text-3xl"
+                      : "text-4xl",
               )}
             >
               {props.stat.value}

@@ -74,18 +74,23 @@ const TEAM_HUB: OwnerNavGroup = {
   icon: "team",
   items: [
     { href: "/team", label: "Overview", icon: "team" },
-    { href: "/roster", label: "Roster", icon: "roster", badgeKey: "roster" },
-    { href: "/roster/injuries", label: "Injuries", icon: "injuries" },
+    {
+      href: "/roster",
+      label: "Roster",
+      icon: "roster",
+      badgeKey: "roster",
+      also: ["/roster/injuries"],
+    },
     {
       href: "/team-management/lineups",
       label: "Lineups",
       icon: "lineups",
     },
-    { href: "/development", label: "Development", icon: "development" },
     {
-      href: "/development-league",
-      label: "Dev League",
+      href: "/development",
+      label: "Development",
       icon: "development",
+      also: ["/development-league"],
     },
     { href: "/team/history", label: "History", icon: "awards" },
   ],
@@ -102,10 +107,10 @@ const LEAGUE_HUB: OwnerNavGroup = {
     { href: "/league/standings", label: "Standings", icon: "standings" },
     {
       href: "/league/player-stats",
-      label: "Player Stats",
+      label: "Stats",
       icon: "standings",
+      also: ["/league/team-stats"],
     },
-    { href: "/league/team-stats", label: "Team Stats", icon: "standings" },
     {
       href: "/league/transactions",
       label: "Transactions",
@@ -120,6 +125,20 @@ const LEAGUE_HUB: OwnerNavGroup = {
     { href: "/history", label: "History", icon: "awards" },
   ],
 };
+
+/**
+ * Pages reached through an in-page switcher rather than a sub-tab. Not in the
+ * tab bar, but still listed by the command palette so search finds them.
+ */
+export const OWNER_NAV_SEARCH_PAGES: readonly {
+  hubId: OwnerHubId;
+  href: string;
+  label: string;
+}[] = [
+  { hubId: "team", href: "/roster/injuries", label: "Injuries" },
+  { hubId: "team", href: "/development-league", label: "Dev League" },
+  { hubId: "league", href: "/league/team-stats", label: "Team Stats" },
+];
 
 const FRONT_OFFICE_HUB: OwnerNavGroup = {
   id: "front-office",

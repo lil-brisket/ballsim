@@ -67,6 +67,9 @@ export const DRAFT_PICK_VALUE_ROUND_1 = 80;
 export const DRAFT_PICK_VALUE_ROUND_2 = 50;
 
 /** Bonus per incoming asset already on the evaluating team's trade block. */
+/** Asset-value gap inside which a trade reads as roughly even. */
+export const TRADE_EVEN_BAND = 8;
+
 export const TRADE_BLOCK_VALUE_BONUS = 10;
 
 /** Weights for composite player base asset value (sum ≈ 1). */

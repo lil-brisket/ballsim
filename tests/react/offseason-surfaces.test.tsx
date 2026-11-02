@@ -367,7 +367,7 @@ describe("phase command center", () => {
         expect(container.textContent).toContain(task.title);
       }
       expect(
-        screen.getByRole("region", { name: "Optional shortcuts" }).textContent,
+        screen.getByRole("region", { name: "Quick links" }).textContent,
       ).toContain("Roster");
       expect(primaryCount(container)).toBeLessThanOrEqual(1);
     },

@@ -5,12 +5,10 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { ProspectSheetHeader } from "@/components/roster/sheet/ProspectSheetHeader";
 import { RatingRangeCell } from "@/components/roster/sheet/RatingRangeCell";
 import { SheetTable } from "@/components/roster/sheet/SheetTable";
-import { KeyHint } from "@/components/ui/KeyHint";
 import { RatingDisplaySwitch } from "@/components/ui/RatingDisplaySwitch";
 import { useRatingDisplay } from "@/components/ui/rating-display";
 import {
   DEFAULT_SHEET_SORT,
-  moveSortColumn,
   PROSPECT_COLUMNS,
   sortProspectRows,
   ungroupedProspects,
@@ -123,22 +121,6 @@ export function ProspectSheet(props: {
       case "ArrowUp":
         pick(index - 1);
         break;
-      case "Home":
-        pick(0);
-        break;
-      case "End":
-        pick(sorted.length - 1);
-        break;
-      case "ArrowRight":
-      case "ArrowLeft": {
-        const next = moveSortColumn(
-          PROSPECT_COLUMNS,
-          sort,
-          event.key === "ArrowRight" ? 1 : -1,
-        );
-        setSort({ columnId: next, direction: firstDirection(next) });
-        break;
-      }
       default:
         return;
     }
@@ -183,11 +165,6 @@ export function ProspectSheet(props: {
           first.
         </p>
       ) : null}
-
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
-        <KeyHint keys={["↑", "↓"]} label="Select" />
-        <KeyHint keys={["←", "→"]} label="Sort" />
-      </div>
     </div>
   );
 }

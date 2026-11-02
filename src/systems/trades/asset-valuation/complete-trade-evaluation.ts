@@ -7,6 +7,7 @@ import {
   AGE_VALUE_MODIFIERS,
   STRATEGIC_POSTURE_ADJUSTMENTS,
   TRADE_BLOCK_VALUE_BONUS,
+  TRADE_EVEN_BAND,
 } from "@/systems/trades-config";
 import { getTradeBlock } from "@/systems/trades/trade-block";
 import { getTeamAssetValue } from "@/systems/trades/asset-valuation/team-asset-value";
@@ -136,8 +137,8 @@ export function evaluateTrade(
   );
 
   let recommendation: TradeEvaluation["recommendation"] = "even";
-  if (valueDifference >= 8) recommendation = "favor_receive";
-  else if (valueDifference <= -8) recommendation = "favor_send";
+  if (valueDifference >= TRADE_EVEN_BAND) recommendation = "favor_receive";
+  else if (valueDifference <= -TRADE_EVEN_BAND) recommendation = "favor_send";
 
   if (recommendation === "favor_receive") {
     reasons.unshift("Trade favors this team on asset value");

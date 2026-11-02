@@ -13,6 +13,7 @@ import {
   DlProspectCard,
 } from "@/components/development-league/DlProspectCard";
 import { DlTeamPerformancePanel } from "@/components/development-league/DlTeamPerformancePanel";
+import { HubPageSwitch } from "@/components/game/shell/HubPageSwitch";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -42,6 +43,11 @@ export default async function DevelopmentLeaguePage({
 
   return (
     <div className="space-y-6">
+      <HubPageSwitch
+        saveId={saveId}
+        pair="development"
+        active="development-league"
+      />
       <PageHeader
         title="Development League"
         subtitle={

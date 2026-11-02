@@ -12,7 +12,6 @@ import {
   ErrorState,
   Gauge,
   HubTile,
-  KeyHint,
   Metric,
   MobileListCard,
   NumberStepper,
@@ -153,14 +152,6 @@ export function TeamShowcase(props: {
           <OvrBadge overall={91} size="xl" />
           <OvrBadge overall={84} size="xl" ghost label="POT" />
           <OvrBadge overall={82} size="md" ghost />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <KeyHint keys="Q" />
-          <KeyHint keys="E" />
-          <KeyHint keys="Enter" label="Select" />
-          <KeyHint keys={["Ctrl", "K"]} label="Search" />
-          <KeyHint keys="Esc" label="Back" />
         </div>
 
         <SlantTabs

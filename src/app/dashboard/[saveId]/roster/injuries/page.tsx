@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HubPageSwitch } from "@/components/game/shell/HubPageSwitch";
 import { InjuriesPageView } from "@/components/roster/InjuriesPageView";
 
 export const metadata: Metadata = { title: "Injuries" };
@@ -16,6 +17,7 @@ export default async function RosterInjuriesPage({
   const { error } = await searchParams;
   return (
     <>
+      <HubPageSwitch saveId={saveId} pair="roster" active="injuries" />
       <InjuriesPageView saveId={saveId} error={error} />
     </>
   );

@@ -34,6 +34,10 @@ Moved behind `next/dynamic` (`ssr: false`):
 - the dashboard moments (awards night, championship, season recap,
   progression): load only when the save has one to show.
 
+Later change: the keyboard shortcuts (`/`, Ctrl/Cmd+K) and the gamepad bridge
+were removed with the console-controls layer. The palette now opens from the
+search button only.
+
 | Screen     | Before: files | Before: transferred | Before: parsed | After: files | After: transferred | After: parsed |
 | ---------- | ------------: | ------------------: | -------------: | -----------: | -----------------: | ------------: |
 | Home       |            20 |            355.8 KB |      1160.5 KB |           22 |           351.9 KB |     1142.1 KB |

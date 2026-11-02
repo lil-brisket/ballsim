@@ -163,12 +163,10 @@ describe("RosterSheet", () => {
     fireEvent.keyDown(grid(), { key: "ArrowUp" });
     fireEvent.keyDown(grid(), { key: "ArrowUp" });
     expect(selectedName()).toBe("Alex Rivera");
-    fireEvent.keyDown(grid(), { key: "End" });
+    for (let step = 0; step < 4; step += 1) {
+      fireEvent.keyDown(grid(), { key: "ArrowDown" });
+    }
     expect(selectedName()).toBe("Cal Young");
-    fireEvent.keyDown(grid(), { key: "ArrowDown" });
-    expect(selectedName()).toBe("Cal Young");
-    fireEvent.keyDown(grid(), { key: "Home" });
-    expect(selectedName()).toBe("Alex Rivera");
   });
 
   it("only handles keys it uses", () => {
@@ -219,18 +217,6 @@ describe("RosterSheet", () => {
     expect(rowIds()[0]).toBe("p2");
     // Dashes, never zeros.
     expect(row("p1").textContent).toContain("—");
-  });
-
-  it("moves the sorted column with Left/Right", () => {
-    renderSheet();
-    fireEvent.keyDown(grid(), { key: "ArrowRight" });
-    expect(header("POS").getAttribute("aria-sort")).toBe("ascending");
-    fireEvent.keyDown(grid(), { key: "ArrowRight" });
-    expect(header("AGE").getAttribute("aria-sort")).toBe("ascending");
-    fireEvent.keyDown(grid(), { key: "ArrowRight" });
-    expect(header("OVR").getAttribute("aria-sort")).toBe("descending");
-    fireEvent.keyDown(grid(), { key: "ArrowLeft" });
-    expect(header("AGE").getAttribute("aria-sort")).toBe("ascending");
   });
 
   it("opens the card on Enter and double-click, not on a single click", () => {
@@ -337,7 +323,7 @@ describe("RosterSheet", () => {
     expect(row("p1").className).not.toContain("opacity-70");
   });
 
-  it("switches tabs by button and with [ and ]", () => {
+  it("switches tabs by button", () => {
     renderSheet();
     const count = () => within(grid()).getAllByRole("columnheader").length - 1;
     expect(count()).toBe(13);
@@ -345,10 +331,8 @@ describe("RosterSheet", () => {
     expect(count()).toBe(21);
     fireEvent.click(screen.getByRole("button", { name: "Stats" }));
     expect(count()).toBe(12);
-    fireEvent.keyDown(grid(), { key: "]" });
-    expect(count()).toBe(13);
-    fireEvent.keyDown(grid(), { key: "[" });
-    expect(count()).toBe(12);
+    fireEvent.click(screen.getByRole("button", { name: "Detail" }));
+    expect(count()).toBe(21);
   });
 
   it("falls back to the default order when the sorted column leaves the tab", () => {
@@ -372,36 +356,7 @@ describe("RosterSheet", () => {
     );
     expect(selectedName()).toBe("Alex Rivera");
   });
-  describe("compare key", () => {
-    it("marks on the first C and opens the compare page on the second", () => {
-      renderSheet();
-      fireEvent.click(row("p2"));
-      fireEvent.keyDown(grid(), { key: "c" });
-      expect(push).not.toHaveBeenCalled();
-      expect(screen.getByRole("status").textContent).toMatch(
-        /Comparing Ben Adams/,
-      );
-
-      fireEvent.click(row("p1"));
-      fireEvent.keyDown(grid(), { key: "C" });
-      expect(push).toHaveBeenCalledWith(
-        "/dashboard/save_test/players/compare?a=p2&b=p1",
-      );
-    });
-
-    it("clears the mark on C for the same player or Cancel compare", () => {
-      renderSheet();
-      fireEvent.keyDown(grid(), { key: "c" });
-      expect(screen.getByRole("status")).toBeTruthy();
-      fireEvent.keyDown(grid(), { key: "c" });
-      expect(screen.queryByRole("status")).toBeNull();
-      expect(push).not.toHaveBeenCalled();
-
-      fireEvent.keyDown(grid(), { key: "c" });
-      fireEvent.click(screen.getByRole("button", { name: "Cancel compare" }));
-      expect(screen.queryByRole("status")).toBeNull();
-    });
-
+  describe("compare", () => {
     it("works from the header button too", () => {
       renderSheet();
       fireEvent.click(screen.getByRole("button", { name: "Compare" }));
@@ -412,11 +367,6 @@ describe("RosterSheet", () => {
       expect(push).toHaveBeenCalledWith(
         expect.stringMatching(/\/players\/compare\?a=p1&b=p3$/),
       );
-    });
-
-    it("lists the key in the hints", () => {
-      renderSheet();
-      expect(screen.getByText("Compare", { selector: "span" })).toBeTruthy();
     });
   });
 });
