@@ -16,6 +16,8 @@ import { findTeamStaffByRole } from "@/systems/staff-effects";
 import { STARTER_ROLES } from "@/systems/staff-generation";
 import type { ManagementActionId } from "@/systems/simulation/management-actions";
 import { isInLeaguePhase } from "@/systems/phase-engine";
+import { assignLineupSlots } from "@/systems/lineup-assignment";
+import { playerCanPlay } from "@/domain/entities/player";
 
 export const COACHING_ROLES: readonly StaffRole[] = [
   "head_coach",
@@ -99,6 +101,22 @@ function detectRosterNeeds(state: GameState, teamId: TeamId): ManagementNeed[] {
     });
   }
 
+  const injuryGaps = injuryLineupGaps(state, team.roster);
+  if (
+    injuryGaps.length > 0 &&
+    healthyCount >= GAME_SIMULATION_CONFIG.startingLineupSize
+  ) {
+    needs.push({
+      id: "injury_position_gap",
+      actionId: "SIGN_INJURY_REPLACEMENT",
+      severity: "critical",
+      title: "Injury leaves a position open",
+      detail: `Healthy players cannot cover ${injuryGaps.join(", ")}.`,
+      needKey: `injury_position_gap:${injuryGaps.join("")}`,
+      metadata: { positionalGaps: injuryGaps, healthyCount, injuredCount },
+    });
+  }
+
   const inFaWindow = isInLeaguePhase(state, "offseason.free_agency");
 
   if (
@@ -144,6 +162,30 @@ function detectRotationNeeds(
         detail: `Fewer than ${GAME_SIMULATION_CONFIG.startingLineupSize} healthy players for a valid lineup.`,
         needKey: `invalid_rotation:${healthy.length}`,
         metadata: { healthyCount: healthy.length },
+      },
+    ];
+  }
+
+  const lineupGaps = playingPhase(state)
+    ? assignLineupSlots(
+        team.roster
+          .map((playerId) => state.world.players[playerId])
+          .filter(
+            (player): player is NonNullable<typeof player> =>
+              player != null && playerCanPlay(player),
+          ),
+      ).unfilled
+    : [];
+  if (lineupGaps.length > 0) {
+    return [
+      {
+        id: "no_legal_lineup",
+        actionId: "ADJUST_STARTING_LINEUP",
+        severity: "critical",
+        title: "No legal lineup",
+        detail: `Healthy players cannot fill ${lineupGaps.join(", ")}. Sign or trade for those positions; a player can only play his own positions.`,
+        needKey: `no_legal_lineup:${lineupGaps.join("")}`,
+        metadata: { positionalGaps: lineupGaps },
       },
     ];
   }
@@ -271,6 +313,11 @@ function detectDraftNeeds(state: GameState, teamId: TeamId): ManagementNeed[] {
   ];
 }
 
+function playingPhase(state: GameState): boolean {
+  const phase = state.competition.season.phase;
+  return phase === "preseason" || phase === "regular" || phase === "playoffs";
+}
+
 function countHealthyPlayers(
   state: GameState,
   roster: readonly PlayerId[],
@@ -299,18 +346,33 @@ function missingPositionKey(state: GameState, teamId: TeamId): string {
   if (!team) {
     return "none";
   }
-  const counts = new Map<string, number>();
-  for (const playerId of team.roster) {
-    const player = state.world.players[playerId];
-    if (!player) {
-      continue;
-    }
-    counts.set(player.position, (counts.get(player.position) ?? 0) + 1);
+  const players = team.roster
+    .map((playerId) => state.world.players[playerId])
+    .filter((player): player is NonNullable<typeof player> => player != null);
+  return assignLineupSlots(players).unfilled[0] ?? "none";
+}
+
+/**
+ * Positions the healthy players cannot fill, when injuries are the reason: the
+ * whole roster could fill them, the healthy part cannot. In season only.
+ */
+function injuryLineupGaps(
+  state: GameState,
+  roster: readonly PlayerId[],
+): string[] {
+  const phase = state.competition.season.phase;
+  if (phase !== "preseason" && phase !== "regular") {
+    return [];
   }
-  for (const position of ["PG", "SG", "SF", "PF", "C"] as const) {
-    if ((counts.get(position) ?? 0) === 0) {
-      return position;
-    }
+  const players = roster
+    .map((playerId) => state.world.players[playerId])
+    .filter((player): player is NonNullable<typeof player> => player != null);
+  const healthy = players.filter((player) => playerCanPlay(player));
+  if (healthy.length === players.length) {
+    return [];
   }
-  return "none";
+  const everyone = assignLineupSlots(players).unfilled;
+  return assignLineupSlots(healthy).unfilled.filter(
+    (position) => !everyone.includes(position),
+  );
 }

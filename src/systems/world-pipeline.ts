@@ -1,3 +1,4 @@
+import { ensureFreeAgentPool } from "@/systems/free-agent-pool";
 import type { Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
@@ -76,6 +77,11 @@ export function bootstrapWorld(
     current = preseason.state;
     events.push(...preseason.events);
   }
+
+  // A new league always has free agents: standard leagues open with a pool, a
+  // roster package may carry none, and a fantasy draft's pool is the draft
+  // pool (the floor waits until that draft completes).
+  current = ensureFreeAgentPool(current, rng).state;
 
   return systemResult(current, events);
 }

@@ -7,6 +7,9 @@ import { validateGameState } from "@/persistence/validate-game-state";
 import { DEFAULT_ROSTER_SIZE } from "@/systems/roster-generation-config";
 import { canonicalCustomPlayerId } from "@/systems/custom-content/normalize";
 import { makeFullRosterPackage } from "../../helpers/custom-content";
+import { PLAYER_POSITIONS } from "@/domain/entities/player";
+import { listFreeAgents } from "@/systems/free-agency";
+import { FREE_AGENT_POOL_MIN_PER_POSITION } from "@/systems/free-agent-pool";
 import { bootstrapWorld } from "@/systems/world-pipeline";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
 
@@ -65,11 +68,18 @@ describe("custom roster import", () => {
       createSeededRng(customState.meta.rngState),
       customPkg,
     ).state;
+    // Every team player comes from the package; the only other players are the
+    // generic free agents a league always keeps for injury cover.
     expect(
-      Object.keys(customBoot.world.players).every((id) =>
-        id.startsWith("custom_"),
+      Object.values(customBoot.world.players).every(
+        (player) =>
+          player.id.startsWith("custom_") ||
+          (player.id.startsWith("player_fa_pool_") && player.teamId === null),
       ),
     ).toBe(true);
+    expect(listFreeAgents(customBoot).playerIds.length).toBeGreaterThanOrEqual(
+      FREE_AGENT_POOL_MIN_PER_POSITION * PLAYER_POSITIONS.length,
+    );
     expect(
       Object.values(customBoot.world.players).some((player) =>
         player.id.includes("_fill_"),

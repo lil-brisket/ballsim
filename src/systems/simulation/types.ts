@@ -31,14 +31,20 @@ export type SimulationStopReason =
   | "draft_clock"
   | "phase_change"
   | "user_team_game"
+  | "illegal_lineup"
   | "user_stopped";
 
-export type OwnerInterruptStopReason = "pending_owner_decision" | "draft_clock";
+export type OwnerInterruptStopReason =
+  "pending_owner_decision" | "draft_clock" | "illegal_lineup";
 
 export function isOwnerInterruptStopReason(
   reason: string | null | undefined,
 ): reason is OwnerInterruptStopReason {
-  return reason === "pending_owner_decision" || reason === "draft_clock";
+  return (
+    reason === "pending_owner_decision" ||
+    reason === "draft_clock" ||
+    reason === "illegal_lineup"
+  );
 }
 
 export type SimulationTeamGameProgress = {

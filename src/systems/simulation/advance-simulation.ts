@@ -23,6 +23,7 @@ import {
 } from "@/systems/simulation/monthly-pipeline";
 import { processOffseasonLifecycle } from "@/systems/simulation/offseason-lifecycle";
 import { runOwnerGameplay } from "@/systems/simulation/owner-gameplay";
+import { ownerLineupNeedsFix } from "@/systems/simulation/owner-lineup-gate";
 import {
   formatCannotBeginRegularSeasonError,
   syncPhaseForward,
@@ -221,6 +222,23 @@ function createAdvanceSession(
         ownerHasScheduledGameOnDate(current, ownerTeamId, dateAboutToSimulate)
       ) {
         stopReason = "user_team_game";
+        finished = true;
+        return false;
+      }
+
+      // The owner's team has no legal five (every player at his primary or
+      // secondary position) and nothing will cover it: stop before the game so
+      // the owner can sign or reshuffle. Never consumes RNG.
+      if (
+        !needsRegularSeasonInitialization(current) &&
+        ownerHasScheduledGameOnDate(
+          current,
+          ownerTeamId,
+          dateAboutToSimulate,
+        ) &&
+        ownerLineupNeedsFix(current)
+      ) {
+        stopReason = "illegal_lineup";
         finished = true;
         return false;
       }

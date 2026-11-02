@@ -2,7 +2,9 @@ import {
   createDomainEvent,
   type DomainEvent,
 } from "@/domain/events/domain-event";
+import { createSeededRng } from "@/domain/rng";
 import type { GameState } from "@/state/game-state";
+import { ensureFreeAgentPool } from "@/systems/free-agent-pool";
 import { appendSeasonEventLog } from "@/state/game-state";
 import { analyzeFantasyDraft } from "@/systems/fantasy-draft/draft-analysis";
 import { withFantasyDraft } from "@/systems/fantasy-draft/draft-order";
@@ -52,6 +54,10 @@ export function completeFantasyDraft(
     teamSummaries: analysis.teamSummaries,
     leagueRecap: analysis.leagueRecap,
   });
+
+  // Undrafted players are the free agents; keep the pool at its floor in case a
+  // position was drafted dry.
+  next = ensureFreeAgentPool(next, createSeededRng(next.meta.rngState)).state;
 
   const seasonYear = next.competition.season.year;
   const teamIds = Object.keys(next.world.teams);

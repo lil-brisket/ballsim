@@ -1,3 +1,6 @@
+import { PLAYER_POSITIONS } from "@/domain/entities/player";
+import { listFreeAgents } from "@/systems/free-agency";
+import { FREE_AGENT_POOL_MIN_PER_POSITION } from "@/systems/free-agent-pool";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -46,8 +49,16 @@ describe("custom roster save creation", () => {
     const loaded = await store.load(result.save.id);
     expect(loaded).not.toBeNull();
     expect(() => validateGameState(loaded!.state)).not.toThrow();
-    expect(Object.keys(loaded!.state.world.players).length).toBe(
+    // Team rosters are exactly the package's players; the league also keeps
+    // its free-agent pool.
+    const players = Object.values(loaded!.state.world.players);
+    expect(players.filter((player) => player.teamId !== null)).toHaveLength(
       settings.league.teamCount * DEFAULT_ROSTER_SIZE,
+    );
+    expect(
+      listFreeAgents(loaded!.state).playerIds.length,
+    ).toBeGreaterThanOrEqual(
+      FREE_AGENT_POOL_MIN_PER_POSITION * PLAYER_POSITIONS.length,
     );
     expect(loaded!.state.settings.draft.mode).toBe("custom");
   });
