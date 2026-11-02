@@ -1,19 +1,13 @@
 import { GameHeader } from "@/components/game/GameHeader";
 import type { DashboardSnapshot } from "@/state/selectors";
 import {
-  numberedHubs,
   OWNER_NAV_GROUPS,
   type OwnerNavGroup,
 } from "@/application/owner-nav-config";
 import { TransactionTicker } from "@/components/game/TransactionTicker";
 import type { TransactionTickerView } from "@/state/transaction-ticker-selectors";
 import { RouteTransition } from "@/components/game/RouteTransition";
-import { ControlLegend } from "@/components/game/shell/ControlLegend";
-import {
-  LazyCommandPalette,
-  LazyGamepadBridge,
-} from "@/components/game/shell/LazyShellExtras";
-import { ShellKeys } from "@/components/game/shell/ShellKeys";
+import { LazyCommandPalette } from "@/components/game/shell/LazyShellExtras";
 import { MobileHubBar } from "@/components/game/shell/MobileHubBar";
 import { ShellOffset } from "@/components/game/shell/ShellOffset";
 import { SubTabBar } from "@/components/game/shell/SubTabBar";
@@ -26,8 +20,8 @@ import { teamThemeStyle } from "@/components/ui/TeamThemeScope";
 
 /**
  * In-save chrome: a sticky top bar (team, hubs, date, record, Sim) with the
- * active hub's sub-tabs under it, the page, and the control legend (desktop)
- * or hub bar (phones) along the bottom. Sets the controlled team's `--team-*`
+ * active hub's sub-tabs under it, the page, and the hub bar (phones) along
+ * the bottom. Sets the controlled team's `--team-*`
  * colours on the root so everything below inherits them.
  */
 export function GameShell(props: {
@@ -68,7 +62,7 @@ export function GameShell(props: {
             </SimulationLockRegion>
           </ShellOffset>
 
-          <main className="mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-4 pb-24 pt-6 sm:px-6 lg:pb-20 lg:pt-8">
+          <main className="mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-4 pb-24 pt-6 sm:px-6 lg:pb-8 lg:pt-8">
             <RouteTransition className="flex min-w-0 flex-1 flex-col gap-8">
               {props.children}
             </RouteTransition>
@@ -77,9 +71,6 @@ export function GameShell(props: {
           <SimulationLockRegion className="contents">
             <MobileHubBar saveId={props.saveId} groups={groups} />
           </SimulationLockRegion>
-          <ControlLegend hubCount={numberedHubs(groups).length} />
-          <ShellKeys saveId={props.saveId} groups={groups} />
-          <LazyGamepadBridge />
           <LazyCommandPalette saveId={props.saveId} groups={groups} />
         </div>
       </SimulationActivityProvider>

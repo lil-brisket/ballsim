@@ -12,6 +12,7 @@ import { ProgressionPanel } from "@/components/development/ProgressionPanel";
 import { SkillRatingsTable } from "@/components/development/SkillRatingsTable";
 import { TrainingCamps } from "@/components/development/TrainingCamps";
 import { ManagementDecisionPanel } from "@/components/management/ManagementDecisionPanel";
+import { HubPageSwitch } from "@/components/game/shell/HubPageSwitch";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
@@ -45,6 +46,7 @@ export default async function DevelopmentHubPage({
 
   return (
     <div className="space-y-4">
+      <HubPageSwitch saveId={saveId} pair="development" active="development" />
       <PageHeader
         title="Player Development"
         actions={

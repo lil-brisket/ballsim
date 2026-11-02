@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { simHref } from "@/components/game/shell/hub-keys";
+import { simHref } from "@/components/game/shell/shell-links";
 import { PendingOwnerDecisionPanel } from "@/components/owner/dashboard/PendingOwnerDecisionPanel";
 import { ArenaPanel } from "@/components/ui/ArenaPanel";
 import { buttonClass } from "@/components/ui/Button";
@@ -77,6 +77,41 @@ function HeroRow(props: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-8">
       {props.children}
+    </div>
+  );
+}
+
+/** One side of the next-game matchup: badge, record and team rating. */
+function MatchupSide(props: {
+  branding: React.ComponentProps<typeof TeamBadge>["branding"];
+  name: string;
+  abbreviation: string;
+  wins: number | null;
+  losses: number | null;
+  strength: number | null;
+}) {
+  const hasRecord = props.wins !== null && props.losses !== null;
+  return (
+    <div className="flex min-w-[4.5rem] flex-col items-center gap-1 text-center">
+      <TeamBadge
+        branding={props.branding}
+        name={props.name}
+        size="lg"
+        decorative
+      />
+      <span className="font-display text-lg font-bold uppercase tracking-wide text-ink">
+        {props.abbreviation}
+      </span>
+      {hasRecord ? (
+        <span className="text-sm tabular-nums text-soft">
+          {props.wins}-{props.losses}
+        </span>
+      ) : null}
+      {props.strength !== null ? (
+        <span className="text-sm tabular-nums text-muted">
+          Avg OVR {props.strength}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -256,21 +291,32 @@ export function HomeHero(props: {
               {game.home ? "Home game" : "Road game"}
             </p>
           </div>
-          <div aria-hidden className="flex items-center gap-3">
-            <TeamBadge
+          <div
+            role="group"
+            aria-label="Matchup"
+            className="flex items-center gap-4"
+          >
+            <MatchupSide
               branding={team.branding}
               name={teamName}
-              size="lg"
-              decorative
+              abbreviation={team.abbreviation}
+              wins={dash.team.wins}
+              losses={dash.team.losses}
+              strength={dash.team.strength}
             />
-            <span className="font-display text-xl font-bold uppercase tracking-widest text-faint">
+            <span
+              aria-hidden
+              className="font-display text-xl font-bold uppercase tracking-widest text-faint"
+            >
               {game.home ? "vs" : "@"}
             </span>
-            <TeamBadge
+            <MatchupSide
               branding={game.opponentBranding}
               name={game.opponentName}
-              size="lg"
-              decorative
+              abbreviation={game.opponentAbbreviation}
+              wins={dash.team.nextOpponent?.wins ?? null}
+              losses={dash.team.nextOpponent?.losses ?? null}
+              strength={dash.team.nextOpponent?.strength ?? null}
             />
           </div>
           <Actions>

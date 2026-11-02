@@ -7,10 +7,7 @@ export function OffseasonQuickLinks(props: {
 }) {
   return (
     <nav aria-label="Offseason destinations">
-      <FocusGrid
-        memoryKey="offseason-destinations"
-        className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
-      >
+      <FocusGrid className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {props.links.map((link, index) => (
           <HubTile
             key={link.href}

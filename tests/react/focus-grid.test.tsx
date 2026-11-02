@@ -1,12 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { FocusGrid } from "@/components/ui/focus/FocusGrid";
-import { setInputMode } from "@/components/ui/focus/input-mode";
 
 afterEach(() => {
   cleanup();
-  window.sessionStorage.clear();
-  delete document.documentElement.dataset.input;
 });
 
 /** jsdom has no layout: give each tile a fixed box on a 2x2 grid. */
@@ -37,7 +34,7 @@ function placeTiles() {
 
 function Board() {
   return (
-    <FocusGrid memoryKey="test" aria-label="Tiles">
+    <FocusGrid aria-label="Tiles">
       {["A", "B", "C", "D"].map((name) => (
         <a key={name} href={`/${name}`} data-focus-item="">
           {name}
@@ -81,21 +78,5 @@ describe("FocusGrid", () => {
     a.focus();
     fireEvent.keyDown(a, { key: "ArrowRight", altKey: true });
     expect(document.activeElement).toBe(a);
-  });
-
-  it("restores the remembered tile only in keyboard mode", () => {
-    const first = render(<Board />);
-    screen.getByRole("link", { name: "C" }).focus();
-    first.unmount();
-
-    render(<Board />);
-    expect(document.activeElement).toBe(document.body);
-    cleanup();
-
-    setInputMode("keyboard");
-    render(<Board />);
-    expect(document.activeElement).toBe(
-      screen.getByRole("link", { name: "C" }),
-    );
   });
 });

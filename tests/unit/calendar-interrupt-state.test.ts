@@ -25,6 +25,9 @@ const tradeInterrupt: CalendarInterrupt = {
     financialPct: 75,
     rosterImpact: [],
     bothSidesOwned: false,
+    evenBand: 8,
+    offeringTeamBranding: null,
+    receivingTeamBranding: null,
   },
 };
 

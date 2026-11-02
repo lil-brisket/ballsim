@@ -48,7 +48,7 @@ export function PhaseDashboard(props: {
         returnPath={props.returnPath}
         dismissAction={props.dismissAction}
       />
-      <section aria-label="Optional shortcuts">
+      <section aria-label="Quick links">
         <SectionHeading title="Optional" />
         <p className="mt-2 flex flex-wrap gap-2 text-sm text-muted">
           {props.view.optionalLinks.map((link) => (

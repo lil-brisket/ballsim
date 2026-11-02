@@ -172,10 +172,8 @@ describe("ProspectSheet", () => {
     expect(selectedName()).toBe("Ben Adams");
     fireEvent.click(row("p4"));
     expect(selectedName()).toBe("Dan Fox");
-    fireEvent.keyDown(grid(), { key: "Home" });
-    expect(selectedName()).toBe("Alex Rivera");
-    fireEvent.keyDown(grid(), { key: "End" });
-    expect(selectedName()).toBe("Dan Fox");
+    fireEvent.keyDown(grid(), { key: "ArrowUp" });
+    expect(selectedName()).toBe("Cal Young");
   });
 
   it("shows ranges as grade spans in Grades and numbers in Ratings, with spoken text", () => {
@@ -246,14 +244,6 @@ describe("ProspectSheet", () => {
     renderSheet();
     expect(rowIds()).toEqual(["p1", "p2", "p3", "p4"]);
     expect(grid().querySelector('th[scope="rowgroup"]')).toBeNull();
-  });
-
-  it("moves the sorted column with Left/Right", () => {
-    renderSheet();
-    fireEvent.keyDown(grid(), { key: "ArrowRight" });
-    expect(header("POS").getAttribute("aria-sort")).toBe("ascending");
-    fireEvent.keyDown(grid(), { key: "ArrowLeft" });
-    expect(header("CONF").getAttribute("aria-sort")).toBe("descending");
   });
 
   it("never marks a best in column", () => {

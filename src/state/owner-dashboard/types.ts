@@ -110,6 +110,14 @@ export type OwnerDashboardRosterProblem = {
   kind: string;
 };
 
+/** The controlled team's next opponent, for the Home matchup card. */
+export type OwnerDashboardNextOpponent = {
+  wins: number;
+  losses: number;
+  /** Mean roster overall, one decimal, same scale as `team.strength`. */
+  strength: number;
+};
+
 export type OwnerDashboardTeam = {
   wins: number;
   losses: number;
@@ -121,6 +129,7 @@ export type OwnerDashboardTeam = {
   payrollVsLeaguePct: number | null;
   rosterProblems: OwnerDashboardRosterProblem[];
   upcomingGames: ScheduleGameView[];
+  nextOpponent: OwnerDashboardNextOpponent | null;
 };
 
 export type OwnerDashboardOwner = {

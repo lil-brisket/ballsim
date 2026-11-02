@@ -9,7 +9,6 @@ import { NavBadge, badgeLabel } from "@/components/game/shell/NavBadge";
 import { NavIcon } from "@/components/game/shell/NavIcon";
 import { hubTransitionTypes } from "@/components/game/shell/transition-direction";
 import { useActiveNav } from "@/components/game/shell/use-active-nav";
-import { KeyHint } from "@/components/ui/KeyHint";
 import {
   cn,
   displayClass,
@@ -39,10 +38,6 @@ export function HubBar(props: {
 
   return (
     <nav aria-label="Hubs" className="flex min-w-0 items-center gap-1">
-      {/* Bar hints only on wide screens; the legend always lists Q/E. */}
-      <span className="hidden 2xl:inline-flex">
-        <KeyHint keys="Q" className="mr-1" />
-      </span>
       <ul className="flex min-w-0 items-center gap-1">
         {hubs.map((hub) => {
           const isActive = active?.hub.id === hub.id;
@@ -70,9 +65,6 @@ export function HubBar(props: {
           );
         })}
       </ul>
-      <span className="hidden 2xl:inline-flex">
-        <KeyHint keys="E" className="ml-1" />
-      </span>
       {settings ? (
         <Link
           href={`${base}${settings.href}`}

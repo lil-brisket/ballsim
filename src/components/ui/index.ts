@@ -10,7 +10,6 @@ export {
   type HubTileProps,
   type HubTileSize,
 } from "@/components/ui/HubTile";
-export { KeyHint } from "@/components/ui/KeyHint";
 export { OvrBadge, type OvrBadgeSize } from "@/components/ui/OvrBadge";
 export { MobileListCard } from "@/components/ui/MobileListCard";
 export { Drawer, type DrawerSize } from "@/components/ui/Drawer";

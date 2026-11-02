@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { loadRosterPageView } from "@/application/game-service";
+import { HubPageSwitch } from "@/components/game/shell/HubPageSwitch";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { RosterPage } from "@/components/roster/RosterPage";
 
@@ -25,6 +26,7 @@ export default async function RosterRoutePage({
 
   return (
     <>
+      <HubPageSwitch saveId={saveId} pair="roster" active="roster" />
       {error ? <ErrorState message={error} /> : null}
       <Suspense
         fallback={<p className="text-sm text-faint">Loading roster…</p>}

@@ -32,7 +32,7 @@ import {
   resetSearchIndexCacheForTests,
 } from "@/components/game/shell/CommandPalette";
 import { SearchButton } from "@/components/game/shell/SearchButton";
-import { OPEN_COMMAND_PALETTE } from "@/components/game/shell/hub-keys";
+import { OPEN_COMMAND_PALETTE } from "@/components/game/shell/shell-links";
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 import { resetDrawerScrollLockForTests } from "@/components/ui/drawer-scroll-lock";
 
@@ -109,6 +109,21 @@ describe("CommandPalette", () => {
     expect(optionLabels()).toContain("Team › Roster");
     expect(optionLabels()).not.toContain("League › Standings");
     expect(document.body.style.overflow).toBe("hidden");
+  });
+
+  it("finds pages that moved into in-page switchers", async () => {
+    renderPalette();
+    await openPalette();
+    await type("injuries");
+    expect(optionLabels()).toEqual(["Team › Injuries"]);
+    await type("dev league");
+    expect(optionLabels()).toEqual(["Team › Dev League"]);
+    await type("team stats");
+    expect(optionLabels()).toEqual(["League › Team Stats"]);
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("option")[0]!);
+    });
+    expect(push).toHaveBeenCalledWith("/dashboard/save_test/league/team-stats");
   });
 
   it("filters by every token and loads the index once", async () => {

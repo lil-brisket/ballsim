@@ -16,20 +16,9 @@ vi.mock("@/components/entity/EntityDrawerProvider", () => ({
   }),
 }));
 
-const bridgeMounted = vi.fn();
-vi.mock("@/components/game/shell/GamepadBridge", () => ({
-  GamepadBridge: () => {
-    bridgeMounted();
-    return null;
-  },
-}));
-
 import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
-import { OPEN_COMMAND_PALETTE } from "@/components/game/shell/hub-keys";
-import {
-  LazyCommandPalette,
-  LazyGamepadBridge,
-} from "@/components/game/shell/LazyShellExtras";
+import { OPEN_COMMAND_PALETTE } from "@/components/game/shell/shell-links";
+import { LazyCommandPalette } from "@/components/game/shell/LazyShellExtras";
 import { resetSearchIndexCacheForTests } from "@/components/game/shell/CommandPalette";
 import { resetDrawerScrollLockForTests } from "@/components/ui/drawer-scroll-lock";
 import { LazyDashboardMoments } from "@/components/moments/LazyDashboardMoments";
@@ -37,7 +26,6 @@ import { LazyDashboardMoments } from "@/components/moments/LazyDashboardMoments"
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
-  bridgeMounted.mockClear();
   resetSearchIndexCacheForTests();
   resetDrawerScrollLockForTests();
 });
@@ -61,24 +49,6 @@ describe("LazyCommandPalette", () => {
     });
     expect(await screen.findByRole("combobox")).toBeTruthy();
     expect(screen.getByRole("dialog")).toBeTruthy();
-  });
-});
-
-describe("LazyGamepadBridge", () => {
-  it("does not load the bridge without a controller", async () => {
-    vi.stubGlobal("navigator", { ...navigator, getGamepads: () => [] });
-    render(<LazyGamepadBridge />);
-    await act(async () => {});
-    expect(bridgeMounted).not.toHaveBeenCalled();
-  });
-
-  it("loads the bridge when a controller connects", async () => {
-    vi.stubGlobal("navigator", { ...navigator, getGamepads: () => [] });
-    render(<LazyGamepadBridge />);
-    await act(async () => {
-      window.dispatchEvent(new Event("gamepadconnected"));
-    });
-    await vi.waitFor(() => expect(bridgeMounted).toHaveBeenCalled());
   });
 });
 

@@ -401,6 +401,9 @@ function renderClient() {
 const FINAL_IN_SCOREBOARD = { selector: "#watch-scoreboard-status" };
 const scoreboardFinal = () => screen.queryByText("Final", FINAL_IN_SCOREBOARD);
 const slider = () => screen.getByRole("slider", { name: "Playback position" });
+// One play at a time, through the scrubber's arrow keys.
+const stepForward = () => fireEvent.keyDown(slider(), { key: "ArrowRight" });
+const stepBack = () => fireEvent.keyDown(slider(), { key: "ArrowLeft" });
 
 /** Plays revealed so far, read from the scrubber. */
 function currentRevealed(): number {
@@ -548,7 +551,7 @@ describe("WatchGameClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Play" }));
     advance(1);
     fireEvent.click(screen.getByRole("button", { name: "Pause" }));
-    fireEvent.keyDown(document, { key: "." });
+    stepForward();
     expectRevealed(2);
     expect(
       feed().getByText("J. Smith makes 3-pt shot (K. Lee assists)"),
@@ -759,7 +762,7 @@ describe("WatchGameClient", () => {
 
       const firstPeriod = PLAYS.filter((p) => p.period === 1).length;
       for (let i = 0; i < firstPeriod; i += 1) {
-        fireEvent.keyDown(document, { key: "." });
+        stepForward();
       }
       expectRevealed(firstPeriod);
       expect(lineCells("AWY")).toEqual(["5", "–", "–", "–", "5"]);
@@ -1267,49 +1270,6 @@ describe("WatchGameClient transport", () => {
     expectRevealed(11);
   });
 
-  it("has Space, arrow and comma/period shortcuts", () => {
-    renderClient();
-    key(document.body, " ");
-    expect(button("Pause")).toBeTruthy();
-    key(document.body, " ");
-    expect(button("Play")).toBeTruthy();
-
-    key(document.body, "ArrowRight");
-    expectRevealed(stepPossession(VIEW, 0, 1));
-    key(document.body, "ArrowRight");
-    expectRevealed(stepPossession(VIEW, stepPossession(VIEW, 0, 1), 1));
-    key(document.body, "ArrowLeft");
-    expectRevealed(stepPossession(VIEW, 0, 1));
-    key(document.body, ".");
-    expectRevealed(stepPossession(VIEW, 0, 1) + 1);
-    key(document.body, ",");
-    expectRevealed(stepPossession(VIEW, 0, 1));
-    key(document.body, "ArrowLeft");
-    key(document.body, ",");
-    expectRevealed(0);
-  });
-
-  it("ignores shortcuts while typing, with modifiers, or on a focused button", () => {
-    renderClient();
-    const input = document.createElement("input");
-    document.body.appendChild(input);
-    input.focus();
-    for (const name of [" ", "ArrowRight", "ArrowLeft", ".", ","]) {
-      key(input, name);
-    }
-    expectRevealed(0);
-    expect(button("Play")).toBeTruthy();
-    input.remove();
-
-    fireEvent.keyDown(document.body, { key: ".", ctrlKey: true });
-    expectRevealed(0);
-
-    // Space on a button activates that button only, not play as well.
-    key(button("Next possession"), " ");
-    expectRevealed(0);
-    expect(button("Play")).toBeTruthy();
-  });
-
   it("has exactly one primary control", () => {
     renderClient();
     const group = screen.getByRole("group", { name: "Playback controls" });
@@ -1355,15 +1315,6 @@ describe("WatchGameClient transport", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("menu")).toBeNull();
     expect(document.activeElement).toBe(trigger);
-  });
-
-  it("lists the keyboard shortcuts in a popover", () => {
-    renderClient();
-    const trigger = button("Keyboard shortcuts");
-    fireEvent.click(trigger);
-    expect(screen.getByText("Play or pause")).toBeTruthy();
-    fireEvent.mouseDown(document.body);
-    expect(screen.queryByText("Play or pause")).toBeNull();
   });
 });
 
@@ -1558,9 +1509,9 @@ describe("WatchGameClient benches", () => {
 
     // Stepping by hand is still one play at a time.
     fireEvent.click(screen.getByRole("button", { name: "Pause" }));
-    fireEvent.keyDown(document, { key: "," });
+    stepBack();
     expectRevealed(11);
-    fireEvent.keyDown(document, { key: "." });
+    stepForward();
     expectRevealed(12);
   });
 });
@@ -1627,13 +1578,13 @@ describe("WatchGameClient clock and team fouls", () => {
     expect(within(teamBlock("Visitor")).getByText("Fouls 0")).toBeTruthy();
     expect(screen.queryByTestId("scoreboard-bonus")).toBeNull();
     for (let n = 1; n <= 3; n += 1) {
-      fireEvent.keyDown(document, { key: "." });
+      stepForward();
     }
     expect(within(teamBlock("Visitor")).getByText("Fouls 3")).toBeTruthy();
     expect(within(teamBlock("Harbor")).getByText("Fouls 0")).toBeTruthy();
     // Away has 3 of 4: home is not in the bonus yet.
     expect(screen.queryByTestId("scoreboard-bonus")).toBeNull();
-    fireEvent.keyDown(document, { key: "." });
+    stepForward();
     expect(within(teamBlock("Visitor")).getByText("Fouls 4")).toBeTruthy();
     const chip = screen.getByTestId("scoreboard-bonus");
     expect(chip.textContent).toBe("BONUS");
@@ -1644,7 +1595,7 @@ describe("WatchGameClient clock and team fouls", () => {
   it("restarts the fouls and the bonus in the next period", () => {
     render(<WatchGameClient view={FOUL_VIEW} saveId="save_test" />);
     for (let n = 1; n <= 5; n += 1) {
-      fireEvent.keyDown(document, { key: "." });
+      stepForward();
     }
     expect(within(teamBlock("Visitor")).getByText("Fouls 0")).toBeTruthy();
     expect(within(teamBlock("Harbor")).getByText("Fouls 1")).toBeTruthy();
@@ -1710,7 +1661,7 @@ describe("WatchGameClient clock and team fouls", () => {
       vi.advanceTimersByTime(motionMs(VIEW, 1) / 2);
     });
     fireEvent.click(screen.getByRole("button", { name: "Pause" }));
-    fireEvent.keyDown(document, { key: "." });
+    stepForward();
     expectRevealed(2);
     expect(status()).toBe("Q1 11:00");
     act(() => {

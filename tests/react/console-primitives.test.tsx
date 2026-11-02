@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { DataTable, numericCellClass } from "@/components/ui/DataTable";
 import { HubTile } from "@/components/ui/HubTile";
-import { KeyHint } from "@/components/ui/KeyHint";
 import { OvrBadge } from "@/components/ui/OvrBadge";
 import { Tabs } from "@/components/ui/Tabs";
 import { ratingTier } from "@/presentation/rating-tier";
@@ -52,18 +51,6 @@ describe("OvrBadge", () => {
   it("names a ghost badge as potential", () => {
     render(<OvrBadge overall={82} ghost />);
     expect(screen.getByRole("img", { name: "Potential 82" })).toBeTruthy();
-  });
-});
-
-describe("KeyHint", () => {
-  it("renders one kbd per key", () => {
-    const { container } = render(
-      <KeyHint keys={["Ctrl", "K"]} label="Search" />,
-    );
-    const caps = container.querySelectorAll("kbd");
-    expect(caps).toHaveLength(2);
-    expect(caps[0]!.textContent).toBe("Ctrl");
-    expect(screen.getByText("Search")).toBeTruthy();
   });
 });
 

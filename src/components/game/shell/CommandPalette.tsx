@@ -9,7 +9,10 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import type { OwnerNavGroup } from "@/application/owner-nav-config";
+import {
+  OWNER_NAV_SEARCH_PAGES,
+  type OwnerNavGroup,
+} from "@/application/owner-nav-config";
 import type { SearchIndex } from "@/state/search-index";
 import { useEntityDrawer } from "@/components/entity/EntityDrawerProvider";
 import {
@@ -20,7 +23,7 @@ import {
 import {
   OPEN_COMMAND_PALETTE,
   simHref,
-} from "@/components/game/shell/hub-keys";
+} from "@/components/game/shell/shell-links";
 import { useActiveNav } from "@/components/game/shell/use-active-nav";
 import {
   acquireDrawerScrollLock,
@@ -189,6 +192,17 @@ export function CommandPalette(props: {
           label,
           haystack: label,
           run: () => navigate(tab.href),
+        });
+      }
+      for (const extra of OWNER_NAV_SEARCH_PAGES) {
+        if (extra.hubId !== hub.id) continue;
+        const label = `${hub.label} › ${extra.label}`;
+        items.push({
+          key: `page:${hub.id}:${extra.href}`,
+          group: "pages",
+          label,
+          haystack: label,
+          run: () => navigate(extra.href),
         });
       }
     }

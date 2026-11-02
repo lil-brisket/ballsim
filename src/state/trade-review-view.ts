@@ -1,7 +1,14 @@
 import { getContractSalaryForYear } from "@/domain/entities/contract";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type { TeamId } from "@/domain/ids";
+import {
+  toBrandingView,
+  type TeamBrandingView,
+} from "@/state/team-branding-view";
+import { TRADE_EVEN_BAND } from "@/systems/trades-config";
+import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { GameState } from "@/state/game-state";
 import { evaluateTrade } from "@/systems/trades/asset-valuation/complete-trade-evaluation";
@@ -17,6 +24,16 @@ export type TradeReviewAsset = {
   name: string;
   detail: string;
   href: string | null;
+  /** Player-only fields (absent for picks and unknown players). */
+  playerId?: string;
+  firstName?: string;
+  lastName?: string;
+  position?: string;
+  overall?: number;
+  age?: number;
+  /** Current-year salary in dollars; null when no contract. */
+  salary?: number | null;
+  portrait?: PlayerPortraitAssignment | null;
 };
 
 export type TradeReviewRosterRow = {
@@ -34,6 +51,11 @@ export type TradeReviewView = {
   youSend: TradeReviewAsset[];
   recommendation: "favor_receive" | "favor_send" | "even";
   netValue: number;
+  /** Net value inside +/- this reads as "roughly even". */
+  evenBand: number;
+  /** Team colours for tinting each side's portraits; null when unknown. */
+  offeringTeamBranding: TeamBrandingView | null;
+  receivingTeamBranding: TeamBrandingView | null;
   reasons: string[];
   rosterFitPct: number;
   strategicFitPct: number;
@@ -83,6 +105,9 @@ export function buildTradeReviewView(
     youSend: describeTradeSide(state, userSide, saveId),
     recommendation: evaluation.recommendation,
     netValue: evaluation.valueDifference,
+    evenBand: TRADE_EVEN_BAND,
+    offeringTeamBranding: toBrandingView(offeringTeam?.branding),
+    receivingTeamBranding: toBrandingView(receivingTeam?.branding),
     reasons: evaluation.reasons,
     rosterFitPct: Math.round(evaluation.rosterFit * 100),
     strategicFitPct: Math.round(evaluation.strategicFit * 100),
@@ -128,6 +153,14 @@ function describeTradeSide(
       name: `${player.firstName} ${player.lastName}`,
       detail: `${player.position} · OVR ${ovr} · Age ${player.age}${salaryLabel}`,
       href: `/dashboard/${saveId}/players/${playerId}`,
+      playerId,
+      firstName: player.firstName,
+      lastName: player.lastName,
+      position: player.position,
+      overall: ovr,
+      age: player.age,
+      salary: salary ?? null,
+      portrait: selectPlayerPortrait(state, playerId),
     });
   }
   for (const pickId of side.draftPickIds) {

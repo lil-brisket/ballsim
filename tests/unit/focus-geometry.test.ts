@@ -4,8 +4,6 @@ import {
   nearestInDirection,
   type FocusRect,
 } from "@/components/ui/focus/geometry";
-import { parentPathFor } from "@/components/game/shell/hub-keys";
-import { OWNER_NAV_GROUPS } from "@/application/owner-nav-config";
 
 function rect(left: number, top: number, width = 100, height = 100): FocusRect {
   return { left, top, right: left + width, bottom: top + height };
@@ -45,21 +43,5 @@ describe("nearestInDirection", () => {
     expect(directionForKey("ArrowUp")).toBe("up");
     expect(directionForKey("ArrowRight")).toBe("right");
     expect(directionForKey("Enter")).toBeUndefined();
-  });
-});
-
-describe("parentPathFor (Esc)", () => {
-  const groups = OWNER_NAV_GROUPS;
-
-  it("goes from a tab to its hub, from a hub to Home, and stays on Home", () => {
-    expect(parentPathFor(groups, "team", "/roster")).toBe("/team");
-    expect(parentPathFor(groups, "team", "/players/p1")).toBe("/team");
-    expect(parentPathFor(groups, "team", "/team")).toBe("");
-    expect(parentPathFor(groups, "home", "/calendar")).toBe("");
-    expect(parentPathFor(groups, "home", "")).toBeUndefined();
-  });
-
-  it("returns Home for paths outside every hub", () => {
-    expect(parentPathFor(groups, undefined, "/somewhere")).toBe("");
   });
 });

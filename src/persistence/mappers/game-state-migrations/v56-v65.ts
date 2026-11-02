@@ -345,7 +345,8 @@ export function migrateV64ToV65(state: GameStateV64): GameStateV65 {
     },
     competition: { ...state.competition, playByPlay: {} },
   } as GameState;
-  const migrated = ensurePlayerPortraits(withRegistry).state;
+  // Frozen at the v65 shape: the shared library arrives in v82 → v83.
+  const migrated = ensurePlayerPortraits(withRegistry, { library: [] }).state;
   const { playByPlay: _dropped, ...competition } = migrated.competition;
   void _dropped;
   return {

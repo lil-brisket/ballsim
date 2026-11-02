@@ -228,7 +228,7 @@ export function WatchGameClient(props: {
     [view],
   );
 
-  // The buttons and the page shortcuts share these handlers.
+  // The playback buttons use these handlers.
   const togglePlay = () => {
     if (revealed >= total && !isPlaying) {
       return;
@@ -247,67 +247,6 @@ export function WatchGameClient(props: {
       jumpTo(stepPossession(view, revealed, 1));
     }
   };
-  const shortcuts = useRef({
-    togglePlay,
-    stepPlay,
-    previousPossession,
-    nextPossession,
-  });
-  useEffect(() => {
-    shortcuts.current = {
-      togglePlay,
-      stepPlay,
-      previousPossession,
-      nextPossession,
-    };
-  });
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.defaultPrevented ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.altKey
-      ) {
-        return;
-      }
-      const target = event.target instanceof Element ? event.target : null;
-      if (
-        target?.closest(
-          'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="slider"], [role="menu"], [role="menuitem"], [role="menuitemcheckbox"]',
-        )
-      ) {
-        return;
-      }
-      const current = shortcuts.current;
-      switch (event.key) {
-        case " ":
-          if (target?.closest("button, a")) {
-            return;
-          }
-          current.togglePlay();
-          break;
-        case "ArrowLeft":
-          current.previousPossession();
-          break;
-        case "ArrowRight":
-          current.nextPossession();
-          break;
-        case ",":
-          current.stepPlay(-1);
-          break;
-        case ".":
-          current.stepPlay(1);
-          break;
-        default:
-          return;
-      }
-      event.preventDefault();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
-
   const selectedPlayer =
     view.players.find((p) => p.playerId === selectedPlayerId) ?? null;
   const selectedRow = selectedPlayer

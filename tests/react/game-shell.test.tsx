@@ -385,7 +385,7 @@ describe("game shell UI", () => {
     unmount();
   });
 
-  it("GameShell has a main landmark, hub bars and the control legend", () => {
+  it("GameShell has a main landmark, hub bars and the sound toggle", () => {
     const { unmount } = render(
       <GameShell
         saveId="save_test"
@@ -398,9 +398,9 @@ describe("game shell UI", () => {
     expect(screen.getByRole("main").textContent).toContain("page");
     // Desktop hub row and phone hub bar.
     expect(screen.getAllByRole("navigation", { name: "Hubs" })).toHaveLength(2);
-    expect(
-      screen.getByRole("contentinfo", { name: "Keyboard controls" }),
-    ).toBeTruthy();
+    expect(screen.queryByRole("contentinfo")).toBeNull();
+    // Desktop header sound control.
+    expect(screen.getByRole("button", { name: "Sound: Off" })).toBeTruthy();
     const more = screen.getByRole("button", { name: "More" });
     expect(more.className).toContain("min-h-14");
     expect(

@@ -914,21 +914,14 @@ body {
 }
 
 /*
- * Height of the in-save bottom chrome: the phone hub bar, or the desktop
- * control legend (none on touch screens). Sticky-bottom page bars use
- * `bottom-[var(--shell-bottom,0px)]`.
+ * Height of the in-save bottom chrome: the phone hub bar (none from lg up).
+ * Sticky-bottom page bars use `bottom-[var(--shell-bottom,0px)]`.
  */
 .shell-backdrop {
   --shell-bottom: calc(3.5rem + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 64rem) {
-  .shell-backdrop {
-    --shell-bottom: 2.6rem;
-  }
-}
-
-@media (min-width: 64rem) and (pointer: coarse) {
   .shell-backdrop {
     --shell-bottom: 0px;
   }
@@ -960,21 +953,18 @@ body {
 }
 
 ::view-transition-group(shell-header),
-::view-transition-group(shell-mobile-bar),
-::view-transition-group(shell-legend) {
+::view-transition-group(shell-mobile-bar) {
   animation: none;
   z-index: 100;
 }
 
 ::view-transition-old(shell-header),
-::view-transition-old(shell-mobile-bar),
-::view-transition-old(shell-legend) {
+::view-transition-old(shell-mobile-bar) {
   display: none;
 }
 
 ::view-transition-new(shell-header),
-::view-transition-new(shell-mobile-bar),
-::view-transition-new(shell-legend) {
+::view-transition-new(shell-mobile-bar) {
   animation: none;
 }
 

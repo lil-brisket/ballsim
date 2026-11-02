@@ -2,9 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   activeOwnerNav,
   OWNER_NAV_GROUPS,
-  type OwnerNavGroup,
 } from "@/application/owner-nav-config";
-import { hubForKey } from "@/components/game/shell/hub-keys";
 import { NAV_ICONS } from "@/components/game/shell/NavIcon";
 
 function where(path: string): [string | undefined, string | undefined] {
@@ -45,7 +43,7 @@ describe("activeOwnerNav", () => {
     expect(where("")).toEqual(["home", "Home"]);
     expect(where("/team")).toEqual(["team", "Overview"]);
     expect(where("/roster")).toEqual(["team", "Roster"]);
-    expect(where("/roster/injuries")).toEqual(["team", "Injuries"]);
+    expect(where("/roster/injuries")).toEqual(["team", "Roster"]);
     // Contracts lives under /team but belongs to Front Office.
     expect(where("/team/contracts")).toEqual(["front-office", "Contracts"]);
     expect(where("/finances/payroll")).toEqual(["front-office", "Finances"]);
@@ -68,6 +66,33 @@ describe("activeOwnerNav", () => {
     expect(where("/sponsorships")).toEqual(["front-office", "Business"]);
   });
 
+  it("folds switcher pages into their hub tab", () => {
+    expect(where("/development")).toEqual(["team", "Development"]);
+    expect(where("/development-league")).toEqual(["team", "Development"]);
+    expect(where("/league/player-stats")).toEqual(["league", "Stats"]);
+    expect(where("/league/team-stats")).toEqual(["league", "Stats"]);
+  });
+
+  it("keeps Team at 5 tabs and League at 6", () => {
+    const labels = (id: string) =>
+      OWNER_NAV_GROUPS.find((g) => g.id === id)!.items.map((i) => i.label);
+    expect(labels("team")).toEqual([
+      "Overview",
+      "Roster",
+      "Lineups",
+      "Development",
+      "History",
+    ]);
+    expect(labels("league")).toEqual([
+      "Overview",
+      "Standings",
+      "Stats",
+      "Transactions",
+      "Awards",
+      "History",
+    ]);
+  });
+
   it("maps tab-less pages to a hub without a tab", () => {
     expect(where("/players/p1")).toEqual(["team", undefined]);
     expect(where("/games/g1/watch")).toEqual(["home", undefined]);
@@ -77,32 +102,5 @@ describe("activeOwnerNav", () => {
   it("does not match a prefix inside a longer path segment", () => {
     expect(where("/teams")).toEqual([undefined, undefined]);
     expect(where("/rosterx")).toEqual([undefined, undefined]);
-  });
-});
-
-describe("hubForKey", () => {
-  const groups: readonly OwnerNavGroup[] = OWNER_NAV_GROUPS;
-
-  it("steps with Q and E and wraps", () => {
-    expect(hubForKey("e", groups, "home")?.id).toBe("team");
-    expect(hubForKey("E", groups, "team")?.id).toBe("league");
-    expect(hubForKey("q", groups, "home")?.id).toBe("media");
-    expect(hubForKey("e", groups, "media")?.id).toBe("home");
-  });
-
-  it("jumps with number keys and never numbers Settings", () => {
-    expect(hubForKey("1", groups, "media")?.id).toBe("home");
-    expect(hubForKey("4", groups, "home")?.id).toBe("front-office");
-    expect(hubForKey("6", groups, "home")).toBeUndefined();
-  });
-
-  it("enters the hub row from Settings", () => {
-    expect(hubForKey("e", groups, "settings")?.id).toBe("home");
-    expect(hubForKey("q", groups, "settings")?.id).toBe("media");
-  });
-
-  it("ignores other keys", () => {
-    expect(hubForKey("x", groups, "home")).toBeUndefined();
-    expect(hubForKey(" ", groups, "home")).toBeUndefined();
   });
 });

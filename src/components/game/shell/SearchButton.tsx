@@ -1,6 +1,6 @@
 "use client";
 
-import { OPEN_COMMAND_PALETTE } from "@/components/game/shell/hub-keys";
+import { OPEN_COMMAND_PALETTE } from "@/components/game/shell/shell-links";
 import { cn, focusRingClass, touchTargetClass } from "@/components/ui/styles";
 
 /** Header button that opens the command palette (the only way on touch). */
