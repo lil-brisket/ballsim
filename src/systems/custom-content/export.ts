@@ -24,6 +24,9 @@ function playerToSource(player: Player, sourceId: string): PlayerSourceRecord {
     heightInches: player.heightInches,
     weightPounds: player.weightPounds,
     position: player.position,
+    ...(player.secondaryPosition !== undefined
+      ? { secondaryPosition: player.secondaryPosition }
+      : {}),
     archetype: player.archetype,
     attributes: { ...player.attributes },
     potential: { ...player.potential },

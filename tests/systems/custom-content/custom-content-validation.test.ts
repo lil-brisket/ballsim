@@ -122,6 +122,30 @@ describe("custom content validation", () => {
     ).toBe(true);
   });
 
+  it("rejects a secondary position that matches the primary or is unknown", () => {
+    for (const [secondaryPosition, code] of [
+      ["PG", "secondary_position_matches_primary"],
+      ["XX", "invalid_secondary_position"],
+    ] as const) {
+      const pkg = makeRosterPackage({
+        teams: [{ sourceId: "t0", name: "A" }],
+        players: [
+          {
+            ...makePlayerSource({ sourceId: "p0", position: "PG" }),
+            secondaryPosition: secondaryPosition as "PG",
+            teamSourceId: "t0",
+          },
+        ],
+      });
+      const result = validateRosterPackage(pkg, {
+        teamCount: 1,
+        schemaVersion: GAME_STATE_SCHEMA_VERSION,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.errors.some((entry) => entry.code === code)).toBe(true);
+    }
+  });
+
   it("warns on missing optional metadata but still imports", () => {
     const pkg = makeFullRosterPackage({ teamCount: 12 });
     const raw = {

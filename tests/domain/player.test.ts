@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   createPlayer,
   PLAYER_POSITIONS,
+  playerPositions,
+  playsPosition,
   type PlayerAttributes,
   type PlayerInput,
 } from "@/domain/entities/player";
@@ -348,5 +350,43 @@ describe("createPlayer", () => {
     expect(() => createPlayer(validInput({ weightPounds: -10 }))).toThrow(
       /weightPounds/,
     );
+  });
+
+  describe("secondaryPosition", () => {
+    it("is absent by default", () => {
+      const player = createPlayer(validInput());
+      expect("secondaryPosition" in player).toBe(false);
+      expect(playerPositions(player)).toEqual(["PG"]);
+    });
+
+    it("keeps a valid secondary position", () => {
+      const player = createPlayer(validInput({ secondaryPosition: "SG" }));
+      expect(player.secondaryPosition).toBe("SG");
+      expect(playerPositions(player)).toEqual(["PG", "SG"]);
+    });
+
+    it("rejects a secondary equal to the primary", () => {
+      expect(() =>
+        createPlayer(validInput({ secondaryPosition: "PG" })),
+      ).toThrow(/secondaryPosition/);
+    });
+
+    it("rejects an unknown secondary position", () => {
+      expect(() =>
+        createPlayer(
+          validInput({
+            secondaryPosition: "XX" as unknown as PlayerInput["position"],
+          }),
+        ),
+      ).toThrow(/secondaryPosition/);
+    });
+
+    it("plays only the primary and secondary positions", () => {
+      const player = createPlayer(validInput({ secondaryPosition: "SG" }));
+      expect(playsPosition(player, "PG")).toBe(true);
+      expect(playsPosition(player, "SG")).toBe(true);
+      expect(playsPosition(player, "SF")).toBe(false);
+      expect(playsPosition(player, "C")).toBe(false);
+    });
   });
 });

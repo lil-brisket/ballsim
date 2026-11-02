@@ -1,4 +1,5 @@
 import { isJerseyNumber } from "@/domain/jersey-number";
+import { isPlayerPosition } from "@/domain/entities/player";
 import { isDeadMoneyReason } from "@/domain/entities/dead-money";
 import { isMoraleReason } from "@/domain/entities/player-morale";
 import { isDevelopmentFocus } from "@/domain/entities/development-plan";
@@ -859,6 +860,21 @@ export function validateGameState(state: unknown): asserts state is GameState {
         playerValue.jerseyTeamId,
         `world.players[${playerId}].jerseyTeamId`,
       );
+    }
+    if (playerValue.secondaryPosition !== undefined) {
+      if (
+        typeof playerValue.secondaryPosition !== "string" ||
+        !isPlayerPosition(playerValue.secondaryPosition)
+      ) {
+        fail(
+          `world.players[${playerId}].secondaryPosition must be a player position.`,
+        );
+      }
+      if (playerValue.secondaryPosition === playerValue.position) {
+        fail(
+          `world.players[${playerId}].secondaryPosition must differ from position.`,
+        );
+      }
     }
     if (playerValue.contractId != null) {
       assertNonEmptyString(

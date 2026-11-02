@@ -18,6 +18,7 @@ import {
   clampPlayerToPotential,
 } from "@/systems/player-development";
 import { developmentStageForAge } from "@/systems/player-generation-config";
+import { gainSecondaryPosition } from "@/systems/player-secondary-position";
 import { trainerDevelopmentMultiplier } from "@/systems/staff-effects";
 import {
   applyDlOpportunityBonusToPlayer,
@@ -126,6 +127,8 @@ export function processSeasonPlayerDevelopment(
       );
       withDlBonus = clampPlayerToPotential(withDlBonus);
     }
+    // A player whose ratings now support a second position gains it, once.
+    withDlBonus = gainSecondaryPosition(withDlBonus);
     nextPlayers[playerId] = withDlBonus;
 
     const afterOverall = calculatePlayerOverall(
