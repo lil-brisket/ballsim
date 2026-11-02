@@ -14,6 +14,7 @@ import { isPlayerAvailable } from "@/systems/player-availability";
 import { cloneTeamRosterManagement } from "@/domain/entities/team-roster-management";
 import { buildRotationPlan } from "@/systems/rotation/rotation-planner";
 import {
+  defaultSlotsForLineup,
   evaluateSubstitutions,
   type SubstitutionCheckpoint,
 } from "@/systems/rotation/substitution-engine";
@@ -220,7 +221,7 @@ function applySideSubstitutions(input: {
   const result = evaluateSubstitutions({
     teamId,
     onCourt,
-    slots: onCourt.map((player) => player.position),
+    slots: defaultSlotsForLineup(onCourt),
     benchPool,
     plan,
     secondsOnCourt: sim.secondsOnCourt,

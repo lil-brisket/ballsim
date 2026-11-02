@@ -9,6 +9,7 @@ import { ROLE_TEMPLATES } from "@/systems/rotation/rotation-role-templates";
 import type { RotationEntry } from "@/domain/entities/team-roster-management";
 import { buildRotationPlan } from "@/systems/rotation/rotation-planner";
 import { evaluateSubstitutions } from "@/systems/rotation/substitution-engine";
+import { hasLegalLineup } from "@/systems/lineup-assignment";
 import { buildRotationGameContext } from "@/systems/rotation/rotation-game-context";
 import { emptyTeamRosterManagement } from "@/domain/entities/team-roster-management";
 
@@ -109,6 +110,83 @@ describe("substitution engine", () => {
     for (const id of fouledOut) {
       expect(result.onCourt.some((p) => p.id === id)).toBe(false);
     }
+  });
+
+  it("replaces a fouled-out center with a player who can play center", () => {
+    const teamId = asTeamId("t1");
+    const onCourt = [1, 2, 3, 4, 5].map((n) =>
+      createPlayer({
+        id: asPlayerId(`pc${n}`),
+        teamId,
+        position: (["PG", "SG", "SF", "PF", "C"] as const)[n - 1]!,
+      }),
+    );
+    // The guard is the better player and would win on rating alone.
+    const guard = createPlayer({
+      id: asPlayerId("pb_guard"),
+      teamId,
+      position: "PG",
+      attributes: { ballHandling: 90, passing: 90 },
+    });
+    const backupCenter = createPlayer({
+      id: asPlayerId("pb_center"),
+      teamId,
+      position: "PF",
+      secondaryPosition: "C",
+    });
+    const bench = [guard, backupCenter];
+    const roster = [...onCourt, ...bench];
+    const rotation = roster.map((player, index) =>
+      makeEntry(player.id, index < 5 ? "starter" : "sixth_man", {
+        preferredPositions: [player.position],
+        targetMinutes: index < 5 ? 30 : 20,
+      }),
+    );
+    const management = {
+      ...emptyTeamRosterManagement(),
+      startingLineup: onCourt.map((player, index) => ({
+        playerId: player.id,
+        slot: (["PG", "SG", "SF", "PF", "C"] as const)[index]!,
+      })),
+      bench: bench.map((p) => p.id),
+      rotation,
+      rotationDepth: 7,
+    };
+    const plan = buildRotationPlan({
+      teamId,
+      management,
+      rosterPlayers: roster,
+      availablePlayerIds: new Set(roster.map((p) => p.id as string)),
+    });
+    const center = onCourt[4]!;
+    const result = evaluateSubstitutions({
+      teamId,
+      onCourt,
+      slots: onCourt.map((p) => p.position),
+      benchPool: bench,
+      plan,
+      secondsOnCourt: new Map(),
+      continuousSecondsOnCourt: new Map(),
+      lastSubElapsedSeconds: new Map(),
+      foulsByPlayerId: new Map([[center.id, 6]]),
+      fouledOutIds: new Set([center.id]),
+      unavailableIds: new Set(),
+      fatigueByPlayerId: new Map(),
+      elapsedGameSeconds: 600,
+      context: buildRotationGameContext({
+        periodNumber: 2,
+        secondsRemainingInPeriod: 400,
+        elapsedGameSeconds: 600,
+        teamScore: 40,
+        opponentScore: 38,
+        competitionType: "regular_season",
+      }),
+      checkpoint: "foul_out",
+      remainingGameMinutes: 30,
+    });
+    expect(result.onCourt.map((p) => p.id)).toContain(backupCenter.id);
+    expect(result.onCourt.map((p) => p.id)).not.toContain(guard.id);
+    expect(hasLegalLineup(result.onCourt)).toBe(true);
   });
 
   it("caps tactical substitutions per checkpoint", () => {

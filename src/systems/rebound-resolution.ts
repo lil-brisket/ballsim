@@ -1,3 +1,4 @@
+import { playedPositions } from "@/systems/lineup-assignment";
 import {
   PLAYER_POSITIONS,
   RATING_MAX,
@@ -40,13 +41,16 @@ export type ReboundResult = {
 /**
  * RNG-free base rebound strength:
  *   rebounding + POSITION_REBOUND_MODIFIERS[position]
+ * `position` is the one he is playing, which is his listed position unless he
+ * is playing his secondary.
  */
-export function playerReboundBaseStrength(player: Player): number {
-  assertPlayerPosition(player.position);
+export function playerReboundBaseStrength(
+  player: Player,
+  position: PlayerPosition = player.position,
+): number {
+  assertPlayerPosition(position);
   assertRating(player.attributes.rebounding, "attributes.rebounding");
-  return (
-    player.attributes.rebounding + POSITION_REBOUND_MODIFIERS[player.position]
-  );
+  return player.attributes.rebounding + POSITION_REBOUND_MODIFIERS[position];
 }
 
 /**
@@ -66,10 +70,17 @@ export function resolveRebound(
 ): ReboundResult {
   validateResolveReboundInput(input, rng);
 
+  const offensivePlayed = playedPositions(input.offensivePlayers);
+  const defensivePlayed = playedPositions(input.defensivePlayers);
+
   const offensiveScores: ReboundCandidateScore[] = [];
   let offensiveTeamStrength = 0;
   for (const player of input.offensivePlayers) {
-    const strength = effectiveStrength(player, rng);
+    const strength = effectiveStrength(
+      player,
+      offensivePlayed.get(player.id),
+      rng,
+    );
     offensiveScores.push({
       playerId: player.id,
       teamId: input.offensiveTeamId,
@@ -82,7 +93,11 @@ export function resolveRebound(
   const defensiveScores: ReboundCandidateScore[] = [];
   let defensiveRawStrength = 0;
   for (const player of input.defensivePlayers) {
-    const strength = effectiveStrength(player, rng);
+    const strength = effectiveStrength(
+      player,
+      defensivePlayed.get(player.id),
+      rng,
+    );
     defensiveScores.push({
       playerId: player.id,
       teamId: input.defensiveTeamId,
@@ -112,8 +127,12 @@ export function resolveRebound(
   };
 }
 
-function effectiveStrength(player: Player, rng: Rng): number {
-  const base = playerReboundBaseStrength(player);
+function effectiveStrength(
+  player: Player,
+  position: PlayerPosition | undefined,
+  rng: Rng,
+): number {
+  const base = playerReboundBaseStrength(player, position);
   const variance =
     (rng.next() * 2 - 1) * REBOUND_RESOLUTION_CONFIG.varianceAmplitude;
   return Math.max(REBOUND_RESOLUTION_CONFIG.minStrength, base + variance);

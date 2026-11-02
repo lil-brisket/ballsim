@@ -114,3 +114,49 @@ describe("pickMatchedDefender", () => {
     expect(draws).toBe(50);
   });
 });
+
+describe("pickMatchedDefender with secondary positions", () => {
+  const noSwitch = switchChance + rimHelpChance + 0.01;
+
+  it("pairs a player by the position he is playing, not his listed one", () => {
+    // Two PFs on the floor: the PF/C plays C because the other PF holds PF.
+    const offense = [
+      createPlayer({
+        id: "off_pg",
+        teamId: asTeamId("off"),
+        position: "PG",
+      }),
+      createPlayer({
+        id: "off_sg",
+        teamId: asTeamId("off"),
+        position: "SG",
+      }),
+      createPlayer({
+        id: "off_sf",
+        teamId: asTeamId("off"),
+        position: "SF",
+      }),
+      createPlayer({
+        id: "off_pf",
+        teamId: asTeamId("off"),
+        position: "PF",
+      }),
+      createPlayer({
+        id: "off_big",
+        teamId: asTeamId("off"),
+        position: "PF",
+        secondaryPosition: "C",
+      }),
+    ];
+    const defense = lineup("def", ["PG", "SG", "SF", "PF", "C"]);
+    const guardedBy = (id: string) =>
+      pickMatchedDefender(
+        offense.find((player) => player.id === id)!,
+        offense,
+        defense,
+        fixedRoll(noSwitch),
+      ).id;
+    expect(guardedBy("off_big")).toBe("def_4"); // plays C
+    expect(guardedBy("off_pf")).toBe("def_3"); // plays PF
+  });
+});

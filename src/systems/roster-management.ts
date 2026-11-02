@@ -5,6 +5,8 @@
 
 import {
   PLAYER_POSITIONS,
+  playerPositions,
+  playsPosition,
   type Player,
   type PlayerPosition,
 } from "@/domain/entities/player";
@@ -24,6 +26,10 @@ import {
   type TeamRosterManagement,
 } from "@/domain/entities/team-roster-management";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
+import {
+  assignLineupSlots,
+  positionDistance,
+} from "@/systems/lineup-assignment";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
 import {
@@ -163,6 +169,13 @@ export function validateRosterManagementShape(
 
   for (const slot of management.startingLineup) {
     checkMembership(slot.playerId, "starting lineup");
+    const slotted = state.world.players[slot.playerId];
+    if (slotted != null && !playsPosition(slotted, slot.slot)) {
+      issues.push({
+        code: "illegal_slot",
+        message: `${slotted.firstName} ${slotted.lastName} plays ${playerPositions(slotted).join("/")} and cannot start at ${slot.slot}.`,
+      });
+    }
     const availability = getPlayerAvailability(state, slot.playerId, teamId);
     if (!availability.available && availability.reason !== "inactive") {
       if (availability.reason === "injured") {
@@ -347,18 +360,14 @@ export type PositionFit = {
 };
 
 /**
- * Primary = player.position; secondary = adjacent positions on the position ladder only.
- * Shared by roster needs and depth-chart eligibility — do not duplicate adjacency elsewhere.
+ * Primary = player.position; secondary = player.secondaryPosition, when he
+ * has one. Those are the only positions he can be placed at.
+ * Shared by roster needs and depth-chart eligibility — do not duplicate position eligibility elsewhere.
  */
 export function positionFitsForPlayer(player: Player): PositionFit[] {
-  const primary = player.position;
-  const index = PLAYER_POSITIONS.indexOf(primary);
-  const fits: PositionFit[] = [{ position: primary, fit: "primary" }];
-  if (index > 0) {
-    fits.push({ position: PLAYER_POSITIONS[index - 1]!, fit: "secondary" });
-  }
-  if (index < PLAYER_POSITIONS.length - 1) {
-    fits.push({ position: PLAYER_POSITIONS[index + 1]!, fit: "secondary" });
+  const fits: PositionFit[] = [{ position: player.position, fit: "primary" }];
+  if (player.secondaryPosition !== undefined) {
+    fits.push({ position: player.secondaryPosition, fit: "secondary" });
   }
   return fits;
 }
@@ -775,21 +784,10 @@ export function recommendRosterManagement(
       player.availability === "out" || player.availability === "suspended",
   );
 
-  const used = new Set<string>();
-  const startingLineup: LineupSlot[] = [];
-
-  for (const slot of PLAYER_POSITIONS) {
-    const candidate =
-      available.find(
-        (player) => player.position === slot && !used.has(player.id),
-      ) ?? available.find((player) => !used.has(player.id));
-    if (candidate == null) {
-      break;
-    }
-    used.add(candidate.id);
-    startingLineup.push({ playerId: candidate.id, slot });
-  }
-
+  // A player starts only at his primary or secondary position, so the
+  // starters are the best natural assignment of the available players. A
+  // short lineup (no legal five exists) is left short rather than padded
+  // with off-position players.
   // Recovery / minor players can play (see player-availability) but only
   // start when the preferred pool cannot fill five; otherwise a banged-up
   // team gets a short lineup that plays a whole game with < 5 on court.
@@ -797,19 +795,19 @@ export function recommendRosterManagement(
     (player) =>
       player.availability === "recovery" || player.availability === "minor",
   );
-  while (startingLineup.length < TRADE_ROSTER_RULES.startingLineupSize) {
-    const candidate =
-      available.find((player) => !used.has(player.id)) ??
-      playableFallback.find((player) => !used.has(player.id));
-    if (candidate == null) {
-      break;
+  let startingLineup: LineupSlot[] = assignLineupSlots(available).slots;
+  if (startingLineup.length < TRADE_ROSTER_RULES.startingLineupSize) {
+    // Recovering / minor players start only when the preferred pool cannot
+    // cover every position.
+    const widened = assignLineupSlots([
+      ...available,
+      ...playableFallback,
+    ]).slots;
+    if (widened.length > startingLineup.length) {
+      startingLineup = widened;
     }
-    const usedSlots = new Set(startingLineup.map((entry) => entry.slot));
-    const slot =
-      PLAYER_POSITIONS.find((position) => !usedSlots.has(position)) ?? "SF";
-    used.add(candidate.id);
-    startingLineup.push({ playerId: candidate.id, slot });
   }
+  const used = new Set<string>(startingLineup.map((slot) => slot.playerId));
 
   const bench: PlayerId[] = [];
   const inactive: PlayerId[] = [];
@@ -891,7 +889,15 @@ export function recommendRosterManagement(
   });
 
   // For depth ranking: overall order with starters first already
-  const ranked = [
+  // Depth = min(philosophy depth, playable count, 12)
+  const playableCount = listPlayableRosterPlayerIds(state, teamId).length;
+  const effectiveDepth = Math.min(
+    resolved.depth,
+    ROTATION_CONFIG.targetRotationPlayerCount,
+    Math.max(playableCount, 5),
+  );
+
+  const orderedByRating = [
     ...rotationCandidates.filter((e) => e.isStarter),
     ...rotationCandidates
       .filter((e) => !e.isStarter)
@@ -906,12 +912,12 @@ export function recommendRosterManagement(
       }),
   ];
 
-  // Depth = min(philosophy depth, playable count, 12)
-  const playableCount = listPlayableRosterPlayerIds(state, teamId).length;
-  const effectiveDepth = Math.min(
-    resolved.depth,
-    ROTATION_CONFIG.targetRotationPlayerCount,
-    Math.max(playableCount, 5),
+  // A tired or fouled-out starter can only be replaced by a player who plays
+  // his position, so the active bench keeps a backup at each one when it can.
+  const ranked = withPositionalBackups(
+    orderedByRating,
+    effectiveDepth,
+    (playerId) => state.world.players[playerId],
   );
 
   const rotation = buildRotationFromRoster(
@@ -1169,7 +1175,11 @@ export function getEmergencyLineup(
     management.startingLineup.every((slot) =>
       isPlayerAvailable(state, slot.playerId, teamId),
     ) &&
-    new Set(management.startingLineup.map((slot) => slot.slot)).size === size;
+    new Set(management.startingLineup.map((slot) => slot.slot)).size === size &&
+    management.startingLineup.every((slot) => {
+      const starter = state.world.players[slot.playerId];
+      return starter != null && playsPosition(starter, slot.slot);
+    });
 
   if (savedValid && availableIds.length >= size) {
     const players = management.startingLineup.map(
@@ -1197,6 +1207,10 @@ export function getEmergencyLineup(
     }
   }
 
+  // No legal five exists. Fill every slot a player can take naturally, then
+  // give the open slots to the best remaining players at the nearest position.
+  // Rosters the game cannot leave short, so this is the last resort; owners
+  // are stopped before it (see advance-simulation) unless AI assist covers it.
   const rosterPlayers = team.roster
     .map((playerId) => state.world.players[playerId])
     .filter((player): player is Player => player != null)
@@ -1209,17 +1223,93 @@ export function getEmergencyLineup(
       return playerOverall(b) - playerOverall(a);
     });
 
-  const selected = rosterPlayers.slice(0, Math.min(size, rosterPlayers.length));
-  const slots: LineupSlot[] = selected.map((player, index) => ({
-    playerId: player.id,
-    slot: PLAYER_POSITIONS[index] ?? "SF",
-  }));
+  const playable = rosterPlayers.filter((player) =>
+    isPlayerAvailable(state, player.id, teamId),
+  );
+  const natural = assignLineupSlots(playable).slots;
+  const taken = new Set<string>(natural.map((slot) => slot.playerId));
+  const slots: LineupSlot[] = [...natural];
+  const openSlots = PLAYER_POSITIONS.filter(
+    (position) => !natural.some((slot) => slot.slot === position),
+  );
+  for (const open of openSlots) {
+    if (slots.length >= size) break;
+    const remaining = rosterPlayers.filter((player) => !taken.has(player.id));
+    // Healthy players first, then the closest position, then the better player.
+    const nearest = [...remaining].sort(
+      (a, b) =>
+        Number(isPlayerAvailable(state, b.id, teamId)) -
+          Number(isPlayerAvailable(state, a.id, teamId)) ||
+        positionDistance(a, open) - positionDistance(b, open) ||
+        playerOverall(b) - playerOverall(a),
+    )[0];
+    if (nearest == null) break;
+    taken.add(nearest.id);
+    slots.push({ playerId: nearest.id, slot: open });
+  }
+  slots.sort(
+    (a, b) =>
+      PLAYER_POSITIONS.indexOf(a.slot) - PLAYER_POSITIONS.indexOf(b.slot),
+  );
+  const selected = slots.map((slot) => state.world.players[slot.playerId]!);
 
   return {
     players: selected,
     slots,
     emergency: true,
   };
+}
+
+/**
+ * Starters first, then the active bench. The bench is the best players by
+ * rating, except that a position with no backup among them gets the best bench
+ * player who plays it, in place of the lowest-ranked player whose spot is not
+ * the only backup at another position. Bench order is otherwise unchanged.
+ */
+function withPositionalBackups<
+  T extends { playerId: PlayerId; isStarter: boolean },
+>(
+  ranked: readonly T[],
+  depth: number,
+  playerOf: (playerId: PlayerId) => Player | undefined,
+): T[] {
+  const starters = ranked.filter((entry) => entry.isStarter);
+  const bench = ranked.filter((entry) => !entry.isStarter);
+  const active = bench.slice(0, Math.max(0, depth - starters.length));
+  const rest = bench.slice(active.length);
+  const plays = (entry: T, position: PlayerPosition): boolean => {
+    const player = playerOf(entry.playerId);
+    return player != null && playsPosition(player, position);
+  };
+  const coverage = (entries: readonly T[]): number =>
+    PLAYER_POSITIONS.filter((position) =>
+      entries.some((entry) => plays(entry, position)),
+    ).length;
+
+  for (const position of PLAYER_POSITIONS) {
+    if (active.some((entry) => plays(entry, position))) continue;
+    const incoming = rest.findIndex((entry) => plays(entry, position));
+    if (incoming < 0) continue;
+    const before = coverage(active);
+    let victim = -1;
+    for (let index = active.length - 1; index >= 0; index -= 1) {
+      const without = active.filter((_, other) => other !== index);
+      if (coverage(without) >= before) {
+        victim = index;
+        break;
+      }
+    }
+    if (victim < 0) continue;
+    const [out] = active.splice(victim, 1);
+    const [added] = rest.splice(incoming, 1);
+    active.push(added!);
+    rest.push(out!);
+  }
+
+  const order = new Map(bench.map((entry, index) => [entry, index]));
+  active.sort((a, b) => order.get(a)! - order.get(b)!);
+  rest.sort((a, b) => order.get(a)! - order.get(b)!);
+  return [...starters, ...active, ...rest];
 }
 
 function starterTemplateEntry(

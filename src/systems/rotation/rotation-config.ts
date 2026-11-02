@@ -11,6 +11,13 @@ export const ROTATION_CONFIG = {
     period3Early: 4,
     period4: 5,
   },
+  /**
+   * Substitution score lost for each position a swap leaves with no one who
+   * plays it. A strong preference for a legal lineup, not a hard rule, so a
+   * clearly better bench player can still come in and play the nearest
+   * position.
+   */
+  openPositionSubstitutionPenalty: 6,
   /** Max discretionary substitutions per checkpoint per team. */
   tacticalSubsPerCheckpoint: 2,
   /** Minimum continuous court seconds before a tactical sub-out. */
