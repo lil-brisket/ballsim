@@ -62,7 +62,7 @@ export function GameShell(props: {
             </SimulationLockRegion>
           </ShellOffset>
 
-          <main className="mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-4 pb-24 pt-6 sm:px-6 lg:pb-8 lg:pt-8">
+          <main className="mx-auto flex w-full max-w-[100rem] flex-1 flex-col px-4 pb-24 pt-6 sm:px-6 lg:pt-8 xl:pb-8">
             <RouteTransition className="flex min-w-0 flex-1 flex-col gap-8">
               {props.children}
             </RouteTransition>

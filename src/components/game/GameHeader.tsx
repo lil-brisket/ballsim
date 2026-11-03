@@ -90,7 +90,7 @@ export function GameHeader(props: {
         >
           BallSim
         </Link>
-        <div className="min-w-0 flex-1 lg:max-w-[10rem] lg:flex-none xl:max-w-[19rem] 2xl:max-w-xs">
+        <div className="min-w-0 flex-1 xl:max-w-[19rem] xl:flex-none 2xl:max-w-xs">
           <Suspense fallback={null}>
             <OwnerTeamSwitcher
               saveId={saveId}
@@ -99,7 +99,7 @@ export function GameHeader(props: {
             />
           </Suspense>
         </div>
-        <div className="hidden min-w-0 flex-1 justify-center lg:flex">
+        <div className="hidden min-w-0 flex-1 justify-center xl:flex">
           <HubBar saveId={saveId} groups={props.groups} />
         </div>
         <TickerBar
@@ -111,7 +111,7 @@ export function GameHeader(props: {
           <span className="sr-only">Record </span>
           {record}
         </p>
-        <SoundMenu className="hidden lg:flex" />
+        <SoundMenu className="hidden xl:flex" />
         <SearchButton />
         <NotificationsBell
           saveId={saveId}

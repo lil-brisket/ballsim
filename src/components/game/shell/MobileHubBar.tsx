@@ -50,7 +50,7 @@ export function MobileHubBar(props: {
     <>
       <nav
         aria-label="Hubs"
-        className="[view-transition-name:shell-mobile-bar] safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t border-surface-line bg-surface-deep/95 backdrop-blur lg:hidden"
+        className="[view-transition-name:shell-mobile-bar] safe-area-bottom fixed inset-x-0 bottom-0 z-40 border-t border-surface-line bg-surface-deep/95 backdrop-blur xl:hidden"
       >
         <ul className="flex">
           {bar.map((hub) => {
