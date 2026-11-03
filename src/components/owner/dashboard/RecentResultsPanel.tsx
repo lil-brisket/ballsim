@@ -1,3 +1,4 @@
+import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { ScoreBug, type ScoreBugTeam } from "@/components/ui/ScoreBug";
 import { cn, focusRingClass } from "@/components/ui/styles";
 import type { RecentFormGame } from "@/state/recent-form-selectors";
@@ -46,10 +47,25 @@ export function RecentResultsPanel(props: {
             >
               <ScoreBug
                 teams={game.home ? [theirs, mine] : [mine, theirs]}
+                mineIndex={game.home ? 1 : 0}
                 date={game.date}
                 className="py-1!"
                 href={`/dashboard/${props.saveId}/games/${game.gameId}`}
               />
+              {game.leader ? (
+                <p className="mt-1 flex items-center gap-1.5 px-1 text-sm text-muted">
+                  <PlayerPortrait
+                    playerId={game.leader.playerId}
+                    firstName={game.leader.firstName}
+                    lastName={game.leader.lastName}
+                    portrait={game.leader.portrait}
+                    size="xs"
+                  />
+                  <span className="truncate">
+                    {game.leader.name} · {game.leader.points} pts
+                  </span>
+                </p>
+              ) : null}
             </li>
           );
         })}

@@ -10,7 +10,10 @@ import {
   focusRingClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
-import { formatGameDate } from "@/presentation/game-date";
+import {
+  formatGameDate,
+  formatRelativeGameDay,
+} from "@/presentation/game-date";
 import type {
   ActionCenterItem,
   ActionCenterView,
@@ -20,7 +23,13 @@ import type { OwnerDashboardView } from "@/state/owner-dashboard";
 export type HomeHeroDash = Pick<
   OwnerDashboardView,
   | "controlledTeam"
+  | "currentDate"
+  | "daysUntilTradeDeadline"
   | "flags"
+  | "home"
+  | "offseasonStage"
+  | "seasonPhase"
+  | "tradesOpen"
   | "offseasonPriorities"
   | "pendingTradeOffer"
   | "seasonRecap"
@@ -116,10 +125,87 @@ function MatchupSide(props: {
   );
 }
 
-function blockingItems(view: ActionCenterView): ActionCenterItem[] {
-  return view.items.filter(
-    (item) => item.severity === "critical" || item.severity === "warning",
-  );
+/** Days inside which the trade deadline earns a line in the hero. */
+const DEADLINE_NOTICE_DAYS = 7;
+
+function tradeDeadlineNote(dash: HomeHeroDash): string | null {
+  const days = dash.daysUntilTradeDeadline;
+  if (!dash.tradesOpen || days == null || days > DEADLINE_NOTICE_DAYS) {
+    return null;
+  }
+  if (days <= 0) return "Trade deadline is today";
+  return `Trade deadline in ${days} day${days === 1 ? "" : "s"}`;
+}
+
+type OffseasonFocus = { label: string; href: string; cta: string };
+
+/** What the offseason hero points at for each stage; hub when none fits. */
+function offseasonFocus(dash: HomeHeroDash, base: string): OffseasonFocus {
+  switch (dash.offseasonStage) {
+    case "draft_preparation":
+    case "draft":
+      return { label: "Draft", href: `${base}/draft`, cta: "Open Draft" };
+    case "free_agency":
+      return {
+        label: "Free agency",
+        href: `${base}/free-agency`,
+        cta: "Open Free Agency",
+      };
+    case "contract_expiration":
+    case "roster_decisions":
+      return {
+        label: "Roster decisions",
+        href: `${base}/team/contracts`,
+        cta: "Review Contracts",
+      };
+    case "staff_development":
+      return {
+        label: "Staff and development",
+        href: `${base}/staff-coaching/staff`,
+        cta: "Open Staff",
+      };
+    default:
+      return {
+        label: "Offseason",
+        href: `${base}/offseason`,
+        cta: "Open Offseason Hub",
+      };
+  }
+}
+
+function nextGameEyebrow(dash: HomeHeroDash): string {
+  if (dash.seasonPhase === "preseason") return "Next preseason game";
+  if (dash.seasonPhase === "playoffs") return "Next playoff game";
+  return "Next game";
+}
+
+function seriesScoreLabel(
+  series: NonNullable<HomeHeroDash["home"]["playoffSeries"]>,
+): string {
+  const { teamWins, opponentWins, opponentAbbreviation } = series;
+  if (teamWins === opponentWins) {
+    return `Series tied ${teamWins}-${opponentWins}`;
+  }
+  return teamWins > opponentWins
+    ? `Leads ${opponentAbbreviation} ${teamWins}-${opponentWins}`
+    : `Trails ${opponentAbbreviation} ${opponentWins}-${teamWins}`;
+}
+
+/** Critical and warning items, those that refuse time advance first. */
+function urgentItems(view: ActionCenterView): ActionCenterItem[] {
+  return view.items
+    .filter(
+      (item) => item.severity === "critical" || item.severity === "warning",
+    )
+    .sort((a, b) => Number(b.blocksAdvance) - Number(a.blocksAdvance));
+}
+
+function urgentTitle(view: ActionCenterView): string {
+  const { blockingCount, urgentCount } = view;
+  if (blockingCount > 0) {
+    return `${blockingCount} action${blockingCount === 1 ? "" : "s"} must be resolved before time can advance`;
+  }
+  return `${urgentCount} action${urgentCount === 1 ? " needs" : "s need"} attention`;
 }
 
 /**
@@ -220,15 +306,14 @@ export function HomeHero(props: {
       break;
     }
     case "urgent-actions": {
-      const [first, ...rest] = blockingItems(actionCenter);
+      const [first, ...rest] = urgentItems(actionCenter);
       const more = rest.slice(0, 2);
-      const count = actionCenter.urgentCount;
       body = (
         <HeroRow>
           <div className="space-y-2">
             <SectionHeading
               id="home-hero-title"
-              title={`${count} action${count === 1 ? " needs" : "s need"} attention before time can advance`}
+              title={urgentTitle(actionCenter)}
             />
             {first ? (
               <div>
@@ -274,22 +359,40 @@ export function HomeHero(props: {
     }
     case "next-game": {
       const game = nextGame!;
+      const series = dash.home.playoffSeries;
+      const deadlineNote = tradeDeadlineNote(dash);
       const teamName = `${team.city} ${team.name}`;
       body = (
         <div className="flex flex-col gap-4 md:grid md:grid-cols-[1fr_auto_auto] md:items-center md:gap-8">
           <div className="space-y-2">
             <SectionHeading
               id="home-hero-title"
-              eyebrow="Next game"
+              eyebrow={nextGameEyebrow(dash)}
               title={`${game.home ? "vs" : "at"} ${game.opponentName}`}
             />
             <p className="text-sm text-soft">
+              {formatRelativeGameDay(game.date, dash.currentDate)}
+              <span className="mx-2 text-disabled" aria-hidden>
+                ·
+              </span>
               {formatGameDate(game.date, { weekday: true })}
               <span className="mx-2 text-disabled" aria-hidden>
                 ·
               </span>
               {game.home ? "Home game" : "Road game"}
             </p>
+            {deadlineNote ? (
+              <p className="text-sm font-medium text-warning">{deadlineNote}</p>
+            ) : null}
+            {series ? (
+              <p className="text-sm font-medium text-ink">
+                {series.roundLabel}
+                <span className="mx-2 text-disabled" aria-hidden>
+                  ·
+                </span>
+                {seriesScoreLabel(series)}
+              </p>
+            ) : null}
           </div>
           <div
             role="group"
@@ -323,9 +426,22 @@ export function HomeHero(props: {
             <Link href={simHref(saveId)} className={PRIMARY}>
               Sim to tip-off
             </Link>
+            <Link href={`${base}/games/${game.gameId}`} className={QUIET}>
+              Game preview
+            </Link>
             <Link href={`${base}/team-management/lineups`} className={QUIET}>
               Review rotation
             </Link>
+            {deadlineNote ? (
+              <Link href={`${base}/trades`} className={QUIET}>
+                Open trades
+              </Link>
+            ) : null}
+            {dash.seasonPhase === "preseason" ? (
+              <Link href={`${base}/development`} className={QUIET}>
+                Training and development
+              </Link>
+            ) : null}
           </Actions>
         </div>
       );
@@ -333,10 +449,15 @@ export function HomeHero(props: {
     }
     case "offseason": {
       const priorities = dash.offseasonPriorities.slice(0, 3);
+      const focus = offseasonFocus(dash, base);
       body = (
         <HeroRow>
           <div className="space-y-2">
-            <SectionHeading id="home-hero-title" title="Offseason" />
+            <SectionHeading
+              id="home-hero-title"
+              eyebrow={focus.label === "Offseason" ? undefined : "Offseason"}
+              title={focus.label}
+            />
             {priorities.length > 0 ? (
               <ul className="space-y-1 text-sm text-soft">
                 {priorities.map((priority) => (
@@ -346,9 +467,14 @@ export function HomeHero(props: {
             ) : null}
           </div>
           <Actions>
-            <Link href={`${base}/offseason`} className={PRIMARY}>
-              Open Offseason Hub
+            <Link href={focus.href} className={PRIMARY}>
+              {focus.cta}
             </Link>
+            {focus.href !== `${base}/offseason` ? (
+              <Link href={`${base}/offseason`} className={QUIET}>
+                Offseason Hub
+              </Link>
+            ) : null}
           </Actions>
         </HeroRow>
       );

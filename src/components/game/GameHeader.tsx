@@ -90,7 +90,7 @@ export function GameHeader(props: {
         >
           BallSim
         </Link>
-        <div className="min-w-0 flex-1 lg:max-w-xs lg:flex-none">
+        <div className="min-w-0 flex-1 xl:max-w-[19rem] xl:flex-none 2xl:max-w-xs">
           <Suspense fallback={null}>
             <OwnerTeamSwitcher
               saveId={saveId}
@@ -99,19 +99,19 @@ export function GameHeader(props: {
             />
           </Suspense>
         </div>
-        <div className="hidden min-w-0 flex-1 justify-center lg:flex">
+        <div className="hidden min-w-0 flex-1 justify-center xl:flex">
           <HubBar saveId={saveId} groups={props.groups} />
         </div>
         <TickerBar
           aria-label="Season status"
           items={tickerItems}
-          className="hidden xl:flex"
+          className="hidden 2xl:flex"
         />
-        <p className="shrink-0 font-display text-xl font-bold tabular-nums text-team-ink xl:hidden">
+        <p className="shrink-0 font-display text-xl font-bold tabular-nums text-team-ink 2xl:hidden">
           <span className="sr-only">Record </span>
           {record}
         </p>
-        <SoundMenu className="hidden lg:flex" />
+        <SoundMenu className="hidden xl:flex" />
         <SearchButton />
         <NotificationsBell
           saveId={saveId}

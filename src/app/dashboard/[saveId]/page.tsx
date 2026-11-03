@@ -5,6 +5,7 @@ import {
   switchActiveOwnerTeamAction,
 } from "@/application/actions";
 import { loadOwnerSaveView } from "@/application/game-service";
+import { AroundTheLeaguePanel } from "@/components/owner/dashboard/AroundTheLeaguePanel";
 import { BoardDirectiveCard } from "@/components/owner/dashboard/BoardDirectiveCard";
 import { HomeHero } from "@/components/owner/dashboard/HomeHero";
 import { HomeTileBoard } from "@/components/owner/dashboard/HomeTileBoard";
@@ -46,6 +47,7 @@ export default async function DashboardPage({
     currentDate: dash.currentDate,
     saveId,
     daysUntilTradeDeadline: dash.daysUntilTradeDeadline,
+    participationBlockedReason: dashboard.participation?.advanceBlockedReason,
   });
 
   const recentForm = recentFormFromResults(dashboard.recentResults);
@@ -74,7 +76,13 @@ export default async function DashboardPage({
         }}
       />
 
-      <HomeTileBoard saveId={saveId} data={dash} />
+      <HomeTileBoard
+        saveId={saveId}
+        data={dash}
+        mediaSlot={
+          <AroundTheLeaguePanel timeline={dash.mediaTimeline} saveId={saveId} />
+        }
+      />
     </div>
   );
 }

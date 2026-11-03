@@ -34,6 +34,9 @@ export function AroundTheLeaguePanel(props: {
           )}
         >
           Media Hub
+          {props.timeline.unreadCount > 0
+            ? ` · ${props.timeline.unreadCount} unread`
+            : ""}
         </Link>
       }
     >

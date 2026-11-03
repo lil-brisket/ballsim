@@ -42,13 +42,23 @@ export type ActionCenterItem = {
   hrefLabel: string;
   secondaryHref?: string;
   secondaryLabel?: string;
+  /**
+   * True only when this item corresponds to a gate that refuses time advance.
+   * Severity says how much it matters, not whether time can advance.
+   */
+  blocksAdvance: boolean;
+  /** Items sharing a key describe one underlying issue and collapse to one. */
+  dedupeKey: string;
 };
 
 export type ActionCenterView = {
   items: ActionCenterItem[];
   hasUrgentActions: boolean;
   focalMode: "actions" | "next-game";
+  /** Critical + warning items before the display cap. */
   urgentCount: number;
+  /** Items (before the display cap) that refuse time advance. */
+  blockingCount: number;
 };
 
 const SEVERITY_PRIORITY: Record<OwnerDashboardActionSeverity, number> = {
@@ -176,6 +186,26 @@ function compareActionCenterItems(
   return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
 }
 
+/**
+ * Several producers describe the same underlying issue under different ids.
+ * Phase need ids come from `management-needs.ts`.
+ */
+function dedupeKeyFor(id: string): string {
+  if (id === "action_draft" || id === "phase-draft_clock") return "draft_clock";
+  if (id === "action_staff" || id.startsWith("phase-staff_gap_")) {
+    return "staff_gap";
+  }
+  if (
+    id === "action_roster" ||
+    id === "phase-injured_in_rotation" ||
+    id === "phase-injury_roster_emergency" ||
+    id === "phase-injury_position_gap"
+  ) {
+    return "injuries";
+  }
+  return id;
+}
+
 export function mapOwnerActionToCenterItem(
   item: OwnerDashboardActionItem,
   currentDate: string,
@@ -199,6 +229,10 @@ export function mapOwnerActionToCenterItem(
     description: item.what,
     href: item.href,
     hrefLabel: item.hrefLabel,
+    // Owner-dashboard items never gate time advance on their own; the one
+    // that does (draft clock) is confirmed by its phase item in the build.
+    blocksAdvance: false,
+    dedupeKey: dedupeKeyFor(item.id),
   };
 }
 
@@ -214,8 +248,9 @@ export function mapUnresolvedToCenterItem(
       : item.domain === "staffHiring"
         ? `/dashboard/${saveId}/staff-coaching/staff`
         : `/dashboard/${saveId}/calendar`;
+  const id = `phase-${item.id}`;
   return {
-    id: `phase-${item.id}`,
+    id,
     priority: basePriority("phase", severity),
     severity,
     category: "phase",
@@ -226,6 +261,10 @@ export function mapUnresolvedToCenterItem(
     description: item.detail,
     href,
     hrefLabel: "Review",
+    // Unresolved items already exclude needs the AI assist policy can handle,
+    // which is the same test `shouldStopForDraftClock` applies.
+    blocksAdvance: item.id === "draft_clock",
+    dedupeKey: dedupeKeyFor(id),
   };
 }
 
@@ -235,10 +274,33 @@ export function buildActionCenterView(input: {
   currentDate: string;
   saveId: string;
   daysUntilTradeDeadline?: number | null;
+  /**
+   * `advanceBlockedReason` from the participation view: why the league cannot
+   * advance (unconfirmed assignments, commissioner-only, someone not Ready).
+   */
+  participationBlockedReason?: string | null;
   cap?: number;
 }): ActionCenterView {
   const cap = input.cap ?? ACTION_QUEUE_CAP;
   const items: ActionCenterItem[] = [];
+
+  if (input.participationBlockedReason) {
+    items.push({
+      id: "participation_gate",
+      priority: basePriority("phase", "critical"),
+      severity: "critical",
+      category: "phase",
+      urgency: "immediate",
+      deadline: null,
+      relevance: "league",
+      title: "Waiting on the league",
+      description: input.participationBlockedReason,
+      href: `/dashboard/${input.saveId}`,
+      hrefLabel: "View participants",
+      blocksAdvance: true,
+      dedupeKey: "participation_gate",
+    });
+  }
 
   for (const unresolved of input.phaseResponsibility?.unresolvedItems ?? []) {
     items.push(
@@ -256,27 +318,34 @@ export function buildActionCenterView(input: {
     );
   }
 
-  // Deduplicate by id (phase items use phase- prefix).
-  const seen = new Set<string>();
-  const unique = items.filter((item) => {
-    if (seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
+  items.sort(compareActionCenterItems);
 
-  unique.sort(compareActionCenterItems);
-  const capped = unique.slice(0, cap);
+  // One item per underlying issue: the highest-ranked wins, but it blocks if
+  // any duplicate does (the draft clock item only blocks via its phase twin).
+  const byKey = new Map<string, ActionCenterItem>();
+  for (const item of items) {
+    const kept = byKey.get(item.dedupeKey);
+    if (!kept) {
+      byKey.set(item.dedupeKey, item);
+    } else if (item.blocksAdvance && !kept.blocksAdvance) {
+      kept.blocksAdvance = true;
+    }
+  }
+  const unique = [...byKey.values()];
 
-  const urgentCount = capped.filter(
+  // Counts cover every item, not just the ones the cap leaves visible.
+  const urgentCount = unique.filter(
     (item) => item.severity === "critical" || item.severity === "warning",
   ).length;
+  const blockingCount = unique.filter((item) => item.blocksAdvance).length;
   const hasUrgentActions = urgentCount > 0;
 
   return {
-    items: capped,
+    items: unique.slice(0, cap),
     hasUrgentActions,
     focalMode: hasUrgentActions ? "actions" : "next-game",
     urgentCount,
+    blockingCount,
   };
 }
 

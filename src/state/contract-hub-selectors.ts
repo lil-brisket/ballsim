@@ -241,6 +241,8 @@ export function toContractHubView(state: GameState): ContractHubView {
         },
         href: `/dashboard/${saveId}/team/contracts`,
         hrefLabel: "Review",
+        blocksAdvance: false,
+        dedupeKey: id,
       });
     }
   }

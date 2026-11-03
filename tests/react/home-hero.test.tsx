@@ -89,6 +89,19 @@ function dash(overrides: Partial<HomeHeroDash> = {}): HomeHeroDash {
       seasonReviewPending: false,
       pendingOwnerDecision: false,
     },
+    currentDate: "2026-10-06",
+    seasonPhase: "regular",
+    offseasonStage: "none",
+    tradesOpen: true,
+    daysUntilTradeDeadline: null,
+    home: {
+      topPlayer: null,
+      biggestRiser: null,
+      biggestFaller: null,
+      standing: null,
+      playoffSeries: null,
+      payroll: { payroll: 120_000_000, taxLine: null, projectedTax: 0 },
+    },
     offseasonPriorities: [],
     pendingTradeOffer: null,
     seasonRecap: null,
@@ -110,7 +123,11 @@ function dash(overrides: Partial<HomeHeroDash> = {}): HomeHeroDash {
   };
 }
 
-function urgentItem(id: string, title: string): ActionCenterItem {
+function urgentItem(
+  id: string,
+  title: string,
+  blocksAdvance = false,
+): ActionCenterItem {
   return {
     id,
     priority: 1,
@@ -123,6 +140,8 @@ function urgentItem(id: string, title: string): ActionCenterItem {
     description: `${title} needs a decision`,
     href: `/dashboard/s1/${id}`,
     hrefLabel: `Fix ${id}`,
+    blocksAdvance,
+    dedupeKey: id,
   };
 }
 
@@ -131,6 +150,7 @@ const CALM: ActionCenterView = {
   hasUrgentActions: false,
   focalMode: "next-game",
   urgentCount: 0,
+  blockingCount: 0,
 };
 
 const URGENT: ActionCenterView = {
@@ -142,6 +162,19 @@ const URGENT: ActionCenterView = {
   hasUrgentActions: true,
   focalMode: "actions",
   urgentCount: 3,
+  blockingCount: 0,
+};
+
+const BLOCKING: ActionCenterView = {
+  items: [
+    urgentItem("a1", "Injury requires rotation change"),
+    urgentItem("a2", "Payroll over the cap"),
+    urgentItem("a3", "You're on the draft clock", true),
+  ],
+  hasUrgentActions: true,
+  focalMode: "actions",
+  urgentCount: 3,
+  blockingCount: 1,
 };
 
 function renderHero(
@@ -241,9 +274,8 @@ describe("HomeHero precedence", () => {
   it("leads with the first urgent action and keeps the rest quiet", () => {
     const container = renderHero(dash(), URGENT);
 
-    expect(
-      screen.getByText("3 actions need attention before time can advance"),
-    ).toBeTruthy();
+    expect(screen.getByText("3 actions need attention")).toBeTruthy();
+    expect(screen.queryByText(/before time can advance/)).toBeNull();
     expect(screen.getByText("Injury requires rotation change")).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Fix a1" }).getAttribute("href"),
@@ -257,6 +289,15 @@ describe("HomeHero precedence", () => {
     expect(primaryControls(container)).toEqual(["Fix a1"]);
   });
 
+  it("only claims time is blocked for actions that block, and leads with them", () => {
+    const container = renderHero(dash(), BLOCKING);
+
+    expect(
+      screen.getByText("1 action must be resolved before time can advance"),
+    ).toBeTruthy();
+    expect(primaryControls(container)).toEqual(["Fix a3"]);
+  });
+
   it("shows the next game with Sim to tip-off as the only primary", () => {
     const container = renderHero(dash());
 
@@ -267,6 +308,44 @@ describe("HomeHero precedence", () => {
     ).toBe("/dashboard/s1/calendar?focus=next-game");
     expect(screen.getByRole("link", { name: "Review rotation" })).toBeTruthy();
     expect(primaryControls(container)).toEqual(["Sim to tip-off"]);
+  });
+
+  it("says how far away the game is and links to its preview", () => {
+    renderHero(dash());
+
+    expect(screen.getByText(/Tomorrow/)).toBeTruthy();
+    expect(screen.getByText("Next game")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Game preview" }).getAttribute("href"),
+    ).toBe("/dashboard/s1/games/g1");
+  });
+
+  it("labels preseason games", () => {
+    renderHero(dash({ seasonPhase: "preseason" }));
+
+    expect(screen.getByText("Next preseason game")).toBeTruthy();
+  });
+
+  it("shows the playoff series score and round", () => {
+    const base = dash();
+    renderHero(
+      dash({
+        seasonPhase: "playoffs",
+        home: {
+          ...base.home,
+          playoffSeries: {
+            roundLabel: "Conference Semifinals",
+            opponentAbbreviation: "MON",
+            teamWins: 2,
+            opponentWins: 1,
+          },
+        },
+      }),
+    );
+
+    expect(screen.getByText("Next playoff game")).toBeTruthy();
+    expect(screen.getByText(/Conference Semifinals/)).toBeTruthy();
+    expect(screen.getByText(/Leads MON 2-1/)).toBeTruthy();
   });
 
   it("shows both teams' records and ratings in the matchup", () => {
@@ -312,6 +391,67 @@ describe("HomeHero precedence", () => {
     expect(primaryControls(container)).toEqual(["Open Offseason Hub"]);
   });
 
+  it("points the offseason hero at the current stage", () => {
+    const base = dash();
+    const cases: Array<[string, string, string]> = [
+      ["draft", "Open Draft", "/dashboard/s1/draft"],
+      ["free_agency", "Open Free Agency", "/dashboard/s1/free-agency"],
+      ["roster_decisions", "Review Contracts", "/dashboard/s1/team/contracts"],
+      ["staff_development", "Open Staff", "/dashboard/s1/staff-coaching/staff"],
+    ];
+    for (const [stage, cta, href] of cases) {
+      renderHero(
+        dash({
+          offseasonStage: stage as HomeHeroDash["offseasonStage"],
+          team: { ...base.team, upcomingGames: [] },
+        }),
+      );
+      expect(screen.getByRole("link", { name: cta }).getAttribute("href")).toBe(
+        href,
+      );
+      expect(
+        screen
+          .getByRole("link", { name: "Offseason Hub" })
+          .getAttribute("href"),
+      ).toBe("/dashboard/s1/offseason");
+      cleanup();
+    }
+  });
+
+  it("counts down to the trade deadline inside the last week", () => {
+    renderHero(dash({ daysUntilTradeDeadline: 3 }));
+
+    expect(screen.getByText("Trade deadline in 3 days")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Open trades" }).getAttribute("href"),
+    ).toBe("/dashboard/s1/trades");
+  });
+
+  it("stays quiet about the deadline when it is far off or trading is closed", () => {
+    renderHero(dash({ daysUntilTradeDeadline: 12 }));
+    expect(screen.queryByText(/Trade deadline/)).toBeNull();
+    cleanup();
+
+    renderHero(dash({ daysUntilTradeDeadline: 2, tradesOpen: false }));
+    expect(screen.queryByText(/Trade deadline/)).toBeNull();
+    expect(screen.queryByRole("link", { name: "Open trades" })).toBeNull();
+  });
+
+  it("offers training and development in the preseason only", () => {
+    renderHero(dash({ seasonPhase: "preseason" }));
+    expect(
+      screen
+        .getByRole("link", { name: "Training and development" })
+        .getAttribute("href"),
+    ).toBe("/dashboard/s1/development");
+    cleanup();
+
+    renderHero(dash());
+    expect(
+      screen.queryByRole("link", { name: "Training and development" }),
+    ).toBeNull();
+  });
+
   it("resolves modes in priority order", () => {
     const base = dash();
     expect(resolveHomeHeroMode(base, CALM)).toBe("next-game");
@@ -330,18 +470,22 @@ function boardData(
 ): HomeTileBoardData {
   return {
     team: { strength: 62.1, upcomingGames: [game("g1"), game("g2", false)] },
-    owner: { patience: 57, ownership: { moodLabel: "Displeased" } },
+    owner: {
+      patience: 57,
+      primaryObjectives: [
+        { description: "Make the playoffs", status: "active" },
+      ],
+      ownership: { moodLabel: "Displeased", concern: null },
+    },
     health: {
       cash: 17_700_000,
       cashContext: { text: "Net weekly surplus $726K", direction: "up" },
+      financialHealth: "stable",
     },
     tradeInbox: { totalPending: 2, pendingForActiveTeam: 1 },
     tradesOpen: true,
     daysUntilTradeDeadline: 12,
-    mediaTimeline: {
-      posts: [{ id: "p1", text: "Ethan Porter led the way with 46." }],
-      unreadCount: 19,
-    },
+    nextImportantEvent: null,
     home: {
       topPlayer: {
         playerId: "p_1",
@@ -355,21 +499,30 @@ function boardData(
         name: "Sam Rise",
         overall: 70,
         delta: 4,
+        portrait: null,
       },
-      standing: { conferenceRank: 12, conferenceName: "Coastal", gamesBack: 2 },
+      biggestFaller: null,
+      payroll: { payroll: 150_000_000, taxLine: 160_000_000, projectedTax: 0 },
+      standing: {
+        conferenceRank: 12,
+        conferenceName: "Coastal",
+        gamesBack: 2,
+        playoffLabel: "bubble",
+        streakLabel: "W3",
+      },
+      playoffSeries: null,
     },
     ...overrides,
   };
 }
 
 describe("HomeTileBoard", () => {
-  it("links the eight hub tiles", () => {
+  it("links the seven hub tiles", () => {
     render(<HomeTileBoard saveId="s1" data={boardData()} />);
 
     const hrefs: Record<string, string> = {
       Roster: "/dashboard/s1/roster",
       Standings: "/dashboard/s1/league/standings",
-      Media: "/dashboard/s1/media",
       Finances: "/dashboard/s1/finances",
       Trades: "/dashboard/s1/trades",
       Development: "/dashboard/s1/development",
@@ -377,7 +530,7 @@ describe("HomeTileBoard", () => {
       Schedule: "/dashboard/s1/calendar",
     };
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(8);
+    expect(links).toHaveLength(7);
     for (const [title, href] of Object.entries(hrefs)) {
       const link = links.find((el) => el.textContent?.includes(title));
       expect(link?.getAttribute("href"), title).toBe(href);
@@ -397,11 +550,9 @@ describe("HomeTileBoard", () => {
     const standings = screen.getByRole("link", { name: /Standings/ });
     expect(within(standings).getByText("#12")).toBeTruthy();
     expect(within(standings).getByText("Coastal seed")).toBeTruthy();
-    expect(within(standings).getByText("2 GB")).toBeTruthy();
-
-    const media = screen.getByRole("link", { name: /Media/ });
-    expect(within(media).getByText(/Ethan Porter led the way/)).toBeTruthy();
-    expect(within(media).getByText("19 unread")).toBeTruthy();
+    expect(
+      within(standings).getByText("2 GB · On the bubble · W3"),
+    ).toBeTruthy();
 
     const finances = screen.getByRole("link", { name: /Finances/ });
     expect(within(finances).getByText("$17.7M")).toBeTruthy();
@@ -433,17 +584,43 @@ describe("HomeTileBoard", () => {
           team: { strength: 62.1, upcomingGames: [] },
           tradesOpen: false,
           tradeInbox: { totalPending: 0, pendingForActiveTeam: 0 },
-          mediaTimeline: { posts: [], unreadCount: 0 },
-          home: { topPlayer: null, biggestRiser: null, standing: null },
+          home: {
+            topPlayer: null,
+            biggestRiser: null,
+            biggestFaller: null,
+            standing: null,
+            playoffSeries: null,
+            payroll: boardData().home.payroll,
+          },
         })}
       />,
     );
 
     expect(screen.getByText("No games scheduled")).toBeTruthy();
     expect(screen.getByText("Trading is closed")).toBeTruthy();
-    expect(screen.getByText("No rating changes yet")).toBeTruthy();
+    expect(screen.getByText("No risers this season")).toBeTruthy();
     expect(screen.getByText("Standings start with the season")).toBeTruthy();
-    expect(screen.queryByText(/unread/)).toBeNull();
+  });
+
+  it("shows the next important event when no games are scheduled", () => {
+    render(
+      <HomeTileBoard
+        saveId="s1"
+        data={boardData({
+          team: { strength: 62.1, upcomingGames: [] },
+          nextImportantEvent: {
+            date: "2026-06-25",
+            title: "NBA Draft",
+            daysUntil: 12,
+            category: "draft",
+            blocking: false,
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Next: NBA Draft/)).toBeTruthy();
+    expect(screen.queryByText("No games scheduled")).toBeNull();
   });
 
   it("says when the team leads its conference", () => {
@@ -457,12 +634,74 @@ describe("HomeTileBoard", () => {
               conferenceRank: 1,
               conferenceName: "Coastal",
               gamesBack: 0,
+              playoffLabel: "clinched",
+              streakLabel: null,
             },
           },
         })}
       />,
     );
 
-    expect(screen.getByText("Leading the conference")).toBeTruthy();
+    expect(
+      screen.getByText("Leading the conference · Playoffs clinched"),
+    ).toBeTruthy();
+  });
+
+  it("shows payroll against the tax line and flags tight funds", () => {
+    const base = boardData();
+    render(
+      <HomeTileBoard
+        saveId="s1"
+        data={boardData({
+          health: { ...base.health, financialHealth: "critical" },
+          home: {
+            ...base.home,
+            payroll: {
+              payroll: 170_000_000,
+              taxLine: 160_000_000,
+              projectedTax: 1,
+            },
+          },
+        })}
+      />,
+    );
+
+    const finances = screen.getByRole("link", { name: /Finances/ });
+    expect(within(finances).getByText(/\$10\.0M over tax/)).toBeTruthy();
+    expect(
+      within(finances).getByText("Business funds under pressure"),
+    ).toBeTruthy();
+  });
+
+  it("shows riser and faller on the development tile", () => {
+    const base = boardData();
+    render(
+      <HomeTileBoard
+        saveId="s1"
+        data={boardData({
+          home: {
+            ...base.home,
+            biggestFaller: {
+              playerId: "p_3",
+              name: "Old Timer",
+              overall: 61,
+              delta: -3,
+            },
+          },
+        })}
+      />,
+    );
+
+    const dev = screen.getByRole("link", { name: /Development/ });
+    expect(within(dev).getByText("Biggest riser")).toBeTruthy();
+    expect(within(dev).getByText("SR")).toBeTruthy();
+    expect(within(dev).getByText(/Old Timer -3/)).toBeTruthy();
+  });
+
+  it("shows the owner's open objective", () => {
+    render(<HomeTileBoard saveId="s1" data={boardData()} />);
+
+    const owner = screen.getByRole("link", { name: /Owner/ });
+    expect(within(owner).getByText("Goal: Make the playoffs")).toBeTruthy();
   });
 });
