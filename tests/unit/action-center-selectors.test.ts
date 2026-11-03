@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { advanceBlockedReason } from "@/systems/participation";
+import { createTestGameState } from "../factories/game-state";
 import {
   buildActionCenterView,
   filterDomainDecisions,
@@ -119,6 +121,125 @@ describe("action-center-selectors", () => {
     expect(view.items.some((i) => i.id === "phase-u1")).toBe(true);
   });
 
+  it("flags only the unresolved draft clock as blocking and merges its twin", () => {
+    const view = buildActionCenterView({
+      actionItems: [
+        action({
+          id: "action_draft",
+          category: "draft",
+          severity: "critical",
+          title: "Draft clock",
+        }),
+        action({
+          id: "action_attendance",
+          category: "attendance",
+          severity: "warning",
+          title: "Attendance concern",
+        }),
+      ],
+      phaseResponsibility: {
+        phaseKey: "draft",
+        owner: "unresolved",
+        unresolvedCount: 1,
+        unresolvedItems: [
+          {
+            id: "draft_clock",
+            domain: "draft",
+            severity: "critical",
+            title: "On the clock",
+            detail: "Make your pick",
+          },
+        ],
+      },
+      currentDate: "2026-06-20",
+      saveId: "s1",
+    });
+    const draft = view.items.filter((i) => i.dedupeKey === "draft_clock");
+    expect(draft).toHaveLength(1);
+    expect(draft[0]!.blocksAdvance).toBe(true);
+    expect(
+      view.items.find((i) => i.id === "action_attendance")!.blocksAdvance,
+    ).toBe(false);
+    expect(view.blockingCount).toBe(1);
+    expect(view.urgentCount).toBe(2);
+  });
+
+  it("does not block when the draft clock has no unresolved phase item", () => {
+    const view = buildActionCenterView({
+      actionItems: [
+        action({
+          id: "action_draft",
+          category: "draft",
+          severity: "critical",
+          title: "Draft clock",
+        }),
+      ],
+      currentDate: "2026-06-20",
+      saveId: "s1",
+    });
+    expect(view.blockingCount).toBe(0);
+    expect(view.items[0]!.blocksAdvance).toBe(false);
+  });
+
+  it("collapses staff and injury duplicates and counts before the cap", () => {
+    const view = buildActionCenterView({
+      actionItems: [
+        action({
+          id: "action_staff",
+          category: "staff",
+          severity: "warning",
+          title: "Staff",
+        }),
+        action({
+          id: "action_roster",
+          category: "roster",
+          severity: "warning",
+          title: "Injuries",
+        }),
+        ...Array.from({ length: 6 }, (_, i) =>
+          action({
+            id: `w${i}`,
+            category: "team",
+            severity: "warning",
+            title: `W${i}`,
+          }),
+        ),
+      ],
+      phaseResponsibility: {
+        phaseKey: "regular_season",
+        owner: "unresolved",
+        unresolvedCount: 2,
+        unresolvedItems: [
+          {
+            id: "staff_gap_head_coach",
+            domain: "staffHiring",
+            severity: "warning",
+            title: "Coach",
+            detail: "d",
+          },
+          {
+            id: "injured_in_rotation",
+            domain: "lineup",
+            severity: "warning",
+            title: "Hurt",
+            detail: "d",
+          },
+        ],
+      } as PhaseResponsibility,
+      currentDate: "2026-09-08",
+      saveId: "s1",
+      cap: 5,
+    });
+    expect(view.items.length).toBe(5);
+    expect(view.urgentCount).toBe(8);
+    expect(view.items.filter((i) => i.dedupeKey === "staff_gap")).toHaveLength(
+      1,
+    );
+    expect(view.items.filter((i) => i.dedupeKey === "injuries")).toHaveLength(
+      1,
+    );
+  });
+
   it("filters team decisions without duplicating full action center shape", () => {
     const view = buildActionCenterView({
       actionItems: [
@@ -176,5 +297,62 @@ describe("action-center-selectors", () => {
     expect(contracts).toHaveLength(2);
     expect(contracts[0]!.id).toBe("c_soon");
     expect(contracts[1]!.id).toBe("c_late");
+  });
+
+  describe("parity with the participation advance gate", () => {
+    function shared(assignmentsConfirmed: boolean) {
+      const state = createTestGameState();
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          participation: {
+            mode: "local_shared" as const,
+            participants: [
+              {
+                id: "p1",
+                displayName: "Alex",
+                teamIds: [state.user.activeOwnerTeamId],
+                isHost: true,
+                plannedTeamCount: 1,
+              },
+            ],
+            activeParticipantId: "p1",
+            readyParticipantIds: [],
+            assignmentsConfirmed,
+          },
+        },
+      };
+    }
+
+    it("blocks exactly when advanceBlockedReason says so", () => {
+      for (const confirmed of [false, true]) {
+        const state = shared(confirmed);
+        const reason = advanceBlockedReason(state);
+        const view = buildActionCenterView({
+          actionItems: [],
+          currentDate: "2026-09-08",
+          saveId: "s1",
+          participationBlockedReason: reason,
+        });
+        expect(view.blockingCount > 0).toBe(reason !== null);
+      }
+    });
+
+    it("shows the reason on a critical blocking item", () => {
+      const reason = advanceBlockedReason(shared(false));
+      const view = buildActionCenterView({
+        actionItems: [],
+        currentDate: "2026-09-08",
+        saveId: "s1",
+        participationBlockedReason: reason,
+      });
+      expect(view.items[0]).toMatchObject({
+        id: "participation_gate",
+        severity: "critical",
+        blocksAdvance: true,
+        description: reason,
+      });
+    });
   });
 });

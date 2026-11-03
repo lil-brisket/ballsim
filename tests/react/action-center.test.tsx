@@ -10,6 +10,7 @@ describe("ActionCenter", () => {
       hasUrgentActions: false,
       focalMode: "next-game",
       urgentCount: 0,
+      blockingCount: 0,
     };
     render(<ActionCenter view={view} saveId="s1" returnPath="/dashboard/s1" />);
     expect(screen.getByText(/good shape/i)).toBeTruthy();
@@ -30,14 +31,18 @@ describe("ActionCenter", () => {
           description: "Starter is out",
           href: "/dashboard/s1/team-management/lineups",
           hrefLabel: "Review Rotation",
+          blocksAdvance: false,
+          dedupeKey: "a1",
         },
       ],
       hasUrgentActions: true,
       focalMode: "actions",
       urgentCount: 1,
+      blockingCount: 0,
     };
     render(<ActionCenter view={view} saveId="s1" returnPath="/dashboard/s1" />);
     expect(screen.getByText(/1 action need attention/i)).toBeTruthy();
+    expect(screen.queryByText(/before time can advance/i)).toBeNull();
     expect(screen.getByText("Injury requires rotation change")).toBeTruthy();
   });
 });

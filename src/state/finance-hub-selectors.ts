@@ -120,6 +120,8 @@ export function toFinanceHubView(state: GameState): FinanceHubView {
         description: `Business health is ${businessHealth.replaceAll("_", " ")}.`,
         href: `/dashboard/${saveId}/finances`,
         hrefLabel: "Review Finances",
+        blocksAdvance: false,
+        dedupeKey: "finance_health_warning",
       });
     }
   } else {

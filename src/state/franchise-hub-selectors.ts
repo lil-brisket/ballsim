@@ -366,5 +366,7 @@ function relocationDecisionFromSummary(
       "Market and franchise conditions make relocation a legitimate option.",
     href: summary.href,
     hrefLabel: "Review Stay vs Move",
+    blocksAdvance: false,
+    dedupeKey: "action_relocation",
   };
 }
