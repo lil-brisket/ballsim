@@ -21,9 +21,15 @@ function TeamSide(props: {
   team: ScoreBugTeam;
   won: boolean;
   badgeSize: TeamBadgeSize;
+  mine: boolean;
 }) {
   return (
-    <span className="flex min-w-0 items-center gap-2">
+    <span
+      className={cn(
+        "flex min-w-0 items-center gap-2",
+        props.mine && "-ml-1.5 border-l-2 border-team-ink pl-1",
+      )}
+    >
       <TeamBadge
         branding={props.team.branding}
         name={props.team.abbreviation}
@@ -60,6 +66,8 @@ export function ScoreBug(props: {
   /** ISO game date. */
   date: string;
   overtime?: boolean;
+  /** Index into `teams` of the viewer's team; marks that row and shows W/L. */
+  mineIndex?: 0 | 1;
   href?: string;
   badgeSize?: TeamBadgeSize;
   className?: string;
@@ -67,7 +75,18 @@ export function ScoreBug(props: {
   const [a, b] = props.teams;
   const aWon = a.score > b.score;
   const bWon = b.score > a.score;
-  const tag = props.overtime ? "Final/OT" : "Final";
+  const mine =
+    props.mineIndex === undefined ? null : props.teams[props.mineIndex];
+  const rival =
+    props.mineIndex === undefined ? null : props.teams[props.mineIndex ^ 1];
+  const outcome =
+    mine && rival && mine.score !== rival.score
+      ? mine.score > rival.score
+        ? "W"
+        : "L"
+      : null;
+  const finalTag = props.overtime ? "Final/OT" : "Final";
+  const tag = outcome ? `${outcome} · ${finalTag}` : finalTag;
   const shortDate = formatGameDate(props.date);
   const label = `${tag}: ${a.abbreviation} ${a.score}, ${b.abbreviation} ${b.score}, ${shortDate}`;
   const badgeSize = props.badgeSize ?? "sm";
@@ -77,11 +96,29 @@ export function ScoreBug(props: {
       <span className="sr-only">{label}</span>
       <span aria-hidden className="flex flex-col gap-1">
         <span className="flex items-center justify-between gap-3 text-sm text-muted">
-          <span className="font-medium uppercase tracking-wide">{tag}</span>
+          <span
+            className={cn(
+              "font-medium uppercase tracking-wide",
+              outcome === "W" && "text-win",
+              outcome === "L" && "text-loss",
+            )}
+          >
+            {tag}
+          </span>
           <span>{shortDate}</span>
         </span>
-        <TeamSide team={a} won={aWon} badgeSize={badgeSize} />
-        <TeamSide team={b} won={bWon} badgeSize={badgeSize} />
+        <TeamSide
+          team={a}
+          won={aWon}
+          badgeSize={badgeSize}
+          mine={props.mineIndex === 0}
+        />
+        <TeamSide
+          team={b}
+          won={bWon}
+          badgeSize={badgeSize}
+          mine={props.mineIndex === 1}
+        />
       </span>
     </>
   );

@@ -4,6 +4,7 @@
  * with different windows per screen.
  */
 
+import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type { GameState } from "@/state/game-state";
 import type { TeamId } from "@/domain/ids";
 import { canWatchGame } from "@/state/watch-game-selectors";
@@ -13,6 +14,16 @@ import {
 } from "@/state/team-branding-view";
 
 export const RECENT_FORM_GAME_LIMIT = 5;
+
+/** The viewer's top scorer in a finished game. */
+export type RecentResultLeader = {
+  playerId: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  points: number;
+  portrait: PlayerPortraitAssignment | null;
+};
 
 export type RecentFormGame = {
   gameId: string;
@@ -26,6 +37,8 @@ export type RecentFormGame = {
   won: boolean;
   /** True when a play-by-play log exists (show Watch link). */
   canWatch?: boolean;
+  /** Top scorer for the viewer's team, when box score rows exist. */
+  leader?: RecentResultLeader | null;
 };
 
 export type RecentFormView = {
@@ -111,6 +124,7 @@ export function recentFormFromResults(
     opponentBranding?: TeamBrandingView | null;
     opponentTeamId?: string;
     canWatch?: boolean;
+    leader?: RecentFormGame["leader"];
   }>,
 ): RecentFormView {
   const games: RecentFormGame[] = results
@@ -126,6 +140,7 @@ export function recentFormFromResults(
       opponentScore: result.opponentScore,
       won: result.won,
       canWatch: result.canWatch ?? false,
+      leader: result.leader ?? null,
     }));
 
   const wins = games.filter((g) => g.won).length;

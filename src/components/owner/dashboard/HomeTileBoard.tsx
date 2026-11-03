@@ -11,29 +11,67 @@ import type {
   OwnerDashboardMetricContext,
   OwnerDashboardView,
 } from "@/state/owner-dashboard";
-import type { TimelinePostView } from "@/state/media-timeline/post-view";
+import type { PlayoffPositionLabel } from "@/state/standings-selectors";
 
 /** The slice of the owner dashboard the tile board reads. */
 export type HomeTileBoardData = Pick<
   OwnerDashboardView,
-  "tradeInbox" | "tradesOpen" | "daysUntilTradeDeadline" | "home"
+  | "tradeInbox"
+  | "tradesOpen"
+  | "daysUntilTradeDeadline"
+  | "home"
+  | "nextImportantEvent"
 > & {
   team: Pick<OwnerDashboardView["team"], "strength" | "upcomingGames">;
   owner: {
     patience: number;
-    ownership: Pick<OwnerDashboardView["owner"]["ownership"], "moodLabel">;
+    primaryObjectives: Pick<
+      OwnerDashboardView["owner"]["primaryObjectives"][number],
+      "description" | "status"
+    >[];
+    ownership: Pick<
+      OwnerDashboardView["owner"]["ownership"],
+      "moodLabel" | "concern"
+    >;
   };
   health: {
     cash: number;
     cashContext: OwnerDashboardMetricContext | null;
-  };
-  mediaTimeline: {
-    posts: Pick<TimelinePostView, "id" | "text">[];
-    unreadCount: number;
+    financialHealth: OwnerDashboardView["health"]["financialHealth"];
   };
 };
 
 const SCHEDULE_TILE_GAMES = 5;
+
+const OUTLOOK_TEXT: Partial<Record<PlayoffPositionLabel, string>> = {
+  clinched: "Playoffs clinched",
+  playoff: "In playoff position",
+  play_in: "In the play-in",
+  bubble: "On the bubble",
+  eliminated: "Eliminated",
+};
+
+function standingNote(
+  standing: NonNullable<HomeTileBoardData["home"]["standing"]>,
+): string {
+  const gap =
+    standing.gamesBack > 0
+      ? `${standing.gamesBack} GB`
+      : "Leading the conference";
+  const outlook = OUTLOOK_TEXT[standing.playoffLabel];
+  return [gap, outlook, standing.streakLabel].filter(Boolean).join(" · ");
+}
+
+function payrollNote(
+  payroll: HomeTileBoardData["home"]["payroll"],
+): string | null {
+  if (payroll.taxLine === null)
+    return `Payroll ${formatMoney(payroll.payroll)}`;
+  const gap = payroll.taxLine - payroll.payroll;
+  return gap >= 0
+    ? `Payroll ${formatMoney(payroll.payroll)} · ${formatMoney(gap)} under tax`
+    : `Payroll ${formatMoney(payroll.payroll)} · ${formatMoney(-gap)} over tax`;
+}
 
 function CountChip(props: { count: number; label: string }) {
   return (
@@ -51,6 +89,22 @@ function splitName(name: string): { first: string; last: string } {
   return space < 0
     ? { first: name, last: "" }
     : { first: name.slice(0, space), last: name.slice(space + 1) };
+}
+
+function RiserArt(props: {
+  riser: NonNullable<HomeTileBoardData["home"]["biggestRiser"]>;
+}) {
+  const { riser } = props;
+  const name = splitName(riser.name);
+  return (
+    <PlayerPortrait
+      playerId={riser.playerId}
+      firstName={name.first}
+      lastName={name.last}
+      portrait={riser.portrait}
+      size="sm"
+    />
+  );
 }
 
 function TopPlayerArt(props: {
@@ -82,23 +136,32 @@ function tradesNote(data: HomeTileBoardData): string | null {
 }
 
 /**
- * Home tile board: eight links to the hubs, each carrying the one fact that
- * hub owns. Roster, Schedule, Trades and Media are the large tiles (four
- * columns from `xl`, Media on its own row); Standings, Finances, Development
- * and Owner are a compact strip of secondary facts below.
+ * Home tile board: seven links to the hubs, each carrying the one fact that
+ * hub owns. Roster, Schedule and Trades are the large tiles (four columns
+ * from `xl`); the media feed follows in `mediaSlot`, then Standings, Finances,
+ * Development and Owner as a compact strip of secondary facts.
  */
 export function HomeTileBoard(props: {
   saveId: string;
   data: HomeTileBoardData;
+  /** Rendered between the large tiles and the secondary strip (the media feed). */
+  mediaSlot?: React.ReactNode;
 }) {
   const { saveId, data } = props;
   const base = `/dashboard/${saveId}`;
-  const { topPlayer, biggestRiser, standing } = data.home;
-  const lead = data.mediaTimeline.posts[0];
+  const { topPlayer, biggestRiser, biggestFaller, standing, payroll } =
+    data.home;
   const pending = data.tradeInbox.totalPending;
   const games = data.team.upcomingGames.slice(0, SCHEDULE_TILE_GAMES);
   const cashDirection = data.health.cashContext?.direction;
   const tradeNote = tradesNote(data);
+  const objective = data.owner.primaryObjectives.find(
+    (o) => o.status !== "completed" && o.status !== "failed",
+  );
+  const fundsTight =
+    data.health.financialHealth === "warning" ||
+    data.health.financialHealth === "critical" ||
+    data.health.financialHealth === "insolvent";
 
   return (
     <div className="space-y-4">
@@ -127,7 +190,14 @@ export function HomeTileBoard(props: {
           size="wide"
         >
           {games.length === 0 ? (
-            "No games scheduled"
+            data.nextImportantEvent ? (
+              <>
+                Next: {data.nextImportantEvent.title} ·{" "}
+                {formatGameDate(data.nextImportantEvent.date)}
+              </>
+            ) : (
+              "No games scheduled"
+            )
           ) : (
             <span className="flex flex-wrap gap-x-4 gap-y-2">
               {games.map((game) => (
@@ -167,34 +237,13 @@ export function HomeTileBoard(props: {
         >
           {tradeNote}
         </HubTile>
-
-        <HubTile
-          enterIndex={3}
-          dense
-          href={`${base}/media`}
-          title="Media"
-          size="wide"
-          className="xl:col-span-4"
-          badge={
-            data.mediaTimeline.unreadCount > 0 ? (
-              <CountChip
-                count={data.mediaTimeline.unreadCount}
-                label="unread"
-              />
-            ) : undefined
-          }
-        >
-          {lead ? (
-            <span className="line-clamp-2">{lead.text}</span>
-          ) : (
-            "No league stories yet"
-          )}
-        </HubTile>
       </FocusGrid>
+
+      {props.mediaSlot}
 
       <FocusGrid
         aria-label="More hubs"
-        className="grid grid-cols-2 gap-3 xl:grid-cols-4"
+        className="grid grid-cols-2 gap-4 xl:grid-cols-4"
       >
         <HubTile
           enterIndex={4}
@@ -211,9 +260,7 @@ export function HomeTileBoard(props: {
           }
         >
           {standing
-            ? standing.gamesBack > 0
-              ? `${standing.gamesBack} GB`
-              : "Leading the conference"
+            ? standingNote(standing)
             : "Standings start with the season"}
         </HubTile>
 
@@ -240,6 +287,19 @@ export function HomeTileBoard(props: {
               {data.health.cashContext.text}
             </>
           ) : null}
+          <span className="block">{payrollNote(payroll)}</span>
+          {fundsTight ? (
+            <span
+              className={cn(
+                "block font-medium",
+                data.health.financialHealth === "warning"
+                  ? "text-warning"
+                  : "text-loss",
+              )}
+            >
+              Business funds under pressure
+            </span>
+          ) : null}
         </HubTile>
 
         <HubTile
@@ -247,6 +307,7 @@ export function HomeTileBoard(props: {
           size="compact"
           href={`${base}/development`}
           title="Development"
+          art={biggestRiser ? <RiserArt riser={biggestRiser} /> : undefined}
           stat={
             biggestRiser
               ? {
@@ -258,7 +319,15 @@ export function HomeTileBoard(props: {
               : undefined
           }
         >
-          {biggestRiser ? "Biggest riser" : "No rating changes yet"}
+          {biggestRiser ? "Biggest riser" : "No risers this season"}
+          {biggestFaller ? (
+            <span className="block">
+              <span aria-hidden className="mr-1 text-loss">
+                ▼
+              </span>
+              {biggestFaller.name} {biggestFaller.delta}
+            </span>
+          ) : null}
         </HubTile>
 
         <HubTile
@@ -269,6 +338,16 @@ export function HomeTileBoard(props: {
           stat={{ value: data.owner.patience, label: "Owner patience" }}
         >
           {data.owner.ownership.moodLabel}
+          {objective ? (
+            <span className="line-clamp-2 block text-warning">
+              Goal: {objective.description}
+            </span>
+          ) : null}
+          {data.owner.ownership.concern ? (
+            <span className="line-clamp-2 block">
+              {data.owner.ownership.concern}
+            </span>
+          ) : null}
         </HubTile>
       </FocusGrid>
     </div>

@@ -1,3 +1,5 @@
+import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
+import type { RecentResultLeader } from "@/state/recent-form-selectors";
 import { describeOwnerObjective } from "@/domain/owner-objective-text";
 import type { GameMode, GameState } from "@/state/game-state";
 import {
@@ -171,6 +173,8 @@ export type DashboardSnapshot = {
     opponentBranding: TeamBrandingView | null;
     /** True when a play-by-play log exists for this game (Watch link). */
     canWatch?: boolean;
+    /** The controlled team's top scorer; null for legacy games without stats. */
+    leader?: RecentResultLeader | null;
   }>;
   upcomingGames: ScheduleGameView[];
   objectives: ObjectiveView[];
@@ -406,11 +410,26 @@ export function toDashboardSnapshot(
       const opponentScore = home ? game.score.away : game.score.home;
       const opponentId = home ? game.awayTeamId : game.homeTeamId;
       const opponent = state.world.teams[opponentId];
+      const top = game.playerStats
+        .filter((row) => row.teamId === team.id)
+        .sort((a, b) => b.points - a.points || b.minutes - a.minutes)[0];
       return {
         gameId: game.id,
         date: game.date,
         opponentAbbreviation: opponent?.abbreviation ?? "???",
         opponentTeamId: opponentId,
+        leader: top
+          ? {
+              playerId: top.playerId,
+              firstName: top.firstName ?? "",
+              lastName: top.lastName ?? "",
+              name:
+                [top.firstName, top.lastName].filter(Boolean).join(" ") ||
+                "Unknown",
+              points: top.points,
+              portrait: selectPlayerPortrait(state, top.playerId),
+            }
+          : null,
         home,
         teamScore,
         opponentScore,

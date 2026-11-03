@@ -90,6 +90,32 @@ describe("toHomeBoardView", () => {
     expect(toHomeBoardView(next).biggestRiser).toBeNull();
   });
 
+  it("reports the biggest faller and nothing when nobody fell", () => {
+    const state = bootstrappedState();
+    const [a, b] = rosterOveralls(state);
+    let next = withPriorOverall(state, a!.id, a!.overall + 2);
+    next = withPriorOverall(next, b!.id, b!.overall + 6);
+
+    const faller = toHomeBoardView(next).biggestFaller;
+
+    expect(faller?.playerId).toBe(b!.id);
+    expect(faller?.delta).toBe(-6);
+    expect(toHomeBoardView(state).biggestFaller).toBeNull();
+  });
+
+  it("carries payroll and the tax line", () => {
+    const { payroll } = toHomeBoardView(bootstrappedState());
+
+    expect(payroll.payroll).toBeGreaterThan(0);
+    expect(payroll.taxLine === null || payroll.taxLine > 0).toBe(true);
+  });
+
+  it("carries a playoff outlook with the standing", () => {
+    const { standing } = toHomeBoardView(bootstrappedState());
+
+    expect(standing!.playoffLabel).toBeTruthy();
+  });
+
   it("includes the conference standing after bootstrap", () => {
     const view = toHomeBoardView(bootstrappedState());
 
@@ -97,6 +123,13 @@ describe("toHomeBoardView", () => {
     expect(view.standing!.conferenceRank).toBeGreaterThanOrEqual(1);
     expect(view.standing!.conferenceName.length).toBeGreaterThan(0);
     expect(view.standing!.gamesBack).toBeGreaterThanOrEqual(0);
+  });
+
+  it("has no playoff series outside the playoffs", () => {
+    const state = bootstrappedState();
+
+    expect(state.competition.season.phase).not.toBe("playoffs");
+    expect(toHomeBoardView(state).playoffSeries).toBeNull();
   });
 
   it("is exposed on the owner dashboard view", () => {

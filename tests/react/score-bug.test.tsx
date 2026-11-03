@@ -29,6 +29,26 @@ describe("ScoreBug", () => {
     expect(bold.map((el) => el.textContent)).toEqual(["HAR", "104"]);
   });
 
+  it("tags the viewer's result and marks their row", () => {
+    const { container } = render(
+      <ScoreBug teams={teams} date="2026-10-08" mineIndex={1} />,
+    );
+    const visible = container.querySelector("[aria-hidden]")!;
+    expect(visible.textContent).toContain("L · Final");
+    const marked = Array.from(visible.querySelectorAll("span")).filter((el) =>
+      el.className.includes("border-team-ink"),
+    );
+    expect(marked).toHaveLength(1);
+    expect(marked[0]!.textContent).toContain("SUM");
+  });
+
+  it("tags a win for the viewer's team", () => {
+    const { container } = render(
+      <ScoreBug teams={teams} date="2026-10-08" mineIndex={0} />,
+    );
+    expect(container.textContent).toContain("W · Final");
+  });
+
   it("becomes a link with a 44px target when href is given", () => {
     render(
       <ScoreBug
