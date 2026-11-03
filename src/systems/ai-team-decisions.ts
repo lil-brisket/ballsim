@@ -107,7 +107,10 @@ import {
 } from "@/systems/roster-management";
 import { isDraftAiPhase, isFreeAgencyAiPhase } from "@/systems/phase-engine";
 import { runAiDevelopmentLeagueDecisions } from "@/systems/development-league/ai-decisions";
+import { assignPlayerToDevelopmentLeague } from "@/systems/development-league/assignment";
+import { isDevelopmentLeagueEligible } from "@/systems/development-league/eligibility";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
+import { getTopLeagueRosterPlayers } from "@/systems/development-league/franchise-membership";
 
 export { isUserControlledTeam };
 
@@ -242,7 +245,8 @@ function rotationBelowDepth(
  * five positions (the only center is hurt, say) signs a free agent who plays
  * an open position, one a day at most, so its lineup stays legal. A capped
  * team uses the veteran minimum for a replacement-level player. A full roster
- * waives a spare first, but never one the lineup needs.
+ * waives a spare first, or sends a Development League eligible player down
+ * when no contract can be waived, but never one the lineup needs.
  */
 function runAiLineupRepairs(state: GameState): SystemResult {
   const phase = state.competition.season.phase;
@@ -288,21 +292,34 @@ export function repairTeamLineup(
   if (candidates.length === 0) {
     return { ...systemResult(current, events), signed: false };
   }
-  // All or nothing: a waiver only stands if a signing follows it.
+  // All or nothing: the roster spot only stays open if a signing follows it.
   const beforeWaiver = current;
   const rosterSize = current.world.teams[teamId]?.roster.length ?? 0;
   if (rosterSize >= TRADE_ROSTER_RULES.maxRosterSize) {
-    const waiveId = findLineupSafeWaiver(current, teamId, open);
-    if (waiveId === null) {
+    const room = findLineupSafeRosterRoom(current, teamId, open);
+    if (room === null) {
       return { ...systemResult(current, events), signed: false };
     }
-    const waived = releasePlayerUnderContract(current, {
-      playerId: waiveId,
-      teamId,
-      mode: "waive",
-    });
-    current = waived.state;
-    events.push(...waived.events);
+    if (room.kind === "waive") {
+      const waived = releasePlayerUnderContract(current, {
+        playerId: room.playerId,
+        teamId,
+        mode: "waive",
+      });
+      current = waived.state;
+      events.push(...waived.events);
+    } else {
+      const assigned = assignPlayerToDevelopmentLeague(
+        current,
+        room.playerId,
+        teamId,
+      );
+      if (!assigned.success) {
+        return { ...systemResult(current, events), signed: false };
+      }
+      current = assigned.state;
+      events.push(...assigned.events);
+    }
   }
 
   // The next best free agent is tried if an offer cannot be completed.
@@ -339,7 +356,7 @@ export function canRepairTeamLineup(state: GameState, teamId: TeamId): boolean {
   const rosterSize = state.world.teams[teamId]?.roster.length ?? 0;
   return (
     rosterSize < TRADE_ROSTER_RULES.maxRosterSize ||
-    findLineupSafeWaiver(state, teamId, open) !== null
+    findLineupSafeRosterRoom(state, teamId, open) !== null
   );
 }
 
@@ -393,7 +410,9 @@ function findLineupSafeWaiver(
   teamId: TeamId,
   open: readonly PlayerPosition[],
 ): PlayerId | null {
-  const waiveId = findCpuWaiverCandidate(state, teamId, open[0] ?? "PG");
+  const waiveId = findCpuWaiverCandidate(state, teamId, open[0] ?? "PG", {
+    includeUnavailableAtNeededPosition: true,
+  });
   if (waiveId === null) {
     return null;
   }
@@ -403,6 +422,45 @@ function findLineupSafeWaiver(
   return assignLineupSlots(remaining).unfilled.length > open.length
     ? null
     : waiveId;
+}
+
+type LineupRosterRoom = {
+  kind: "waive" | "development_league";
+  playerId: PlayerId;
+};
+
+/**
+ * How a full roster makes room for a repair signing without opening a position
+ * the lineup covers: waive a spare, or, when no contract can be waived (dead
+ * money), send the weakest Development League eligible player. A Development
+ * League assignment keeps the contract, so it costs nothing.
+ */
+function findLineupSafeRosterRoom(
+  state: GameState,
+  teamId: TeamId,
+  open: readonly PlayerPosition[],
+): LineupRosterRoom | null {
+  const waiveId = findLineupSafeWaiver(state, teamId, open);
+  if (waiveId !== null) {
+    return { kind: "waive", playerId: waiveId };
+  }
+  const healthy = healthyRoster(state, teamId);
+  const candidate = getTopLeagueRosterPlayers(teamId, state)
+    .filter(
+      (player) =>
+        isDevelopmentLeagueEligible(player, teamId, state) &&
+        assignLineupSlots(healthy.filter((other) => other.id !== player.id))
+          .unfilled.length <= open.length,
+    )
+    .sort(
+      (a, b) =>
+        calculatePlayerOverall(a.position, a.attributes) -
+          calculatePlayerOverall(b.position, b.attributes) ||
+        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+    )[0];
+  return candidate === undefined
+    ? null
+    : { kind: "development_league", playerId: candidate.id };
 }
 
 function signLineupRepair(

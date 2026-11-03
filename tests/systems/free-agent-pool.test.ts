@@ -130,6 +130,74 @@ describe("ensureFreeAgentPool", () => {
   });
 });
 
+describe("ensureFreeAgentPool demand", () => {
+  /** Puts the league in the regular season with `count` teams missing every center. */
+  function withCenterlessTeams(state: GameState, count: number): GameState {
+    const players = { ...state.world.players };
+    const teamIds = Object.keys(state.world.teams)
+      .filter((id) => id !== state.user.activeOwnerTeamId)
+      .sort()
+      .slice(0, count);
+    for (const teamId of teamIds) {
+      for (const id of state.world.teams[teamId]!.roster) {
+        const player = players[id]!;
+        if (playsPosition(player, "C")) {
+          players[id] = createPlayer({ ...player, availability: "out" });
+        }
+      }
+    }
+    return {
+      ...state,
+      competition: {
+        ...state.competition,
+        season: { ...state.competition.season, phase: "regular" },
+      },
+      world: { ...state.world, players },
+    };
+  }
+
+  function centers(state: GameState): number {
+    return listFreeAgents(state).playerIds.filter((id) =>
+      playsPosition(state.world.players[id]!, "C"),
+    ).length;
+  }
+
+  it("holds a free agent for every team that needs a center", () => {
+    const state = withCenterlessTeams(drained(league()), 6);
+    const filled = ensureFreeAgentPool(state, createSeededRng(4)).state;
+    expect(centers(filled)).toBeGreaterThanOrEqual(6);
+  });
+
+  it("keeps only the floor when no team needs the position", () => {
+    const state = {
+      ...drained(league()),
+    };
+    const regular = withCenterlessTeams(state, 0);
+    const filled = ensureFreeAgentPool(regular, createSeededRng(4)).state;
+    expect(centers(filled)).toBeGreaterThanOrEqual(
+      FREE_AGENT_POOL_MIN_PER_POSITION,
+    );
+    expect(centers(filled)).toBeLessThan(6);
+  });
+
+  it("does not size the pool to demand outside the preseason and regular season", () => {
+    const inOffseason = (state: GameState): GameState => ({
+      ...state,
+      competition: {
+        ...state.competition,
+        season: { ...state.competition.season, phase: "offseason" as const },
+      },
+    });
+    const needy = inOffseason(withCenterlessTeams(drained(league()), 6));
+    const calm = inOffseason(withCenterlessTeams(drained(league()), 0));
+    const withDemand = ensureFreeAgentPool(needy, createSeededRng(4)).state;
+    const without = ensureFreeAgentPool(calm, createSeededRng(4)).state;
+    expect(listFreeAgents(withDemand).playerIds).toEqual(
+      listFreeAgents(without).playerIds,
+    );
+  });
+});
+
 describe("daily AI decisions", () => {
   it("restore the pool when teams have signed everyone", () => {
     const empty = drained(league());

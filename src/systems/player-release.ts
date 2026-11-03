@@ -36,6 +36,7 @@ import {
   getTeamPayroll,
 } from "@/systems/salary-cap";
 import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import { playerCanPlay } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { applyCashOnlyImpact } from "@/systems/team-finances";
 import { TRADE_ROSTER_RULES } from "@/systems/trades-config";
@@ -355,11 +356,16 @@ export const AI_WAIVE_MAX_DEAD_MONEY_CAP_SHARE = 0.03;
  * The player a CPU team waives to open a roster spot for a needed position:
  * its lowest-rated player at a position it has more than one of, whose dead
  * money stays small. Null when nobody qualifies.
+ *
+ * Players at the needed position are not waived, except, with
+ * `includeUnavailableAtNeededPosition`, one who cannot play right now (an
+ * injured center is no depth while a center is being signed).
  */
 export function findCpuWaiverCandidate(
   state: GameState,
   teamId: TeamId,
   neededPosition: string,
+  options: { includeUnavailableAtNeededPosition?: boolean } = {},
 ): PlayerId | null {
   const team = state.world.teams[teamId];
   if (!team) return null;
@@ -377,7 +383,12 @@ export function findCpuWaiverCandidate(
     if (!player || isPlayerDlAssigned(player) || player.contractId == null) {
       continue;
     }
-    if (player.position === neededPosition) continue;
+    if (
+      player.position === neededPosition &&
+      !(options.includeUnavailableAtNeededPosition && !playerCanPlay(player))
+    ) {
+      continue;
+    }
     if ((counts.get(player.position) ?? 0) < 2) continue;
     const contract = state.business.contracts[player.contractId];
     if (!contract || contract.teamId !== teamId) continue;

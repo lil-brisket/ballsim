@@ -3,6 +3,7 @@ import { CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { createSeededRng } from "@/domain/rng";
 import {
   createPlayer,
+  playerCanPlay,
   playsPosition,
   type Player,
 } from "@/domain/entities/player";
@@ -160,6 +161,52 @@ describe("AI lineup repair for injuries", () => {
     state = withoutFreeAgentsAt(state, "C");
     const after = runAiTeamDecisions(state, createSeededRng(5)).state;
     expect(missingPositions(after, teamId)).not.toContain("C");
+  });
+
+  it("waives the injured backup center when no one else can be waived", () => {
+    let state = seasonState();
+    const teamId = aiTeam(state);
+    state = injureEveryone(state, teamId, "C");
+    // Everyone but the centers is on a big guaranteed deal (too much dead
+    // money to waive); the injured centers are cheap.
+    const year = state.competition.season.year;
+    const contracts = { ...state.business.contracts };
+    for (const player of rosterPlayers(state, teamId)) {
+      const contract = contracts[player.contractId!]!;
+      // Only primary centers are cheap; a forward who also plays center is not.
+      const cheap = player.position === "C";
+      const salaryByYear: Record<string, number> = {};
+      for (let y = year; y <= year + 3; y += 1) {
+        salaryByYear[String(y)] = cheap ? 500_000 : 30_000_000;
+      }
+      contracts[player.contractId!] = {
+        ...contract,
+        startYear: year,
+        endYear: cheap ? year : year + 3,
+        salaryByYear: cheap ? { [String(year)]: 500_000 } : salaryByYear,
+      };
+    }
+    state = { ...state, business: { ...state.business, contracts } };
+    state = withFreeAgent(withoutFreeAgentsAt(state, "C"), "C").state;
+    const rosterBefore = state.world.teams[teamId]!.roster;
+    expect(rosterBefore).toHaveLength(15);
+    const injuredCenters = rosterPlayers(state, teamId).filter(
+      (p) => !playerCanPlay(p) && playsPosition(p, "C"),
+    );
+    expect(injuredCenters.length).toBeGreaterThan(0);
+
+    const result = repairTeamLineup(state, teamId);
+
+    expect(result.signed).toBe(true);
+    const after = rosterPlayers(result.state, teamId);
+    expect(after).toHaveLength(15);
+    expect(missingPositions(result.state, teamId)).not.toContain("C");
+    // One of the injured centers made room; no healthy player was lost.
+    const lost = rosterBefore.filter(
+      (id) => !result.state.world.teams[teamId]!.roster.includes(id),
+    );
+    expect(lost).toHaveLength(1);
+    expect(playerCanPlay(state.world.players[lost[0]!]!)).toBe(false);
   });
 
   it("does not repair outside preseason and the regular season", () => {

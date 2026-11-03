@@ -1,9 +1,15 @@
-import { playsPosition, type Player } from "@/domain/entities/player";
+import {
+  playerCanPlay,
+  playsPosition,
+  type Player,
+  type PlayerPosition,
+} from "@/domain/entities/player";
 import { asPlayerId } from "@/domain/ids";
 import { createSeededRng, deriveSeed, type Rng } from "@/domain/rng";
 import { systemResult, type SystemResult } from "@/domain/system-result";
 import type { GameState } from "@/state/game-state";
 import { listFreeAgents } from "@/systems/free-agency";
+import { assignLineupSlots } from "@/systems/lineup-assignment";
 import { generatePlayerWithRng } from "@/systems/player-generation";
 import { OPENING_FREE_AGENT_QUALITY } from "@/systems/roster-generation-config";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
@@ -15,11 +21,37 @@ import { PLAYER_POSITIONS } from "@/domain/entities/player";
  */
 export const FREE_AGENT_POOL_MIN_PER_POSITION = 3;
 
+/**
+ * Preseason and regular season only: teams with a position their healthy
+ * players cannot fill sign a free agent for it, so the pool also holds one
+ * player per such team at that position, whatever the floor.
+ */
+function isRepairPhase(state: GameState): boolean {
+  const phase = state.competition.season.phase;
+  return phase === "preseason" || phase === "regular";
+}
+
+/** How many teams currently have no healthy player to fill each position. */
+function openPositionDemand(state: GameState): Map<PlayerPosition, number> {
+  const demand = new Map<PlayerPosition, number>();
+  for (const team of Object.values(state.world.teams)) {
+    const healthy = team.roster
+      .map((id) => state.world.players[id])
+      .filter((p): p is Player => p !== undefined && playerCanPlay(p));
+    for (const position of assignLineupSlots(healthy).unfilled) {
+      demand.set(position, (demand.get(position) ?? 0) + 1);
+    }
+  }
+  return demand;
+}
+
 const POOL_ID_PREFIX = "player_fa_pool_";
 
 /**
  * Tops the free-agent pool up to {@link FREE_AGENT_POOL_MIN_PER_POSITION} at
- * each position with fringe players, the same band a new league opens with.
+ * each position (more where several teams need that position filled, in the
+ * preseason and regular season) with fringe players, the same band a new
+ * league opens with.
  * Does nothing while a startup fantasy draft is unfinished (its pool is the
  * draft pool) or before any player exists.
  *
@@ -39,14 +71,16 @@ export function ensureFreeAgentPool(state: GameState, rng: Rng): SystemResult {
   const pool = listFreeAgents(state).playerIds.map(
     (id) => state.world.players[id]!,
   );
+  const demand = isRepairPhase(state) ? openPositionDemand(state) : null;
   const missing = PLAYER_POSITIONS.flatMap((position) => {
     const have = pool.filter((player) =>
       playsPosition(player, position),
     ).length;
-    return Array.from(
-      { length: Math.max(0, FREE_AGENT_POOL_MIN_PER_POSITION - have) },
-      () => position,
+    const target = Math.max(
+      FREE_AGENT_POOL_MIN_PER_POSITION,
+      demand?.get(position) ?? 0,
     );
+    return Array.from({ length: Math.max(0, target - have) }, () => position);
   });
   if (missing.length === 0) {
     return systemResult(state);
