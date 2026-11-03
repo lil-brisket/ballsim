@@ -1,7 +1,12 @@
 "use client";
 
 import { DataTable, numericCellClass } from "@/components/ui/DataTable";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import {
+  DialogPortal,
+  FormDoneWatcher,
+  useDialogKeys,
+} from "@/components/contracts/dialog-support";
 import { releasePlayerAction } from "@/application/actions";
 import { formatMoney, MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Button } from "@/components/ui/Button";
@@ -11,9 +16,6 @@ import { cn, focusRingClass } from "@/components/ui/styles";
 import type { PlayerReleaseView } from "@/state/player-release-selectors";
 
 type Mode = "waive" | "buyout";
-
-const FOCUSABLE =
-  'button:not([disabled]), input:not([disabled]):not([type="hidden"]), [href], [tabindex]:not([tabindex="-1"])';
 
 /**
  * Release (waive / buyout) confirmation. Presentation only: the mutation
@@ -27,43 +29,33 @@ export function ReleasePlayerDialog(props: {
   release: PlayerReleaseView;
   /** Open on mount (deep link from the player drawer). */
   defaultOpen?: boolean;
+  /** Controlled mode: the parent owns `open`. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Do not render the built-in trigger button. */
+  hideTrigger?: boolean;
+  /** Called when the submitted action settles. */
+  onSubmitted?: () => void;
 }) {
   const { release } = props;
-  const [open, setOpen] = useState(props.defaultOpen ?? false);
+  const controlled = props.open !== undefined;
+  const [innerOpen, setInnerOpen] = useState(props.defaultOpen ?? false);
+  const open = controlled ? props.open === true : innerOpen;
+  function setOpen(next: boolean) {
+    if (!controlled) setInnerOpen(next);
+    props.onOpenChange?.(next);
+  }
   const [mode, setMode] = useState<Mode>("waive");
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const dialog = dialogRef.current;
-    const trigger = triggerRef.current;
-    dialog?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        return;
-      }
-      if (event.key !== "Tab" || !dialog) return;
-      const items = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE));
-      if (items.length === 0) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      trigger?.focus();
-    };
-  }, [open]);
+  useDialogKeys({
+    open,
+    dialogRef,
+    triggerRef,
+    onClose: () => setOpen(false),
+  });
 
   const option = mode === "waive" ? release.waive : release.buyout;
   const blocked = release.blockedReason !== null;
@@ -74,113 +66,123 @@ export function ReleasePlayerDialog(props: {
 
   return (
     <>
-      <Button
-        ref={triggerRef}
-        variant="danger"
-        className="min-h-11 px-2.5"
-        onClick={() => {
-          setMode("waive");
-          setOpen(true);
-        }}
-      >
-        Release
-      </Button>
-      {open ? (
-        <Overlay
-          className="flex items-center justify-center p-4"
-          onClick={() => setOpen(false)}
+      {props.hideTrigger ? null : (
+        <Button
+          ref={triggerRef}
+          variant="danger"
+          className="min-h-11 px-2.5"
+          onClick={() => {
+            setMode("waive");
+            setOpen(true);
+          }}
         >
-          <div
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            className="relative z-10 max-h-full w-full max-w-lg overflow-y-auto rounded-xl border border-line-strong bg-surface-raised p-5 text-left shadow-xl"
+          Release
+        </Button>
+      )}
+      {open ? (
+        <DialogPortal portal={controlled}>
+          <Overlay
+            className="flex items-center justify-center p-4"
+            onClick={() => setOpen(false)}
           >
-            <SectionHeading
-              as="h3"
-              id={titleId}
-              title={`Release ${props.playerName}?`}
-            />
-            <form action={releasePlayerAction} className="mt-3 space-y-4">
-              <input type="hidden" name="saveId" value={props.saveId} />
-              <input type="hidden" name="playerId" value={props.playerId} />
-              <input type="hidden" name="returnPath" value={props.returnPath} />
-              <input type="hidden" name="mode" value={mode} />
-
-              <fieldset className="space-y-2">
-                <legend className="sr-only">Release type</legend>
-                <ModeChoice
-                  name="release-mode"
-                  value="waive"
-                  checked={mode === "waive"}
-                  onSelect={setMode}
-                  label="Waive"
-                  detail="Pay the rest of his contract on the original schedule."
-                  amount={release.waive.totalDeadMoney}
-                  amountLabel="Total dead money"
+            <div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
+              className="relative z-10 max-h-full w-full max-w-lg overflow-y-auto rounded-xl border border-line-strong bg-surface-raised p-5 text-left shadow-xl"
+            >
+              <SectionHeading
+                as="h3"
+                id={titleId}
+                title={`Release ${props.playerName}?`}
+              />
+              <form action={releasePlayerAction} className="mt-3 space-y-4">
+                <input type="hidden" name="saveId" value={props.saveId} />
+                <input type="hidden" name="playerId" value={props.playerId} />
+                <input
+                  type="hidden"
+                  name="returnPath"
+                  value={props.returnPath}
                 />
-                <ModeChoice
-                  name="release-mode"
-                  value="buyout"
-                  checked={mode === "buyout"}
-                  onSelect={setMode}
-                  label="Buyout"
-                  detail={
-                    buyoutPercent !== null
-                      ? `He accepts ${buyoutPercent}% of the remaining salary (${formatMoney(release.remainingSalary)}). You pay it now.`
-                      : "He gives up part of his salary. You pay it now."
-                  }
-                  amount={release.buyout.cashNow}
-                  amountLabel="Paid now"
-                />
-              </fieldset>
+                <input type="hidden" name="mode" value={mode} />
+                <FormDoneWatcher onDone={props.onSubmitted} />
 
-              <DataTable
-                headers={[
-                  "Season",
-                  { label: "Cap hit", numeric: true },
-                  { label: "Cash still due", numeric: true },
-                ]}
-              >
-                {option.seasons.map((season) => (
-                  <tr key={season.seasonYear}>
-                    <td className="px-3 py-2">{season.seasonYear}</td>
-                    <td className={`px-3 py-2 ${numericCellClass}`}>
-                      <MoneyDisplay amount={season.capHit} />
-                    </td>
-                    <td className={`px-3 py-2 ${numericCellClass}`}>
-                      {mode === "buyout" ? (
-                        <span className="text-muted">Paid now</span>
-                      ) : (
-                        <MoneyDisplay amount={season.cashDue} />
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </DataTable>
+                <fieldset className="space-y-2">
+                  <legend className="sr-only">Release type</legend>
+                  <ModeChoice
+                    name="release-mode"
+                    value="waive"
+                    checked={mode === "waive"}
+                    onSelect={setMode}
+                    label="Waive"
+                    detail="Pay the rest of his contract on the original schedule."
+                    amount={release.waive.totalDeadMoney}
+                    amountLabel="Total dead money"
+                  />
+                  <ModeChoice
+                    name="release-mode"
+                    value="buyout"
+                    checked={mode === "buyout"}
+                    onSelect={setMode}
+                    label="Buyout"
+                    detail={
+                      buyoutPercent !== null
+                        ? `He accepts ${buyoutPercent}% of the remaining salary (${formatMoney(release.remainingSalary)}). You pay it now.`
+                        : "He gives up part of his salary. You pay it now."
+                    }
+                    amount={release.buyout.cashNow}
+                    amountLabel="Paid now"
+                  />
+                </fieldset>
 
-              <p className="text-sm text-soft">
-                Cap space after: <MoneyDisplay amount={option.capSpaceAfter} />
-              </p>
+                <DataTable
+                  headers={[
+                    "Season",
+                    { label: "Cap hit", numeric: true },
+                    { label: "Cash still due", numeric: true },
+                  ]}
+                >
+                  {option.seasons.map((season) => (
+                    <tr key={season.seasonYear}>
+                      <td className="px-3 py-2">{season.seasonYear}</td>
+                      <td className={`px-3 py-2 ${numericCellClass}`}>
+                        <MoneyDisplay amount={season.capHit} />
+                      </td>
+                      <td className={`px-3 py-2 ${numericCellClass}`}>
+                        {mode === "buyout" ? (
+                          <span className="text-muted">Paid now</span>
+                        ) : (
+                          <MoneyDisplay amount={season.cashDue} />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </DataTable>
 
-              {blocked ? (
-                <p role="alert" className="text-sm text-danger-ink">
-                  {release.blockedReason}
+                <p className="text-sm text-soft">
+                  Cap space after:{" "}
+                  <MoneyDisplay amount={option.capSpaceAfter} />
                 </p>
-              ) : null}
 
-              <div className="flex flex-wrap justify-end gap-2">
-                <Button variant="secondary" onClick={() => setOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="danger" disabled={blocked}>
-                  {mode === "waive" ? "Waive player" : "Buy out player"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </Overlay>
+                {blocked ? (
+                  <p role="alert" className="text-sm text-danger-ink">
+                    {release.blockedReason}
+                  </p>
+                ) : null}
+
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button variant="secondary" onClick={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" variant="danger" disabled={blocked}>
+                    {mode === "waive" ? "Waive player" : "Buy out player"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </Overlay>
+        </DialogPortal>
       ) : null}
     </>
   );

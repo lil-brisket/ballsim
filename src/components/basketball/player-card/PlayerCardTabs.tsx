@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export const PLAYER_CARD_TABS = [
@@ -8,6 +8,9 @@ export const PLAYER_CARD_TABS = [
   { id: "attributes", label: "Attributes" },
   { id: "statistics", label: "Statistics" },
   { id: "development", label: "Development" },
+  { id: "gamelog", label: "Game Log" },
+  { id: "career", label: "Career" },
+  { id: "contract", label: "Contract" },
 ] as const;
 
 export type PlayerCardTabId = (typeof PLAYER_CARD_TABS)[number]["id"];
@@ -27,6 +30,14 @@ export function PlayerCardTabList(props: {
   className?: string;
 }) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    // Keep the active tab visible when the list scrolls horizontally.
+    refs.current[props.active]?.scrollIntoView?.({
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [props.active]);
 
   function select(index: number, focus: boolean) {
     const count = PLAYER_CARD_TABS.length;
@@ -60,7 +71,10 @@ export function PlayerCardTabList(props: {
     <div
       role="tablist"
       aria-label="Player card sections"
-      className={cn("flex gap-1 overflow-x-auto", props.className)}
+      className={cn(
+        "flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        props.className,
+      )}
     >
       {PLAYER_CARD_TABS.map((tab, index) => {
         const selected = tab.id === props.active;

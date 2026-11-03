@@ -38,6 +38,8 @@ const GAME_LOG_COLUMNS: Array<[SortKey, string, boolean]> = [
 export function PlayerGameLog(props: {
   player: PlayerProfileView;
   saveId: string;
+  /** Called when a box-score link is followed (the drawer closes itself). */
+  onNavigate?: () => void;
 }) {
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
   const [competitionFilter, setCompetitionFilter] = useState<string>("all");
@@ -147,6 +149,7 @@ export function PlayerGameLog(props: {
             <td className="px-3 py-2">
               <Link
                 href={`/dashboard/${props.saveId}/games/${row.gameId}`}
+                onClick={props.onNavigate}
                 className={cn(linkClass, focusRingClass)}
               >
                 {formatGameDate(row.date)}

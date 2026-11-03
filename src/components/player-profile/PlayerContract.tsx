@@ -15,6 +15,8 @@ import type { PlayerProfileView } from "@/state/player-profile-selectors";
 export function PlayerContract(props: {
   player: PlayerProfileView;
   saveId: string;
+  /** Hides the link to the contracts hub (the player drawer owns this view). */
+  inDrawer?: boolean;
 }) {
   const profile = props.player.contractProfile;
 
@@ -31,12 +33,14 @@ export function PlayerContract(props: {
       <Section
         title="Current contract"
         action={
-          <Link
-            href={`/dashboard/${props.saveId}/team/contracts`}
-            className={cn(linkClass, touchTargetTextClass, focusRingClass)}
-          >
-            View contracts
-          </Link>
+          props.inDrawer ? undefined : (
+            <Link
+              href={`/dashboard/${props.saveId}/team/contracts`}
+              className={cn(linkClass, touchTargetTextClass, focusRingClass)}
+            >
+              View contracts
+            </Link>
+          )
         }
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

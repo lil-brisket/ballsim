@@ -167,3 +167,26 @@ describe("ExpiringDeals", () => {
     expect(container.textContent).toBe("");
   });
 });
+
+describe("ExtendContractDialog controlled mode", () => {
+  it("renders no trigger and reports close through onOpenChange", () => {
+    const onOpenChange = vi.fn();
+    render(
+      <ExtendContractDialog
+        saveId="s1"
+        playerId="p1"
+        playerName="Test Player"
+        returnPath="/x"
+        extension={extension}
+        open
+        hideTrigger
+        onOpenChange={onOpenChange}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Extend" })).toBeNull();
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    cleanup();
+  });
+});

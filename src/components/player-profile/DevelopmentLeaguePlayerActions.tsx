@@ -1,5 +1,6 @@
 "use client";
 
+import { FormDoneWatcher } from "@/components/contracts/dialog-support";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import {
@@ -16,6 +17,8 @@ export function DevelopmentLeaguePlayerActions(props: {
   statusLabel: string | null;
   readinessLabel: string | null;
   whyBullets: string[];
+  /** Called when a submitted assign/recall action settles (drawer refresh). */
+  onDone?: () => void;
 }) {
   if (!props.canAssign && !props.canRecall && props.statusLabel == null) {
     return null;
@@ -43,6 +46,7 @@ export function DevelopmentLeaguePlayerActions(props: {
             <input type="hidden" name="saveId" value={props.saveId} />
             <input type="hidden" name="playerId" value={props.playerId} />
             <input type="hidden" name="returnPath" value={props.returnPath} />
+            <FormDoneWatcher onDone={props.onDone} />
             <button
               type="submit"
               className={buttonClass({ variant: "primary" })}
@@ -56,6 +60,7 @@ export function DevelopmentLeaguePlayerActions(props: {
             <input type="hidden" name="saveId" value={props.saveId} />
             <input type="hidden" name="playerId" value={props.playerId} />
             <input type="hidden" name="returnPath" value={props.returnPath} />
+            <FormDoneWatcher onDone={props.onDone} />
             <button
               type="submit"
               className={buttonClass({ variant: "secondary" })}

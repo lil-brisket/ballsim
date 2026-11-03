@@ -198,12 +198,12 @@ describe("toPlayerDrawerView", () => {
     );
     expect(controlledView).not.toBeNull();
     expect(controlledView!.contract).not.toBeNull();
-    expect(controlledView!.navigation.contractHref).toBe(
-      "/dashboard/save_drawer/team/contracts",
-    );
-    expect(controlledView!.navigation.developmentHref).toContain(
-      "/development",
-    );
+    expect(controlledView!.actions.onControlledRoster).toBe(true);
+    // Contract-bound actions are present only when the player has a deal that
+    // the owner can act on; both stay null when there is no such deal.
+    expect(controlledView!.actions.release).not.toBeNull();
+    expect(controlledView!.navigation).not.toHaveProperty("extendHref");
+    expect(controlledView!.navigation).not.toHaveProperty("releaseHref");
 
     const otherTeam = Object.values(state.world.teams).find(
       (t) => t.id !== controlled.id && t.roster.length > 0,
@@ -213,8 +213,11 @@ describe("toPlayerDrawerView", () => {
     const oppView = toPlayerDrawerView(state, asPlayerId(oppId), "save_drawer");
     expect(oppView).not.toBeNull();
     expect(oppView!.contract).toBeNull();
-    expect(oppView!.navigation.contractHref).toBeNull();
-    expect(oppView!.navigation.developmentHref).toBeNull();
+    expect(oppView!.actions).toEqual({
+      onControlledRoster: false,
+      extension: null,
+      release: null,
+    });
     expect(oppView!.identity.overall).toBeGreaterThan(0);
   });
 

@@ -98,9 +98,8 @@ const samplePlayer = {
   navigation: {
     playerHref: "/dashboard/save_test/players/player_1",
     teamHref: "/dashboard/save_test/team",
-    contractHref: null,
-    developmentHref: null,
   },
+  actions: { onControlledRoster: false, extension: null, release: null },
 };
 
 describe("EntityDrawerProvider", () => {
@@ -129,14 +128,14 @@ describe("EntityDrawerProvider", () => {
     expect(fetchPlayer).toHaveBeenCalledWith("save_test", "player_1");
 
     await waitFor(() => {
-      expect(screen.getByText("View full player")).toBeTruthy();
+      expect(screen.getByText("Open as page")).toBeTruthy();
     });
     expect(screen.getByText("Season averages")).toBeTruthy();
     expect(screen.getByText("18.2")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() => {
-      expect(screen.queryByText("View full player")).toBeNull();
+      expect(screen.queryByText("Open as page")).toBeNull();
     });
     unmount();
   });
@@ -153,16 +152,16 @@ describe("EntityDrawerProvider", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Alex Rivera" }));
     await waitFor(() => {
-      expect(screen.getByText("View full player")).toBeTruthy();
+      expect(screen.getByText("Open as page")).toBeTruthy();
     });
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() => {
-      expect(screen.queryByText("View full player")).toBeNull();
+      expect(screen.queryByText("Open as page")).toBeNull();
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Alex Rivera" }));
     await waitFor(() => {
-      expect(screen.getByText("View full player")).toBeTruthy();
+      expect(screen.getByText("Open as page")).toBeTruthy();
     });
     expect(screen.getByText("18.2")).toBeTruthy();
     unmount();
@@ -181,13 +180,13 @@ describe("EntityDrawerProvider", () => {
     expect(document.body.style.overflow).toBe("");
     fireEvent.click(screen.getByRole("button", { name: "Alex Rivera" }));
     await waitFor(() => {
-      expect(screen.getByText("View full player")).toBeTruthy();
+      expect(screen.getByText("Open as page")).toBeTruthy();
     });
     expect(document.body.style.overflow).toBe("hidden");
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     await waitFor(() => {
-      expect(screen.queryByText("View full player")).toBeNull();
+      expect(screen.queryByText("Open as page")).toBeNull();
     });
     expect(document.body.style.overflow).toBe("");
     unmount();

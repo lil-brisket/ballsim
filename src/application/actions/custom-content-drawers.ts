@@ -5,8 +5,12 @@ import type {
   TeamDrawerView,
   StaffDrawerView,
 } from "@/state/entity-drawer-selectors";
-import type { PlayerGameSeriesPoint } from "@/state/player-profile-selectors";
+import type {
+  PlayerGameSeriesPoint,
+  PlayerProfileDrawerData,
+} from "@/state/player-profile-selectors";
 import {
+  loadOwnerPlayerView,
   loadPlayerDrawerView,
   loadPlayerGameSeries,
   loadTeamDrawerView,
@@ -32,6 +36,19 @@ export async function fetchPlayerDrawerViewAction(
   playerId: string,
 ): Promise<PlayerDrawerView | null> {
   return loadPlayerDrawerView(saveId, playerId);
+}
+
+/**
+ * Client-callable full profile for the drawer's Game Log, Career and Contract
+ * tabs (no redirect). Null when the player is outside the owner's scope.
+ */
+export async function fetchPlayerProfileViewAction(
+  saveId: string,
+  playerId: string,
+): Promise<PlayerProfileDrawerData | null> {
+  const view = await loadOwnerPlayerView(saveId, playerId);
+  if (!view) return null;
+  return { player: view.player, tradesOpen: view.dashboard.tradesOpen };
 }
 
 /** Client-callable game-by-game series for a non-current season (no redirect). */

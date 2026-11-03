@@ -1,6 +1,18 @@
 import { createEmptyPlayerStatLine } from "@/domain/player-stat-aggregation";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 vi.mock("server-only", () => ({}));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/dashboard/save_test/players",
+}));
+const { fetchProfile } = vi.hoisted(() => ({ fetchProfile: vi.fn() }));
+vi.mock("@/application/actions", () => ({
+  releasePlayerAction: vi.fn(),
+  offerContractExtensionAction: vi.fn(),
+  executeTradeAction: vi.fn(),
+  assignToDevelopmentLeagueAction: vi.fn(),
+  recallFromDevelopmentLeagueAction: vi.fn(),
+  fetchPlayerProfileViewAction: (...args: unknown[]) => fetchProfile(...args),
+}));
 import {
   fireEvent,
   render,
@@ -8,6 +20,8 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import type { ContractExtensionView } from "@/state/contract-extension-selectors";
+import type { PlayerReleaseView } from "@/state/player-release-selectors";
 import { PlayerDrawer } from "@/components/basketball/PlayerDrawer";
 import { resetDrawerScrollLockForTests } from "@/components/ui/drawer-scroll-lock";
 import type { PlayerAttributes } from "@/domain/entities/player";
@@ -33,6 +47,51 @@ const BASE_ATTRIBUTES: PlayerAttributes = {
   offensiveIq: 60,
   defensiveIq: 60,
   consistency: 60,
+};
+
+const extensionView: ContractExtensionView = {
+  playerId: "player_1",
+  seasonsLeft: 0,
+  currentSalary: 8_000_000,
+  firstNewSeason: 2028,
+  askSalary: 12_000_000,
+  askMinYears: 3,
+  maxYears: 5,
+  minSalary: 1_000_000,
+  maxSalary: 50_000_000,
+  salaryCap: 100_000_000,
+  salaryCapEnabled: true,
+  seasons: [2028, 2029, 2030, 2031, 2032].map((seasonYear) => ({
+    seasonYear,
+    currentSalary: 0,
+    payrollWithoutPlayer: 95_000_000,
+  })),
+  lastResponse: null,
+  refusals: 0,
+  testingMarket: false,
+  blockedReason: null,
+};
+
+const releaseView: PlayerReleaseView = {
+  playerId: "player_1",
+  remainingSalary: 20_000_000,
+  blockedReason: null,
+  waive: {
+    mode: "waive",
+    cashNow: 0,
+    buyoutRate: null,
+    totalDeadMoney: 20_000_000,
+    seasons: [{ seasonYear: 2027, capHit: 10_000_000, cashDue: 10_000_000 }],
+    capSpaceAfter: 5_000_000,
+  },
+  buyout: {
+    mode: "buyout",
+    cashNow: 17_600_000,
+    buyoutRate: 0.88,
+    totalDeadMoney: 17_600_000,
+    seasons: [{ seasonYear: 2027, capHit: 17_600_000, cashDue: 0 }],
+    capSpaceAfter: -2_000_000,
+  },
 };
 
 function playerView(
@@ -104,11 +163,8 @@ function playerView(
     navigation: {
       playerHref: "/dashboard/save_test/players/player_1",
       teamHref: "/dashboard/save_test/team",
-      contractHref: null,
-      developmentHref: null,
-      extendHref: null,
-      releaseHref: null,
     },
+    actions: { onControlledRoster: false, extension: null, release: null },
     ...overrides,
   };
 }
@@ -116,6 +172,8 @@ function playerView(
 describe("PlayerDrawer modal", () => {
   beforeEach(() => {
     resetDrawerScrollLockForTests();
+    fetchProfile.mockReset();
+    fetchProfile.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -163,11 +221,15 @@ describe("PlayerDrawer modal", () => {
     expect(screen.getByText("Season averages")).toBeTruthy();
     expect(screen.getByText("18.2")).toBeTruthy();
 
-    const fullPlayer = screen.getByRole("link", { name: "View full player" });
-    expect(fullPlayer.getAttribute("href")).toBe(
+    expect(screen.queryByRole("link", { name: "View full player" })).toBeNull();
+    const asPage = screen.getByRole("link", { name: "Open as page" });
+    expect(asPage.getAttribute("href")).toBe(
       "/dashboard/save_test/players/player_1",
     );
-    expect(fullPlayer.className).toMatch(/min-h-11/);
+    expect(asPage.className).toMatch(/min-h-11/);
+    for (const name of ["Game Log", "Career", "Contract"]) {
+      expect(screen.getByRole("tab", { name })).toBeTruthy();
+    }
     expect(screen.queryByRole("link", { name: "View contract" })).toBeNull();
     expect(screen.queryByRole("link", { name: "View development" })).toBeNull();
     unmount();
@@ -227,7 +289,7 @@ describe("PlayerDrawer modal", () => {
     unmount();
   });
 
-  it("closes the modal when navigating via the full-player action", () => {
+  it("closes the modal when opening the player as a page", () => {
     const onOpenChange = vi.fn();
     const { unmount } = render(
       <PlayerDrawer
@@ -237,54 +299,37 @@ describe("PlayerDrawer modal", () => {
         onOpenChange={onOpenChange}
       />,
     );
-    fireEvent.click(screen.getByRole("link", { name: "View full player" }));
+    fireEvent.click(screen.getByRole("link", { name: "Open as page" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
     unmount();
   });
 
-  it("shows contract and development actions when hrefs are present", () => {
+  it("shows the contract in Overview with no contract or development links", () => {
     const view = playerView({
       contract: {
         salary: 12_500_000,
         yearsRemaining: 2,
         status: "active",
       },
-      navigation: {
-        playerHref: "/dashboard/save_test/players/player_1",
-        teamHref: "/dashboard/save_test/team",
-        contractHref: "/dashboard/save_test/team/contracts",
-        developmentHref: "/dashboard/save_test/development",
-        extendHref: null,
-        releaseHref: null,
-      },
+      actions: { onControlledRoster: true, extension: null, release: null },
     });
     const { unmount } = render(
       <PlayerDrawer open status="ready" view={view} onOpenChange={vi.fn()} />,
     );
-    expect(
-      screen.getByRole("link", { name: "View contract" }).getAttribute("href"),
-    ).toBe("/dashboard/save_test/team/contracts");
-    expect(
-      screen
-        .getByRole("link", { name: "View development" })
-        .getAttribute("href"),
-    ).toBe("/dashboard/save_test/development");
+    expect(screen.queryByRole("link", { name: "View contract" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "View development" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Compare" })).toBeTruthy();
     expect(screen.getByText("$12.5M")).toBeTruthy();
     expect(screen.getByText("active")).toBeTruthy();
     unmount();
   });
 
-  it("links Extend contract and Release to the contracts dialogs", () => {
+  it("opens Extend contract and Release dialogs in place", () => {
     const view = playerView({
-      navigation: {
-        playerHref: "/dashboard/save_test/players/player_1",
-        teamHref: "/dashboard/save_test/team",
-        contractHref: "/dashboard/save_test/team/contracts",
-        developmentHref: null,
-        extendHref:
-          "/dashboard/save_test/team/contracts?action=extend&player=player_1",
-        releaseHref:
-          "/dashboard/save_test/team/contracts?action=release&player=player_1",
+      actions: {
+        onControlledRoster: true,
+        extension: extensionView,
+        release: releaseView,
       },
     });
     const onOpenChange = vi.fn();
@@ -296,21 +341,67 @@ describe("PlayerDrawer modal", () => {
         onOpenChange={onOpenChange}
       />,
     );
+    expect(screen.queryByRole("link", { name: "Extend contract" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Release" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Extend contract" }));
     expect(
-      screen
-        .getByRole("link", { name: "Extend contract" })
-        .getAttribute("href"),
-    ).toBe("/dashboard/save_test/team/contracts?action=extend&player=player_1");
-    const release = screen.getByRole("link", { name: "Release" });
-    expect(release.getAttribute("href")).toBe(
-      "/dashboard/save_test/team/contracts?action=release&player=player_1",
+      screen.getByRole("heading", { name: "Extend Alex Rivera" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Extend" })).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(
+      screen.queryByRole("heading", { name: "Extend Alex Rivera" }),
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Release" }));
+    expect(
+      screen.getByRole("heading", { name: "Release Alex Rivera?" }),
+    ).toBeTruthy();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it("Escape closes only the dialog, not the drawer", () => {
+    const view = playerView({
+      actions: {
+        onControlledRoster: true,
+        extension: extensionView,
+        release: releaseView,
+      },
+    });
+    const onOpenChange = vi.fn();
+    const { unmount } = render(
+      <PlayerDrawer
+        open
+        status="ready"
+        view={view}
+        onOpenChange={onOpenChange}
+      />,
     );
-    fireEvent.click(release);
+    const trigger = screen.getByRole("button", { name: "Release" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    expect(
+      screen.getByRole("heading", { name: "Release Alex Rivera?" }),
+    ).toBeTruthy();
+
+    fireEvent.keyDown(document.activeElement ?? document.body, {
+      key: "Escape",
+    });
+    expect(
+      screen.queryByRole("heading", { name: "Release Alex Rivera?" }),
+    ).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+
+    fireEvent.keyDown(document, { key: "Escape" });
     expect(onOpenChange).toHaveBeenCalledWith(false);
     unmount();
   });
 
-  it("hides Extend contract and Release without hrefs", () => {
+  it("hides Extend contract and Release when the actions are null", () => {
     const { unmount } = render(
       <PlayerDrawer
         open
@@ -319,8 +410,10 @@ describe("PlayerDrawer modal", () => {
         onOpenChange={vi.fn()}
       />,
     );
-    expect(screen.queryByRole("link", { name: "Extend contract" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Release" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Extend contract" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Release" })).toBeNull();
     unmount();
   });
 
@@ -356,14 +449,7 @@ describe("PlayerDrawer modal", () => {
   it("shows contract details unavailable for controlled players without a contract object", () => {
     const view = playerView({
       contract: null,
-      navigation: {
-        playerHref: "/dashboard/save_test/players/player_1",
-        teamHref: "/dashboard/save_test/team",
-        contractHref: "/dashboard/save_test/team/contracts",
-        developmentHref: "/dashboard/save_test/development",
-        extendHref: null,
-        releaseHref: null,
-      },
+      actions: { onControlledRoster: true, extension: null, release: null },
     });
     const { unmount } = render(
       <PlayerDrawer open status="ready" view={view} onOpenChange={vi.fn()} />,
@@ -382,7 +468,7 @@ describe("PlayerDrawer modal", () => {
         onOpenChange={vi.fn()}
       />,
     );
-    expect(screen.queryByText("Contract")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Contract" })).toBeNull();
     expect(screen.queryByText("Contract details unavailable")).toBeNull();
     unmount();
   });
@@ -498,7 +584,7 @@ describe("PlayerDrawer modal", () => {
       body.scrollTop = 140;
     }
 
-    const fullPlayer = screen.getByRole("link", { name: "View full player" });
+    const fullPlayer = screen.getByRole("link", { name: "Open as page" });
     fullPlayer.focus();
 
     rerender(
@@ -526,6 +612,75 @@ describe("PlayerDrawer modal", () => {
     expect(document.activeElement).not.toBe(
       screen.getByRole("button", { name: "Close" }),
     );
+    unmount();
+  });
+
+  it("lazy-loads the profile once per player and shows the contract tab", async () => {
+    fetchProfile.mockResolvedValue({
+      tradesOpen: false,
+      player: { contractProfile: null, onControlledRoster: false },
+    });
+    const { unmount } = render(
+      <PlayerDrawer
+        open
+        status="ready"
+        view={playerView()}
+        onOpenChange={vi.fn()}
+      />,
+    );
+    expect(fetchProfile).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Contract" }));
+    expect(document.querySelector('[aria-busy="true"]')).toBeTruthy();
+    expect(await screen.findByText("No contract on file.")).toBeTruthy();
+    expect(fetchProfile).toHaveBeenCalledTimes(1);
+    expect(fetchProfile).toHaveBeenCalledWith("save_test", "player_1");
+    expect(screen.queryByRole("link", { name: "View contracts" })).toBeNull();
+
+    const contractTab = screen.getByRole("tab", { name: "Contract" });
+    fireEvent.click(screen.getByRole("tab", { name: "Overview" }));
+    fireEvent.click(contractTab);
+    expect(fetchProfile).toHaveBeenCalledTimes(1);
+    unmount();
+  });
+
+  it("shows an unavailable note when the profile is out of scope", async () => {
+    const { unmount } = render(
+      <PlayerDrawer
+        open
+        status="ready"
+        view={playerView()}
+        onOpenChange={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Career" }));
+    expect(
+      await screen.findByText(
+        "Full profile details are not available for this player.",
+      ),
+    ).toBeTruthy();
+    unmount();
+  });
+
+  it("shows an error with retry when the profile fails to load", async () => {
+    fetchProfile.mockRejectedValueOnce(new Error("boom"));
+    fetchProfile.mockResolvedValueOnce({
+      tradesOpen: false,
+      player: { contractProfile: null, onControlledRoster: false },
+    });
+    const { unmount } = render(
+      <PlayerDrawer
+        open
+        status="ready"
+        view={playerView()}
+        onOpenChange={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Contract" }));
+    const retry = await screen.findByRole("button", { name: "Try again" });
+    fireEvent.click(retry);
+    expect(await screen.findByText("No contract on file.")).toBeTruthy();
+    expect(fetchProfile).toHaveBeenCalledTimes(2);
     unmount();
   });
 });
