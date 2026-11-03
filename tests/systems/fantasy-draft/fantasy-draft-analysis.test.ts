@@ -95,6 +95,22 @@ describe("fantasy draft analysis", () => {
     expect(summaryView!.teamSummaries[teamIds[0]!]?.draftGrade).toBe(
       ownedSummary!.draftGrade,
     );
+
+    // The saved analysis keeps only the primary position; the view adds each
+    // drafted player's secondary, read from the live player.
+    const lookup = summaryView!.secondaryPositionById ?? {};
+    const drafted = state.world.fantasyDraft!.selectedPlayerIds;
+    for (const playerId of drafted) {
+      expect(lookup[playerId]).toBe(
+        state.world.players[playerId]?.secondaryPosition,
+      );
+    }
+    expect(
+      drafted.some((id) => state.world.players[id]?.secondaryPosition),
+    ).toBe(true);
+    for (const playerId of Object.keys(lookup)) {
+      expect(drafted).toContain(playerId);
+    }
   }, 60_000);
 
   it("activeOwnerTeamId drives live view roster/queue context", () => {

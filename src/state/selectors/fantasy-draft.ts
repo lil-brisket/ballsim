@@ -195,6 +195,11 @@ export type FantasyDraftSummaryView = {
   teamSummaries: Record<string, FantasyDraftTeamSummary>;
   leagueRecap: FantasyDraftLeagueRecap | null;
   teamNames: Record<string, { name: string; abbreviation: string }>;
+  /**
+   * Secondary position of each drafted player who has one, read from the live
+   * players (the saved draft analysis keeps only the primary position).
+   */
+  secondaryPositionById?: Record<string, string>;
 };
 
 function mapNeedLevel(level: string): "HIGH" | "MEDIUM" | "LOW" {
@@ -539,6 +544,14 @@ export function toFantasyDraftSummaryView(
     };
   }
 
+  const secondaryPositionById: Record<string, string> = {};
+  for (const playerId of draft.selectedPlayerIds) {
+    const secondary = state.world.players[playerId]?.secondaryPosition;
+    if (secondary) {
+      secondaryPositionById[playerId] = secondary;
+    }
+  }
+
   return {
     status: draft.status,
     totalPicks: draft.totalPicks,
@@ -548,5 +561,6 @@ export function toFantasyDraftSummaryView(
     teamSummaries: draft.teamSummaries ?? {},
     leagueRecap: draft.leagueRecap ?? null,
     teamNames,
+    secondaryPositionById,
   };
 }

@@ -8,6 +8,7 @@ import { buttonClass } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Tabs } from "@/components/ui/Tabs";
 import { OvrBadge } from "@/components/ui/OvrBadge";
+import { formatPositionLabel } from "@/presentation/position-label";
 
 function Stars(props: { count: number }) {
   return (
@@ -44,6 +45,7 @@ function BalanceBar(props: { level: string }) {
 function HighlightCard(props: {
   title: string;
   pick: FantasyDraftTeamSummary["bestPick"];
+  secondaryPositionById?: Record<string, string>;
 }) {
   if (!props.pick) {
     return (
@@ -59,7 +61,12 @@ function HighlightCard(props: {
         {props.pick.playerName} — Pick #{props.pick.pickNumber}
       </div>
       <div className="flex items-center gap-1.5 text-muted">
-        <span>{props.pick.position}</span>
+        <span>
+          {formatPositionLabel(
+            props.pick.position,
+            props.secondaryPositionById?.[props.pick.playerId],
+          )}
+        </span>
         <OvrBadge overall={props.pick.overall} size="sm" />
         <OvrBadge overall={props.pick.potential} ghost label="POT" size="sm" />
       </div>
@@ -71,8 +78,9 @@ function TeamSummaryPanel(props: {
   saveId: string;
   teamName: string;
   summary: FantasyDraftTeamSummary;
+  secondaryPositionById?: Record<string, string>;
 }) {
-  const { summary, teamName } = props;
+  const { summary, teamName, secondaryPositionById } = props;
   return (
     <div className="space-y-6">
       <header>
@@ -101,9 +109,21 @@ function TeamSummaryPanel(props: {
       </section>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <HighlightCard title="Best Pick" pick={summary.bestPick} />
-        <HighlightCard title="Biggest Reach" pick={summary.biggestReach} />
-        <HighlightCard title="Best Value" pick={summary.bestValue} />
+        <HighlightCard
+          title="Best Pick"
+          pick={summary.bestPick}
+          secondaryPositionById={secondaryPositionById}
+        />
+        <HighlightCard
+          title="Biggest Reach"
+          pick={summary.biggestReach}
+          secondaryPositionById={secondaryPositionById}
+        />
+        <HighlightCard
+          title="Best Value"
+          pick={summary.bestValue}
+          secondaryPositionById={secondaryPositionById}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -193,7 +213,12 @@ function TeamSummaryPanel(props: {
                 <tr key={row.pickNumber} className="border-t border-line">
                   <td className="py-1.5">{row.pickNumber}</td>
                   <td>{row.playerName}</td>
-                  <td>{row.position}</td>
+                  <td>
+                    {formatPositionLabel(
+                      row.position,
+                      secondaryPositionById?.[row.playerId],
+                    )}
+                  </td>
                   <td>
                     <OvrBadge overall={row.overall} size="sm" />
                   </td>
@@ -332,6 +357,7 @@ export function FantasyDraftSummaryClient(props: {
           saveId={saveId}
           teamName={teamMeta.name}
           summary={summary}
+          secondaryPositionById={view.secondaryPositionById}
         />
       ) : (
         <p className="text-sm text-faint">No team summary available.</p>
