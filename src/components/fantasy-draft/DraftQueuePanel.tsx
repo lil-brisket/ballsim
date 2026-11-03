@@ -1,4 +1,5 @@
 import { cn, focusRingClass } from "@/components/ui/styles";
+import { formatPositionLabel } from "@/presentation/position-label";
 import {
   removeFantasyDraftQueuePlayerAction,
   reorderFantasyDraftQueueAction,
@@ -15,6 +16,7 @@ export function DraftQueuePanel(props: {
     playerId: string;
     name: string;
     position: string;
+    secondaryPosition?: string | null;
     overall: number;
     potential: number;
   }) => void;
@@ -76,7 +78,12 @@ export function DraftQueuePanel(props: {
                       {entry.firstName} {entry.lastName}
                     </div>
                     <div className="flex items-center gap-1.5 text-sm text-faint">
-                      <span>{entry.position}</span>
+                      <span>
+                        {formatPositionLabel(
+                          entry.position,
+                          entry.secondaryPosition,
+                        )}
+                      </span>
                       <OvrBadge overall={entry.overall} size="sm" />
                       <OvrBadge
                         overall={entry.potential}
@@ -150,6 +157,7 @@ export function DraftQueuePanel(props: {
                                 playerId: entry.playerId,
                                 name: `${entry.firstName} ${entry.lastName}`,
                                 position: entry.position,
+                                secondaryPosition: entry.secondaryPosition,
                                 overall: entry.overall,
                                 potential: entry.potential,
                               })

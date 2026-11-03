@@ -73,6 +73,7 @@ export type DepthChartEntryView = {
   overall: number;
   effectiveOverall: number;
   primaryPosition: PlayerPosition;
+  secondaryPosition?: PlayerPosition | null;
   depthPosition: PlayerPosition;
   fit: "primary" | "secondary";
   label: DepthChartLabel;
@@ -108,6 +109,7 @@ export type TradeBlockPlayerView = {
   firstName: string;
   lastName: string;
   position: PlayerPosition;
+  secondaryPosition?: PlayerPosition | null;
   overall: number;
   status: TradeBlockStatus;
 };
@@ -385,6 +387,7 @@ export function toDepthChartView(
         overall,
         effectiveOverall: overallAtPosition(player, position),
         primaryPosition: player.position,
+        secondaryPosition: player.secondaryPosition ?? null,
         depthPosition: position,
         fit: fit.fit,
         label,
@@ -431,6 +434,7 @@ export function toTradeBlockView(
         firstName: player.firstName,
         lastName: player.lastName,
         position: player.position,
+        secondaryPosition: player.secondaryPosition ?? null,
         overall: playerOverall(player),
         status: asset.status,
       });

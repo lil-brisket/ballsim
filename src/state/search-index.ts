@@ -15,6 +15,8 @@ export type SearchIndexPlayer = {
   id: string;
   name: string;
   position: string;
+  /** Rostered/free-agent players only; never set for draft prospects. */
+  secondaryPosition?: string;
   /** Team abbreviation, "FA" for a free agent or "Draft" for a prospect. */
   team: string;
   /** Null for draft prospects: their rating is hidden behind scouting. */
@@ -61,6 +63,9 @@ export function toSearchIndex(state: GameState): SearchIndex {
       id: player.id,
       name: `${player.firstName} ${player.lastName}`,
       position: player.position,
+      ...(player.secondaryPosition
+        ? { secondaryPosition: player.secondaryPosition }
+        : {}),
       team,
       overall: calculatePlayerOverall(player.position, player.attributes),
       mine: player.teamId === myTeamId,

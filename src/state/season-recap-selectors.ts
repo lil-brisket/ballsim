@@ -11,6 +11,7 @@ import type {
   YoYMetric,
 } from "@/domain/entities/annual-franchise-report";
 import type { PlayoffResultSnapshot } from "@/domain/entities/franchise-history";
+import type { PlayerPosition } from "@/domain/entities/player";
 import type { Game } from "@/domain/entities/game";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { getFinalGamesForSeason } from "@/state/game-access";
@@ -38,6 +39,7 @@ export type SeasonRecapBestPlayer = {
   playerId: string;
   name: string;
   position: string | null;
+  secondaryPosition?: PlayerPosition | null;
   portrait: PlayerPortraitAssignment | null;
   games: number;
   /** Per game, one decimal. */
@@ -255,6 +257,8 @@ function selectBestPlayer(
     playerId: best.playerId,
     name: identity?.displayName ?? best.playerId,
     position: identity?.position ?? null,
+    secondaryPosition:
+      state.world.players[best.playerId]?.secondaryPosition ?? null,
     portrait: selectPlayerPortrait(state, best.playerId),
     games: line.games,
     points: oneDecimal(line.points / line.games),

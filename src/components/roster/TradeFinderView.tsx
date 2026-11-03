@@ -15,6 +15,7 @@ import type {
 } from "@/state/trade-offer-selectors";
 import { TRADE_OFFER_MAX_ASSETS_PER_SIDE } from "@/systems/trades-config";
 import { OvrBadge } from "@/components/ui/OvrBadge";
+import { formatPositionLabel } from "@/presentation/position-label";
 
 type PickView = Extract<TradeAssetView, { kind: "draftPick" }>;
 type Selected = { kind: "player" | "draftPick"; id: string };
@@ -67,6 +68,7 @@ export function TradeFinderView(props: {
       id: p.playerId,
       name: `${p.firstName} ${p.lastName}`,
       position: p.position,
+      secondaryPosition: p.secondaryPosition ?? null,
       overall: p.overall,
       age: p.age,
       salary: p.contractSalary,
@@ -267,7 +269,12 @@ export function TradeFinderView(props: {
                         ) : null}
                       </span>
                       <span className="flex shrink-0 items-center gap-1.5 text-sm tabular-nums text-faint">
-                        <span>{player.position}</span>
+                        <span>
+                          {formatPositionLabel(
+                            player.position,
+                            player.secondaryPosition,
+                          )}
+                        </span>
                         <OvrBadge overall={player.overall} size="sm" />
                         <span>
                           Age {player.age}

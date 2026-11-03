@@ -100,6 +100,17 @@ describe("TradeReviewPanel", () => {
     expect(cards[0]!.textContent).toContain("C · Age 27 · $4.6M");
   });
 
+  it("shows a secondary position next to the primary one", () => {
+    const withSecondary: TradeReviewView = {
+      ...review,
+      youReceive: [{ ...review.youReceive[0]!, secondaryPosition: "PF" }],
+    };
+    render(<TradeReviewPanel review={withSecondary} />);
+    const cards = screen.getAllByTestId("trade-player-card");
+    expect(cards[0]!.textContent).toContain("C/PF · Age 27 · $4.6M");
+    expect(cards[1]!.textContent).toContain("SF · Age 28");
+  });
+
   it("renders picks as text chips without a player card", () => {
     render(<TradeReviewPanel review={review} />);
     const chip = screen.getByTestId("trade-pick-chip");

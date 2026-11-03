@@ -4,6 +4,7 @@
  * selector; no RNG and no writes.
  */
 
+import type { PlayerPosition } from "@/domain/entities/player";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { GameState } from "@/state/game-state";
@@ -17,6 +18,7 @@ export type HomeBoardView = {
     playerId: string;
     name: string;
     position: string;
+    secondaryPosition?: PlayerPosition | null;
     overall: number;
     portrait: PlayerPortraitAssignment | null;
   } | null;
@@ -37,6 +39,7 @@ type Row = {
   playerId: string;
   name: string;
   position: string;
+  secondaryPosition: PlayerPosition | null;
   overall: number;
   delta: number | null;
 };
@@ -52,6 +55,7 @@ export function toHomeBoardView(state: GameState): HomeBoardView {
       playerId,
       name: `${player.firstName} ${player.lastName}`,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       overall,
       delta: changeFromHistory(state, playerId, overall).delta,
     });
@@ -76,6 +80,7 @@ export function toHomeBoardView(state: GameState): HomeBoardView {
           playerId: top.playerId,
           name: top.name,
           position: top.position,
+          secondaryPosition: top.secondaryPosition,
           overall: top.overall,
           portrait: selectPlayerPortrait(state, top.playerId),
         }

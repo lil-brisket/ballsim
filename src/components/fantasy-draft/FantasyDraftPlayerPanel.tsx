@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useEffect, useId, useRef } from "react";
 import {
@@ -23,6 +24,7 @@ export function FantasyDraftPlayerPanel(props: {
     playerId: string;
     name: string;
     position: string;
+    secondaryPosition?: string | null;
     overall: number;
     potential: number;
   }) => void;
@@ -75,8 +77,9 @@ export function FantasyDraftPlayerPanel(props: {
               }
             />
             <p className="mt-1 text-sm text-muted">
-              {detail.position} · Age {detail.age} · {detail.heightInches}&quot;
-              / {detail.weightPounds} lbs
+              {formatPositionLabel(detail.position, detail.secondaryPosition)} ·
+              Age {detail.age} · {detail.heightInches}&quot; /{" "}
+              {detail.weightPounds} lbs
             </p>
             <p className="mt-0.5 text-sm capitalize text-faint">
               {detail.archetypeLabel} · {detail.nationality} · {detail.tier}
@@ -214,6 +217,7 @@ export function FantasyDraftPlayerPanel(props: {
                     playerId: detail.playerId,
                     name: `${detail.firstName} ${detail.lastName}`,
                     position: detail.position,
+                    secondaryPosition: detail.secondaryPosition,
                     overall: detail.overall,
                     potential: detail.potential,
                   })

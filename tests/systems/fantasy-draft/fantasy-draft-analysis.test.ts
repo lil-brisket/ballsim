@@ -129,6 +129,22 @@ describe("fantasy draft analysis", () => {
     expect(view!.settings.confirmPicks).toBe(true);
   });
 
+  it("live view carries each pool player's secondary position", () => {
+    let state = createFantasyState(8);
+    state = setDefaultDraftOrder(state);
+    state = confirmFantasyDraftOrder(state, TEST_NOW_ISO);
+    const view = toFantasyDraftView(state)!;
+    expect(view.poolPlayers.length).toBeGreaterThan(0);
+    for (const row of view.poolPlayers) {
+      const player =
+        state.world.players[row.playerId as keyof typeof state.world.players]!;
+      expect(row.secondaryPosition).toBe(player.secondaryPosition ?? null);
+    }
+    expect(view.poolPlayers.some((row) => row.secondaryPosition !== null)).toBe(
+      true,
+    );
+  });
+
   it("analyzeFantasyDraft produces reach and steal candidates", () => {
     let state = createFantasyState(8);
     state = setDefaultDraftOrder(state);

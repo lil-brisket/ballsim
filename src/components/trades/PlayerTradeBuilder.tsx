@@ -8,12 +8,14 @@ import {
   declineOwnerDecisionAction,
   proposePlayerTradeAction,
 } from "@/application/actions";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { OvrBadge } from "@/components/ui/OvrBadge";
 
 export type TradeBuilderPlayer = {
   id: string;
   name: string;
   position: string;
+  secondaryPosition?: string | null;
   overall: number;
   age: number;
 };
@@ -208,7 +210,7 @@ function AssetColumn(props: {
               onChange={() => props.onPlayer(p.id)}
             />
             <span className="flex items-center gap-1.5">
-              {p.name} ({p.position})
+              {p.name} ({formatPositionLabel(p.position, p.secondaryPosition)})
               <OvrBadge overall={p.overall} size="sm" />
               <span>· Age {p.age}</span>
             </span>

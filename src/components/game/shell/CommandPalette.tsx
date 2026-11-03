@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import {
   useCallback,
   useEffect,
@@ -386,7 +387,11 @@ export function CommandPalette(props: {
                     {item.player.name}
                   </span>
                   <span className="shrink-0 text-sm text-muted">
-                    {item.player.position} · {item.player.team}
+                    {formatPositionLabel(
+                      item.player.position,
+                      item.player.secondaryPosition,
+                    )}{" "}
+                    · {item.player.team}
                   </span>
                 </>
               ) : item.team ? (

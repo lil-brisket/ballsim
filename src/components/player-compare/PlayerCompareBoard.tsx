@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatPositionLabel } from "@/presentation/position-label";
 import {
   formatContractSummary,
   PlayerIdentityLine,
@@ -80,7 +81,10 @@ function SlotCard(props: {
           <PlayerIdentityLine
             className="mt-1"
             lead={player.teamAbbreviation ?? "FA"}
-            position={player.position}
+            position={formatPositionLabel(
+              player.position,
+              player.secondaryPosition,
+            )}
             age={player.age}
             heightInches={player.heightInches}
             contractSummary={formatContractSummary(player.contract)}

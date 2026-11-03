@@ -58,6 +58,7 @@ export function TeamRosterPreview(props: { saveId: string; hub: TeamHubView }) {
                 lastName={player.lastName}
                 jerseyNumber={player.jerseyNumber}
                 position={player.position}
+                secondaryPosition={player.secondaryPosition}
                 overall={player.overall}
                 injuryStatus={player.injuryKind}
               />

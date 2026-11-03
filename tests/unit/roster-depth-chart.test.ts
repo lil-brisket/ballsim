@@ -92,6 +92,20 @@ describe("toDepthChartView", () => {
     expect(pfEntry?.fit).toBe("secondary");
   });
 
+  it("carries the secondary position on each depth entry", () => {
+    const sf = createPlayer({
+      id: "sf1",
+      teamId,
+      position: "SF",
+      secondaryPosition: "PF",
+      attributes: uniformPlayerAttributes(84),
+    });
+    const chart = toDepthChartView(buildState([sf]), teamId);
+    expect(chart.PF[0]?.primaryPosition).toBe("SF");
+    expect(chart.PF[0]?.secondaryPosition).toBe("PF");
+    expect(chart.SF[0]?.secondaryPosition).toBe("PF");
+  });
+
   it("does not list a player at a position that is not his own", () => {
     const sf = createPlayer({
       id: "sf1",

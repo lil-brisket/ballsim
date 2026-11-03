@@ -1,4 +1,5 @@
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
 import { HubTile } from "@/components/ui/HubTile";
 import { FocusGrid } from "@/components/ui/focus/FocusGrid";
@@ -113,7 +114,9 @@ export function HomeTileBoard(props: {
           stat={{ value: data.team.strength, label: "Team strength" }}
           art={topPlayer ? <TopPlayerArt player={topPlayer} /> : undefined}
         >
-          {topPlayer ? `Top: ${topPlayer.name}, ${topPlayer.position}` : null}
+          {topPlayer
+            ? `Top: ${topPlayer.name}, ${formatPositionLabel(topPlayer.position, topPlayer.secondaryPosition)}`
+            : null}
         </HubTile>
 
         <HubTile

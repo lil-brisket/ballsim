@@ -1,4 +1,5 @@
 import { setDevelopmentFocusesAction } from "@/application/actions";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -78,7 +79,8 @@ export function TrainingCamps(props: {
                     {row.playerName}
                   </PlayerEntityLink>
                   <span className="ml-2 text-sm text-faint">
-                    {row.position} · {row.age}
+                    {formatPositionLabel(row.position, row.secondaryPosition)} ·{" "}
+                    {row.age}
                   </span>
                   <OvrBadge
                     overall={row.overall}

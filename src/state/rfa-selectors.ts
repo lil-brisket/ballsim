@@ -1,3 +1,4 @@
+import type { PlayerPosition } from "@/domain/entities/player";
 /**
  * Restricted free agency views for the owner: qualifying offers to decide in
  * roster decisions, offer sheets to match or decline, sheets the owner has
@@ -19,6 +20,7 @@ export type QualifyingOfferRow = {
   playerId: string;
   playerName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   overall: number;
   qualifyingOfferSalary: number;
@@ -116,6 +118,7 @@ export function toOwnerRfaView(state: GameState): OwnerRfaView {
           playerId: status.playerId,
           playerName: playerName(state, status.playerId),
           position: player.position,
+          secondaryPosition: player.secondaryPosition ?? null,
           age: player.age,
           overall: calculatePlayerOverall(player.position, player.attributes),
           qualifyingOfferSalary: status.qualifyingOfferSalary,

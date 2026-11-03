@@ -28,6 +28,30 @@ describe("toPlayerCompareView", () => {
     expect(other?.contract).toBeNull();
   });
 
+  it("carries the player's secondary position", () => {
+    const state = bootstrapped();
+    const id = getControlledTeam(state).roster[0]!;
+    const player = state.world.players[id]!;
+    const secondary = player.position === "PG" ? "SG" : "PG";
+    const withPlayer = (secondaryPosition: typeof secondary | undefined) =>
+      ({
+        ...state,
+        world: {
+          ...state.world,
+          players: {
+            ...state.world.players,
+            [id]: { ...player, secondaryPosition },
+          },
+        },
+      }) as typeof state;
+    expect(
+      toPlayerCompareView(withPlayer(secondary), id)?.secondaryPosition,
+    ).toBe(secondary);
+    expect(
+      toPlayerCompareView(withPlayer(undefined), id)?.secondaryPosition,
+    ).toBeNull();
+  });
+
   it("returns null for missing ids", () => {
     const state = bootstrapped();
     expect(toPlayerCompareView(state, undefined)).toBeNull();

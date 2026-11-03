@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import { useMemo, useState } from "react";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { formatHeight } from "@/presentation/player-rating-categories";
@@ -19,6 +20,7 @@ export function PlayerPoolTable(props: {
     playerId: string;
     name: string;
     position: string;
+    secondaryPosition?: string | null;
     overall: number;
     potential: number;
   }) => void;
@@ -205,7 +207,12 @@ export function PlayerPoolTable(props: {
                     </div>
                   ) : null}
                 </td>
-                <td className="pr-2">{player.position}</td>
+                <td className="pr-2">
+                  {formatPositionLabel(
+                    player.position,
+                    player.secondaryPosition,
+                  )}
+                </td>
                 <td className="pr-2">
                   <OvrBadge overall={player.overall} size="sm" />
                 </td>
@@ -231,6 +238,7 @@ export function PlayerPoolTable(props: {
                           playerId: player.playerId,
                           name: `${player.firstName} ${player.lastName}`,
                           position: player.position,
+                          secondaryPosition: player.secondaryPosition,
                           overall: player.overall,
                           potential: player.potential,
                         })

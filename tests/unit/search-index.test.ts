@@ -38,6 +38,32 @@ describe("toSearchIndex", () => {
     expect(row.prospect).toBe(false);
   });
 
+  it("includes a secondary position only for players who have one", () => {
+    const state = bootstrapped();
+    const [first, second] = Object.values(state.world.players).filter(
+      (p) => p.teamId,
+    );
+    const secondary = first!.position === "PG" ? "SG" : "PG";
+    const next = {
+      ...state,
+      world: {
+        ...state.world,
+        players: {
+          ...state.world.players,
+          [first!.id]: { ...first!, secondaryPosition: secondary },
+          [second!.id]: { ...second!, secondaryPosition: undefined },
+        },
+      },
+    } as typeof state;
+    const rows = toSearchIndex(next).players;
+    expect(rows.find((p) => p.id === first!.id)?.secondaryPosition).toBe(
+      secondary,
+    );
+    expect(
+      rows.find((p) => p.id === second!.id)?.secondaryPosition,
+    ).toBeUndefined();
+  });
+
   it("skips retired players and sorts your team first, then by name", () => {
     const state = bootstrapped();
     const victim = Object.values(state.world.players)[0]!;

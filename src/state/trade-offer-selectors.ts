@@ -5,6 +5,7 @@
 
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import { getContractSalaryForYear } from "@/domain/entities/contract";
+import type { PlayerPosition } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import type { DraftPickId, PlayerId, TeamId } from "@/domain/ids";
 import type { GameState } from "@/state/game-state";
@@ -19,6 +20,7 @@ export type TradeAssetView =
       id: string;
       name: string;
       position: string;
+      secondaryPosition?: PlayerPosition | null;
       overall: number;
       age: number;
       salary: number | null;
@@ -128,6 +130,7 @@ function playerView(
     id: player.id,
     name: `${player.firstName} ${player.lastName}`,
     position: player.position,
+    secondaryPosition: player.secondaryPosition ?? null,
     overall: calculatePlayerOverall(player.position, player.attributes),
     age: player.age,
     salary:

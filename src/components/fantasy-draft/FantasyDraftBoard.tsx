@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import { useCallback, useRef, useState, useTransition } from "react";
 import {
   fantasyDraftPickAction,
@@ -33,6 +34,7 @@ type PendingPlayer = {
   playerId: string;
   name: string;
   position: string;
+  secondaryPosition?: string | null;
   overall: number;
   potential: number;
 };
@@ -134,7 +136,10 @@ export function FantasyDraftBoard({ saveId, draft, error }: Props) {
               ) : (
                 draft.activeRoster.map((p) => (
                   <li key={p.playerId}>
-                    <span className="text-faint">{p.position}</span> {p.name}{" "}
+                    <span className="text-faint">
+                      {formatPositionLabel(p.position, p.secondaryPosition)}
+                    </span>{" "}
+                    {p.name}{" "}
                     <OvrBadge
                       overall={p.overall}
                       size="sm"

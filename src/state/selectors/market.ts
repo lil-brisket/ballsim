@@ -1,3 +1,4 @@
+import type { PlayerPosition } from "@/domain/entities/player";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import {
   type TeamBrandingView,
@@ -38,6 +39,7 @@ export type FreeAgentView = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   overall: number;
 };
@@ -103,6 +105,7 @@ export type ContractRowView = {
   playerId: string;
   playerName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   salary: number | null;
   startYear: number;
   endYear: number;
@@ -139,6 +142,7 @@ export function toFreeAgentViews(state: GameState): FreeAgentView[] {
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       age: player.age,
       overall: calculatePlayerOverall(player.position, player.attributes),
     });
@@ -310,6 +314,7 @@ export function toContractsView(state: GameState): ContractRowView[] {
         getPlayerIdentity(state, contract.playerId)?.displayName ??
         contract.playerId,
       position: player?.position ?? "—",
+      secondaryPosition: player?.secondaryPosition ?? null,
       salary: getContractSalaryForYear(contract, year) ?? null,
       startYear: contract.startYear,
       endYear: contract.endYear,

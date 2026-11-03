@@ -117,6 +117,17 @@ describe("PlayerCompareBoard", () => {
     expect(within(table).getAllByText("Inside Scoring")).toHaveLength(1);
   });
 
+  it("shows the secondary position in the identity line", () => {
+    render(
+      <PlayerCompareBoard
+        saveId="save_test"
+        a={{ ...view("p1", "Alpha", 70, 60), secondaryPosition: "SG" }}
+        b={view("p2", "Bravo", 75, 58)}
+      />,
+    );
+    expect(screen.getAllByText(/PG\/SG/)).toHaveLength(1);
+  });
+
   it("shows an identity line and OvrBadge for each loaded player", () => {
     render(
       <PlayerCompareBoard

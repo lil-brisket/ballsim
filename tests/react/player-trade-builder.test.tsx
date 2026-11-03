@@ -8,10 +8,11 @@ vi.mock("@/application/actions", () => ({
 
 import { PlayerTradeBuilder } from "@/components/trades/PlayerTradeBuilder";
 
-const player = (id: string, name: string) => ({
+const player = (id: string, name: string, secondaryPosition?: string) => ({
   id,
   name,
   position: "PG",
+  secondaryPosition,
   overall: 70,
   age: 25,
 });
@@ -63,6 +64,25 @@ function payload(container: HTMLElement) {
 
 describe("PlayerTradeBuilder", () => {
   afterEach(() => cleanup());
+
+  it("lists a player as PG/SG when he has a secondary position", () => {
+    render(
+      <PlayerTradeBuilder
+        saveId="s1"
+        returnPath="/dashboard/s1/trades/propose"
+        myTeamId="t1"
+        myTeam={{
+          id: "t1",
+          players: [player("p1", "Ann Mine", "SG"), player("p4", "Di Plain")],
+          picks: [],
+        }}
+        targets={[]}
+        sentOffers={[]}
+      />,
+    );
+    expect(screen.getByText(/Ann Mine \(PG\/SG\)/)).toBeTruthy();
+    expect(screen.getByText(/Di Plain \(PG\)/)).toBeTruthy();
+  });
 
   it("disables submit until both sides have an asset", () => {
     renderBuilder();

@@ -1,4 +1,5 @@
 import { buttonClass } from "@/components/ui/Button";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { cn } from "@/components/ui/styles";
 import type {
   LiveBoxScoreRow,
@@ -37,7 +38,12 @@ export function CourtPlayerCard(props: {
         <div className="min-w-0">
           <p className="truncate font-semibold text-ink">{player.fullName}</p>
           <p className="text-sm text-muted">
-            {[player.position, `${team.city} ${team.name}`]
+            {[
+              player.position
+                ? formatPositionLabel(player.position, player.secondaryPosition)
+                : null,
+              `${team.city} ${team.name}`,
+            ]
               .filter(Boolean)
               .join(" · ")}
             {row.onCourt ? " · On court" : " · On the bench"}
