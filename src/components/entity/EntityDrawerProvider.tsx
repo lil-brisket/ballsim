@@ -79,6 +79,24 @@ export function EntityDrawerProvider(props: {
     [props.saveId],
   );
 
+  /** Refetch without the loading state so the drawer does not flash. */
+  const refreshPlayer = useCallback(
+    async (playerId: string) => {
+      try {
+        const view = await fetchPlayerDrawerViewAction(props.saveId, playerId);
+        if (!view) {
+          setStatus("missing");
+          setPlayerView(null);
+          return;
+        }
+        setPlayerView(view);
+      } catch {
+        // Keep the stale view; the user can reopen the drawer.
+      }
+    },
+    [props.saveId],
+  );
+
   const loadTeam = useCallback(
     async (teamId: string) => {
       setStatus("loading");
@@ -178,6 +196,11 @@ export function EntityDrawerProvider(props: {
         }}
         status={kind === "player" ? status : "idle"}
         view={playerView}
+        onActionComplete={
+          entityId && kind === "player"
+            ? () => void refreshPlayer(entityId)
+            : undefined
+        }
         onRetry={
           entityId && kind === "player"
             ? () => void loadPlayer(entityId)

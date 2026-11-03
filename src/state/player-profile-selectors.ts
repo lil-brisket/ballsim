@@ -232,6 +232,12 @@ export type PlayerDevelopmentBundle = {
   trackingStartedSeasonYear: number | null;
 };
 
+/** What the player drawer's profile tabs need beyond the quick-view payload. */
+export type PlayerProfileDrawerData = {
+  player: PlayerProfileView;
+  tradesOpen: boolean;
+};
+
 export type PlayerProfileView = PlayerDetailView & {
   stats: PlayerStatsBundle;
   development: PlayerDevelopmentBundle;

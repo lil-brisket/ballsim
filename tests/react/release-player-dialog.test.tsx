@@ -146,3 +146,26 @@ describe("ReleasePlayerDialog deep link", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
+
+describe("ReleasePlayerDialog controlled mode", () => {
+  it("renders no trigger and reports close through onOpenChange", () => {
+    const onOpenChange = vi.fn();
+    render(
+      <ReleasePlayerDialog
+        saveId="s1"
+        playerId="p1"
+        playerName="Test Player"
+        returnPath="/x"
+        release={release}
+        open
+        hideTrigger
+        onOpenChange={onOpenChange}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Release" })).toBeNull();
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    cleanup();
+  });
+});

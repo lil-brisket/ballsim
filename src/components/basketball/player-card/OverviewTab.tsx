@@ -66,7 +66,7 @@ export function OverviewTab(props: { view: PlayerDrawerView }) {
             </div>
           </div>
         </Section>
-      ) : view.navigation.contractHref ? (
+      ) : view.actions.onControlledRoster ? (
         <Section title="Contract" density="compact">
           <p className="text-sm text-muted">Contract details unavailable</p>
         </Section>

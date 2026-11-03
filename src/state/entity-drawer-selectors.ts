@@ -1,6 +1,12 @@
 import { ARCHETYPE_LABELS } from "@/domain/entities/player-archetype";
-import { toEligibleContractExtensionView } from "@/state/contract-extension-selectors";
-import { toPlayerReleaseView } from "@/state/player-release-selectors";
+import {
+  toEligibleContractExtensionView,
+  type ContractExtensionView,
+} from "@/state/contract-extension-selectors";
+import {
+  toPlayerReleaseView,
+  type PlayerReleaseView,
+} from "@/state/player-release-selectors";
 import {
   toPlayerMoodView,
   type PlayerMoodView,
@@ -105,12 +111,14 @@ export type PlayerDrawerView = {
   navigation: {
     playerHref: string;
     teamHref: string | null;
-    contractHref: string | null;
-    developmentHref: string | null;
-    /** Opens the extension sheet on Contracts; null when not eligible. */
-    extendHref: string | null;
-    /** Opens the release dialog on Contracts; null without a contract. */
-    releaseHref: string | null;
+  };
+  /** Controlled-roster actions the drawer runs in place (no page change). */
+  actions: {
+    onControlledRoster: boolean;
+    /** Null when the player is not eligible for an extension. */
+    extension: ContractExtensionView | null;
+    /** Null without a contract to release. */
+    release: PlayerReleaseView | null;
   };
 };
 
@@ -264,21 +272,13 @@ export function toPlayerDrawerView(
     navigation: {
       playerHref: `/dashboard/${saveId}/players/${playerId}`,
       teamHref,
-      contractHref: onControlledRoster
-        ? `/dashboard/${saveId}/team/contracts`
+    },
+    actions: {
+      onControlledRoster,
+      extension: onControlledRoster
+        ? toEligibleContractExtensionView(state, playerId)
         : null,
-      extendHref:
-        onControlledRoster &&
-        toEligibleContractExtensionView(state, playerId) !== null
-          ? `/dashboard/${saveId}/team/contracts?action=extend&player=${playerId}`
-          : null,
-      releaseHref:
-        onControlledRoster && toPlayerReleaseView(state, playerId) !== null
-          ? `/dashboard/${saveId}/team/contracts?action=release&player=${playerId}`
-          : null,
-      developmentHref: onControlledRoster
-        ? `/dashboard/${saveId}/development`
-        : null,
+      release: onControlledRoster ? toPlayerReleaseView(state, playerId) : null,
     },
   };
 }

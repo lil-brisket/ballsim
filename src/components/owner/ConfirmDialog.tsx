@@ -1,7 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import {
+  DialogPortal,
+  useDialogKeys,
+} from "@/components/contracts/dialog-support";
 import { Overlay } from "@/components/ui/Overlay";
 import {
   focusRingClass,
@@ -20,12 +24,23 @@ export function ConfirmDialog(props: {
   description: string;
   confirmLabel?: string;
   children: React.ReactNode;
+  /** Render above a modal drawer: portal to body, trap focus, Escape closes. */
+  portal?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  useDialogKeys({
+    open: open && props.portal === true,
+    dialogRef,
+    triggerRef,
+    onClose: () => setOpen(false),
+  });
 
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
@@ -38,31 +53,34 @@ export function ConfirmDialog(props: {
         {props.confirmLabel ?? "Confirm"}
       </button>
       {open ? (
-        <Overlay
-          className="flex items-center justify-center p-4"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-dialog-title"
-            className="relative z-10 w-full max-w-md rounded-xl border border-line-strong bg-surface-raised p-5 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
+        <DialogPortal portal={props.portal === true}>
+          <Overlay
+            className="flex items-center justify-center p-4"
+            onClick={() => setOpen(false)}
           >
-            <SectionHeading
-              as="h3"
-              id="confirm-dialog-title"
-              title={props.title}
-            />
-            <p className="mt-2 text-sm text-muted">{props.description}</p>
-            <div className="mt-5 flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              {props.children}
+            <div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="confirm-dialog-title"
+              className="relative z-10 w-full max-w-md rounded-xl border border-line-strong bg-surface-raised p-5 shadow-xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <SectionHeading
+                as="h3"
+                id="confirm-dialog-title"
+                title={props.title}
+              />
+              <p className="mt-2 text-sm text-muted">{props.description}</p>
+              <div className="mt-5 flex justify-end gap-2">
+                <Button variant="secondary" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                {props.children}
+              </div>
             </div>
-          </div>
-        </Overlay>
+          </Overlay>
+        </DialogPortal>
       ) : null}
     </>
   );

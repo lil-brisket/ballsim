@@ -25,6 +25,8 @@ const HIGH_LABELS: Record<string, string> = {
 export function PlayerCareer(props: {
   player: PlayerProfileView;
   saveId: string;
+  /** Called when a box-score link is followed (the drawer closes itself). */
+  onNavigate?: () => void;
 }) {
   const { player } = props;
 
@@ -178,6 +180,7 @@ export function PlayerCareer(props: {
                 <td className="px-3 py-2">
                   <Link
                     href={`/dashboard/${props.saveId}/games/${high.gameId}`}
+                    onClick={props.onNavigate}
                     className={cn(linkClass, focusRingClass)}
                   >
                     Box score

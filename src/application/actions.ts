@@ -127,6 +127,7 @@ export {
 } from "@/application/actions/fantasy-draft";
 export {
   fetchPlayerDrawerViewAction,
+  fetchPlayerProfileViewAction,
   fetchTeamDrawerViewAction,
   fetchStaffDrawerViewAction,
   upsertCustomContentPackageAction,
