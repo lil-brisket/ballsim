@@ -50,10 +50,10 @@ export function HubBar(props: {
                 className={cn(
                   displayClass,
                   slantClass,
-                  "inline-flex min-h-11 items-center gap-2 whitespace-nowrap px-1.5 transition-colors xl:px-2 2xl:px-4",
+                  "inline-flex min-h-11 items-center gap-2 whitespace-nowrap px-1.5 transition-colors 2xl:px-4",
                   isActive
                     ? "text-2xl text-on-team [--slant-fill:var(--team-primary)]"
-                    : "text-lg text-muted hover:text-ink hover:[--slant-fill:var(--surface-high)]",
+                    : "text-base text-muted hover:text-ink hover:[--slant-fill:var(--surface-high)] 2xl:text-lg",
                   focusRingClass,
                 )}
               >
