@@ -90,7 +90,7 @@ export function GameHeader(props: {
         >
           BallSim
         </Link>
-        <div className="min-w-0 flex-1 lg:max-w-xs lg:flex-none">
+        <div className="min-w-0 flex-1 lg:max-w-[10rem] lg:flex-none xl:max-w-[19rem] 2xl:max-w-xs">
           <Suspense fallback={null}>
             <OwnerTeamSwitcher
               saveId={saveId}
@@ -105,9 +105,9 @@ export function GameHeader(props: {
         <TickerBar
           aria-label="Season status"
           items={tickerItems}
-          className="hidden xl:flex"
+          className="hidden 2xl:flex"
         />
-        <p className="shrink-0 font-display text-xl font-bold tabular-nums text-team-ink xl:hidden">
+        <p className="shrink-0 font-display text-xl font-bold tabular-nums text-team-ink 2xl:hidden">
           <span className="sr-only">Record </span>
           {record}
         </p>
