@@ -3,6 +3,7 @@
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { AvailabilityDot } from "@/components/team-management/availability-dot";
 import { cn, focusRingClass } from "@/components/ui/styles";
+import { formatPositionLabel } from "@/presentation/position-label";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 
 export type ChipPlayer = {
@@ -10,6 +11,7 @@ export type ChipPlayer = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: string | null;
   overall?: number;
   availabilityLabel: string;
 };
@@ -64,7 +66,10 @@ export function PlayerChip(props: {
             {player.lastName}
           </span>
           <span className="flex items-center justify-center gap-1.5 text-sm tabular-nums">
-            {slot ? <span aria-hidden={hidden}>{slot}</span> : null}
+            <span aria-hidden={hidden}>
+              {slot ??
+                formatPositionLabel(player.position, player.secondaryPosition)}
+            </span>
             <span aria-hidden={hidden}>{player.overall ?? "–"}</span>
             <AvailabilityDot status={player.availabilityLabel} />
           </span>

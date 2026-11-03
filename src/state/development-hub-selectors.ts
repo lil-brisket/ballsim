@@ -1,3 +1,4 @@
+import type { PlayerPosition } from "@/domain/entities/player";
 /**
  * Player Development Hub — answers "Who is changing?"
  * Composes roster + playerHistory; does not invent development focus or causal trainer links.
@@ -35,6 +36,7 @@ export type DevelopmentHubRow = {
   portrait: PlayerPortraitAssignment | null;
   playerName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   stage: string;
   overall: number;
@@ -125,6 +127,7 @@ export function toDevelopmentHubView(state: GameState): DevelopmentHubView {
       portrait: selectPlayerPortrait(state, player.id),
       playerName: `${player.firstName} ${player.lastName}`,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       age: player.age,
       stage,
       overall,

@@ -1,4 +1,5 @@
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { formatMoney } from "@/components/owner/MoneyDisplay";
 import { DataTable, numericCellClass } from "@/components/ui/DataTable";
 import { cn } from "@/components/ui/styles";
@@ -194,7 +195,9 @@ export function CapSheet(props: { view: CapSheetView; saveId: string }) {
                 {row.name}
               </PlayerEntityLink>
               {row.position ? (
-                <span className="ml-2 text-sm text-muted">{row.position}</span>
+                <span className="ml-2 text-sm text-muted">
+                  {formatPositionLabel(row.position, row.secondaryPosition)}
+                </span>
               ) : null}
               {row.note ? (
                 <span className="ml-2 text-sm text-muted">{row.note}</span>

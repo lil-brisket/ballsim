@@ -2,7 +2,11 @@
  * Soft lineup viability scoring — not rigid PG/SG/SF/PF/C requirements.
  */
 
-import type { Player, PlayerPosition } from "@/domain/entities/player";
+import {
+  playerPositions,
+  type Player,
+  type PlayerPosition,
+} from "@/domain/entities/player";
 import type { RotationEntry } from "@/domain/entities/team-roster-management";
 
 export type LineupValidationResult = {
@@ -13,23 +17,28 @@ export type LineupValidationResult = {
   issues: string[];
 };
 
+/**
+ * Positions the rotation prefers for a player, always among the positions he
+ * plays (primary, secondary). An entry that names none he plays falls back to
+ * his primary.
+ */
 export function preferredPositionsFor(
   entry: RotationEntry | undefined,
   player: Player,
 ): PlayerPosition[] {
-  if (entry != null && entry.preferredPositions.length > 0) {
-    return entry.preferredPositions;
-  }
-  return [player.position];
+  const natural = playerPositions(player);
+  const preferred = (entry?.preferredPositions ?? []).filter((position) =>
+    natural.includes(position),
+  );
+  return preferred.length > 0 ? preferred : [player.position];
 }
 
+/** Every position the player may be placed at: his primary and secondary only. */
 export function allPositionsFor(
-  entry: RotationEntry | undefined,
+  _entry: RotationEntry | undefined,
   player: Player,
 ): PlayerPosition[] {
-  const preferred = preferredPositionsFor(entry, player);
-  const secondary = entry?.secondaryPositions ?? [];
-  return [...new Set([...preferred, ...secondary, player.position])];
+  return [...playerPositions(player)];
 }
 
 /**

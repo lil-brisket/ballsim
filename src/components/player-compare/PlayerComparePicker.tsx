@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
@@ -192,7 +193,8 @@ export function PlayerComparePicker(props: {
             )}
             <span className="min-w-0 flex-1 truncate">{player.name}</span>
             <span className="shrink-0 text-sm text-muted">
-              {player.position} · {player.team}
+              {formatPositionLabel(player.position, player.secondaryPosition)} ·{" "}
+              {player.team}
             </span>
           </div>
         ))}

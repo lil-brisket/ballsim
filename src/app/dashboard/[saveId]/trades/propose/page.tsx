@@ -26,6 +26,7 @@ function assetsFor(state: GameState, teamId: string) {
       id: p.id as string,
       name: `${p.firstName} ${p.lastName}`,
       position: p.position as string,
+      secondaryPosition: p.secondaryPosition ?? null,
       overall: calculatePlayerOverall(p.position, p.attributes),
       age: p.age,
     }));

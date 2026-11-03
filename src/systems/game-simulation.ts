@@ -12,7 +12,7 @@ import {
 } from "@/domain/entities/game-result";
 import { assertCompletedGameBoxScore } from "@/domain/entities/game-box-score";
 import type { PlayByPlayLog } from "@/domain/entities/play-by-play";
-import type { Player } from "@/domain/entities/player";
+import { PLAYER_POSITIONS, type Player } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { asPossessionId, type PlayerId, type TeamId } from "@/domain/ids";
 import type { Rng } from "@/domain/rng";
@@ -61,6 +61,7 @@ import {
 } from "@/systems/schedule-date-index";
 import type { SimulationProfiler } from "@/systems/simulation/simulation-profiler";
 import { getEmergencyLineup } from "@/systems/roster-management";
+import { selectPositionalStarters } from "@/systems/lineup-assignment";
 import {
   accumulateOnCourtTime,
   averageOnCourtFatigue,
@@ -977,7 +978,12 @@ function selectStartingLineup(
       calculatePlayerOverall(b.position, b.attributes) -
       calculatePlayerOverall(a.position, a.attributes),
   );
-  const lineup = sorted.slice(0, Math.min(size, sorted.length));
+  // Each starter plays his primary or secondary position; the best five by
+  // rating alone would often leave a position open (see lineup-assignment).
+  const lineup =
+    size === PLAYER_POSITIONS.length
+      ? selectPositionalStarters(sorted, size)
+      : sorted.slice(0, Math.min(size, sorted.length));
   if (lineup.length === 0) {
     throw new Error("Starting lineup requires at least one player.");
   }

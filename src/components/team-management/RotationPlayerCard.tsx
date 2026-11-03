@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/Button";
 import { useId, useRef } from "react";
 import { useDialogFocus } from "@/components/management/use-dialog-focus";
 import { OvrBadge } from "@/components/ui/OvrBadge";
+import { formatPositionLabel } from "@/presentation/position-label";
 
 export type RotationPlayerCardData = {
   playerId: string;
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: string | null;
   age?: number;
   overall?: number;
   teamName?: string;
@@ -246,7 +248,7 @@ export function RotationPlayerCard(props: {
             />
             <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
               <span>
-                {player.position}
+                {formatPositionLabel(player.position, player.secondaryPosition)}
                 {player.age != null ? ` · Age ${player.age}` : ""}
               </span>
               {player.overall != null ? (

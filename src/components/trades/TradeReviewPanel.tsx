@@ -11,6 +11,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { formatPositionLabel } from "@/presentation/position-label";
 import type { TeamBrandingView } from "@/state/team-branding-view";
 import type {
   TradeReviewAsset,
@@ -57,7 +58,9 @@ function PlayerCard(props: {
     </span>
   );
   const facts = [
-    asset.position,
+    asset.position
+      ? formatPositionLabel(asset.position, asset.secondaryPosition)
+      : null,
     asset.age != null ? `Age ${asset.age}` : null,
     asset.salary != null ? formatMoney(asset.salary) : null,
   ].filter((part): part is string => part != null);

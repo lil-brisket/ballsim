@@ -29,6 +29,7 @@ export type CustomRosterPlayerPatch = Partial<
     | "age"
     | "nationality"
     | "position"
+    | "secondaryPosition"
     | "archetype"
     | "attributes"
     | "potential"
@@ -61,6 +62,8 @@ function playerToInput(
     heightInches: patch.heightInches ?? player.heightInches,
     weightPounds: patch.weightPounds ?? player.weightPounds,
     position: patch.position ?? player.position,
+    // A secondary can be gained or changed here, never cleared.
+    secondaryPosition: patch.secondaryPosition ?? player.secondaryPosition,
     archetype: patch.archetype ?? player.archetype,
     attributes: patch.attributes ?? { ...player.attributes },
     potential: patch.potential ?? { ...player.potential },

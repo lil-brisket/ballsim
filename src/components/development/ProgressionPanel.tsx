@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import { useState } from "react";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import {
@@ -105,7 +106,9 @@ export function ProgressionPanel(props: {
                 {row.name}
               </PlayerEntityLink>
             </td>
-            <td className="px-3 py-2">{row.position}</td>
+            <td className="px-3 py-2">
+              {formatPositionLabel(row.position, row.secondaryPosition)}
+            </td>
             <td className={cn("px-3 py-2", numericCellClass)}>{row.age}</td>
             <td className={cn("px-3 py-2", numericCellClass)}>{row.before}</td>
             <td className={cn("px-3 py-2", numericCellClass)}>{row.after}</td>

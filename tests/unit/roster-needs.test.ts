@@ -8,9 +8,10 @@ import {
   uniformPlayerAttributes,
 } from "../factories/player";
 import {
-  effectiveOverallAtPosition,
+  overallAtPosition,
   evaluateRosterNeeds,
 } from "@/state/roster-page-selectors";
+import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { positionFitsForPlayer } from "@/systems/roster-management";
 
 function buildState(
@@ -37,20 +38,29 @@ function buildState(
 }
 
 describe("positionFitsForPlayer", () => {
-  it("marks primary and adjacent secondary positions", () => {
+  it("is only the primary position without a secondary", () => {
     const sf = createPlayer({ position: "SF" });
-    const fits = positionFitsForPlayer(sf);
-    expect(fits).toEqual([
+    expect(positionFitsForPlayer(sf)).toEqual([
       { position: "SF", fit: "primary" },
-      { position: "SG", fit: "secondary" },
-      { position: "PF", fit: "secondary" },
     ]);
   });
 
-  it("applies 0.65 secondary effective OVR", () => {
-    expect(effectiveOverallAtPosition(82, "primary")).toBe(82);
-    expect(effectiveOverallAtPosition(82, "secondary")).toBe(
-      Math.round(82 * 0.65),
+  it("adds the secondary position and nothing adjacent", () => {
+    const pf = createPlayer({ position: "PF", secondaryPosition: "C" });
+    expect(positionFitsForPlayer(pf)).toEqual([
+      { position: "PF", fit: "primary" },
+      { position: "C", fit: "secondary" },
+    ]);
+  });
+
+  it("rates a player at the position's own weights, with no multiplier", () => {
+    const pf = createPlayer({
+      position: "PF",
+      secondaryPosition: "C",
+      attributes: uniformPlayerAttributes(80),
+    });
+    expect(overallAtPosition(pf, "C")).toBe(
+      calculatePlayerOverall("C", pf.attributes),
     );
   });
 });

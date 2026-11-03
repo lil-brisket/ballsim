@@ -55,6 +55,7 @@ export type PlayerSourceRecord = {
   heightInches: number;
   weightPounds: number;
   position: PlayerPosition;
+  secondaryPosition?: PlayerPosition;
   archetype: PlayerArchetype;
   attributes: PlayerAttributes;
   potential: PlayerPotential;

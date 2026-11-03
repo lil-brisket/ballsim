@@ -2,7 +2,16 @@ import {
   DEFAULT_DRAFT_LOTTERY_SETTINGS,
   DEFAULT_PAYROLL_RULE_SETTINGS,
 } from "@/domain/game-settings";
-import type { Player } from "@/domain/entities/player";
+import {
+  PLAYER_POSITIONS,
+  playerPositions,
+  type Player,
+  type PlayerPosition,
+} from "@/domain/entities/player";
+import type { LineupSlot } from "@/domain/entities/team-roster-management";
+import { secondaryPositionFor } from "@/systems/player-secondary-position";
+import { ensureFreeAgentPool } from "@/systems/free-agent-pool";
+import { createSeededRng } from "@/domain/rng";
 import type { Team } from "@/domain/entities/team";
 import type { PlayerId } from "@/domain/ids";
 import { isJerseyNumber, preferredJerseyNumber } from "@/domain/jersey-number";
@@ -566,4 +575,107 @@ export function migrateV82ToV83(
       schemaVersion: 83,
     },
   };
+}
+
+/**
+ * Deterministic v83 → v84: secondary positions. A player may now only be
+ * placed at his primary or secondary position, so this
+ *  - gives every active player the secondary position his archetype, body and
+ *    ratings support (the same rule new players get; no RNG),
+ *  - clamps each rotation entry's positions to what the player can play, and
+ *  - keeps only the starting-lineup slots that are still legal: a starter
+ *    holds his slot when he plays it, otherwise moves to a free slot he does
+ *    play, otherwise leaves the lineup. An AI team rebuilds a short lineup the
+ *    next day; the owner is asked to fix theirs, and
+ *  - tops the free-agent pool up to the league floor (no RNG consumed).
+ */
+export function migrateV83ToV84(state: GameState): GameState {
+  const players: GameState["world"]["players"] = {};
+  for (const [playerId, player] of Object.entries(state.world.players)) {
+    const secondaryPosition =
+      player.retired === true || player.secondaryPosition !== undefined
+        ? player.secondaryPosition
+        : secondaryPositionFor(player);
+    players[playerId] =
+      secondaryPosition === undefined ||
+      secondaryPosition === player.secondaryPosition
+        ? player
+        : { ...player, secondaryPosition };
+  }
+
+  const teams: GameState["world"]["teams"] = {};
+  for (const [teamId, team] of Object.entries(state.world.teams)) {
+    const management = team.rosterManagement;
+    if (management == null) {
+      teams[teamId] = team;
+      continue;
+    }
+    const naturalPositions = (playerId: string): readonly PlayerPosition[] => {
+      const player = players[playerId];
+      return player === undefined ? [] : playerPositions(player);
+    };
+
+    const rotation = management.rotation.map((entry) => {
+      const natural = naturalPositions(entry.playerId);
+      if (natural.length === 0) {
+        return entry;
+      }
+      const preferred = entry.preferredPositions.filter((position) =>
+        natural.includes(position),
+      );
+      return {
+        ...entry,
+        preferredPositions: preferred.length > 0 ? preferred : [natural[0]!],
+        secondaryPositions: [],
+      };
+    });
+
+    const used = new Set<PlayerPosition>();
+    const kept: LineupSlot[] = [];
+    const unplaced: LineupSlot[] = [];
+    for (const slot of management.startingLineup) {
+      if (
+        !used.has(slot.slot) &&
+        naturalPositions(slot.playerId).includes(slot.slot)
+      ) {
+        used.add(slot.slot);
+        kept.push(slot);
+      } else {
+        unplaced.push(slot);
+      }
+    }
+    for (const slot of unplaced) {
+      const free = naturalPositions(slot.playerId).find(
+        (position) => !used.has(position),
+      );
+      if (free !== undefined) {
+        used.add(free);
+        kept.push({ playerId: slot.playerId, slot: free });
+      }
+    }
+    const startingLineup = PLAYER_POSITIONS.flatMap((position) =>
+      kept.filter((slot) => slot.slot === position),
+    );
+
+    teams[teamId] = {
+      ...team,
+      rosterManagement: { ...management, rotation, startingLineup },
+    };
+  }
+
+  const migrated: GameState = {
+    ...state,
+    meta: {
+      ...state.meta,
+      schemaVersion: 84,
+    },
+    world: {
+      ...state.world,
+      players,
+      teams,
+    },
+  };
+  // A league keeps a free-agent pool; older saves could drain theirs to nothing.
+  return ensureFreeAgentPool(migrated, createSeededRng(state.meta.rngState))
+    .state;
 }

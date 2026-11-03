@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { DataTable } from "@/components/ui/DataTable";
@@ -78,7 +79,8 @@ export function SkillRatingsTable(props: {
                     </PlayerEntityLink>
                   </span>
                   <p className="text-sm text-faint">
-                    {row.position} · {row.age}
+                    {formatPositionLabel(row.position, row.secondaryPosition)} ·{" "}
+                    {row.age}
                   </p>
                   {row.focus !== "balanced" ? (
                     <p className="text-sm text-faint">

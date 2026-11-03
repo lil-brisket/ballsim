@@ -30,6 +30,7 @@ export type CreatePlayerOverrides = {
   lastName?: string;
   nationality?: PlayerNationality;
   position?: PlayerPosition;
+  secondaryPosition?: PlayerPosition;
   archetype?: PlayerArchetype;
   age?: number;
   heightInches?: number;
@@ -163,6 +164,7 @@ export function createPlayer(overrides: CreatePlayerOverrides = {}): Player {
     lastName: overrides.lastName ?? "Rivera",
     nationality: overrides.nationality ?? "USA",
     position: overrides.position ?? "PG",
+    secondaryPosition: overrides.secondaryPosition,
     archetype: overrides.archetype ?? "floor_general",
     age: overrides.age ?? 24,
     heightInches: overrides.heightInches ?? 75,

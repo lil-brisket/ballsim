@@ -20,6 +20,7 @@ import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { createEmptyTeamStanding } from "@/domain/entities/standings";
 import type { PlayerId } from "@/domain/ids";
+import type { PlayerPosition } from "@/domain/entities/player";
 import { listFreeAgents } from "@/systems/free-agency";
 import { draftYearForSeason } from "@/systems/draft";
 import { draftClassIdFor } from "@/domain/entities/draft";
@@ -58,6 +59,7 @@ export type RosterPlayerView = {
   /** Saved jersey number (0-99). */
   jerseyNumber: number;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   overall: number;
   contractSalary: number | null;
@@ -88,6 +90,7 @@ export type PlayerDetailView = {
   /** Saved jersey number (0-99). */
   jerseyNumber: number;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   heightInches: number;
   weightPounds: number;
@@ -232,6 +235,7 @@ export function toRosterView(state: GameState): RosterPlayerView[] {
       lastName: player.lastName,
       jerseyNumber: player.jerseyNumber,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       age: player.age,
       overall: calculatePlayerOverall(player.position, player.attributes),
       contractSalary: salary,
@@ -357,6 +361,7 @@ function playerEntityToDetail(
     lastName: player.lastName,
     jerseyNumber: player.jerseyNumber,
     position: player.position,
+    secondaryPosition: player.secondaryPosition ?? null,
     age: player.age,
     heightInches: player.heightInches,
     weightPounds: player.weightPounds,

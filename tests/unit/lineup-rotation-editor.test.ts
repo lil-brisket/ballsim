@@ -4,6 +4,7 @@ import type {
   RotationView,
 } from "@/state/team-management-selectors";
 import {
+  canStartAtSlot,
   createEditorState,
   findDuplicateAssignments,
   setStarterSlot,
@@ -224,6 +225,10 @@ describe("lineup-rotation-editor", () => {
   it("starter change keeps assignments consistent and moves previous to bench", () => {
     const { lineup, rotation } = fixture();
     const state = createEditorState(lineup, rotation);
+    // p6 is an SG with a PG secondary, so he may start at PG.
+    state.rows = state.rows.map((r) =>
+      r.playerId === "p6" ? { ...r, secondaryPosition: "PG" } : r,
+    );
     const next = setStarterSlot(state, "PG", "p6");
     expect(next.starters.find((s) => s.slot === "PG")?.playerId).toBe("p6");
     expect(next.bench).toContain("p1");
@@ -232,6 +237,22 @@ describe("lineup-rotation-editor", () => {
     const p6 = next.rows.find((r) => r.playerId === "p6");
     expect(p6?.groupRole).toBe("starter");
     expect(p6?.role).toBe("starter");
+  });
+
+  it("canStartAtSlot allows only the primary or secondary position", () => {
+    const sgPg = { position: "SG", secondaryPosition: "PG" };
+    expect(canStartAtSlot(sgPg, "SG")).toBe(true);
+    expect(canStartAtSlot(sgPg, "PG")).toBe(true);
+    expect(canStartAtSlot(sgPg, "C")).toBe(false);
+    expect(canStartAtSlot({ position: "SG" }, "PG")).toBe(false);
+  });
+
+  it("ignores a starter change that would place a player off-position", () => {
+    const { lineup, rotation } = fixture();
+    const state = createEditorState(lineup, rotation);
+    // p6 is a plain SG: PG is off-position.
+    expect(setStarterSlot(state, "PG", "p6")).toBe(state);
+    expect(state.starters.find((s) => s.slot === "PG")?.playerId).toBe("p1");
   });
 
   it("inactive players cannot have minutes in local state", () => {

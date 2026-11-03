@@ -50,6 +50,7 @@ export function copyPlayerWithAttributes(
     heightInches: source.heightInches,
     weightPounds: source.weightPounds,
     position: source.position,
+    secondaryPosition: source.secondaryPosition,
     archetype: source.archetype,
     attributes: { ...attributes },
     potential: { ...source.potential },

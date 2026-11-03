@@ -5,7 +5,10 @@ import {
   toPlayerMoodView,
   type PlayerMoodView,
 } from "@/state/player-mood-selectors";
-import type { PlayerAttributes } from "@/domain/entities/player";
+import type {
+  PlayerAttributes,
+  PlayerPosition,
+} from "@/domain/entities/player";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { selectPlayerPortrait } from "@/state/player-portrait-selectors";
 import {
@@ -65,6 +68,7 @@ export type PlayerDrawerView = {
     /** Saved jersey number (0-99). */
     jerseyNumber: number;
     position: string;
+    secondaryPosition?: PlayerPosition | null;
     age: number;
     overall: number;
     potential: number;
@@ -126,6 +130,7 @@ export type TeamDrawerTopPlayer = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   overall: number;
   injuryStatus: string;
 };
@@ -218,6 +223,7 @@ export function toPlayerDrawerView(
       lastName: player.lastName,
       jerseyNumber: player.jerseyNumber,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       age: player.age,
       overall,
       potential: player.potential.overall,
@@ -337,6 +343,7 @@ export function toTeamDrawerView(
       firstName: p.firstName,
       lastName: p.lastName,
       position: p.position,
+      secondaryPosition: p.secondaryPosition ?? null,
       overall: calculatePlayerOverall(p.position, p.attributes),
       injuryStatus: p.availability,
     });

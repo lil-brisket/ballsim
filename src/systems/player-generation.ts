@@ -23,6 +23,7 @@ import {
   pickCompatibleArchetype,
 } from "@/systems/player-attribute-generation";
 import { generatePlayerName } from "@/systems/player-name-generation";
+import { secondaryPositionFor } from "@/systems/player-secondary-position";
 import {
   MAX_PLAYER_AGE,
   MAX_PLAYER_QUALITY,
@@ -155,6 +156,14 @@ export function generatePlayerWithRng(
     composure: rng.nextInt(MIN_PERSONALITY, MAX_PERSONALITY),
   };
 
+  const secondaryPosition = secondaryPositionFor({
+    position,
+    archetype,
+    heightInches,
+    weightPounds,
+    attributes,
+  });
+
   return createPlayer({
     id: playerId,
     teamId: options.teamId ?? null,
@@ -162,6 +171,7 @@ export function generatePlayerWithRng(
     lastName,
     nationality,
     position,
+    secondaryPosition,
     archetype,
     age,
     heightInches,

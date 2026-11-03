@@ -608,15 +608,21 @@ export function buildPlayChoreography(
     // Roughly where a player stands during the action, to size a pass.
     const midAction = (id: PlayerId) =>
       lerp(start(id), toSpot.get(id) ?? start(id), 0.5);
-    const flightMs = (from: PlayerId, to: PlayerId) =>
-      Math.min(
-        PASS_FLIGHT_MAX_MS,
-        Math.max(
-          PASS_FLIGHT_MIN_MS,
-          (feetBetween(midAction(from), midAction(to)) / PASS_FEET_PER_SECOND) *
-            1000,
-        ),
+    // The ball goes between where the two stand when it leaves and arrives,
+    // which can be well apart from where they are halfway through the action,
+    // so the flight is sized for the longest of the start, middle and end.
+    const endSpot = (id: PlayerId) => toSpot.get(id) ?? start(id);
+    const flightMs = (from: PlayerId, to: PlayerId) => {
+      const feet = Math.max(
+        feetBetween(start(from), start(to)),
+        feetBetween(midAction(from), midAction(to)),
+        feetBetween(endSpot(from), endSpot(to)),
       );
+      return Math.min(
+        PASS_FLIGHT_MAX_MS,
+        Math.max(PASS_FLIGHT_MIN_MS, (feet / PASS_FEET_PER_SECOND) * 1000),
+      );
+    };
     let passer: PlayerId | null = first;
     let assistFlightMs = PASS_FLIGHT_MIN_MS;
     chain.forEach((id, j) => {

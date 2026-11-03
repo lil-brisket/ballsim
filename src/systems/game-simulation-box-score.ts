@@ -172,7 +172,7 @@ const BOX_SCORE_SHOT_CALIBRATION = {
   // Elite shooters are kept believable by the shared diminishing-returns
   // curve (effectiveShootingAbility), not a box-score-only knee.
   twoPoint: { intercept: 0.0425, slope: 0.9772 },
-  threePoint: { intercept: 0.04, slope: 0.951 },
+  threePoint: { intercept: 0.011, slope: 0.951 },
   freeThrow: { intercept: -0.008, slope: 0.9984 },
 } as const;
 

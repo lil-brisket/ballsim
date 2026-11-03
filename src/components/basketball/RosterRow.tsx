@@ -3,6 +3,8 @@ import { PlayerPortrait } from "@/components/basketball/PlayerPortrait";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { OvrBadge } from "@/components/ui/OvrBadge";
+import type { PlayerPosition } from "@/domain/entities/player";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { cn, type Density } from "@/components/ui/styles";
 
 /**
@@ -18,6 +20,8 @@ export function RosterRow(props: {
   /** Persisted portrait from the view model; null/absent → initials plate. */
   portrait?: PlayerPortraitAssignment | null;
   position: string;
+  /** Optional second natural position; shown as "PG/SG". */
+  secondaryPosition?: PlayerPosition | null;
   overall: number;
   age?: number;
   injuryStatus?: string;
@@ -56,7 +60,7 @@ export function RosterRow(props: {
           {props.firstName} {props.lastName}
         </PlayerEntityLink>
         <p className="text-sm text-faint">
-          {props.position}
+          {formatPositionLabel(props.position, props.secondaryPosition)}
           {props.age != null ? ` · ${props.age}` : ""}
         </p>
       </div>

@@ -7,6 +7,10 @@ import type { RotationEntry } from "@/domain/entities/team-roster-management";
 import type { PlayerId, TeamId } from "@/domain/ids";
 import { ROTATION_CONFIG } from "@/systems/rotation/rotation-config";
 import {
+  assignLineupSlots,
+  playedPositions,
+} from "@/systems/lineup-assignment";
+import {
   buildRotationMap,
   playerCanCoverSlot,
   scoreLineupViability,
@@ -131,6 +135,19 @@ function pickBestReplacement(input: {
   let best: Player | null = null;
   let bestScore = Number.NEGATIVE_INFINITY;
 
+  // A player is placed at his primary or secondary position, so a swap that
+  // leaves a position with no one to play it costs score for each such
+  // position beyond the fewest any candidate leaves. Strongly preferred, not
+  // required: a short bench can still bring in its best player.
+  const openAfter = (candidate: Player): number =>
+    assignLineupSlots(
+      input.onCourt.map((p) => (p.id === input.outPlayer.id ? candidate : p)),
+    ).unfilled.length;
+  const openCounts = new Map(
+    input.candidates.map((candidate) => [candidate.id, openAfter(candidate)]),
+  );
+  const fewestOpen = Math.min(...openCounts.values());
+
   for (const candidate of input.candidates) {
     const entry = entryFor(input.plan, candidate.id);
     const positionFit = playerCanCoverSlot(candidate, input.slot, entry)
@@ -168,8 +185,17 @@ function pickBestReplacement(input: {
       input.plan.rotationByPlayerId,
     );
 
+    const openPenalty =
+      ((openCounts.get(candidate.id) ?? fewestOpen) - fewestOpen) *
+      ROTATION_CONFIG.openPositionSubstitutionPenalty;
+
     const score =
-      positionFit + inScore + priorityBoost + closingBoost + viability * 0.05;
+      positionFit +
+      inScore +
+      priorityBoost +
+      closingBoost +
+      viability * 0.05 -
+      openPenalty;
 
     if (score > bestScore) {
       bestScore = score;
@@ -532,7 +558,8 @@ export function evaluateSubstitutions(
 export function defaultSlotsForLineup(
   onCourt: readonly Player[],
 ): PlayerPosition[] {
-  return onCourt.map((player) => player.position);
+  const played = playedPositions(onCourt);
+  return onCourt.map((player) => played.get(player.id) ?? player.position);
 }
 
 export { buildRotationMap };

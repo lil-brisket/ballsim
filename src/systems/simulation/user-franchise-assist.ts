@@ -13,10 +13,7 @@ import {
 import { addCalendarDays } from "@/domain/calendar-date";
 import type { ContractInput } from "@/domain/entities/contract";
 import type { Player } from "@/domain/entities/player";
-import {
-  PLAYER_POSITIONS,
-  type PlayerPosition,
-} from "@/domain/entities/player";
+import { playsPosition } from "@/domain/entities/player";
 import type { StaffRole } from "@/domain/entities/staff";
 import { createDomainEvent, type DomainEvent } from "@/domain/events";
 import {
@@ -58,7 +55,11 @@ import {
   makeDraftSelection,
   tryAutoPickActiveDraftSlot,
 } from "@/systems/draft";
-import { selectProspectForTeam } from "@/systems/ai-team-decisions";
+import {
+  missingPositions,
+  repairTeamLineup,
+  selectProspectForTeam,
+} from "@/systems/ai-team-decisions";
 import { isUserOnDraftClock } from "@/systems/draft/draft-clock";
 import { createAiAssistLogEvent } from "@/systems/simulation/ai-assist-logging";
 import {
@@ -270,6 +271,15 @@ function fillRosterForNeed(
   const team = current.world.teams[teamId];
   if (!team) {
     return { ...systemResult(current), didAct: false };
+  }
+
+  if (
+    need.actionId === "SIGN_INJURY_REPLACEMENT" &&
+    Array.isArray(need.metadata?.positionalGaps)
+  ) {
+    // Injuries left a position open: sign for it, waiving a spare if full.
+    const repaired = repairTeamLineup(current, teamId);
+    return { ...repaired, didAct: repaired.signed };
   }
 
   const isRoutine = need.actionId === "SIGN_ROUTINE_FA";
@@ -661,8 +671,12 @@ function pickBestAffordableFreeAgent(
     .filter((player) => !exclude.has(player.id));
 
   const ranked = [...pool].sort((a, b) => {
-    const aMissing = missing.includes(a.position) ? 0 : 1;
-    const bMissing = missing.includes(b.position) ? 0 : 1;
+    const aMissing = missing.some((position) => playsPosition(a, position))
+      ? 0
+      : 1;
+    const bMissing = missing.some((position) => playsPosition(b, position))
+      ? 0
+      : 1;
     if (aMissing !== bMissing) {
       return aMissing - bMissing;
     }
@@ -701,27 +715,6 @@ function pickBestAffordableFreeAgent(
     }
   }
   return undefined;
-}
-
-function missingPositions(state: GameState, teamId: TeamId): PlayerPosition[] {
-  const counts = new Map<PlayerPosition, number>();
-  for (const position of PLAYER_POSITIONS) {
-    counts.set(position, 0);
-  }
-  const team = state.world.teams[teamId];
-  if (!team) {
-    return [...PLAYER_POSITIONS];
-  }
-  for (const playerId of team.roster) {
-    const player = state.world.players[playerId];
-    if (!player) {
-      continue;
-    }
-    counts.set(player.position, (counts.get(player.position) ?? 0) + 1);
-  }
-  return PLAYER_POSITIONS.filter(
-    (position) => (counts.get(position) ?? 0) === 0,
-  );
 }
 
 function ensureAiAssistState(state: GameState, teamId: TeamId): GameState {

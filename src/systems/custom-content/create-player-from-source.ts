@@ -24,6 +24,7 @@ export function playerInputFromSource(input: {
     heightInches: input.source.heightInches,
     weightPounds: input.source.weightPounds,
     position: input.source.position,
+    secondaryPosition: input.source.secondaryPosition,
     archetype: input.source.archetype,
     attributes: { ...input.source.attributes },
     potential: { ...input.source.potential },

@@ -1,5 +1,6 @@
 import type { DepthChartView } from "@/state/roster-page-selectors";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -65,7 +66,14 @@ export function DepthChart(props: {
                           </span>
                         ) : null}
                         {entry.primaryPosition !== position ? (
-                          <span>({entry.primaryPosition})</span>
+                          <span>
+                            (
+                            {formatPositionLabel(
+                              entry.primaryPosition,
+                              entry.secondaryPosition,
+                            )}
+                            )
+                          </span>
                         ) : null}
                       </div>
                     </li>

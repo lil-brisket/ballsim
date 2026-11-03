@@ -11,6 +11,7 @@ import {
 } from "@/state/team-branding-view";
 import type { GameState } from "@/state/game-state";
 import type { PlayerId, TeamId } from "@/domain/ids";
+import type { PlayerPosition } from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import {
   getCurrentPick,
@@ -40,6 +41,7 @@ export type FantasyDraftPoolPlayerView = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   heightInches: number;
   weightPounds: number;
@@ -60,6 +62,7 @@ export type FantasyDraftQueueEntryView = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   overall: number;
   potential: number;
   isAvailable: boolean;
@@ -73,6 +76,7 @@ export type FantasyDraftRecommendationView = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   overall: number;
   potential: number;
   tier: string;
@@ -133,6 +137,7 @@ export type FantasyDraftView = {
     playerId: string;
     name: string;
     position: string;
+    secondaryPosition?: PlayerPosition | null;
     overall: number;
   }>;
   positionCounts: Array<{ position: string; count: number }>;
@@ -146,6 +151,7 @@ export type FantasyDraftView = {
     playerId: string;
     playerName: string;
     position: string;
+    secondaryPosition?: PlayerPosition | null;
   }>;
   undraftedCount: number;
   selectionsMade: number;
@@ -156,6 +162,7 @@ export type FantasyDraftPlayerDetailView = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   heightInches: number;
   weightPounds: number;
@@ -188,6 +195,11 @@ export type FantasyDraftSummaryView = {
   teamSummaries: Record<string, FantasyDraftTeamSummary>;
   leagueRecap: FantasyDraftLeagueRecap | null;
   teamNames: Record<string, { name: string; abbreviation: string }>;
+  /**
+   * Secondary position of each drafted player who has one, read from the live
+   * players (the saved draft analysis keeps only the primary position).
+   */
+  secondaryPositionById?: Record<string, string>;
 };
 
 function mapNeedLevel(level: string): "HIGH" | "MEDIUM" | "LOW" {
@@ -209,6 +221,7 @@ function toRecommendationView(
     firstName: player.firstName,
     lastName: player.lastName,
     position: player.position,
+    secondaryPosition: player.secondaryPosition ?? null,
     overall,
     potential: player.potential.overall,
     tier: fantasyDraftPlayerTier(overall),
@@ -278,6 +291,7 @@ export function toFantasyDraftView(
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       age: player.age,
       heightInches: player.heightInches,
       weightPounds: player.weightPounds,
@@ -313,6 +327,7 @@ export function toFantasyDraftView(
         firstName: player?.firstName ?? "Unknown",
         lastName: player?.lastName ?? "",
         position: player?.position ?? "?",
+        secondaryPosition: player?.secondaryPosition ?? null,
         overall,
         potential: player?.potential.overall ?? 0,
         isAvailable: selection === undefined,
@@ -368,6 +383,7 @@ export function toFantasyDraftView(
         playerId,
         name: player ? `${player.firstName} ${player.lastName}` : playerId,
         position: player?.position ?? "?",
+        secondaryPosition: player?.secondaryPosition ?? null,
         overall: player
           ? calculatePlayerOverall(player.position, player.attributes)
           : 0,
@@ -395,6 +411,7 @@ export function toFantasyDraftView(
         ? `${player.firstName} ${player.lastName}`
         : selection.playerId,
       position: player?.position ?? "?",
+      secondaryPosition: player?.secondaryPosition ?? null,
     };
   });
 
@@ -483,6 +500,7 @@ export function toFantasyDraftPlayerDetailView(
     firstName: player.firstName,
     lastName: player.lastName,
     position: player.position,
+    secondaryPosition: player.secondaryPosition ?? null,
     age: player.age,
     heightInches: player.heightInches,
     weightPounds: player.weightPounds,
@@ -526,6 +544,14 @@ export function toFantasyDraftSummaryView(
     };
   }
 
+  const secondaryPositionById: Record<string, string> = {};
+  for (const playerId of draft.selectedPlayerIds) {
+    const secondary = state.world.players[playerId]?.secondaryPosition;
+    if (secondary) {
+      secondaryPositionById[playerId] = secondary;
+    }
+  }
+
   return {
     status: draft.status,
     totalPicks: draft.totalPicks,
@@ -535,5 +561,6 @@ export function toFantasyDraftSummaryView(
     teamSummaries: draft.teamSummaries ?? {},
     leagueRecap: draft.leagueRecap ?? null,
     teamNames,
+    secondaryPositionById,
   };
 }

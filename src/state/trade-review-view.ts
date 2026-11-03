@@ -1,5 +1,8 @@
 import { getContractSalaryForYear } from "@/domain/entities/contract";
-import { PLAYER_POSITIONS } from "@/domain/entities/player";
+import {
+  PLAYER_POSITIONS,
+  type PlayerPosition,
+} from "@/domain/entities/player";
 import type { TradeProposal } from "@/domain/entities/trade-proposal";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
 import type { TeamId } from "@/domain/ids";
@@ -29,6 +32,7 @@ export type TradeReviewAsset = {
   firstName?: string;
   lastName?: string;
   position?: string;
+  secondaryPosition?: PlayerPosition | null;
   overall?: number;
   age?: number;
   /** Current-year salary in dollars; null when no contract. */
@@ -157,6 +161,7 @@ function describeTradeSide(
       firstName: player.firstName,
       lastName: player.lastName,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       overall: ovr,
       age: player.age,
       salary: salary ?? null,

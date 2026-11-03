@@ -1,4 +1,5 @@
 import { buttonClass } from "@/components/ui/Button";
+import { formatPositionLabel } from "@/presentation/position-label";
 import Link from "next/link";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -45,7 +46,7 @@ export function TeamRotationPreview(props: {
                 >
                   <span className="min-w-0 truncate">
                     <span className="mr-2 text-sm text-faint">
-                      {row.position}
+                      {formatPositionLabel(row.position, row.secondaryPosition)}
                     </span>
                     <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
                       {row.firstName} {row.lastName}
@@ -72,7 +73,7 @@ export function TeamRotationPreview(props: {
                 >
                   <span className="min-w-0 truncate">
                     <span className="mr-2 text-sm text-faint">
-                      {row.position}
+                      {formatPositionLabel(row.position, row.secondaryPosition)}
                     </span>
                     <PlayerEntityLink saveId={saveId} playerId={row.playerId}>
                       {row.firstName} {row.lastName}

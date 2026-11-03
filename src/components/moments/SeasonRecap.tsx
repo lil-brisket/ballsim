@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import {
   MomentOverlay,
   type MomentStep,
@@ -140,7 +141,11 @@ export function PlayerBody({
       />
       <div className="space-y-1">
         <p className="text-sm tabular-nums text-muted">{playerLine(player)}</p>
-        {player.position ? <p className="text-lg">{player.position}</p> : null}
+        {player.position ? (
+          <p className="text-lg">
+            {formatPositionLabel(player.position, player.secondaryPosition)}
+          </p>
+        ) : null}
       </div>
     </div>
   );

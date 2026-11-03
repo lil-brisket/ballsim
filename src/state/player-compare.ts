@@ -4,7 +4,10 @@
  */
 
 import { getControlledTeam } from "@/state/selectors";
-import type { PlayerAttributes } from "@/domain/entities/player";
+import type {
+  PlayerAttributes,
+  PlayerPosition,
+} from "@/domain/entities/player";
 import { ARCHETYPE_LABELS } from "@/domain/entities/player-archetype";
 import { getContractSalaryForYear } from "@/domain/entities/contract";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
@@ -15,6 +18,7 @@ export type PlayerCompareView = {
   firstName: string;
   lastName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   heightInches: number;
   archetypeLabel: string;
@@ -46,6 +50,7 @@ export function toPlayerCompareView(
     firstName: player.firstName,
     lastName: player.lastName,
     position: player.position,
+    secondaryPosition: player.secondaryPosition ?? null,
     age: player.age,
     heightInches: player.heightInches,
     archetypeLabel: ARCHETYPE_LABELS[player.archetype] ?? player.archetype,

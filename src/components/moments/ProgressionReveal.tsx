@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import { AnimatedOvrBadge } from "@/components/moments/AnimatedOvrBadge";
 import {
   MomentOverlay,
@@ -63,7 +64,8 @@ function PlayerBody({ row }: { row: ProgressionPlayerRow }) {
         </span>
       </div>
       <p className="text-sm text-muted">
-        Age {row.age} · {row.position}
+        Age {row.age} ·{" "}
+        {formatPositionLabel(row.position, row.secondaryPosition)}
       </p>
       {row.topMoves.length > 0 ? (
         <ul className="space-y-1 text-sm">

@@ -1,4 +1,5 @@
 import type { FantasyDraftView } from "@/state/selectors";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { OvrBadge } from "@/components/ui/OvrBadge";
 
@@ -20,7 +21,12 @@ function RecCard(props: {
         {props.player.firstName} {props.player.lastName}
       </div>
       <div className="flex items-center gap-1.5 text-faint">
-        <span>{props.player.position}</span>
+        <span>
+          {formatPositionLabel(
+            props.player.position,
+            props.player.secondaryPosition,
+          )}
+        </span>
         <OvrBadge overall={props.player.overall} size="sm" />
         <OvrBadge
           overall={props.player.potential}

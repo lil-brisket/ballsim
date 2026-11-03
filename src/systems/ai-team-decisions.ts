@@ -2,7 +2,11 @@ import { calendarDaysBetween } from "@/domain/calendar-date";
 import type { ContractInput } from "@/domain/entities/contract";
 import type { DraftClass } from "@/domain/entities/draft";
 import type { Player, PlayerPosition } from "@/domain/entities/player";
-import { PLAYER_POSITIONS } from "@/domain/entities/player";
+import {
+  PLAYER_POSITIONS,
+  playerCanPlay,
+  playsPosition,
+} from "@/domain/entities/player";
 import { calculatePlayerOverall } from "@/domain/player-overall-rating";
 import { draftClassIdFor } from "@/domain/entities/draft";
 import type { DomainEvent } from "@/domain/events";
@@ -61,8 +65,16 @@ import {
   submitRfaOfferSheet,
 } from "@/systems/rfa";
 import { isActiveRfa } from "@/domain/entities/rfa-status";
-import { getContractSigningYear } from "@/systems/salary-cap";
-import { isSalaryLowball } from "@/systems/salary-scale";
+import { getContractSigningYear, getTeamCapSpace } from "@/systems/salary-cap";
+import { getLeagueSalaryCap } from "@/systems/league-salary-cap";
+import {
+  isSalaryLowball,
+  isVetMinExceptionSalary,
+  REPLACEMENT_LEVEL_OVERALL,
+  vetMinSalary,
+} from "@/systems/salary-scale";
+import { assignLineupSlots } from "@/systems/lineup-assignment";
+import { ensureFreeAgentPool } from "@/systems/free-agent-pool";
 import { getCalendarContext } from "@/systems/simulation/calendar-context";
 import { checkTradeWindow } from "@/systems/league-rules/trade-rules";
 import { draftYearForSeason, makeDraftSelection } from "@/systems/draft";
@@ -95,7 +107,10 @@ import {
 } from "@/systems/roster-management";
 import { isDraftAiPhase, isFreeAgencyAiPhase } from "@/systems/phase-engine";
 import { runAiDevelopmentLeagueDecisions } from "@/systems/development-league/ai-decisions";
+import { assignPlayerToDevelopmentLeague } from "@/systems/development-league/assignment";
+import { isDevelopmentLeagueEligible } from "@/systems/development-league/eligibility";
 import { enforceMaxRosterViaDevelopmentLeague } from "@/systems/development-league/enforce-roster-cap";
+import { getTopLeagueRosterPlayers } from "@/systems/development-league/franchise-membership";
 
 export { isUserControlledTeam };
 
@@ -108,7 +123,8 @@ const REQUIRED_POSITIONS: readonly PlayerPosition[] = PLAYER_POSITIONS;
  */
 export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
   const events: DomainEvent[] = [];
-  let current = state;
+  // The league always has free agents to sign from.
+  let current = ensureFreeAgentPool(state, _rng).state;
 
   if (current.competition.season.phase === "offseason") {
     if (isFreeAgencyAiPhase(current)) {
@@ -136,6 +152,10 @@ export function runAiTeamDecisions(state: GameState, _rng: Rng): SystemResult {
     current = trade.state;
     events.push(...trade.events);
   }
+
+  const repairs = runAiLineupRepairs(current);
+  current = repairs.state;
+  events.push(...repairs.events);
 
   current = maintainAiRosterManagement(current);
 
@@ -218,6 +238,284 @@ function rotationBelowDepth(
     playing < available.length &&
     playing < Math.min(depth, ROTATION_CONFIG.targetRotationPlayerCount)
   );
+}
+
+/**
+ * In-season injury cover. A CPU team whose healthy players cannot fill all
+ * five positions (the only center is hurt, say) signs a free agent who plays
+ * an open position, one a day at most, so its lineup stays legal. A capped
+ * team uses the veteran minimum for a replacement-level player. A full roster
+ * waives a spare first, or sends a Development League eligible player down
+ * when no contract can be waived, but never one the lineup needs.
+ */
+function runAiLineupRepairs(state: GameState): SystemResult {
+  const phase = state.competition.season.phase;
+  if (phase !== "preseason" && phase !== "regular") {
+    return systemResult(state, []);
+  }
+  const events: DomainEvent[] = [];
+  let current = state;
+  const teamIds = (Object.keys(current.world.teams) as TeamId[])
+    .filter((teamId) => !isUserControlledTeam(current, teamId))
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+
+  for (const teamId of teamIds) {
+    const repaired = repairTeamLineup(current, teamId);
+    current = repaired.state;
+    events.push(...repaired.events);
+  }
+  return systemResult(current, events);
+}
+
+/**
+ * Signs one free agent so `teamId`'s healthy players can fill every position,
+ * at most once a day per team. Does nothing when the lineup is already legal.
+ * Also used for a user team whose AI assist covers injuries.
+ */
+export function repairTeamLineup(
+  state: GameState,
+  teamId: TeamId,
+): SystemResult & { signed: boolean } {
+  const date = state.world.calendar.currentDate;
+  const key = `ai_lineup_repair:${teamId}:${date}`;
+  const open = missingPositions(state, teamId);
+  if (open.length === 0 || hasAppliedGameplayConsequence(state, key)) {
+    return { ...systemResult(state, []), signed: false };
+  }
+  let current = withAppliedGameplayConsequence(state, key);
+  const events: DomainEvent[] = [];
+
+  const candidates = rankLineupRepairCandidates(current, teamId, open).slice(
+    0,
+    LINEUP_REPAIR_MAX_OFFERS,
+  );
+  if (candidates.length === 0) {
+    return { ...systemResult(current, events), signed: false };
+  }
+  // All or nothing: the roster spot only stays open if a signing follows it.
+  const beforeWaiver = current;
+  const rosterSize = current.world.teams[teamId]?.roster.length ?? 0;
+  if (rosterSize >= TRADE_ROSTER_RULES.maxRosterSize) {
+    const room = findLineupSafeRosterRoom(current, teamId, open);
+    if (room === null) {
+      return { ...systemResult(current, events), signed: false };
+    }
+    if (room.kind === "waive") {
+      const waived = releasePlayerUnderContract(current, {
+        playerId: room.playerId,
+        teamId,
+        mode: "waive",
+      });
+      current = waived.state;
+      events.push(...waived.events);
+    } else {
+      const assigned = assignPlayerToDevelopmentLeague(
+        current,
+        room.playerId,
+        teamId,
+      );
+      if (!assigned.success) {
+        return { ...systemResult(current, events), signed: false };
+      }
+      current = assigned.state;
+      events.push(...assigned.events);
+    }
+  }
+
+  // The next best free agent is tried if an offer cannot be completed.
+  for (const candidate of candidates) {
+    const signedResult = signLineupRepair(current, teamId, candidate, date);
+    if (signedResult === null) {
+      continue;
+    }
+    events.push(...signedResult.events);
+    current = signedResult.state;
+    if (current.world.players[candidate.id]?.teamId === teamId) {
+      return { ...systemResult(current, events), signed: true };
+    }
+  }
+  return { ...systemResult(beforeWaiver, []), signed: false };
+}
+
+/** Offers a repair makes before giving up for the day. */
+const LINEUP_REPAIR_MAX_OFFERS = 3;
+
+/**
+ * Whether `repairTeamLineup` could fill the team's open positions today: a
+ * free agent who plays one and fits the cap (or the minimum exception), and
+ * room on the roster or a spare to waive. True when nothing is open.
+ */
+export function canRepairTeamLineup(state: GameState, teamId: TeamId): boolean {
+  const open = missingPositions(state, teamId);
+  if (open.length === 0) {
+    return true;
+  }
+  if (rankLineupRepairCandidates(state, teamId, open).length === 0) {
+    return false;
+  }
+  const rosterSize = state.world.teams[teamId]?.roster.length ?? 0;
+  return (
+    rosterSize < TRADE_ROSTER_RULES.maxRosterSize ||
+    findLineupSafeRosterRoom(state, teamId, open) !== null
+  );
+}
+
+function rankLineupRepairCandidates(
+  state: GameState,
+  teamId: TeamId,
+  open: readonly PlayerPosition[],
+): Player[] {
+  const seasonYear = getContractSigningYear(state);
+  const capSpace = state.settings.financialRules.salaryCapEnabled
+    ? getTeamCapSpace(teamId, seasonYear, state)
+    : Number.MAX_SAFE_INTEGER;
+  const cap = getLeagueSalaryCap(state);
+  const pool = listFreeAgents(state)
+    .playerIds.map((playerId) => state.world.players[playerId])
+    .filter(
+      (player): player is Player =>
+        player !== undefined &&
+        player.retired !== true &&
+        playerCanPlay(player) &&
+        coversAny(player, open) &&
+        !isPendingRfaFor(state, player.id, teamId),
+    );
+  const bestRating = (player: Player): number =>
+    Math.max(
+      ...open
+        .filter((position) => playsPosition(player, position))
+        .map((position) => calculatePlayerOverall(position, player.attributes)),
+    );
+  const ranked = [...pool].sort((a, b) => {
+    const diff = bestRating(b) - bestRating(a);
+    if (diff !== 0) {
+      return diff;
+    }
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
+  return ranked.filter((player) => {
+    const market = freeAgentAsk(state, player);
+    const overall = calculatePlayerOverall(player.position, player.attributes);
+    return (
+      (capSpace >= market && market >= AI_FA_MIN_SALARY) ||
+      (overall < REPLACEMENT_LEVEL_OVERALL &&
+        isVetMinExceptionSalary(vetMinSalary(cap), cap))
+    );
+  });
+}
+
+/** A spare to waive that does not open a position the lineup now covers. */
+function findLineupSafeWaiver(
+  state: GameState,
+  teamId: TeamId,
+  open: readonly PlayerPosition[],
+): PlayerId | null {
+  const waiveId = findCpuWaiverCandidate(state, teamId, open[0] ?? "PG", {
+    includeUnavailableAtNeededPosition: true,
+  });
+  if (waiveId === null) {
+    return null;
+  }
+  const remaining = healthyRoster(state, teamId).filter(
+    (player) => player.id !== waiveId,
+  );
+  return assignLineupSlots(remaining).unfilled.length > open.length
+    ? null
+    : waiveId;
+}
+
+type LineupRosterRoom = {
+  kind: "waive" | "development_league";
+  playerId: PlayerId;
+};
+
+/**
+ * How a full roster makes room for a repair signing without opening a position
+ * the lineup covers: waive a spare, or, when no contract can be waived (dead
+ * money), send the weakest Development League eligible player. A Development
+ * League assignment keeps the contract, so it costs nothing.
+ */
+function findLineupSafeRosterRoom(
+  state: GameState,
+  teamId: TeamId,
+  open: readonly PlayerPosition[],
+): LineupRosterRoom | null {
+  const waiveId = findLineupSafeWaiver(state, teamId, open);
+  if (waiveId !== null) {
+    return { kind: "waive", playerId: waiveId };
+  }
+  const healthy = healthyRoster(state, teamId);
+  const candidate = getTopLeagueRosterPlayers(teamId, state)
+    .filter(
+      (player) =>
+        isDevelopmentLeagueEligible(player, teamId, state) &&
+        assignLineupSlots(healthy.filter((other) => other.id !== player.id))
+          .unfilled.length <= open.length,
+    )
+    .sort(
+      (a, b) =>
+        calculatePlayerOverall(a.position, a.attributes) -
+          calculatePlayerOverall(b.position, b.attributes) ||
+        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+    )[0];
+  return candidate === undefined
+    ? null
+    : { kind: "development_league", playerId: candidate.id };
+}
+
+function signLineupRepair(
+  state: GameState,
+  teamId: TeamId,
+  candidate: Player,
+  date: string,
+): SystemResult | null {
+  const seasonYear = getContractSigningYear(state);
+  const capSpace = state.settings.financialRules.salaryCapEnabled
+    ? getTeamCapSpace(teamId, seasonYear, state)
+    : Number.MAX_SAFE_INTEGER;
+  const cap = getLeagueSalaryCap(state);
+  const askShare = freeAgentAskShare(state);
+  const market = freeAgentAsk(state, candidate);
+  const useVetMin = capSpace < market;
+  const salary = useVetMin ? vetMinSalary(cap) : Math.min(capSpace, market);
+  const offerId = asOfferId(
+    `offer_ai_repair_${teamId}_${candidate.id}_${date}`,
+  );
+  const contractId = asContractId(
+    `contract_ai_repair_${candidate.id}_${date.replaceAll("-", "")}`,
+  );
+  const terms: ContractInput = {
+    id: contractId,
+    playerId: candidate.id,
+    teamId,
+    startYear: seasonYear,
+    endYear: seasonYear,
+    salaryByYear: { [String(seasonYear)]: salary },
+  };
+  try {
+    const offered = makeOffer(state, {
+      id: offerId,
+      playerId: candidate.id,
+      teamId,
+      terms,
+    });
+    // An emergency one-year deal to fill an open position is not negotiated:
+    // a free agent does not turn it down on playing time or team quality, the
+    // same as a short roster being filled at the end of free agency.
+    const accepted = acceptOffer(offered.state, offerId, {
+      evaluateInterest: (playerId, offerTeamId, next) => ({
+        ...evaluateOpenOfferInterest(next, playerId, offerTeamId, askShare),
+        interested: true,
+      }),
+    });
+    return systemResult(accepted.state, [
+      ...offered.events,
+      ...accepted.events,
+    ]);
+  } catch {
+    // Cap, roster or rules failure: leave the gap for the sim's emergency fallback.
+    return null;
+  }
 }
 
 function runAiFreeAgency(state: GameState): SystemResult {
@@ -353,7 +651,7 @@ function runAiFreeAgencyRound(
     const rosterSize = current.world.teams[teamId]?.roster.length ?? 0;
     if (
       rosterSize >= TRADE_ROSTER_RULES.maxRosterSize &&
-      missingPositions(current, teamId).includes(candidate.position)
+      coversAny(candidate, missingPositions(current, teamId))
     ) {
       const waiveId = findCpuWaiverCandidate(
         current,
@@ -699,11 +997,36 @@ function teamUrgentlyNeedsSigning(state: GameState, teamId: TeamId): boolean {
   );
 }
 
-function missingPositions(state: GameState, teamId: TeamId): PlayerPosition[] {
-  const counts = positionCounts(state, teamId);
-  return REQUIRED_POSITIONS.filter(
-    (position) => (counts.get(position) ?? 0) === 0,
-  );
+/**
+ * Positions the team's healthy players cannot fill. Players only count at
+ * their primary or secondary position, and one player fills one slot, so five
+ * guards leave SF, PF and C open and an injured center leaves C open.
+ */
+export function missingPositions(
+  state: GameState,
+  teamId: TeamId,
+): PlayerPosition[] {
+  return assignLineupSlots(healthyRoster(state, teamId)).unfilled;
+}
+
+function healthyRoster(state: GameState, teamId: TeamId): Player[] {
+  const team = state.world.teams[teamId];
+  if (!team) {
+    return [];
+  }
+  return team.roster
+    .map((playerId) => state.world.players[playerId])
+    .filter(
+      (player): player is Player =>
+        player !== undefined && playerCanPlay(player),
+    );
+}
+
+function coversAny(
+  player: Player,
+  positions: readonly PlayerPosition[],
+): boolean {
+  return positions.some((position) => playsPosition(player, position));
 }
 
 function positionCounts(
@@ -803,8 +1126,8 @@ function pickBestAffordableFreeAgent(
     );
 
   const ranked = [...pool].sort((a, b) => {
-    const aMissing = missing.includes(a.position) ? 0 : 1;
-    const bMissing = missing.includes(b.position) ? 0 : 1;
+    const aMissing = coversAny(a, missing) ? 0 : 1;
+    const bMissing = coversAny(b, missing) ? 0 : 1;
     if (aMissing !== bMissing) {
       return aMissing - bMissing;
     }

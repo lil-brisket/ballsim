@@ -17,6 +17,7 @@ import type {
   TradeInterestLevel,
   TradeOfferView,
 } from "@/state/trade-offer-selectors";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { OvrBadge } from "@/components/ui/OvrBadge";
 
 const INTEREST_LABELS: Record<TradeInterestLevel, string> = {
@@ -28,7 +29,7 @@ const INTEREST_LABELS: Record<TradeInterestLevel, string> = {
 
 function assetSummary(asset: TradeAssetView): string {
   if (asset.kind === "player") {
-    return `${asset.name} (${asset.position}, ${asset.overall} OVR)`;
+    return `${asset.name} (${formatPositionLabel(asset.position, asset.secondaryPosition)}, ${asset.overall} OVR)`;
   }
   return asset.viaAbbreviation
     ? `${asset.name} via ${asset.viaAbbreviation}`
@@ -65,7 +66,12 @@ function AssetColumn(props: {
                       {asset.name}
                     </Link>
                     <p className="flex items-center gap-1.5 text-sm text-faint">
-                      <span>{asset.position}</span>
+                      <span>
+                        {formatPositionLabel(
+                          asset.position,
+                          asset.secondaryPosition,
+                        )}
+                      </span>
                       <OvrBadge overall={asset.overall} size="sm" />
                       <span>
                         Age {asset.age}

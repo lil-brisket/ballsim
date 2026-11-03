@@ -29,6 +29,7 @@ export type ProgressionPlayerRow = {
   playerId: string;
   name: string;
   position: PlayerPosition;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   portrait: PlayerPortraitAssignment | null;
   before: number;
@@ -137,6 +138,7 @@ export function toProgressionRevealView(
       playerId,
       name: `${player.firstName} ${player.lastName}`,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       age: player.age,
       portrait: selectPlayerPortrait(state, playerId),
       before: record.overall,

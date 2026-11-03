@@ -3,6 +3,8 @@ import { cloneGameSettings, CBL_GAME_SETTINGS } from "@/domain/game-settings";
 import { type TeamId } from "@/domain/ids";
 import { asTeamId } from "@/domain/ids";
 import { createSeededRng } from "@/domain/rng";
+import { PLAYER_POSITIONS, playsPosition } from "@/domain/entities/player";
+import { FREE_AGENT_POOL_MIN_PER_POSITION } from "@/systems/free-agent-pool";
 import {
   deserializeGameState,
   serializeGameState,
@@ -266,6 +268,20 @@ describe("fantasy draft auto-pick and completion", () => {
 
     const fas = listFreeAgents(state);
     expect(fas.playerIds.length).toBeGreaterThan(0);
+
+    // The leftover draft pool is the free-agent pool, and it covers every
+    // position; nothing is generated before or during the draft.
+    const pool = fas.playerIds.map((id) => state.world.players[id]!);
+    for (const position of PLAYER_POSITIONS) {
+      expect(
+        pool.filter((player) => playsPosition(player, position)).length,
+      ).toBeGreaterThanOrEqual(FREE_AGENT_POOL_MIN_PER_POSITION);
+    }
+    expect(
+      Object.keys(state.world.players).some((id) =>
+        id.startsWith("player_fa_pool_"),
+      ),
+    ).toBe(false);
   }, 60_000);
 
   it("survives serialize/deserialize mid-draft", () => {

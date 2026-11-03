@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useEffect, useId, useRef } from "react";
 import { fantasyDraftPickAction } from "@/application/actions";
@@ -12,6 +13,7 @@ export function DraftConfirmDialog(props: {
     playerId: string;
     name: string;
     position: string;
+    secondaryPosition?: string | null;
     overall: number;
     potential: number;
   };
@@ -49,7 +51,12 @@ export function DraftConfirmDialog(props: {
           title={<>Draft {props.player.name}?</>}
         />
         <p className="mt-2 flex items-center gap-1.5 text-sm text-soft">
-          <span>{props.player.position}</span>
+          <span>
+            {formatPositionLabel(
+              props.player.position,
+              props.player.secondaryPosition,
+            )}
+          </span>
           <OvrBadge overall={props.player.overall} size="sm" />
           <OvrBadge
             overall={props.player.potential}

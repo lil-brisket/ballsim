@@ -18,12 +18,14 @@ function card(
   position: string,
   overall: number,
   available = true,
+  secondaryPosition: string | null = null,
 ): PlayerCardLike {
   return {
     playerId: id,
     firstName: "Test",
     lastName: last,
     position,
+    secondaryPosition,
     overall,
     plannedMinutes: 20,
     availabilityLabel: available ? "Available" : "Out",
@@ -38,7 +40,7 @@ const players = [
   card("p3", "Charlie", "SF", 77),
   card("p4", "Delta", "PF", 76),
   card("p5", "Echo", "C", 75),
-  card("p6", "Foxtrot", "PG", 70),
+  card("p6", "Foxtrot", "PG", 70, true, "C"),
   card("p7", "Golf", "SG", 69, false),
 ];
 
@@ -82,6 +84,30 @@ describe("StartingFiveEditor court", () => {
     expect(onChange).toHaveBeenCalledWith("PG", "p6");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(document.activeElement).toBe(chip);
+  });
+
+  it("only offers players who play the slot, and shows PG/C labels", async () => {
+    render(
+      <StartingFiveEditor
+        starters={starters}
+        allPlayers={players}
+        rowsById={new Map()}
+        onChangeStarter={vi.fn()}
+      />,
+    );
+    // Foxtrot is PG/C: offered at C, not at SF. Alpha (PG) is not offered at C.
+    fireEvent.click(screen.getByRole("button", { name: /^C: Test Echo/ }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText(/Foxtrot/)).toBeTruthy();
+    expect(within(dialog).getByText("PG/C")).toBeTruthy();
+    expect(within(dialog).getByText("C")).toBeTruthy();
+    expect(within(dialog).queryByText(/Alpha/)).toBeNull();
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    fireEvent.click(screen.getByRole("button", { name: /^SF: Test Charlie/ }));
+    const sfDialog = await screen.findByRole("dialog");
+    expect(within(sfDialog).queryByText(/Foxtrot/)).toBeNull();
   });
 
   it("closes the picker on Escape and supports arrow keys in the list", async () => {

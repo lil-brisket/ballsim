@@ -161,6 +161,33 @@ export function readPlayerSourceRecord(
     );
   }
 
+  const secondaryPosition = record.secondaryPosition;
+  let validSecondary: PlayerPosition | undefined;
+  if (secondaryPosition !== undefined) {
+    if (
+      typeof secondaryPosition !== "string" ||
+      !isPlayerPosition(secondaryPosition)
+    ) {
+      errors.push(
+        issue(
+          `${path}.secondaryPosition`,
+          "invalid_secondary_position",
+          `${path}.secondaryPosition is not a valid position.`,
+        ),
+      );
+    } else if (secondaryPosition === position) {
+      errors.push(
+        issue(
+          `${path}.secondaryPosition`,
+          "secondary_position_matches_primary",
+          `${path}.secondaryPosition must differ from position.`,
+        ),
+      );
+    } else {
+      validSecondary = secondaryPosition;
+    }
+  }
+
   const archetype = record.archetype;
   if (typeof archetype !== "string" || !isPlayerArchetype(archetype)) {
     errors.push(
@@ -390,6 +417,9 @@ export function readPlayerSourceRecord(
     heightInches,
     weightPounds,
     position,
+    ...(validSecondary !== undefined
+      ? { secondaryPosition: validSecondary }
+      : {}),
     archetype,
     attributes,
     potential,

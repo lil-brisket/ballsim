@@ -11,6 +11,7 @@ import {
   focusRingClass,
   touchTargetTextClass,
 } from "@/components/ui/styles";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { ratingTier } from "@/presentation/rating-tier";
 import type { RosterPagePlayerView } from "@/state/roster-page-selectors";
 
@@ -66,7 +67,8 @@ export function RosterCard(props: {
               {name}
             </PlayerEntityLink>
             <p className="text-sm text-soft">
-              {player.position} · Age {player.age}
+              {formatPositionLabel(player.position, player.secondaryPosition)} ·
+              Age {player.age}
             </p>
             <p className="mt-0.5 text-sm text-muted">
               {player.roleDisplayLabel}

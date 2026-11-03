@@ -79,6 +79,10 @@ export const PLAYER_POSITIONS: readonly PlayerPosition[] = [
 export type { PlayerArchetype };
 export type { PlayerNationality };
 
+export function isPlayerPosition(value: string): value is PlayerPosition {
+  return (PLAYER_POSITIONS as readonly string[]).includes(value);
+}
+
 export type PlayerAttributes = {
   speed: number;
   strength: number;
@@ -178,6 +182,11 @@ export type Player = {
   heightInches: number;
   weightPounds: number;
   position: PlayerPosition;
+  /**
+   * Optional second natural position. Never equal to {@link Player.position}.
+   * Most players have none. A player can gain one but never loses it.
+   */
+  secondaryPosition?: PlayerPosition;
   archetype: PlayerArchetype;
   attributes: PlayerAttributes;
   potential: PlayerPotential;
@@ -227,6 +236,7 @@ export type PlayerInput = {
   heightInches: number;
   weightPounds: number;
   position: PlayerPosition;
+  secondaryPosition?: PlayerPosition;
   archetype: PlayerArchetype;
   attributes: PlayerAttributes;
   potential: PlayerPotential;
@@ -332,6 +342,23 @@ export function isPlayerAvailability(
   return (PLAYER_AVAILABILITIES as readonly string[]).includes(value);
 }
 
+/** The player's natural positions: primary first, then the secondary if any. */
+export function playerPositions(
+  player: Pick<Player, "position" | "secondaryPosition">,
+): readonly PlayerPosition[] {
+  return player.secondaryPosition === undefined
+    ? [player.position]
+    : [player.position, player.secondaryPosition];
+}
+
+/** True when `position` is the player's primary or secondary position. */
+export function playsPosition(
+  player: Pick<Player, "position" | "secondaryPosition">,
+  position: PlayerPosition,
+): boolean {
+  return player.position === position || player.secondaryPosition === position;
+}
+
 /** True when the player is eligible to take the floor (may still have workload caps). */
 export function playerCanPlay(player: Player): boolean {
   if (player.availability === "out" || player.availability === "suspended") {
@@ -421,6 +448,7 @@ export function createPlayer(input: PlayerInput): Player {
   assertPositiveFinite(input.heightInches, "heightInches");
   assertPositiveFinite(input.weightPounds, "weightPounds");
   assertPlayerPosition(input.position);
+  assertSecondaryPosition(input.secondaryPosition, input.position);
   assertPlayerArchetype(input.archetype);
   assertAttributes(input.attributes);
   assertPotential(input.potential);
@@ -469,6 +497,9 @@ export function createPlayer(input: PlayerInput): Player {
     heightInches: input.heightInches,
     weightPounds: input.weightPounds,
     position: input.position,
+    ...(input.secondaryPosition !== undefined
+      ? { secondaryPosition: input.secondaryPosition }
+      : {}),
     archetype: input.archetype,
     attributes: { ...input.attributes },
     potential: { ...input.potential },
@@ -600,6 +631,23 @@ function assertPlayerPosition(value: string): void {
     throw new Error(
       `Player position must be one of ${PLAYER_POSITIONS.join(", ")}.`,
     );
+  }
+}
+
+function assertSecondaryPosition(
+  value: string | undefined,
+  primary: PlayerPosition,
+): void {
+  if (value === undefined) {
+    return;
+  }
+  if (!isPlayerPosition(value)) {
+    throw new Error(
+      `Player secondaryPosition must be one of ${PLAYER_POSITIONS.join(", ")}.`,
+    );
+  }
+  if (value === primary) {
+    throw new Error("Player secondaryPosition must differ from position.");
   }
 }
 

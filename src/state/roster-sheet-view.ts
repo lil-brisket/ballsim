@@ -31,6 +31,7 @@ export type SheetPlayerView = {
   jerseyNumber: number;
   position: string;
   primaryPosition: PlayerPosition;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   overall: number;
   potential: number;
@@ -108,6 +109,7 @@ export function toSheetPlayerView(
     jerseyNumber: player.jerseyNumber,
     position: player.position,
     primaryPosition: player.position,
+    secondaryPosition: player.secondaryPosition ?? null,
     age: player.age,
     overall: calculatePlayerOverall(player.position, player.attributes),
     potential: player.potential.overall,

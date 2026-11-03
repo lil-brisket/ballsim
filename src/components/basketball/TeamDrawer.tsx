@@ -143,6 +143,7 @@ export function TeamDrawer(props: {
                     firstName={player.firstName}
                     lastName={player.lastName}
                     position={player.position}
+                    secondaryPosition={player.secondaryPosition}
                     overall={player.overall}
                     injuryStatus={
                       player.injuryStatus !== "available"

@@ -9,6 +9,7 @@ import { ContractSummary } from "@/components/owner/ContractSummary";
 import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { OvrBadge } from "@/components/ui/OvrBadge";
+import { formatPositionLabel } from "@/presentation/position-label";
 
 type SortKey = "name" | "position" | "age" | "overall" | "status";
 
@@ -28,7 +29,9 @@ export function RosterTable(props: {
         const name = `${player.firstName} ${player.lastName}`.toLowerCase();
         return (
           name.includes(q) ||
-          player.position.toLowerCase().includes(q) ||
+          formatPositionLabel(player.position, player.secondaryPosition)
+            .toLowerCase()
+            .includes(q) ||
           player.injuryKind.toLowerCase().includes(q)
         );
       });
@@ -115,7 +118,9 @@ export function RosterTable(props: {
                 {player.firstName} {player.lastName}
               </PlayerEntityLink>
             </td>
-            <td className="px-3 py-2 text-muted">{player.position}</td>
+            <td className="px-3 py-2 text-muted">
+              {formatPositionLabel(player.position, player.secondaryPosition)}
+            </td>
             <td className="px-3 py-2 text-muted">{player.age}</td>
             <td className="px-3 py-2">
               <OvrBadge

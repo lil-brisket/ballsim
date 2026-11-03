@@ -2,6 +2,7 @@ import {
   declineTeamOptionAction,
   exerciseTeamOptionAction,
 } from "@/application/actions";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { ExtendContractDialog } from "@/components/contracts/ExtendContractDialog";
 import { ReleasePlayerDialog } from "@/components/contracts/ReleasePlayerDialog";
 import { PlayerEntityLink } from "@/components/entity/PlayerEntityLink";
@@ -72,7 +73,7 @@ export function ContractRow(props: {
           {row.playerName}
         </PlayerEntityLink>
         <p className="text-sm text-faint">
-          {row.position}
+          {formatPositionLabel(row.position, row.secondaryPosition)}
           {row.age !== null ? ` · ${row.age}` : ""}
         </p>
       </td>

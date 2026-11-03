@@ -1,3 +1,4 @@
+import type { PlayerPosition } from "@/domain/entities/player";
 /**
  * Training camp views: the owner's roster with each player's camp, the camp
  * catalogue, and skill ratings with the change since last season.
@@ -50,6 +51,7 @@ export type DevelopmentPlanRow = {
   playerId: string;
   playerName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   overall: number;
   focus: DevelopmentFocus;
@@ -77,6 +79,7 @@ export type SkillRatingsRow = {
   portrait: PlayerPortraitAssignment | null;
   playerName: string;
   position: string;
+  secondaryPosition?: PlayerPosition | null;
   age: number;
   overall: number;
   overallDelta: number | null;
@@ -96,6 +99,7 @@ export function toDevelopmentPlansView(state: GameState): DevelopmentPlansView {
       playerId,
       playerName: `${player.firstName} ${player.lastName}`,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       age: player.age,
       overall: calculatePlayerOverall(player.position, player.attributes),
       focus: plans[playerId] ?? "balanced",
@@ -132,6 +136,7 @@ export function toSkillRatingsView(state: GameState): SkillRatingsRow[] {
       portrait: selectPlayerPortrait(state, playerId),
       playerName: `${player.firstName} ${player.lastName}`,
       position: player.position,
+      secondaryPosition: player.secondaryPosition ?? null,
       age: player.age,
       overall,
       overallDelta: changeFromHistory(state, playerId, overall).delta,

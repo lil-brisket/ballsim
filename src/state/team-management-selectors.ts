@@ -11,6 +11,7 @@ import {
 import { ARCHETYPE_LABELS } from "@/domain/entities/player-archetype";
 import {
   PLAYER_POSITIONS,
+  playerPositions,
   type Player,
   type PlayerPosition,
 } from "@/domain/entities/player";
@@ -65,6 +66,7 @@ export type LineupPlayerCardView = {
   firstName: string;
   lastName: string;
   position: PlayerPosition;
+  secondaryPosition?: PlayerPosition | null;
   overall: number;
   archetypeLabel: string;
   plannedMinutes: number;
@@ -123,6 +125,7 @@ export type RotationRowView = {
   eligiblePositions: PlayerPosition[];
   preferredPositions: PlayerPosition[];
   secondaryPositions: PlayerPosition[];
+  secondaryPosition?: PlayerPosition | null;
   availabilityStatus: string;
   availabilityLabel: string;
   available: boolean;
@@ -293,6 +296,7 @@ function playerCard(
     firstName: player.firstName,
     lastName: player.lastName,
     position: player.position,
+    secondaryPosition: player.secondaryPosition ?? null,
     overall: calculatePlayerOverall(player.position, player.attributes),
     archetypeLabel: ARCHETYPE_LABELS[player.archetype] ?? player.archetype,
     plannedMinutes: role === "inactive" ? 0 : (rotation?.targetMinutes ?? 0),
@@ -522,9 +526,11 @@ export function toRotationView(state: GameState): RotationView {
       minutePriorityBias: rotation?.minutePriorityBias ?? 0,
       overrideMedicalRecommendation,
       actualMinutes: seasonActualMinutes(state, team.id, playerId),
-      eligiblePositions: rotation?.preferredPositions ?? [player.position],
+      // A player can only be placed at his primary or secondary position.
+      eligiblePositions: [...playerPositions(player)],
       preferredPositions: rotation?.preferredPositions ?? [player.position],
       secondaryPositions: rotation?.secondaryPositions ?? [],
+      secondaryPosition: player.secondaryPosition ?? null,
       availabilityStatus: availability.status,
       availabilityLabel: availability.label,
       available: availability.available,

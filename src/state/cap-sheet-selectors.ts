@@ -1,3 +1,4 @@
+import type { PlayerPosition } from "@/domain/entities/player";
 /**
  * Cap sheet view: the owner team's payroll by season (this season plus up to
  * four more), with the cap / tax line / floor markers. Presentation only;
@@ -23,6 +24,7 @@ export type CapSheetRow = {
   playerId: string;
   name: string;
   position: string | null;
+  secondaryPosition?: PlayerPosition | null;
   kind: "player" | "dead_money" | "development_league";
   /** Dead money reason label, or "Development league" for DL rows. */
   note: string | null;
@@ -138,6 +140,7 @@ export function toCapSheetView(
         ? `${player.firstName} ${player.lastName}`
         : "Unknown player",
       position: player ? String(player.position) : null,
+      secondaryPosition: player.secondaryPosition ?? null,
       kind: dl ? "development_league" : "player",
       note: dl ? "Development league" : null,
       cells,
@@ -164,6 +167,7 @@ export function toCapSheetView(
           ? `${player.firstName} ${player.lastName}`
           : "Former player",
         position: player ? String(player.position) : null,
+        secondaryPosition: player.secondaryPosition ?? null,
         kind: "dead_money",
         note: DEAD_LABELS[entry.reason],
         cells: seasons.map(() => EMPTY),

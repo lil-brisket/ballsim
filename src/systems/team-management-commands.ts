@@ -70,6 +70,7 @@ function blockingShapeErrors(
       issue.code === "not_on_roster" ||
       issue.code === "duplicate_group" ||
       issue.code === "unavailable_starter" ||
+      issue.code === "illegal_slot" ||
       issue.code === "inactive_minutes",
   );
   if (blocking.length > 0) {

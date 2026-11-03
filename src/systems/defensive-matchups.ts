@@ -1,9 +1,11 @@
 import { PLAYER_POSITIONS, type Player } from "@/domain/entities/player";
+import { playedPositions } from "@/systems/lineup-assignment";
 import type { Rng } from "@/domain/rng";
 
 /**
- * Who guards whom. Both lineups are ordered by position (PG -> C, lineup
- * order breaking ties) and each offensive player is guarded by the defender
+ * Who guards whom. Both lineups are ordered by the position each player is
+ * playing (PG -> C; a secondary position counts, lineup order breaks ties)
+ * and each offensive player is guarded by the defender
  * in the same slot. With `switchChance` a random defender contests instead
  * (switches, scrambles). On two-point shots, with `rimHelpChance` the
  * defense's best shot blocker rotates over to contest.
@@ -44,11 +46,10 @@ export function pickMatchedDefender(
 }
 
 function byPosition(players: readonly Player[]): Player[] {
-  return [...players].sort(
-    (a, b) =>
-      PLAYER_POSITIONS.indexOf(a.position) -
-      PLAYER_POSITIONS.indexOf(b.position),
-  );
+  const played = playedPositions(players);
+  const order = (player: Player): number =>
+    PLAYER_POSITIONS.indexOf(played.get(player.id) ?? player.position);
+  return [...players].sort((a, b) => order(a) - order(b));
 }
 
 function bestShotBlocker(players: readonly Player[]): Player {

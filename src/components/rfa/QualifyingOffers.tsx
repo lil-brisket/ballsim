@@ -1,4 +1,5 @@
 import { restrictedFreeAgencyAction } from "@/application/actions";
+import { formatPositionLabel } from "@/presentation/position-label";
 import { MoneyDisplay } from "@/components/owner/MoneyDisplay";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -27,7 +28,8 @@ export function QualifyingOffers(props: {
               <p className="text-ink">{row.playerName}</p>
               <p className="flex flex-wrap items-center gap-1.5 text-faint">
                 <span>
-                  {row.position} · {row.age}
+                  {formatPositionLabel(row.position, row.secondaryPosition)} ·{" "}
+                  {row.age}
                 </span>
                 <OvrBadge overall={row.overall} size="sm" />
                 <span>

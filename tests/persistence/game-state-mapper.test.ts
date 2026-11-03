@@ -153,7 +153,10 @@ describe("GameState schema migration", () => {
     expect(player.position).toBe("SF");
     expect(player.age).toBe(27);
     expect(player.nationality).toBe("USA");
+    // The save's own players are the migrated ones; the v84 migration also
+    // tops up the free-agent pool with newly generated players.
     for (const migratedPlayer of Object.values(migrated.world.players)) {
+      if (migratedPlayer.id.startsWith("player_fa_pool_")) continue;
       expect(migratedPlayer.nationality).toBe("USA");
     }
 
@@ -550,9 +553,13 @@ describe("GameState schema migration", () => {
         "jerseyNumber",
         // Load-time reconciliation registers it with his franchise.
         "jerseyTeamId",
+        // v83 → v84 gives a player the secondary position his build supports.
+        "secondaryPosition",
       ].sort(),
     );
     expect(player.jerseyTeamId).toBe(teamId);
+    // A 6'4" scoring guard fits the PG range too; never his own position.
+    expect(player.secondaryPosition).toBe("PG");
   });
 
   it("sets contractId to null when zero or multiple contracts match", () => {

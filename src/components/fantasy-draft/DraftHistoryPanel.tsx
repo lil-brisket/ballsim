@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPositionLabel } from "@/presentation/position-label";
 import { useState } from "react";
 import type { FantasyDraftView } from "@/state/selectors";
 import { cn, focusRingClass, linkClass } from "@/components/ui/styles";
@@ -37,7 +38,10 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
             recent.map((sel) => (
               <li key={sel.pickNumber}>
                 {sel.pickNumber}. {sel.teamAbbreviation} — {sel.playerName}
-                <span className="text-faint"> ({sel.position})</span>
+                <span className="text-faint">
+                  {" "}
+                  ({formatPositionLabel(sel.position, sel.secondaryPosition)})
+                </span>
               </li>
             ))
           )}
@@ -80,7 +84,12 @@ export function DraftHistoryPanel(props: { draft: FantasyDraftView }) {
                       <td>{sel.round}</td>
                       <td>{sel.teamAbbreviation}</td>
                       <td>{sel.playerName}</td>
-                      <td>{sel.position}</td>
+                      <td>
+                        {formatPositionLabel(
+                          sel.position,
+                          sel.secondaryPosition,
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

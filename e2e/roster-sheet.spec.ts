@@ -16,14 +16,18 @@ const selectedName = (page: Page) =>
     .getByRole("region", { name: "Selected player" })
     .getByRole("heading", { level: 3 });
 
-/** Visible text of the first row's skill cell (4th data column: INS). */
+/**
+ * Visible text of the first row's skill cell (4th data column: INS). The grade
+ * or rating only: a cell that holds its column's best value also carries a
+ * decorative marker (`data-best`) with the same aria-hidden shape.
+ */
 const skillCell = (page: Page) =>
   grid(page)
     .locator("tbody tr[data-player-id]")
     .first()
     .locator("td")
     .nth(4)
-    .locator("[data-tier] > [aria-hidden]");
+    .locator("[data-tier] > [aria-hidden]:not([data-best])");
 
 async function openSheet(page: Page, url: string) {
   await page.goto(url, { waitUntil: "networkidle" });

@@ -10,6 +10,7 @@ import {
   RotationPlayerCard,
   type RotationPlayerCardData,
 } from "@/components/team-management/RotationPlayerCard";
+import { formatPositionLabel } from "@/presentation/position-label";
 import type { EditableRotationRow } from "@/state/lineup-rotation-editor";
 
 const ROLE_OPTIONS = [
@@ -86,7 +87,9 @@ function RotationRows(props: {
                 </p>
               ) : null}
             </td>
-            <td className="px-3 py-2 font-mono text-muted">{row.position}</td>
+            <td className="px-3 py-2 font-mono text-muted">
+              {formatPositionLabel(row.position, row.secondaryPosition)}
+            </td>
             <td className="px-3 py-2">
               {inactive ? (
                 <span className="capitalize text-faint">inactive</span>
@@ -184,6 +187,7 @@ export function RotationTable(props: {
       firstName: row.firstName,
       lastName: row.lastName,
       position: row.position,
+      secondaryPosition: row.secondaryPosition,
       age: row.age,
       overall: row.overall,
       teamName: row.teamName ?? props.teamName,

@@ -746,3 +746,68 @@ describe("resolveRebound validation", () => {
     ).toThrow(/position/);
   });
 });
+
+describe("rebound strength at the position being played", () => {
+  it("uses the modifier of the position he plays", () => {
+    const forward = createPlayer({
+      id: "pfc",
+      teamId: OFFENSE_TEAM,
+      position: "PF",
+      secondaryPosition: "C",
+      attributes: { rebounding: 60 },
+    });
+    expect(playerReboundBaseStrength(forward)).toBe(
+      60 + POSITION_REBOUND_MODIFIERS.PF,
+    );
+    expect(playerReboundBaseStrength(forward, "C")).toBe(
+      60 + POSITION_REBOUND_MODIFIERS.C,
+    );
+  });
+
+  it("scores a secondary-position player at the position the lineup gives him", () => {
+    // Two PFs on the floor: the PF/C plays C, so he rebounds with the C modifier.
+    const offense = [
+      createPlayer({ id: "o1", teamId: OFFENSE_TEAM, position: "PG" }),
+      createPlayer({ id: "o2", teamId: OFFENSE_TEAM, position: "SG" }),
+      createPlayer({ id: "o3", teamId: OFFENSE_TEAM, position: "SF" }),
+      createPlayer({
+        id: "o4",
+        teamId: OFFENSE_TEAM,
+        position: "PF",
+        attributes: { rebounding: 50 },
+      }),
+      createPlayer({
+        id: "o5",
+        teamId: OFFENSE_TEAM,
+        position: "PF",
+        secondaryPosition: "C",
+        attributes: { rebounding: 50 },
+      }),
+    ];
+    const defense = [
+      createPlayer({ id: "d1", teamId: DEFENSE_TEAM, position: "PG" }),
+      createPlayer({ id: "d2", teamId: DEFENSE_TEAM, position: "SG" }),
+      createPlayer({ id: "d3", teamId: DEFENSE_TEAM, position: "SF" }),
+      createPlayer({ id: "d4", teamId: DEFENSE_TEAM, position: "PF" }),
+      createPlayer({ id: "d5", teamId: DEFENSE_TEAM, position: "C" }),
+    ];
+    const result = resolveRebound(
+      {
+        offensiveTeamId: OFFENSE_TEAM,
+        defensiveTeamId: DEFENSE_TEAM,
+        offensivePlayers: offense,
+        defensivePlayers: defense,
+      },
+      createSeededRng(7),
+    );
+    const strengthOf = (id: string) =>
+      result.candidateScores.find((score) => score.playerId === id)!.strength;
+    const amplitude = REBOUND_RESOLUTION_CONFIG.varianceAmplitude;
+    expect(strengthOf("o5")).toBeGreaterThanOrEqual(
+      50 + POSITION_REBOUND_MODIFIERS.C - amplitude,
+    );
+    expect(strengthOf("o4")).toBeLessThanOrEqual(
+      50 + POSITION_REBOUND_MODIFIERS.PF + amplitude,
+    );
+  });
+});

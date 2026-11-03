@@ -95,6 +95,22 @@ describe("fantasy draft analysis", () => {
     expect(summaryView!.teamSummaries[teamIds[0]!]?.draftGrade).toBe(
       ownedSummary!.draftGrade,
     );
+
+    // The saved analysis keeps only the primary position; the view adds each
+    // drafted player's secondary, read from the live player.
+    const lookup = summaryView!.secondaryPositionById ?? {};
+    const drafted = state.world.fantasyDraft!.selectedPlayerIds;
+    for (const playerId of drafted) {
+      expect(lookup[playerId]).toBe(
+        state.world.players[playerId]?.secondaryPosition,
+      );
+    }
+    expect(
+      drafted.some((id) => state.world.players[id]?.secondaryPosition),
+    ).toBe(true);
+    for (const playerId of Object.keys(lookup)) {
+      expect(drafted).toContain(playerId);
+    }
   }, 60_000);
 
   it("activeOwnerTeamId drives live view roster/queue context", () => {
@@ -127,6 +143,22 @@ describe("fantasy draft analysis", () => {
     expect(view!.poolPlayers.length).toBeGreaterThan(0);
     expect(view!.teamNeeds).toHaveLength(5);
     expect(view!.settings.confirmPicks).toBe(true);
+  });
+
+  it("live view carries each pool player's secondary position", () => {
+    let state = createFantasyState(8);
+    state = setDefaultDraftOrder(state);
+    state = confirmFantasyDraftOrder(state, TEST_NOW_ISO);
+    const view = toFantasyDraftView(state)!;
+    expect(view.poolPlayers.length).toBeGreaterThan(0);
+    for (const row of view.poolPlayers) {
+      const player =
+        state.world.players[row.playerId as keyof typeof state.world.players]!;
+      expect(row.secondaryPosition).toBe(player.secondaryPosition ?? null);
+    }
+    expect(view.poolPlayers.some((row) => row.secondaryPosition !== null)).toBe(
+      true,
+    );
   });
 
   it("analyzeFantasyDraft produces reach and steal candidates", () => {

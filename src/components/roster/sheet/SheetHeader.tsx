@@ -12,6 +12,7 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/components/ui/styles";
+import { formatPositionLabel } from "@/presentation/position-label";
 import type { RatingDisplayMode } from "@/presentation/rating-grade";
 import {
   SHEET_SKILL_COLUMNS,
@@ -107,7 +108,7 @@ export function SheetHeader(props: {
               <span className="font-mono tabular-nums">
                 #{player.jerseyNumber}
               </span>{" "}
-              · {player.position}
+              · {formatPositionLabel(player.position, player.secondaryPosition)}
             </p>
             <p className="hidden font-display text-lg uppercase tracking-wide text-soft sm:block">
               {player.archetypeLabel}

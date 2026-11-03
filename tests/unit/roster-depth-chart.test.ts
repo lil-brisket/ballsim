@@ -77,11 +77,12 @@ describe("toDepthChartView", () => {
     expect(chart.PG.some((entry) => entry.playerId === "pg1")).toBe(true);
   });
 
-  it("allows SF secondary coverage at PF with SECONDARY label", () => {
+  it("lists a player at his secondary position with a SECONDARY label", () => {
     const sf = createPlayer({
       id: "sf1",
       teamId,
       position: "SF",
+      secondaryPosition: "PF",
       attributes: uniformPlayerAttributes(84),
     });
     const chart = toDepthChartView(buildState([sf]), teamId);
@@ -89,6 +90,36 @@ describe("toDepthChartView", () => {
     expect(pfEntry).toBeDefined();
     expect(pfEntry?.label).toBe("SECONDARY");
     expect(pfEntry?.fit).toBe("secondary");
+  });
+
+  it("carries the secondary position on each depth entry", () => {
+    const sf = createPlayer({
+      id: "sf1",
+      teamId,
+      position: "SF",
+      secondaryPosition: "PF",
+      attributes: uniformPlayerAttributes(84),
+    });
+    const chart = toDepthChartView(buildState([sf]), teamId);
+    expect(chart.PF[0]?.primaryPosition).toBe("SF");
+    expect(chart.PF[0]?.secondaryPosition).toBe("PF");
+    expect(chart.SF[0]?.secondaryPosition).toBe("PF");
+  });
+
+  it("does not list a player at a position that is not his own", () => {
+    const sf = createPlayer({
+      id: "sf1",
+      teamId,
+      position: "SF",
+      attributes: uniformPlayerAttributes(84),
+    });
+    const chart = toDepthChartView(buildState([sf]), teamId);
+    expect(chart.SF.some((entry) => entry.playerId === "sf1")).toBe(true);
+    for (const position of ["PG", "SG", "PF", "C"] as const) {
+      expect(chart[position].some((entry) => entry.playerId === "sf1")).toBe(
+        false,
+      );
+    }
   });
 
   it("labels persisted starter at slot as STARTER", () => {

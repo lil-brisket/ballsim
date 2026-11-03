@@ -7,9 +7,10 @@ import { PlayerPicker } from "@/components/team-management/PlayerPicker";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PLAYER_POSITIONS } from "@/domain/entities/player";
 import type { PlayerPortraitAssignment } from "@/domain/entities/player-portrait";
-import type {
-  PlayerCardLike,
-  StarterDraft,
+import {
+  canStartAtSlot,
+  type PlayerCardLike,
+  type StarterDraft,
 } from "@/state/lineup-rotation-editor";
 
 /** Chip centre on the half court, as percentages of its width and height. */
@@ -41,7 +42,8 @@ export function StartingFiveEditor(props: {
     return props.allPlayers.filter(
       (player) =>
         player.playerId === current ||
-        (!used.has(player.playerId) &&
+        (canStartAtSlot(player, slot) &&
+          !used.has(player.playerId) &&
           (player.available || player.role === "inactive")),
     );
   };

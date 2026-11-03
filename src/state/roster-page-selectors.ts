@@ -73,6 +73,7 @@ export type DepthChartEntryView = {
   overall: number;
   effectiveOverall: number;
   primaryPosition: PlayerPosition;
+  secondaryPosition?: PlayerPosition | null;
   depthPosition: PlayerPosition;
   fit: "primary" | "secondary";
   label: DepthChartLabel;
@@ -108,6 +109,7 @@ export type TradeBlockPlayerView = {
   firstName: string;
   lastName: string;
   position: PlayerPosition;
+  secondaryPosition?: PlayerPosition | null;
   overall: number;
   status: TradeBlockStatus;
 };
@@ -179,8 +181,6 @@ export type TradeFinderRowView = {
   reviewHref: string;
 };
 
-const SECONDARY_OVR_WEIGHT = 0.65;
-
 const ROLE_SORT_ORDER: Record<RotationRole, number> = {
   starter: 0,
   sixth_man: 1,
@@ -197,14 +197,15 @@ const NEED_LEVEL_SEVERITY: Record<RosterNeedLevel, number> = {
   strong: 3,
 };
 
-export function effectiveOverallAtPosition(
-  overall: number,
-  fit: "primary" | "secondary",
+/**
+ * Rating at the position he is playing. A secondary position counts the same
+ * as the primary: no multiplier, only the position's own attribute weights.
+ */
+export function overallAtPosition(
+  player: Player,
+  position: PlayerPosition,
 ): number {
-  if (fit === "primary") {
-    return overall;
-  }
-  return Math.round(overall * SECONDARY_OVR_WEIGHT);
+  return calculatePlayerOverall(position, player.attributes);
 }
 
 export function roleDisplayLabelFor(
@@ -238,7 +239,7 @@ function fitAtPosition(
 
 /**
  * Locked first-pass roster-needs formula (Issue #53).
- * Secondary fits use 0.65× OVR. Only healthy (canPlay) players classify level.
+ * A secondary position counts like the primary. Only healthy (canPlay) players classify level.
  */
 export function evaluateRosterNeeds(
   state: GameState,
@@ -264,7 +265,7 @@ export function evaluateRosterNeeds(
         continue;
       }
       const fit = fitAtPosition(player, position);
-      if (fit == null || fit.fit !== "primary") {
+      if (fit == null) {
         continue;
       }
       eligibleCount += 1;
@@ -272,8 +273,7 @@ export function evaluateRosterNeeds(
       if (!availability.canPlay) {
         continue;
       }
-      const overall = playerOverall(player);
-      healthyEffective.push(effectiveOverallAtPosition(overall, fit.fit));
+      healthyEffective.push(overallAtPosition(player, position));
     }
 
     healthyEffective.sort((a, b) => b - a);
@@ -385,8 +385,9 @@ export function toDepthChartView(
         firstName: player.firstName,
         lastName: player.lastName,
         overall,
-        effectiveOverall: effectiveOverallAtPosition(overall, fit.fit),
+        effectiveOverall: overallAtPosition(player, position),
         primaryPosition: player.position,
+        secondaryPosition: player.secondaryPosition ?? null,
         depthPosition: position,
         fit: fit.fit,
         label,
@@ -433,6 +434,7 @@ export function toTradeBlockView(
         firstName: player.firstName,
         lastName: player.lastName,
         position: player.position,
+        secondaryPosition: player.secondaryPosition ?? null,
         overall: playerOverall(player),
         status: asset.status,
       });
