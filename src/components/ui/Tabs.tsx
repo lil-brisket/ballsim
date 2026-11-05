@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { IntentLink } from "@/components/ui/IntentLink";
 import { cn, focusRingClass, slantClass } from "@/components/ui/styles";
 
 export type TabItem = {
@@ -67,14 +67,14 @@ export function Tabs(props: TabsProps) {
         );
         if (item.href) {
           return (
-            <Link
+            <IntentLink
               key={item.key}
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={className}
             >
               {content}
-            </Link>
+            </IntentLink>
           );
         }
         return (

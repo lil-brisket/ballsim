@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { buttonClass } from "@/components/ui/Button";
 import Link from "next/link";
@@ -18,7 +19,7 @@ type PageProps = {
 
 export default async function TradeReviewPage(props: PageProps) {
   const { saveId, decisionId } = await props.params;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) notFound();
   const review = buildTradeReviewView(loaded.state, decisionId);
   if (!review) notFound();

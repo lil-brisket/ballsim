@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { rowLinkClass } from "@/components/league/row-link-class";
 import {
@@ -53,7 +54,7 @@ export default async function FreeAgencyPage({
 }: FreeAgencyPageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) {
     notFound();
   }

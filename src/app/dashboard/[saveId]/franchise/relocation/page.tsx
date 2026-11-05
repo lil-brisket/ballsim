@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { buttonClass } from "@/components/ui/Button";
 import { notFound } from "next/navigation";
@@ -36,7 +37,7 @@ export default async function FranchiseRelocationPage({
 }: PageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) {
     notFound();
   }

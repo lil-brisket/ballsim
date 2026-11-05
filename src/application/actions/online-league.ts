@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { onlineLeagueContext as context } from "@/application/online/context";
 import {
@@ -77,6 +78,7 @@ export async function leaveOnlineLeagueAction(
   if (!result.ok) {
     redirectWithError(membersPath(saveId), result.error);
   }
+  revalidatePath("/home");
   redirect("/home");
 }
 

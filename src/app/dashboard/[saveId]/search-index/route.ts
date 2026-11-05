@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import { getRequestSaveStore } from "@/application/request-save-store";
 import { toSearchIndex } from "@/state/search-index";
 
@@ -9,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ saveId: string }> },
 ) {
   const { saveId } = await params;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) {
     return Response.json(
       { error: "Save not found" },

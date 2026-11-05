@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/ui/IntentLink";
 import {
   numberedHubs,
   type OwnerNavGroup,
@@ -43,7 +43,7 @@ export function HubBar(props: {
           const isActive = active?.hub.id === hub.id;
           return (
             <li key={hub.id}>
-              <Link
+              <IntentLink
                 href={`${base}${hub.href}`}
                 transitionTypes={typesTo(hub.id)}
                 aria-current={isActive ? "true" : undefined}
@@ -60,13 +60,13 @@ export function HubBar(props: {
                 {hub.label}
                 <NavBadge badge={hub.badge} />
                 <span className="sr-only">{badgeLabel(hub.badge)}</span>
-              </Link>
+              </IntentLink>
             </li>
           );
         })}
       </ul>
       {settings ? (
-        <Link
+        <IntentLink
           href={`${base}${settings.href}`}
           transitionTypes={typesTo(settings.id)}
           aria-current={settingsActive ? "true" : undefined}
@@ -79,7 +79,7 @@ export function HubBar(props: {
         >
           <NavIcon name="settings" className="h-5 w-5" />
           <span className="sr-only">Settings</span>
-        </Link>
+        </IntentLink>
       ) : null}
     </nav>
   );

@@ -10,6 +10,7 @@ import {
   serializeGameState,
 } from "@/persistence/mappers/game-state-mapper";
 import { projectSaveEntities } from "@/persistence/mappers/save-projection-mapper";
+import { deepFreeze } from "@/persistence/deep-freeze";
 import { getPrisma } from "@/persistence/prisma";
 import {
   mergeSaveHistory,
@@ -171,6 +172,40 @@ async function backfillProjectionsIfMissing(
   });
 }
 
+/** A parsed league takes tens of MB of memory; keep only the latest few. */
+const READ_CACHE_MAX_SAVES = 2;
+
+/** Compact once this much of the file is free and most of it is. */
+const COMPACT_MIN_FREE_BYTES = 64 * 1024 * 1024;
+
+/**
+ * SQLite keeps the pages of deleted saves, so the file never shrinks by itself.
+ * Best effort: a failure here must not fail the delete, and hosted databases
+ * that manage their own storage refuse VACUUM. VACUUM blocks the whole process,
+ * so hosted deployments, where that would stall other players, skip it.
+ */
+async function compactIfMostlyEmpty(db: PrismaClient): Promise<void> {
+  if (process.env.BALLSIM_REQUIRE_SIGN_IN === "true") {
+    return;
+  }
+  try {
+    const pragma = async (name: string): Promise<number> => {
+      const rows = await db.$queryRawUnsafe<Record<string, unknown>[]>(
+        `PRAGMA ${name}`,
+      );
+      return Number(rows[0]?.[name] ?? 0);
+    };
+    const free = await pragma("freelist_count");
+    const total = await pragma("page_count");
+    const pageSize = await pragma("page_size");
+    if (free * pageSize >= COMPACT_MIN_FREE_BYTES && free * 2 > total) {
+      await db.$executeRawUnsafe("VACUUM");
+    }
+  } catch (error) {
+    console.warn("Could not compact the save database.", error);
+  }
+}
+
 /**
  * Production SaveGameStore. `stateJson` is the authoritative GameState snapshot.
  * SaveTeam / SavePlayer rows are listing projections written in the same
@@ -180,6 +215,27 @@ export function createPrismaSaveGameStore(
   client?: PrismaClient,
 ): SaveGameStore {
   const db = (): PrismaClient => client ?? getPrisma();
+
+  async function loadFromDatabase(id: string): Promise<LoadedSaveGame | null> {
+    const row = await db().saveGame.findUnique({ where: { id } });
+    if (!row) {
+      return null;
+    }
+    const loaded = toLoaded(row, storedStateJson(row));
+    await backfillProjectionsIfMissing(db(), id, loaded.state);
+    return loaded;
+  }
+
+  /**
+   * Parsed saves for loadReadOnly, oldest first. An entry is valid only while
+   * the row's updatedAt matches, so any write, from any request or server, is
+   * seen on the next read. Holding the promise lets the prefetches of several
+   * tabs share one parse.
+   */
+  const readCache = new Map<
+    string,
+    { updatedAt: number; loaded: Promise<LoadedSaveGame | null> }
+  >();
 
   return {
     async list(): Promise<SaveGameSummary[]> {
@@ -218,14 +274,45 @@ export function createPrismaSaveGameStore(
       return toLoaded(row, stateJson);
     },
 
-    async load(id: string): Promise<LoadedSaveGame | null> {
-      const row = await db().saveGame.findUnique({ where: { id } });
-      if (!row) {
+    load: loadFromDatabase,
+
+    async loadReadOnly(id: string): Promise<LoadedSaveGame | null> {
+      const current = await db().saveGame.findUnique({
+        where: { id },
+        select: { updatedAt: true },
+      });
+      if (!current) {
+        readCache.delete(id);
         return null;
       }
-      const loaded = toLoaded(row, storedStateJson(row));
-      await backfillProjectionsIfMissing(db(), id, loaded.state);
-      return loaded;
+      const updatedAt = current.updatedAt.getTime();
+      const hit = readCache.get(id);
+      const loaded =
+        hit?.updatedAt === updatedAt
+          ? hit.loaded
+          : loadFromDatabase(id).then((result) => {
+              // Outside production a selector that changes shared state throws.
+              if (result && process.env.NODE_ENV !== "production") {
+                deepFreeze(result.state);
+              }
+              return result;
+            });
+      readCache.delete(id);
+      readCache.set(id, { updatedAt, loaded });
+      for (const oldest of readCache.keys()) {
+        if (readCache.size <= READ_CACHE_MAX_SAVES) {
+          break;
+        }
+        readCache.delete(oldest);
+      }
+      try {
+        return await loaded;
+      } catch (error) {
+        if (readCache.get(id)?.loaded === loaded) {
+          readCache.delete(id);
+        }
+        throw error;
+      }
     },
 
     async loadHistory(id: string): Promise<SaveHistory> {
@@ -297,6 +384,8 @@ export function createPrismaSaveGameStore(
         await tx.saveHistoryChunk.deleteMany({ where: { saveGameId: id } });
         return tx.saveGame.deleteMany({ where: { id } });
       });
+      readCache.delete(id);
+      await compactIfMostlyEmpty(db());
       return result.count > 0;
     },
   };

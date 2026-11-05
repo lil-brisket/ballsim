@@ -376,4 +376,68 @@ describe("PrismaSaveGameStore normalized projections", () => {
     ]);
     expect(listed.map((row) => row.name)).toEqual(["Beta Slot", "Alpha Slot"]);
   });
+
+  describe("loadReadOnly", () => {
+    const create = (id: string) =>
+      store.create({
+        id,
+        name: id,
+        state: createTestGameState({ saveId: id }),
+      });
+
+    it("shares one frozen parse until the save changes", async () => {
+      await create("save_read_cache");
+      const first = await store.loadReadOnly!("save_read_cache");
+      const second = await store.loadReadOnly!("save_read_cache");
+      expect(second?.state).toBe(first?.state);
+      expect(Object.isFrozen(first?.state.world)).toBe(true);
+
+      const fresh = await store.load("save_read_cache");
+      expect(fresh?.state).not.toBe(first?.state);
+      expect(Object.isFrozen(fresh?.state.world)).toBe(false);
+
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      const updated = fresh!.state;
+      await store.save({
+        id: "save_read_cache",
+        state: {
+          ...updated,
+          meta: { ...updated.meta, updatedAt: "2031-01-01T00:00:00.000Z" },
+        },
+      });
+      const third = await store.loadReadOnly!("save_read_cache");
+      expect(third?.state).not.toBe(first?.state);
+      expect(third?.state.meta.updatedAt).toBe("2031-01-01T00:00:00.000Z");
+    });
+
+    it("shares one parse between reads that arrive together", async () => {
+      await create("save_read_together");
+      const [first, second] = await Promise.all([
+        store.loadReadOnly!("save_read_together"),
+        store.loadReadOnly!("save_read_together"),
+      ]);
+      expect(second?.state).toBe(first?.state);
+    });
+
+    it("keeps only the latest saves", async () => {
+      await create("save_read_a");
+      await create("save_read_b");
+      await create("save_read_c");
+      const a = await store.loadReadOnly!("save_read_a");
+      await store.loadReadOnly!("save_read_b");
+      expect((await store.loadReadOnly!("save_read_a"))?.state).toBe(a?.state);
+      await store.loadReadOnly!("save_read_b");
+      await store.loadReadOnly!("save_read_c");
+      expect((await store.loadReadOnly!("save_read_a"))?.state).not.toBe(
+        a?.state,
+      );
+    });
+
+    it("forgets a deleted save", async () => {
+      await create("save_read_gone");
+      await store.loadReadOnly!("save_read_gone");
+      expect(await store.delete("save_read_gone")).toBe(true);
+      expect(await store.loadReadOnly!("save_read_gone")).toBeNull();
+    });
+  });
 });

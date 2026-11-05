@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { rowLinkClass } from "@/components/league/row-link-class";
 import { formatGameDate } from "@/presentation/game-date";
@@ -18,7 +19,7 @@ type PageProps = {
 
 export default async function AllStarPage({ params }: PageProps) {
   const { saveId } = await params;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) notFound();
 
   const hub = toAllStarHubView(loaded.state);

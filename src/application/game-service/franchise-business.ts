@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import "server-only";
 import {
   type BoardDirectiveChoice,
@@ -59,7 +60,7 @@ export async function loadOwnerStaffDetail(
 ): Promise<
   (CreateGameResult & { staff: import("@/domain/entities/staff").Staff }) | null
 > {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }

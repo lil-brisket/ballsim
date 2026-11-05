@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { rowLinkClass } from "@/components/league/row-link-class";
 import { buttonClass } from "@/components/ui/Button";
@@ -37,7 +38,7 @@ type Props = {
 export default async function ScoutingPage({ params, searchParams }: Props) {
   const { saveId } = await params;
   const { error, prospect: focusProspect } = await searchParams;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) notFound();
   const state = loaded.state;
   const hub = toScoutingHubView(state);

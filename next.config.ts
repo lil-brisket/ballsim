@@ -22,6 +22,14 @@ const LEGACY_SAVE_ROUTES: ReadonlyArray<[from: string, to: string]> = [
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["10.0.0.248"],
+  experimental: {
+    // Keep visited (dynamic) and hover-prefetched (static) pages briefly, so a
+    // tab opens without a server trip. Revalidating server actions and
+    // router.refresh() clear this cache, so anything that changes a save must
+    // do one of them. 30 seconds is the lowest `static` allows, and it bounds
+    // how long another online player's move can take to show.
+    staleTimes: { dynamic: 30, static: 30 },
+  },
   async redirects() {
     return LEGACY_SAVE_ROUTES.map(([from, to]) => ({
       source: `/dashboard/:saveId${from}`,
