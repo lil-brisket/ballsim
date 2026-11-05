@@ -11,7 +11,7 @@ test.describe("legacy routes", () => {
     test(`${from} lands on ${to}`, async ({ page, dashboard }) => {
       const response = await page.goto(dashboard(from));
       expect(response?.status()).toBeLessThan(400);
-      // Redirects inside a streamed (loading.tsx) segment happen client-side.
+      // Some redirects happen client-side, after the document has started streaming.
       await page.waitForURL((url) => url.pathname === dashboard(to));
     });
   }

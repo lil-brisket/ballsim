@@ -232,6 +232,9 @@ export function useCalendarPlayback(input: {
         setResumeTarget(null);
         startTransition(() => {
           router.push(`/dashboard/${saveId}/games/${watchTarget.gameId}/watch`);
+          // The run saved through a route handler, which cannot clear the
+          // browser's cached pages.
+          router.refresh();
         });
         return;
       }

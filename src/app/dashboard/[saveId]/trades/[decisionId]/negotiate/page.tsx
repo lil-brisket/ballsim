@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { canTradeDraftPick } from "@/systems/league-rules";
 import { buttonClass } from "@/components/ui/Button";
@@ -22,7 +23,7 @@ type PageProps = {
 export default async function TradeNegotiatePage(props: PageProps) {
   const { saveId, decisionId } = await props.params;
   const { resumeTo } = await props.searchParams;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) notFound();
   const state = loaded.state;
   const pending = state.user.pendingOwnerDecisions.find(

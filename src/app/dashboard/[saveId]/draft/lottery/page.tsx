@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -17,7 +18,7 @@ type LotteryPageProps = {
 
 export default async function LotteryPage({ params }: LotteryPageProps) {
   const { saveId } = await params;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) {
     notFound();
   }

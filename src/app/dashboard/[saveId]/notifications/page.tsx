@@ -12,7 +12,7 @@ import {
   markNotificationsReadAction,
   switchActiveOwnerTeamAction,
 } from "@/application/actions";
-import { loadOwnerSaveView } from "@/application/game-service";
+import { loadNotificationsPageView } from "@/application/game-service";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { NotificationItem } from "@/components/owner/NotificationItem";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -30,7 +30,7 @@ export default async function NotificationsPage({
 }: NotificationsPageProps) {
   const { saveId } = await params;
   const { error, type, team } = await searchParams;
-  const view = await loadOwnerSaveView(saveId);
+  const view = await loadNotificationsPageView(saveId);
   if (!view) {
     notFound();
   }

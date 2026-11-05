@@ -4,7 +4,7 @@ import {
   letAiHandlePhaseAction,
   switchActiveOwnerTeamAction,
 } from "@/application/actions";
-import { loadOwnerSaveView } from "@/application/game-service";
+import { loadOwnerDashboardPageView } from "@/application/game-service";
 import { AroundTheLeaguePanel } from "@/components/owner/dashboard/AroundTheLeaguePanel";
 import { BoardDirectiveCard } from "@/components/owner/dashboard/BoardDirectiveCard";
 import { HomeHero } from "@/components/owner/dashboard/HomeHero";
@@ -31,7 +31,7 @@ export default async function DashboardPage({
 }: DashboardPageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const view = await loadOwnerSaveView(saveId);
+  const view = await loadOwnerDashboardPageView(saveId);
   if (!view) {
     notFound();
   }

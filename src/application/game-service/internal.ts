@@ -1,9 +1,10 @@
 import "server-only";
 import { getRequestSaveStore } from "@/application/request-save-store";
-import type {
-  LoadedSaveGame,
-  SaveGameSummary,
-  SaveGameStore,
+import {
+  loadSaveForView,
+  type LoadedSaveGame,
+  type SaveGameSummary,
+  type SaveGameStore,
 } from "@/persistence/save-game-store";
 import type { CustomContentStore } from "@/persistence/custom-content-store";
 import { withSaveHistory } from "@/persistence/save-history";
@@ -51,7 +52,7 @@ export async function loadSaveWithHistory(
   store?: SaveGameStore,
 ): Promise<LoadedSaveGame | null> {
   const saveStore = getStore(store);
-  const loaded = await saveStore.load(saveId);
+  const loaded = await loadSaveForView(saveStore, saveId);
   if (!loaded) {
     return null;
   }

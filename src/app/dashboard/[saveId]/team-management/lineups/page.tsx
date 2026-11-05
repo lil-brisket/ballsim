@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
@@ -22,7 +23,7 @@ export default async function LineupsPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   const portraits = Object.fromEntries(
     [
       ...view.lineup.starters,

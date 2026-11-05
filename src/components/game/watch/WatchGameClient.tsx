@@ -3,6 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CourtPlayerCard } from "@/components/game/watch/court/CourtPlayerCard";
 import { FullCourtView } from "@/components/game/watch/court/FullCourtView";
+import {
+  useCourtFxPreference,
+  useCourtTiltPreference,
+} from "@/components/game/watch/court/fx/court-fx-preference";
+import {
+  buildCourtFxCelebration,
+  buildCourtFxCues,
+} from "@/components/game/watch/court/fx/fx-events";
 import { LiveBoxScore } from "@/components/game/watch/LiveBoxScore";
 import {
   PlaybackControls,
@@ -24,7 +32,7 @@ import {
 } from "@/components/game/watch/playback-pacing";
 import type { PlayerId } from "@/domain/ids";
 import { buildPlayChoreography } from "@/state/watch-court-choreo";
-import { stepPossession } from "@/state/watch-court-frame";
+import { courtSeed, stepPossession } from "@/state/watch-court-frame";
 import { buildFullCourtFrame } from "@/state/watch-full-court";
 import {
   buildLiveBoxScore,
@@ -35,6 +43,9 @@ import {
   buildShotSummary,
 } from "@/state/watch-game-selectors";
 import type { WatchGameView } from "@/state/watch-game-view";
+
+/** Salt of the seed behind the ambient effects that span a whole game. */
+const FX_AMBIENT_SALT = 2000;
 
 export function WatchGameClient(props: {
   view: WatchGameView;
@@ -180,6 +191,16 @@ export function WatchGameClient(props: {
   // While a play animates the clock ticks down through it; otherwise it shows
   // the settled play's clock.
   const playMotionMs = motionMs(view, revealed);
+  const [fxOn, setFxOn] = useCourtFxPreference();
+  const [tiltOn, setTiltOn] = useCourtTiltPreference();
+  const fx = useMemo(
+    () => ({
+      cues: buildCourtFxCues(view, choreography, courtFrame, playMotionMs),
+      celebration: buildCourtFxCelebration(view),
+      seed: courtSeed(view.gameId, 0, FX_AMBIENT_SALT),
+    }),
+    [view, choreography, courtFrame, playMotionMs],
+  );
   const runningSeconds = useGameClock({
     view,
     revealed,
@@ -282,6 +303,8 @@ export function WatchGameClient(props: {
           playing={isPlaying}
           periodBreak={periodBreak ?? finalCard}
           final={live.isFinal}
+          fx={fxOn ? fx : undefined}
+          tilt={tiltOn}
           run={currentRun(view, settled)}
           players={view.players}
           selectedPlayerId={selectedPlayerId}
@@ -300,6 +323,10 @@ export function WatchGameClient(props: {
           periodStarts={periodStarts}
           moments={moments}
           showShotChart={showShotChart}
+          effects={fxOn}
+          onToggleEffects={() => setFxOn(!fxOn)}
+          tilted={tiltOn}
+          onToggleTilted={() => setTiltOn(!tiltOn)}
           onTogglePlay={togglePlay}
           onSpeedChange={setSpeed}
           onSeek={(next) => jumpTo(Math.min(total, Math.max(0, next)))}

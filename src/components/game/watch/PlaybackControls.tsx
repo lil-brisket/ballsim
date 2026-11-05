@@ -268,6 +268,10 @@ function OverflowMenu(props: {
   atEnd: boolean;
   showShotChart: boolean;
   onToggleShotChart: () => void;
+  effects?: boolean;
+  onToggleEffects?: () => void;
+  tilted?: boolean;
+  onToggleTilted?: () => void;
   onRestart: () => void;
   onSkipToEnd: () => void;
 }) {
@@ -352,9 +356,43 @@ function OverflowMenu(props: {
               {props.showShotChart ? "✓" : ""}
             </span>
           </button>
+          {props.onToggleEffects ? (
+            <button
+              ref={(el) => {
+                itemRefs.current[1] = el;
+              }}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={props.effects ?? false}
+              className={itemClass}
+              onClick={choose(props.onToggleEffects)}
+            >
+              Effects
+              <span aria-hidden="true" className="w-4 text-team-ink">
+                {props.effects ? "✓" : ""}
+              </span>
+            </button>
+          ) : null}
+          {props.onToggleTilted ? (
+            <button
+              ref={(el) => {
+                itemRefs.current[2] = el;
+              }}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={props.tilted ?? false}
+              className={itemClass}
+              onClick={choose(props.onToggleTilted)}
+            >
+              Tilted view
+              <span aria-hidden="true" className="w-4 text-team-ink">
+                {props.tilted ? "✓" : ""}
+              </span>
+            </button>
+          ) : null}
           <button
             ref={(el) => {
-              itemRefs.current[1] = el;
+              itemRefs.current[3] = el;
             }}
             type="button"
             role="menuitem"
@@ -365,7 +403,7 @@ function OverflowMenu(props: {
           </button>
           <button
             ref={(el) => {
-              itemRefs.current[2] = el;
+              itemRefs.current[4] = el;
             }}
             type="button"
             role="menuitem"
@@ -413,6 +451,12 @@ export function PlaybackControls(props: {
   onRestart: () => void;
   onSkipToEnd: () => void;
   onToggleShotChart: () => void;
+  /** Broadcast effects are on; the menu item shows with `onToggleEffects`. */
+  effects?: boolean;
+  onToggleEffects?: () => void;
+  /** Tilted camera is on; the menu item shows with `onToggleTilted`. */
+  tilted?: boolean;
+  onToggleTilted?: () => void;
 }) {
   const atEnd = props.revealed >= props.total;
   return (
@@ -494,6 +538,10 @@ export function PlaybackControls(props: {
         atEnd={atEnd}
         showShotChart={props.showShotChart}
         onToggleShotChart={props.onToggleShotChart}
+        effects={props.effects}
+        onToggleEffects={props.onToggleEffects}
+        tilted={props.tilted}
+        onToggleTilted={props.onToggleTilted}
         onRestart={props.onRestart}
         onSkipToEnd={props.onSkipToEnd}
       />

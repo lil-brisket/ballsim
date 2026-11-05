@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { loadOwnerSaveView } from "@/application/game-service";
+import { loadOwnerDashboardPageView } from "@/application/game-service";
 import { PendingOwnerDecisionPanel } from "@/components/owner/dashboard/PendingOwnerDecisionPanel";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
 import { HubTile } from "@/components/ui/HubTile";
@@ -21,7 +21,7 @@ type PageProps = {
 export default async function TradesPage({ params, searchParams }: PageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const view = await loadOwnerSaveView(saveId);
+  const view = await loadOwnerDashboardPageView(saveId);
   if (!view) {
     notFound();
   }

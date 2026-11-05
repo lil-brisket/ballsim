@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { loadOwnerSaveView } from "@/application/game-service";
+import { loadTeamHubPageView } from "@/application/game-service";
 import { TeamHub } from "@/components/team/hub/TeamHub";
 
 export const metadata: Metadata = { title: "Team" };
@@ -19,7 +19,7 @@ export default async function TeamOverviewPage({
 }: TeamPageProps) {
   const { saveId } = await params;
   const { error } = await searchParams;
-  const view = await loadOwnerSaveView(saveId);
+  const view = await loadTeamHubPageView(saveId);
   if (!view) {
     notFound();
   }

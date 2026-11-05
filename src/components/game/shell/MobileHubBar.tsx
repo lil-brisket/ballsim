@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { IntentLink } from "@/components/ui/IntentLink";
 import type { OwnerNavGroup } from "@/application/owner-nav-config";
 import { NavBadge, badgeLabel } from "@/components/game/shell/NavBadge";
 import { NavIcon } from "@/components/game/shell/NavIcon";
@@ -57,7 +58,7 @@ export function MobileHubBar(props: {
             const isActive = active?.hub.id === hub.id;
             return (
               <li key={hub.id} className="flex flex-1">
-                <Link
+                <IntentLink
                   href={`${base}${hub.href}`}
                   transitionTypes={typesTo(hub.id)}
                   aria-current={isActive ? "true" : undefined}
@@ -70,7 +71,7 @@ export function MobileHubBar(props: {
                     badge={hub.badge}
                     className="absolute right-1/2 top-1.5 translate-x-5"
                   />
-                </Link>
+                </IntentLink>
               </li>
             );
           })}
@@ -105,7 +106,7 @@ export function MobileHubBar(props: {
         <ul className="space-y-1">
           {more.map((hub) => (
             <li key={hub.id}>
-              <Link
+              <IntentLink
                 href={`${base}${hub.href}`}
                 transitionTypes={typesTo(hub.id)}
                 onClick={() => setMoreOpen(false)}
@@ -122,7 +123,7 @@ export function MobileHubBar(props: {
                 {hub.label}
                 <span className="sr-only">{badgeLabel(hub.badge)}</span>
                 <NavBadge badge={hub.badge} className="ml-auto" />
-              </Link>
+              </IntentLink>
             </li>
           ))}
         </ul>

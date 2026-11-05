@@ -4,6 +4,11 @@ import {
   readableTextOnBackground,
 } from "@/domain/color-contrast";
 import type { PortraitTraits } from "@/domain/entities/player-portrait";
+import {
+  PORTRAIT_HAIR,
+  PORTRAIT_SKIN,
+  PORTRAIT_SKIN_SHADOW,
+} from "./portrait-palette";
 
 /**
  * Procedural headshot drawn from persisted trait indices.
@@ -11,41 +16,9 @@ import type { PortraitTraits } from "@/domain/entities/player-portrait";
  * plate → back hair → shoulders → neck → ears → head → features → hair → accessory.
  */
 
-const SKIN = [
-  "#f6d7c3",
-  "#eac0a0",
-  "#d9a47f",
-  "#c68a63",
-  "#b07250",
-  "#9a5f3f",
-  "#7f4a2e",
-  "#683b24",
-  "#53301d",
-  "#3f2516",
-] as const;
-
-const SKIN_SHADOW = [
-  "#dcb39b",
-  "#cf9f7f",
-  "#bd8660",
-  "#a96f4b",
-  "#925b3b",
-  "#7e4b30",
-  "#663a23",
-  "#522d1b",
-  "#402315",
-  "#2e1a0f",
-] as const;
-
-const HAIR = [
-  "#111111",
-  "#1d1a1f",
-  "#2b1b12",
-  "#4a2f1d",
-  "#6b2f1a",
-  "#8a6a3b",
-  "#c49a52",
-] as const;
+const SKIN = PORTRAIT_SKIN;
+const SKIN_SHADOW = PORTRAIT_SKIN_SHADOW;
+const HAIR = PORTRAIT_HAIR;
 
 const FEATURE = "#1a1210";
 const PLATE = "#27272a";

@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { rowLinkClass } from "@/components/league/row-link-class";
 import { notFound } from "next/navigation";
@@ -51,7 +52,7 @@ function movementGlyph(movement: string): string {
 
 export default async function FanVotingPage({ params }: PageProps) {
   const { saveId } = await params;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) notFound();
 
   const hub = toFanVotingHubView(loaded.state);

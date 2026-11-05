@@ -19,9 +19,10 @@
  * deployments), which hides ownerless saves and refuses to create them.
  */
 
-import type {
-  LoadedSaveGame,
-  SaveGameStore,
+import {
+  loadSaveForView,
+  type LoadedSaveGame,
+  type SaveGameStore,
 } from "@/persistence/save-game-store";
 import type { GameState } from "@/state/game-state";
 import {
@@ -100,6 +101,17 @@ export function createActingSaveGameStore(
     },
     async load(id) {
       const loaded = await base.load(id);
+      if (!loaded) {
+        return null;
+      }
+      const acting = await actAs(loaded);
+      if (acting) {
+        loadedAt.set(id, loaded.updatedAt);
+      }
+      return acting;
+    },
+    async loadReadOnly(id) {
+      const loaded = await loadSaveForView(base, id);
       if (!loaded) {
         return null;
       }

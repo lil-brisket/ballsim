@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRequestSaveStore } from "@/application/request-save-store";
@@ -23,7 +24,7 @@ export default async function ComparePlayersPage({
 }: ComparePageProps) {
   const { saveId } = await params;
   const query = await searchParams;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) {
     notFound();
   }

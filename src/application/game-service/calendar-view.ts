@@ -8,6 +8,7 @@ import type {
   SaveGameSummary,
   SaveGameStore,
 } from "@/persistence/save-game-store";
+import { SaveVersionConflictError } from "@/persistence/save-version-conflict";
 import { type DashboardSnapshot, toDashboardSnapshot } from "@/state/selectors";
 import {
   type CalendarMonthGrid,
@@ -151,9 +152,25 @@ export async function loadCalendarPageView(
       },
     };
     validateGameState(state);
-    state = (
-      await persistWorkingState(saveId, state, rng.getState(), saveStore)
-    ).state;
+    // A hover can prefetch this page, so this write can run alongside a player
+    // command. Never overwrite one: start again from the save it wrote.
+    try {
+      state = (
+        await persistWorkingState(
+          saveId,
+          state,
+          rng.getState(),
+          saveStore,
+          [],
+          { ifUpdatedAt: loaded.updatedAt },
+        )
+      ).state;
+    } catch (error) {
+      if (error instanceof SaveVersionConflictError) {
+        return loadCalendarPageView(saveId, options, store);
+      }
+      throw error;
+    }
   }
 
   const currentDate = state.world.calendar.currentDate;

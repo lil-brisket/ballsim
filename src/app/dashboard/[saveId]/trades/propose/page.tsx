@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { canTradeDraftPick } from "@/systems/league-rules";
 import { notFound } from "next/navigation";
@@ -49,7 +50,7 @@ function assetsFor(state: GameState, teamId: string) {
 export default async function ProposeTradePage(props: PageProps) {
   const { saveId } = await props.params;
   const { error } = await props.searchParams;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   if (!loaded) notFound();
   const state = loaded.state;
   const participation = state.user.participation;

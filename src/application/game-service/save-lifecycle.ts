@@ -15,9 +15,10 @@ import {
   createLocalSharedParticipation,
   createOnlineParticipation,
 } from "@/systems/participation";
-import type {
-  SaveGameStore,
-  SaveGameSummary,
+import {
+  loadSaveForView,
+  type SaveGameStore,
+  type SaveGameSummary,
 } from "@/persistence/save-game-store";
 import type { CustomContentStore } from "@/persistence/custom-content-store";
 import { validateGameSettings } from "@/domain/game-settings-validation";
@@ -225,7 +226,7 @@ export async function loadOwnerSave(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<CreateGameResult | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -291,7 +292,7 @@ export async function listOwnerSavePreviews(
 
   for (const summary of summaries) {
     try {
-      const loaded = await saveStore.load(summary.id);
+      const loaded = await loadSaveForView(saveStore, summary.id);
       if (!loaded) {
         // Online leagues you are not a member of (or a save deleted since
         // listing) are not shown at all — not even their names.
@@ -342,7 +343,7 @@ export async function canAccessOwnerSave(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<boolean> {
-  return (await getStore(store).load(saveId)) !== null;
+  return (await loadSaveForView(getStore(store), saveId)) !== null;
 }
 
 export async function deleteOwnerSave(

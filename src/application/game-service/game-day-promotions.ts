@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import "server-only";
 import type { SaveGameStore } from "@/persistence/save-game-store";
 import {
@@ -143,7 +144,7 @@ export async function loadOwnerGameDayPromotionEventView(
   gameId: string,
   store?: SaveGameStore,
 ): Promise<GameDayPromotionEventPageView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) return null;
   const state = loaded.state;
   const teamId = state.user.activeOwnerTeamId;

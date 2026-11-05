@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import type { Metadata } from "next";
 import { rowLinkClass } from "@/components/league/row-link-class";
 import {
@@ -130,7 +131,7 @@ export default async function DraftPage({
     ? `/dashboard/${saveId}/calendar?resumeTo=${encodeURIComponent(resumeTo)}`
     : returnPath;
   const board = view.draftBoard;
-  const loaded = await getRequestSaveStore().load(saveId);
+  const loaded = await loadSaveForView(getRequestSaveStore(), saveId);
   const state = loaded?.state;
   const hub = state ? toDraftHubView(state) : null;
   const hasLottery = state ? toDraftLotteryView(state) !== null : false;

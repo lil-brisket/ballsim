@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { GameHeader } from "@/components/game/GameHeader";
 import type { DashboardSnapshot } from "@/state/selectors";
 import {
@@ -9,6 +10,7 @@ import type { TransactionTickerView } from "@/state/transaction-ticker-selectors
 import { RouteTransition } from "@/components/game/RouteTransition";
 import { LazyCommandPalette } from "@/components/game/shell/LazyShellExtras";
 import { MobileHubBar } from "@/components/game/shell/MobileHubBar";
+import { NavigationPendingBar } from "@/components/game/shell/NavigationPendingBar";
 import { ShellOffset } from "@/components/game/shell/ShellOffset";
 import { SubTabBar } from "@/components/game/shell/SubTabBar";
 import { EntityDrawerProvider } from "@/components/entity/EntityDrawerProvider";
@@ -72,6 +74,9 @@ export function GameShell(props: {
             <MobileHubBar saveId={props.saveId} groups={groups} />
           </SimulationLockRegion>
           <LazyCommandPalette saveId={props.saveId} groups={groups} />
+          <Suspense fallback={null}>
+            <NavigationPendingBar />
+          </Suspense>
         </div>
       </SimulationActivityProvider>
     </EntityDrawerProvider>

@@ -1,3 +1,4 @@
+import { loadSaveForView } from "@/persistence/save-game-store";
 import { buildSituationsView } from "@/state/owner-dashboard/action-items";
 import type { OwnerDashboardSituationView } from "@/state/owner-dashboard/types";
 import "server-only";
@@ -156,7 +157,7 @@ export async function loadOwnerSaveView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<OwnerSaveView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -211,6 +212,51 @@ export async function loadOwnerSaveView(
   };
 }
 
+/**
+ * Home and Trades page load: only the two views those pages read, so a tab
+ * switch does not build every other view or run Trade Finder.
+ */
+export async function loadOwnerDashboardPageView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<Pick<OwnerSaveView, "dashboard" | "ownerDashboard"> | null> {
+  const loaded = await loadSaveForView(getStore(store), saveId);
+  if (!loaded) {
+    return null;
+  }
+  return {
+    dashboard: toDashboardSnapshot(loaded.state),
+    ownerDashboard: toOwnerDashboardView(loaded.state),
+  };
+}
+
+/** Team Hub page load. See loadOwnerDashboardPageView. */
+export async function loadTeamHubPageView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<Pick<OwnerSaveView, "teamHub"> | null> {
+  const loaded = await loadSaveForView(getStore(store), saveId);
+  if (!loaded) {
+    return null;
+  }
+  return { teamHub: toTeamHubView(loaded.state) };
+}
+
+/** Notifications page load. See loadOwnerDashboardPageView. */
+export async function loadNotificationsPageView(
+  saveId: string,
+  store?: SaveGameStore,
+): Promise<Pick<OwnerSaveView, "dashboard" | "notifications"> | null> {
+  const loaded = await loadSaveForView(getStore(store), saveId);
+  if (!loaded) {
+    return null;
+  }
+  return {
+    dashboard: toDashboardSnapshot(loaded.state),
+    notifications: toNotificationsView(loaded.state),
+  };
+}
+
 export type RosterPageLoadResult = CreateGameResult & {
   rosterPage: RosterPageView;
 };
@@ -223,7 +269,7 @@ export async function loadRosterPageView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<RosterPageLoadResult | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -298,7 +344,7 @@ export async function loadTeamDrawerView(
   teamId: string,
   store?: SaveGameStore,
 ): Promise<TeamDrawerView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -311,7 +357,7 @@ export async function loadTeamRosterView(
   teamId: string,
   store?: SaveGameStore,
 ): Promise<TeamRosterView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -324,7 +370,7 @@ export async function loadStaffDrawerView(
   staffId: string,
   store?: SaveGameStore,
 ): Promise<StaffDrawerView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -366,7 +412,7 @@ export async function loadOwnerWatchGameView(
   gameId: string,
   store?: SaveGameStore,
 ): Promise<(CreateGameResult & { watch: WatchGameView | null }) | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -387,7 +433,7 @@ export async function loadLeagueHubView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<LeagueHubView | null> {
-  const loaded = await loadSaveWithHistory(saveId, store);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -401,7 +447,7 @@ export async function loadContractHubView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<ContractHubView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -415,7 +461,7 @@ export async function loadStaffHubView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<StaffHubView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -429,7 +475,7 @@ export async function loadStaffHiringMarketView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<StaffHiringMarketView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -443,7 +489,7 @@ export async function loadDevelopmentHubView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<DevelopmentHubView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -457,7 +503,7 @@ export async function loadDevelopmentLeagueHubView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<DevelopmentLeagueDashboardView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -471,7 +517,7 @@ export async function loadFinanceHubView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<FinanceHubView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -487,7 +533,7 @@ export async function loadFranchiseHubView(
 ): Promise<
   (FranchiseHubView & { situations: OwnerDashboardSituationView[] }) | null
 > {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -505,7 +551,7 @@ export async function loadFranchiseOwnershipView(
   saveId: string,
   store?: SaveGameStore,
 ): Promise<FranchiseOwnershipView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -530,7 +576,7 @@ export async function loadTransactionHubView(
   } = {},
   store?: SaveGameStore,
 ): Promise<TransactionHubView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -565,7 +611,7 @@ export async function loadStandingsPageView(
   } = {},
   store?: SaveGameStore,
 ) {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -643,7 +689,7 @@ export async function loadMediaPageView(
   options: MediaTimelinePageOptions = {},
   store?: SaveGameStore,
 ): Promise<MediaTimelinePageView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }
@@ -656,7 +702,7 @@ export async function loadSettingsView(
   selection?: { teamId?: string; playerId?: string },
   store?: SaveGameStore,
 ): Promise<SettingsView | null> {
-  const loaded = await getStore(store).load(saveId);
+  const loaded = await loadSaveForView(getStore(store), saveId);
   if (!loaded) {
     return null;
   }

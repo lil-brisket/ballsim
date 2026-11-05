@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/ui/IntentLink";
 import { cn, focusRingClass } from "@/components/ui/styles";
 
 export type ViewSwitchItem = {
@@ -35,7 +35,7 @@ export function ViewSwitch(props: {
     );
     if (item.href !== undefined) {
       return (
-        <Link
+        <IntentLink
           key={item.key}
           href={item.href}
           aria-current={active ? "page" : undefined}
@@ -43,7 +43,7 @@ export function ViewSwitch(props: {
         >
           {item.label}
           {item.badge}
-        </Link>
+        </IntentLink>
       );
     }
     return (

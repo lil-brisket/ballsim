@@ -46,6 +46,13 @@ export type SaveGameStore = {
    */
   load(id: string): Promise<LoadedSaveGame | null>;
   /**
+   * `load` for code that only reads, such as page views. The state may be
+   * shared with other requests, so never change it and never pass it to
+   * `save`. Anything that may write uses `load`. Adapters without a cache leave
+   * this out; call it through `loadSaveForView`.
+   */
+  loadReadOnly?(id: string): Promise<LoadedSaveGame | null>;
+  /**
    * The history `save` kept out of the snapshot: archived games of seasons
    * before the previous one and older draft classes. Merge it with
    * `withSaveHistory` for views of finished seasons.
@@ -56,3 +63,11 @@ export type SaveGameStore = {
   /** true if a row was removed; false if the id was already gone. */
   delete(id: string): Promise<boolean>;
 };
+
+/** Load a save to display it, from the store's read cache when it has one. */
+export function loadSaveForView(
+  store: SaveGameStore,
+  id: string,
+): Promise<LoadedSaveGame | null> {
+  return store.loadReadOnly ? store.loadReadOnly(id) : store.load(id);
+}

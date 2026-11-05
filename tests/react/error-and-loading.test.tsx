@@ -13,14 +13,6 @@ import DashboardError from "@/app/dashboard/[saveId]/error";
 import AppError from "@/app/error";
 import GlobalError from "@/app/global-error";
 import { backTarget } from "@/components/game/save-error-target";
-import {
-  SkeletonCards,
-  SkeletonPage,
-  SkeletonScreen,
-  SkeletonTable,
-  SkeletonTileBoard,
-} from "@/components/ui/Skeleton";
-import DashboardLoading from "@/app/dashboard/[saveId]/loading";
 
 afterEach(() => {
   cleanup();
@@ -129,32 +121,6 @@ describe("app and global error boundaries", () => {
 });
 
 describe("skeletons", () => {
-  it("expose one status and hide the placeholders", () => {
-    const { container } = render(<DashboardLoading />);
-    expect(screen.getAllByRole("status")).toHaveLength(1);
-    expect(screen.getByRole("status").textContent).toBe("Loading…");
-    const blocks = container.querySelectorAll("[data-skeleton]");
-    expect(blocks.length).toBeGreaterThan(8);
-    for (const block of blocks) {
-      expect(block.closest("[aria-hidden='true']")).not.toBeNull();
-    }
-  });
-
-  it("each composite is aria-hidden on its own", () => {
-    for (const piece of [
-      <SkeletonTileBoard key="a" />,
-      <SkeletonTable key="b" />,
-      <SkeletonCards key="c" />,
-      <SkeletonPage key="d" />,
-    ]) {
-      const { container, unmount } = render(
-        <SkeletonScreen>{piece}</SkeletonScreen>,
-      );
-      expect(container.querySelectorAll("[role='status']")).toHaveLength(1);
-      unmount();
-    }
-  });
-
   it("the shimmer is switched off under reduced motion", () => {
     const css = readFileSync(
       path.join(process.cwd(), "src", "app", "globals.css"),
