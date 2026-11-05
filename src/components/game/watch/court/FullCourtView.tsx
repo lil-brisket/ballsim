@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useId,
   useLayoutEffect,
@@ -47,8 +48,20 @@ import type {
 } from "@/state/watch-game-view";
 import { CourtCallout, CourtPeriodCard, CourtWhistle } from "./CourtOverlays";
 import { CourtToken } from "./CourtToken";
+import { CourtHoops } from "./CourtHoops";
 import {
+  TILT_BENCH_PUSH,
+  TILT_ORIGIN,
+  TILT_RAISE,
+  tiltFloorTransform,
+  tiltPoint,
+  tiltTranslate,
+} from "./court-tilt";
+import {
+  TILT_BALL_SCALE,
+  animationProgress,
   ballFloorKeyframes,
+  ballHeightKeyframes,
   ballLiftKeyframes,
   calloutText,
   courtTranslate,
@@ -56,7 +69,15 @@ import {
   rimTime,
   trackKeyframes,
 } from "./court-motion";
-import { teamTokenColor } from "./team-token-colors";
+import { athleteAppearance } from "./fx/athlete-look";
+import { MIN_TILT_COURT_PX } from "./fx/court-fx-preference";
+import { CourtFxLayer } from "./fx/CourtFxLayer";
+import type { CourtFxCelebration, CourtFxCue } from "./fx/fx-events";
+import { teamLightColor, teamTokenColor } from "./team-token-colors";
+
+/** A label above a standing player would sit on them; it goes to the feet. */
+const labelBelowFigure = (side: LabelSide | undefined): LabelSide =>
+  side === undefined || side === "above" ? "below" : side;
 
 const LENGTH = FULL_COURT_FEET.length;
 const WIDTH = FULL_COURT_FEET.width;
@@ -105,9 +126,24 @@ export function FullCourtView(props: {
   run?: { side: WatchSide; points: number } | null;
   /** The game is over: the centre logo brightens. */
   final?: boolean;
+  /** Broadcast effects over the floor; omitted leaves the floor undecorated. */
+  fx?: {
+    cues: CourtFxCue[];
+    celebration: CourtFxCelebration | null;
+    seed: number;
+  };
+  /** The tilted broadcast camera rather than straight overhead. */
+  tilt?: boolean;
   className?: string;
 }) {
   const { frame, home, away, live } = props;
+  // Floor size in pixels, for the camera and label layout; changes on resize.
+  const [courtSize, setCourtSize] = useState(DEFAULT_COURT_SIZE);
+  // A small floor stays overhead, where the players have room.
+  const tilt = (props.tilt ?? false) && courtSize.width >= MIN_TILT_COURT_PX;
+  // Where anything standing on the floor goes, under this camera.
+  const toScreen = tilt ? tiltTranslate : courtTranslate;
+  const onScreen = tilt ? tiltPoint : (point: FullCourtPoint) => point;
   const speed = props.speed && props.speed > 0 ? props.speed : 1;
   const showShotChart = props.showShotChart ?? false;
 
@@ -133,22 +169,58 @@ export function FullCourtView(props: {
 
   // The latest play's animations, and the speed they were started at.
   const courtRef = useRef<HTMLDivElement>(null);
-  const motion = useRef<{ animations: Animation[]; speed: number }>({
+  const motion = useRef<{
+    animations: Animation[];
+    speed: number;
+    choreography: PlayChoreography | null;
+  }>({
     animations: [],
     speed: 1,
+    choreography: null,
   });
   // Read when a choreography starts, so speed or pause changes never restart it.
-  const latest = useRef({ speed, playing, motionMs });
-  useLayoutEffect(() => {
-    latest.current = { speed, playing, motionMs };
+  const latest = useRef({
+    speed,
+    playing,
+    motionMs,
+    tilt,
+    ballPxPerFt: 0,
+    made: false,
   });
 
-  // Floor size in pixels, for the label layout; only changes on resize.
-  const [courtSize, setCourtSize] = useState(DEFAULT_COURT_SIZE);
+  // A play's time, for the effects layer: every animation of a play starts
+  // together, so any one of them is its clock. The layer hears of a new play
+  // after the court starts it, so a clock only answers for its own play.
+  const fxClock = useCallback((play: PlayChoreography) => {
+    const { animations, choreography: running } = motion.current;
+    const animation = animations[0];
+    return animation && running === play ? animationProgress(animation) : null;
+  }, []);
+  // The disc only gives way to an athlete once something is drawing one.
+  const [fxReady, setFxReady] = useState(false);
+
   // A wide floor seats each bench in one row; the frame's seats (and any walk
   // to or from them) are re-laid out point by point.
-  const wideBench = courtSize.width >= WIDE_BENCH_MIN_PX;
-  const placeOf = wideBench ? wideBenchPoint : (point: FullCourtPoint) => point;
+  // The tilted camera always seats them in a line along the far sideline.
+  const wideBench = tilt || courtSize.width >= WIDE_BENCH_MIN_PX;
+  const seated = wideBench ? wideBenchPoint : (point: FullCourtPoint) => point;
+  const placeOf = tilt
+    ? (point: FullCourtPoint): FullCourtPoint => {
+        const seat = seated(point);
+        return seat.y < 0 ? { ...seat, y: seat.y * TILT_BENCH_PUSH } : seat;
+      }
+    : seated;
+  const ballPxPerFt = (courtSize.width / LENGTH) * TILT_RAISE;
+  useLayoutEffect(() => {
+    latest.current = {
+      speed,
+      playing,
+      motionMs,
+      tilt,
+      ballPxPerFt,
+      made: frame.lastPlay?.outcome === "made",
+    };
+  });
   const place = useRef(placeOf);
   useLayoutEffect(() => {
     place.current = placeOf;
@@ -174,9 +246,13 @@ export function FullCourtView(props: {
 
   useLayoutEffect(() => {
     const running = motion.current.animations;
+    // The camera changing mid-play restarts the same play from the same moment.
+    const samePlay =
+      choreography !== null && motion.current.choreography === choreography;
+    const resumeAt = samePlay ? (running[0]?.currentTime ?? null) : null;
     // A play revealed mid-motion starts from where each layer is drawn now.
     const drawn = new Map<Element, string>();
-    if (choreography) {
+    if (choreography && !samePlay) {
       for (const animation of running) {
         const target = (animation.effect as KeyframeEffect | null)?.target;
         if (target && animation.playState !== "finished") {
@@ -187,8 +263,15 @@ export function FullCourtView(props: {
     for (const animation of running) {
       animation.cancel();
     }
-    const { speed: startSpeed, playing: startPlaying } = latest.current;
-    motion.current = { animations: [], speed: startSpeed };
+    const {
+      speed: startSpeed,
+      playing: startPlaying,
+      tilt: startTilt,
+      ballPxPerFt,
+      made,
+    } = latest.current;
+    const translate = startTilt ? tiltTranslate : courtTranslate;
+    motion.current = { animations: [], speed: startSpeed, choreography };
     const duration = latest.current.motionMs / startSpeed;
     const court = courtRef.current;
     if (!choreography || !court || duration <= 0 || prefersReducedMotion()) {
@@ -203,6 +286,9 @@ export function FullCourtView(props: {
         keyframes[0] = { ...keyframes[0], transform: from };
       }
       const animation = el.animate(keyframes, { duration });
+      if (resumeAt !== null) {
+        animation.currentTime = resumeAt;
+      }
       if (!startPlaying) {
         animation.pause();
       }
@@ -215,18 +301,21 @@ export function FullCourtView(props: {
           choreography.beats,
           track.points.map((point) => place.current(point)),
           choreography.deadBall,
+          translate,
         ),
       );
     }
     start(
       court.querySelector<HTMLElement>('[data-mover="ball"]'),
-      ballFloorKeyframes(choreography),
+      ballFloorKeyframes(choreography, translate),
     );
     start(
       court.querySelector<HTMLElement>("[data-ball-lift]"),
-      ballLiftKeyframes(choreography),
+      startTilt
+        ? ballHeightKeyframes(choreography, ballPxPerFt, made)
+        : ballLiftKeyframes(choreography),
     );
-  }, [choreography]);
+  }, [choreography, tilt]);
 
   // Pause freezes the play mid-motion; Play carries on from there.
   useEffect(() => {
@@ -313,7 +402,7 @@ export function FullCourtView(props: {
     add(frame.players.find((p) => p.role === "handler")?.playerId);
     const request = (id: PlayerId, optional = false) => {
       const p = byId.get(id)!;
-      return { playerId: id, at: p.spot, text: p.label, optional };
+      return { playerId: id, at: onScreen(p.spot), text: p.label, optional };
     };
     // On a wide enough floor everyone else's name shows too, wherever it
     // fits cleanly; a name with no clean spot waits for hover or focus.
@@ -323,14 +412,14 @@ export function FullCourtView(props: {
           .map((p) => p.playerId)
           .filter((id) => !shownIds.includes(id))
       : [];
-    const tokens = frame.players.map((p) => p.spot);
+    const tokens = frame.players.map((p) => onScreen(p.spot));
     const shown = layoutCourtLabels({
       labels: [
         ...shownIds.map((id) => request(id)),
         ...optionalIds.map((id) => request(id, true)),
       ],
       tokens,
-      rims: RIMS,
+      rims: RIMS.map(onScreen),
       court: courtSize,
     });
     for (const [id, placed] of shown) {
@@ -342,7 +431,7 @@ export function FullCourtView(props: {
         const alone = layoutCourtLabels({
           labels: [request(p.playerId)],
           tokens,
-          rims: RIMS,
+          rims: RIMS.map(onScreen),
           avoid,
           court: courtSize,
         });
@@ -350,7 +439,8 @@ export function FullCourtView(props: {
       }
     }
     return { sides, shown: new Set(shown.keys()) };
-  }, [frame.players, courtSize, selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onScreen follows tilt
+  }, [frame.players, courtSize, selectedId, tilt]);
 
   const incoming = new Map<PlayerId, CourtSubstitution>(
     frame.substitutions.map((sub) => [sub.inId, sub]),
@@ -389,7 +479,12 @@ export function FullCourtView(props: {
       (a, b) => (rosterOrder.get(a.id) ?? 0) - (rosterOrder.get(b.id) ?? 0),
     );
   }
-  const benchTopRow = benchTopRowY(frame.benchRows, wideBench);
+  // Under the tilted camera the players on the floor stand up as athletes,
+  // once something is drawing them.
+  const figures = tilt && Boolean(props.fx) && fxReady;
+  const rosterById = new Map((props.players ?? []).map((p) => [p.playerId, p]));
+  const benchTopRow =
+    benchTopRowY(frame.benchRows, wideBench) * (tilt ? TILT_BENCH_PUSH : 1);
   const benchFirstX = wideBench
     ? WIDE_BENCH_LAYOUT.firstX
     : BENCH_LAYOUT.firstX;
@@ -422,6 +517,13 @@ export function FullCourtView(props: {
     frame.attackingEnd === "left"
       ? COURT_FEET.hoopY
       : LENGTH - COURT_FEET.hoopY;
+
+  const floorPlane: CSSProperties | undefined = tilt
+    ? {
+        transform: tiltFloorTransform(courtSize.width),
+        transformOrigin: TILT_ORIGIN,
+      }
+    : undefined;
 
   const arrow = (
     <svg
@@ -500,193 +602,264 @@ export function FullCourtView(props: {
           // Down to the top row of seats in floor heights (padding % is of
           // the width), plus a fixed strip for the captions above it.
           style={{
-            paddingTop: `calc(${Math.round(((-benchTopRow * WIDTH) / LENGTH) * 10000) / 100}% + ${BENCH_CAPTION_PX}px)`,
+            // Tilted, the benches sit in the room the far sideline leaves.
+            paddingTop: tilt
+              ? `${BENCH_CAPTION_PX}px`
+              : `calc(${Math.round(((-benchTopRow * WIDTH) / LENGTH) * 10000) / 100}% + ${BENCH_CAPTION_PX}px)`,
           }}
         />
 
-        <div className="court-viewport relative w-full">
+        <div
+          className="court-viewport relative w-full"
+          // Tilted, the box starts at the benches: nothing is drawn above them.
+          style={
+            tilt
+              ? {
+                  marginTop: `${
+                    Math.round(
+                      -onScreen({ x: 0.5, y: benchTopRow }).y *
+                        (WIDTH / LENGTH) *
+                        10000,
+                    ) / 100
+                  }%`,
+                }
+              : undefined
+          }
+        >
           {/* Baseline wordmarks on the apron, centred on the floor's height so
               they line up with the hoops. */}
-          <span
-            aria-hidden="true"
-            data-testid="court-wordmark"
-            className={cn(WORDMARK_CLASS, "inset-y-0 -left-6 w-6")}
-            style={{ color: palette.wordmark }}
-          >
-            <span className="-rotate-90 whitespace-nowrap">{home.name}</span>
-          </span>
-          <span
-            aria-hidden="true"
-            data-testid="court-wordmark"
-            className={cn(WORDMARK_CLASS, "inset-y-0 -right-6 w-6")}
-            style={{ color: palette.wordmark }}
-          >
-            <span className="rotate-90 whitespace-nowrap">{home.name}</span>
-          </span>
+          {tilt ? null : (
+            <>
+              <span
+                aria-hidden="true"
+                data-testid="court-wordmark"
+                className={cn(WORDMARK_CLASS, "inset-y-0 -left-6 w-6")}
+                style={{ color: palette.wordmark }}
+              >
+                <span className="-rotate-90 whitespace-nowrap">
+                  {home.name}
+                </span>
+              </span>
+              <span
+                aria-hidden="true"
+                data-testid="court-wordmark"
+                className={cn(WORDMARK_CLASS, "inset-y-0 -right-6 w-6")}
+                style={{ color: palette.wordmark }}
+              >
+                <span className="rotate-90 whitespace-nowrap">{home.name}</span>
+              </span>
+            </>
+          )}
           <div
             ref={courtRef}
-            className="court-wood relative aspect-[94/50] w-full overflow-x-clip"
-            style={{ backgroundColor: palette.floor }}
+            className={cn(
+              "court-stage relative aspect-[94/50] w-full",
+              !tilt && "overflow-x-clip",
+            )}
           >
-            {/* Under the lines: the logo is faded paint, not a layer over the court. */}
-            {palette.logo ? (
-              <div
-                aria-hidden="true"
-                data-testid="court-centre-logo"
-                data-final={props.final ? "true" : undefined}
-                className="court-centre-logo pointer-events-none absolute left-1/2 top-1/2 aspect-square -translate-x-1/2 -translate-y-1/2"
-                style={{
-                  width: `calc(8 / ${LENGTH} * 100%)`,
-                  opacity: props.final
-                    ? FINAL_LOGO_OPACITY
-                    : palette.logoOpacity,
-                }}
-              >
-                <TeamLogoMark
-                  branding={palette.logo}
-                  decorative
-                  className="h-full w-full"
-                />
-              </div>
-            ) : null}
-            <svg
-              viewBox={`0 0 ${LENGTH} ${WIDTH}`}
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full"
+            <div
+              data-testid="court-floor"
+              className="court-wood absolute inset-0"
+              style={{ backgroundColor: palette.floor, ...floorPlane }}
             >
-              <defs>
-                <clipPath id={clipId}>
-                  <rect
-                    x="0"
-                    y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
-                    width={COURT_FEET.laneLength}
-                    height={COURT_FEET.laneWidth}
-                  />
-                  <rect
-                    x={LENGTH - COURT_FEET.laneLength}
-                    y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
-                    width={COURT_FEET.laneLength}
-                    height={COURT_FEET.laneWidth}
-                  />
-                </clipPath>
-                {/* Sheen on the lane paint, brightest at the baseline and
-                    fading out toward the free-throw line. */}
-                {(["left", "right"] as const).map((end) => (
-                  <linearGradient
-                    key={end}
-                    id={`${clipId}-${end}`}
-                    x1={end === "left" ? "0" : "1"}
-                    x2={end === "left" ? "1" : "0"}
-                    y1="0"
-                    y2="0"
-                  >
-                    <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.12" />
-                    <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
-                  </linearGradient>
-                ))}
-              </defs>
-              {(["left", "right"] as const).map((end) => {
-                const x = end === "left" ? 0 : LENGTH - COURT_FEET.laneLength;
-                const y = WIDTH / 2 - COURT_FEET.laneWidth / 2;
-                return (
-                  <g key={`lane-${end}`}>
-                    <rect
-                      data-testid="court-lane"
-                      x={x}
-                      y={y}
-                      width={COURT_FEET.laneLength}
-                      height={COURT_FEET.laneWidth}
-                      fill={palette.lane}
-                    />
-                    <rect
-                      x={x}
-                      y={y}
-                      width={COURT_FEET.laneLength}
-                      height={COURT_FEET.laneWidth}
-                      fill={`url(#${clipId}-${end})`}
-                    />
-                  </g>
-                );
-              })}
-              <circle
-                cx={LENGTH / 2}
-                cy={WIDTH / 2}
-                r="6"
-                fill={palette.lane}
-                fillOpacity="0.35"
-                stroke={palette.ring}
-                strokeWidth="0.6"
-              />
-              <g style={{ color: palette.line }}>
-                <FullCourtLines centreCircle={false} />
-              </g>
-              <g
-                style={{ color: palette.laneLine }}
-                clipPath={`url(#${clipId})`}
-              >
-                <FullCourtLines centreCircle={false} />
-              </g>
-              {flashRim ? (
-                <circle
-                  key={`flash-${playIndex}`}
-                  className="court-rim-flash"
-                  cx={rimX}
-                  cy={WIDTH / 2}
-                  r={COURT_FEET.rimRadius}
-                  fill="none"
-                  stroke={palette.laneLine}
-                  strokeWidth="0.5"
-                  data-testid="court-rim-flash"
+              {/* Under the lines: the logo is faded paint, not a layer over the court. */}
+              {palette.logo ? (
+                <div
+                  aria-hidden="true"
+                  data-testid="court-centre-logo"
+                  data-final={props.final ? "true" : undefined}
+                  className="court-centre-logo pointer-events-none absolute left-1/2 top-1/2 aspect-square -translate-x-1/2 -translate-y-1/2"
                   style={{
-                    animationDelay: `${Math.round(flashDelayMs)}ms`,
-                    animationPlayState: playing ? undefined : "paused",
+                    width: `calc(8 / ${LENGTH} * 100%)`,
+                    opacity: props.final
+                      ? FINAL_LOGO_OPACITY
+                      : palette.logoOpacity,
                   }}
-                />
+                >
+                  <TeamLogoMark
+                    branding={palette.logo}
+                    decorative
+                    className="h-full w-full"
+                  />
+                </div>
               ) : null}
-              {showShotChart
-                ? frame.shots.map((shot) => {
-                    const cx = shot.at.x * LENGTH;
-                    const cy = shot.at.y * WIDTH;
-                    const color = colorOf(shot.side);
-                    return (
-                      <g
-                        key={`court-shot-${shot.index}`}
-                        data-testid="court-shot-marker"
-                      >
-                        {shot.made ? (
-                          <circle
-                            cx={cx}
-                            cy={cy}
-                            r="0.9"
-                            fill={color}
-                            stroke={palette.line}
-                            strokeWidth="0.3"
-                          />
-                        ) : (
-                          <>
+              <svg
+                viewBox={`0 0 ${LENGTH} ${WIDTH}`}
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full"
+              >
+                <defs>
+                  <clipPath id={clipId}>
+                    <rect
+                      x="0"
+                      y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
+                      width={COURT_FEET.laneLength}
+                      height={COURT_FEET.laneWidth}
+                    />
+                    <rect
+                      x={LENGTH - COURT_FEET.laneLength}
+                      y={WIDTH / 2 - COURT_FEET.laneWidth / 2}
+                      width={COURT_FEET.laneLength}
+                      height={COURT_FEET.laneWidth}
+                    />
+                  </clipPath>
+                  {/* Sheen on the lane paint, brightest at the baseline and
+                    fading out toward the free-throw line. */}
+                  {(["left", "right"] as const).map((end) => (
+                    <linearGradient
+                      key={end}
+                      id={`${clipId}-${end}`}
+                      x1={end === "left" ? "0" : "1"}
+                      x2={end === "left" ? "1" : "0"}
+                      y1="0"
+                      y2="0"
+                    >
+                      <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.12" />
+                      <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+                    </linearGradient>
+                  ))}
+                </defs>
+                {(["left", "right"] as const).map((end) => {
+                  const x = end === "left" ? 0 : LENGTH - COURT_FEET.laneLength;
+                  const y = WIDTH / 2 - COURT_FEET.laneWidth / 2;
+                  return (
+                    <g key={`lane-${end}`}>
+                      <rect
+                        data-testid="court-lane"
+                        x={x}
+                        y={y}
+                        width={COURT_FEET.laneLength}
+                        height={COURT_FEET.laneWidth}
+                        fill={palette.lane}
+                      />
+                      <rect
+                        x={x}
+                        y={y}
+                        width={COURT_FEET.laneLength}
+                        height={COURT_FEET.laneWidth}
+                        fill={`url(#${clipId}-${end})`}
+                      />
+                    </g>
+                  );
+                })}
+                <circle
+                  cx={LENGTH / 2}
+                  cy={WIDTH / 2}
+                  r="6"
+                  fill={palette.lane}
+                  fillOpacity="0.35"
+                  stroke={palette.ring}
+                  strokeWidth="0.6"
+                />
+                <g style={{ color: palette.line }}>
+                  <FullCourtLines centreCircle={false} hoops={!tilt} />
+                </g>
+                <g
+                  style={{ color: palette.laneLine }}
+                  clipPath={`url(#${clipId})`}
+                >
+                  <FullCourtLines centreCircle={false} hoops={!tilt} />
+                </g>
+                {flashRim && !tilt ? (
+                  <circle
+                    key={`flash-${playIndex}`}
+                    className="court-rim-flash"
+                    cx={rimX}
+                    cy={WIDTH / 2}
+                    r={COURT_FEET.rimRadius}
+                    fill="none"
+                    stroke={palette.laneLine}
+                    strokeWidth="0.5"
+                    data-testid="court-rim-flash"
+                    style={{
+                      animationDelay: `${Math.round(flashDelayMs)}ms`,
+                      animationPlayState: playing ? undefined : "paused",
+                    }}
+                  />
+                ) : null}
+                {showShotChart
+                  ? frame.shots.map((shot) => {
+                      const cx = shot.at.x * LENGTH;
+                      const cy = shot.at.y * WIDTH;
+                      const color = colorOf(shot.side);
+                      return (
+                        <g
+                          key={`court-shot-${shot.index}`}
+                          data-testid="court-shot-marker"
+                        >
+                          {shot.made ? (
                             <circle
                               cx={cx}
                               cy={cy}
                               r="0.9"
-                              fill="none"
+                              fill={color}
                               stroke={palette.line}
-                              strokeWidth="0.7"
-                            />
-                            <circle
-                              cx={cx}
-                              cy={cy}
-                              r="0.9"
-                              fill="none"
-                              stroke={color}
                               strokeWidth="0.3"
                             />
-                          </>
-                        )}
-                      </g>
-                    );
-                  })
-                : null}
-            </svg>
+                          ) : (
+                            <>
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r="0.9"
+                                fill="none"
+                                stroke={palette.line}
+                                strokeWidth="0.7"
+                              />
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r="0.9"
+                                fill="none"
+                                stroke={color}
+                                strokeWidth="0.3"
+                              />
+                            </>
+                          )}
+                        </g>
+                      );
+                    })
+                  : null}
+              </svg>
+            </div>
+
+            {props.fx ? (
+              <CourtFxLayer
+                width={courtSize.width}
+                height={courtSize.height}
+                getClock={fxClock}
+                frame={frame}
+                choreography={choreography}
+                cues={props.fx.cues}
+                motionMs={motionMs}
+                speed={speed}
+                playing={playing}
+                run={props.run ?? null}
+                dimmed={Boolean(props.periodBreak) && !props.final}
+                celebration={props.final ? props.fx.celebration : null}
+                colors={[teamLightColor(home), teamLightColor(away)]}
+                seed={props.fx.seed}
+                onReady={setFxReady}
+                tilted={tilt}
+                place={placeOf}
+                athletes={
+                  tilt
+                    ? frame.players.map((player) => ({
+                        playerId: player.playerId,
+                        jersey: colorOf(player.side),
+                        accent: teamLightColor(teamOf(player.side)),
+                        number: badgeOf(player.playerId),
+                        ...athleteAppearance(
+                          rosterById.get(player.playerId),
+                          player.playerId,
+                        ),
+                      }))
+                    : []
+                }
+              />
+            ) : null}
+
+            {tilt ? <CourtHoops part="back" /> : null}
 
             {[0, 1].map((side) => (
               <span
@@ -695,9 +868,14 @@ export function FullCourtView(props: {
                 data-testid="court-bench-caption"
                 className="pointer-events-none absolute max-w-[46%] truncate whitespace-nowrap font-display text-sm font-semibold uppercase tracking-wide"
                 style={{
-                  left: pct(benchFirstX[side as WatchSide] - 0.02),
+                  left: pct(
+                    onScreen({
+                      x: benchFirstX[side as WatchSide] - 0.02,
+                      y: benchTopRow,
+                    }).x,
+                  ),
                   // Its bottom sits clear of the top row's tokens.
-                  top: pct(benchTopRow),
+                  top: pct(onScreen({ x: 0.5, y: benchTopRow }).y),
                   transform: "translateY(calc(-100% - 16px))",
                   color: palette.wordmark,
                 }}
@@ -721,7 +899,7 @@ export function FullCourtView(props: {
                   key={token.id}
                   data-mover={token.id}
                   className="court-mover z-10"
-                  style={{ transform: courtTranslate(placeOf(token.spot)) }}
+                  style={{ transform: toScreen(placeOf(token.spot)) }}
                 >
                   <CourtToken
                     player={player}
@@ -737,14 +915,17 @@ export function FullCourtView(props: {
                     accent={palette.line}
                     labelSide={
                       floor
-                        ? (labelSides.sides.get(token.id) ?? "below")
-                        : "above"
+                        ? figures
+                          ? labelBelowFigure(labelSides.sides.get(token.id))
+                          : (labelSides.sides.get(token.id) ?? "below")
+                        : "right"
                     }
                     labelShown={floor ? labelSides.shown.has(token.id) : false}
                     badge={badgeOf(token.id)}
                     bench={seated !== null}
                     fouledOut={seated !== null && fouledOut.has(token.id)}
                     impact={floor && token.id === impactId ? impact : undefined}
+                    figure={figures && floor !== null}
                   />
                 </div>
               );
@@ -758,19 +939,31 @@ export function FullCourtView(props: {
               data-testid="court-ball"
               data-mover="ball"
               className="court-mover z-20"
-              style={{ transform: courtTranslate(frame.ball.at) }}
+              style={{ transform: toScreen(frame.ball.at) }}
             >
               <span className="absolute -ml-1.5 -mt-1 h-3 w-3 rounded-full bg-black/40 blur-[1px]" />
-              <div data-ball-lift className="absolute">
+              <div
+                data-ball-lift
+                className="absolute"
+                style={
+                  tilt
+                    ? {
+                        transform: `translateY(${-(frame.ball.holderId === null ? 0.4 : 3) * ballPxPerFt}px) scale(${TILT_BALL_SCALE})`,
+                      }
+                    : undefined
+                }
+              >
                 <div className="-ml-1.5 -mt-1.5 h-3 w-3 rounded-full border border-black/50 bg-caution" />
               </div>
             </div>
+
+            {tilt ? <CourtHoops part="front" /> : null}
 
             {callout && lastPlay ? (
               <CourtCallout
                 key={`callout-${lastPlay.index}`}
                 text={callout}
-                at={frame.ball.at}
+                at={onScreen(frame.ball.at)}
                 delayMs={calloutDelayMs}
                 paused={!playing}
                 accent={
@@ -781,7 +974,7 @@ export function FullCourtView(props: {
             {whistle && lastPlay ? (
               <CourtWhistle
                 key={`whistle-${lastPlay.index}`}
-                at={frame.ball.at}
+                at={onScreen(frame.ball.at)}
                 delayMs={calloutDelayMs}
                 paused={!playing}
               />

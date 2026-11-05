@@ -62,6 +62,11 @@ export function CourtToken(props: {
    * `key` is the play index, so the animation replays for every play.
    */
   impact?: { key: number; delayMs: number; paused: boolean };
+  /**
+   * Something else draws this player on the floor: the disc goes, while the
+   * button, name label and selection and impact rings stay.
+   */
+  figure?: boolean;
 }) {
   const { player, team, color } = props;
   const ink = readableTextOnBackground(color);
@@ -75,6 +80,7 @@ export function CourtToken(props: {
   const halo = props.outline?.halo ? `0 0 0 2px ${props.outline.halo}` : null;
   const boxShadow = [halo, glow].filter(Boolean).join(", ") || undefined;
   const bench = props.bench ?? false;
+  const figure = props.figure ?? false;
   const name = bench
     ? `${player.fullName}, ${team.city} ${team.name}, bench${
         props.fouledOut ? ", fouled out" : ""
@@ -106,11 +112,20 @@ export function CourtToken(props: {
           player.side === 1 ? "border-[3px] border-double" : "border-2",
         )}
         data-ring={player.side === 1 ? "double" : "solid"}
+        data-figure={figure ? "true" : undefined}
         style={{
-          backgroundColor: color,
-          borderColor: props.outline?.ring ?? ink,
-          color: ink,
-          boxShadow,
+          ...(figure
+            ? {
+                backgroundColor: "transparent",
+                borderColor: "transparent",
+                color: "transparent",
+              }
+            : {
+                backgroundColor: color,
+                borderColor: props.outline?.ring ?? ink,
+                color: ink,
+                boxShadow,
+              }),
           ...(props.impact
             ? {
                 animationDelay: `${Math.round(props.impact.delayMs)}ms`,
@@ -131,7 +146,7 @@ export function CourtToken(props: {
             }}
           />
         ) : null}
-        {handler ? (
+        {handler && !figure ? (
           <span
             className={cn(
               "absolute -inset-1 rounded-full border-2",
@@ -144,11 +159,21 @@ export function CourtToken(props: {
           <span className="absolute -inset-1.5 rounded-full border-2 border-white bg-white/15" />
         ) : null}
       </span>
+      {/* A standing figure is clickable up to its head, not just at its feet. */}
+      {figure ? (
+        <span
+          aria-hidden="true"
+          data-testid="court-token-figure-hit"
+          className="absolute -top-8 inset-x-2 h-12"
+        />
+      ) : null}
       {/* Floor shadow, painted under the disc. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -z-10 h-7 w-7 translate-x-0.5 translate-y-1 rounded-full bg-black/35 blur-[2px] sm:h-8 sm:w-8"
-      />
+      {figure ? null : (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -z-10 h-7 w-7 translate-x-0.5 translate-y-1 rounded-full bg-black/35 blur-[2px] sm:h-8 sm:w-8"
+        />
+      )}
       {props.fouledOut ? (
         <span
           aria-hidden="true"

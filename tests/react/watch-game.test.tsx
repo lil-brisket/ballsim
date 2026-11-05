@@ -1281,6 +1281,53 @@ describe("WatchGameClient transport", () => {
     ).toHaveLength(1);
   });
 
+  it("switches between the tilted and overhead cameras and remembers", () => {
+    window.localStorage.removeItem("ballsim.courtTilt");
+    renderClient();
+    const floor = () => screen.getByTestId("court-floor");
+    expect(floor().style.transform).toContain("rotateX");
+    expect(screen.getByTestId("court-hoops-back")).toBeTruthy();
+    const trigger = button("More playback options");
+
+    fireEvent.click(trigger);
+    const on = screen.getByRole("menuitemcheckbox", { name: "Tilted view" });
+    expect(on.getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(on);
+    expect(floor().style.transform).toBe("");
+    expect(screen.queryByTestId("court-hoops-back")).toBeNull();
+    expect(window.localStorage.getItem("ballsim.courtTilt")).toBe("off");
+
+    fireEvent.click(trigger);
+    fireEvent.click(
+      screen.getByRole("menuitemcheckbox", { name: "Tilted view" }),
+    );
+    expect(floor().style.transform).toContain("rotateX");
+    expect(window.localStorage.getItem("ballsim.courtTilt")).toBe("on");
+    window.localStorage.removeItem("ballsim.courtTilt");
+  });
+
+  it("turns the broadcast effects off and on from the overflow menu", () => {
+    window.localStorage.removeItem("ballsim.courtFx");
+    renderClient();
+    expect(screen.getByTestId("court-fx")).toBeTruthy();
+    const trigger = button("More playback options");
+
+    fireEvent.click(trigger);
+    const on = screen.getByRole("menuitemcheckbox", { name: "Effects" });
+    expect(on.getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(on);
+    expect(screen.queryByTestId("court-fx")).toBeNull();
+    expect(window.localStorage.getItem("ballsim.courtFx")).toBe("off");
+
+    fireEvent.click(trigger);
+    const off = screen.getByRole("menuitemcheckbox", { name: "Effects" });
+    expect(off.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(off);
+    expect(screen.getByTestId("court-fx")).toBeTruthy();
+    expect(window.localStorage.getItem("ballsim.courtFx")).toBe("on");
+    window.localStorage.removeItem("ballsim.courtFx");
+  });
+
   it("toggles the shot chart from the overflow menu and closes on Escape", () => {
     renderClient();
     expect(screen.queryAllByTestId("court-shot-marker")).toHaveLength(0);
@@ -1295,8 +1342,18 @@ describe("WatchGameClient transport", () => {
     expect(document.activeElement).toBe(first);
     key(first, "ArrowDown");
     expect(document.activeElement).toBe(
+      screen.getByRole("menuitemcheckbox", { name: "Effects" }),
+    );
+    key(document.activeElement!, "ArrowDown");
+    expect(document.activeElement).toBe(
+      screen.getByRole("menuitemcheckbox", { name: "Tilted view" }),
+    );
+    key(document.activeElement!, "ArrowDown");
+    expect(document.activeElement).toBe(
       screen.getByRole("menuitem", { name: "Restart" }),
     );
+    key(document.activeElement!, "ArrowUp");
+    key(document.activeElement!, "ArrowUp");
     key(document.activeElement!, "ArrowUp");
     expect(document.activeElement).toBe(first);
 

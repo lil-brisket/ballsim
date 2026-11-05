@@ -2,6 +2,7 @@ import type { PlayerId } from "@/domain/ids";
 import type { PlayChoreography } from "@/state/watch-court-choreo";
 import type { CourtLastPlay } from "@/state/watch-court-frame";
 import type { FullCourtPoint } from "@/state/watch-full-court";
+import { RIM_HEIGHT_FT } from "./court-tilt";
 
 export const pct = (value: number): string =>
   `${Math.round(value * 10000) / 100}%`;
@@ -16,6 +17,9 @@ const hundredths = (value: number) => Math.round(value * 10000) / 100;
 export function courtTranslate(point: FullCourtPoint): string {
   return `translate(${hundredths(point.x)}cqw, ${hundredths(point.y)}cqh)`;
 }
+
+/** The ball's size under the tilted camera, in proportion to the rim. */
+export const TILT_BALL_SCALE = 0.8;
 
 /** Passes travel at an even speed, so a short pass never looks flicked. */
 const PASS_EASING = "linear";
@@ -126,14 +130,15 @@ export function trackKeyframes(
   beats: number[],
   points: FullCourtPoint[],
   stop = false,
+  translate: (point: FullCourtPoint) => string = courtTranslate,
 ): Keyframe[] {
   const at = smoothTrack(beats, points, stop);
   const frames: Keyframe[] = [];
   beats.forEach((t, k) => {
-    frames.push({ transform: courtTranslate(points[k]!), offset: t });
+    frames.push({ transform: translate(points[k]!), offset: t });
     if (k < beats.length - 1) {
       for (const sample of legSamples(t, beats[k + 1]!)) {
-        frames.push({ transform: courtTranslate(at(sample)), offset: sample });
+        frames.push({ transform: translate(at(sample)), offset: sample });
       }
     }
   });
@@ -145,7 +150,10 @@ export function trackKeyframes(
  * at the same samples, so the two never drift apart; passes and steals are
  * quick and straight, shots and loose balls travel evenly.
  */
-export function ballFloorKeyframes(choreo: PlayChoreography): Keyframe[] {
+export function ballFloorKeyframes(
+  choreo: PlayChoreography,
+  translate: (point: FullCourtPoint) => string = courtTranslate,
+): Keyframe[] {
   const tracks = new Map(
     choreo.tracks.map((track) => [
       track.playerId,
@@ -156,7 +164,7 @@ export function ballFloorKeyframes(choreo: PlayChoreography): Keyframe[] {
   choreo.ball.forEach((ball, k) => {
     const leg = choreo.legs[k];
     frames.push({
-      transform: courtTranslate(ball.at),
+      transform: translate(ball.at),
       offset: choreo.beats[k],
       easing: leg === "pass" || leg === "steal" ? PASS_EASING : "linear",
     });
@@ -164,7 +172,7 @@ export function ballFloorKeyframes(choreo: PlayChoreography): Keyframe[] {
     if (leg === "carry" && holder) {
       for (const sample of legSamples(choreo.beats[k]!, choreo.beats[k + 1]!)) {
         frames.push({
-          transform: courtTranslate(holder(sample)),
+          transform: translate(holder(sample)),
           offset: sample,
         });
       }
@@ -246,6 +254,176 @@ export function ballLiftKeyframes(choreo: PlayChoreography): Keyframe[] {
     });
   });
   return frames;
+}
+
+/** Hands height when a shot leaves them, feet. */
+const RELEASE_FT = 7.5;
+/** How far a shot climbs above the straight line to the rim, feet. */
+const SHOT_ARC_FT = 5;
+/** A ball in hand, feet. */
+const HELD_FT = 3;
+const CHEST_PASS_FT = 4.5;
+const FLOOR_FT = 0.4;
+/** Share of the last carry before a shot spent bringing the ball up. */
+const GATHER_SHARE = 0.2;
+
+/**
+ * The ball's real height in feet at play time `p`, for a camera that can show
+ * it: dribbled low, passed at chest height, shot in an arc that arrives at rim
+ * height. A make then falls through the net; a miss stays up for the rebound,
+ * which the next play brings down.
+ */
+export function ballHeightAt(
+  choreo: PlayChoreography,
+  made = false,
+): (p: number) => number {
+  const restAt = (k: number): number => {
+    const ball = choreo.ball[k]!;
+    if (ball.lift > 0) {
+      return ball.lift * RIM_HEIGHT_FT;
+    }
+    return ball.holderId !== null ? HELD_FT : FLOOR_FT;
+  };
+  return (p) => {
+    let k = 0;
+    while (k < choreo.legs.length - 1 && p >= choreo.beats[k + 1]!) {
+      k += 1;
+    }
+    const from = choreo.beats[k]!;
+    const to = choreo.beats[k + 1] ?? from;
+    const u =
+      to > from ? Math.min(1, Math.max(0, (p - from) / (to - from))) : 1;
+    const start = restAt(k);
+    const end = restAt(Math.min(k + 1, choreo.ball.length - 1));
+    switch (choreo.legs[k]) {
+      case "shot": {
+        // A block rises only as far as the hand that meets it.
+        const full = end >= RIM_HEIGHT_FT;
+        return (
+          RELEASE_FT +
+          (end - RELEASE_FT) * u +
+          Math.sin(Math.PI * u) * (full ? SHOT_ARC_FT : 1)
+        );
+      }
+      case "loose": {
+        // Falling: slow from the top, fast at the bottom.
+        const landing = made && k === choreo.legs.length - 1 ? FLOOR_FT : end;
+        return landing + (start - landing) * (1 - u * u);
+      }
+      case "pass":
+      case "steal":
+        return CHEST_PASS_FT + Math.sin(Math.PI * u) * 0.6;
+      default: {
+        const nextIsShot = choreo.legs[k + 1] === "shot";
+        const span = to - from;
+        const dribbles = Math.max(1, Math.round(span * DRIBBLES_PER_PLAY));
+        const bounce =
+          FLOOR_FT +
+          (HELD_FT - FLOOR_FT) * Math.abs(Math.cos(Math.PI * dribbles * u));
+        if (nextIsShot && u > 1 - GATHER_SHARE) {
+          const gather = (u - (1 - GATHER_SHARE)) / GATHER_SHARE;
+          return bounce + (RELEASE_FT - bounce) * gather;
+        }
+        return bounce;
+      }
+    }
+  };
+}
+
+/** Inner layer keyframes for the tilted camera, from `ballHeightAt`. */
+export function ballHeightKeyframes(
+  choreo: PlayChoreography,
+  pxPerFt: number,
+  made = false,
+): Keyframe[] {
+  const heightOf = ballHeightAt(choreo, made);
+  const pose = (t: number) => {
+    const px = Math.round(heightOf(t) * pxPerFt * 10) / 10;
+    return {
+      transform: `translateY(${-px}px) scale(${TILT_BALL_SCALE})`,
+      offset: t,
+    };
+  };
+  const frames: Keyframe[] = [];
+  choreo.beats.forEach((t, k) => {
+    frames.push(pose(t));
+    if (k < choreo.beats.length - 1) {
+      const next = choreo.beats[k + 1]!;
+      const steps = Math.max(6, Math.ceil((next - t) * SAMPLES_PER_PLAY));
+      for (let step = 1; step < steps; step += 1) {
+        frames.push(pose(t + ((next - t) * step) / steps));
+      }
+    }
+  });
+  return frames;
+}
+
+/**
+ * Play time (0..1) of a running animation, read from the animation itself so
+ * it follows pause, speed changes and retiming; null once it is cancelled.
+ */
+export function animationProgress(animation: Animation): number | null {
+  const time = animation.currentTime;
+  const end = animation.effect?.getComputedTiming().endTime;
+  if (typeof time !== "number" || typeof end !== "number" || end <= 0) {
+    return null;
+  }
+  return Math.min(1, Math.max(0, time / end));
+}
+
+/** Value at `p` along keyframes sampled as ascending offsets. */
+function lerpAt(offsets: number[], values: number[], p: number): number {
+  let lo = 0;
+  let hi = offsets.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (offsets[mid]! <= p) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+  const span = offsets[hi]! - offsets[lo]!;
+  const u = span > 0 ? Math.min(1, Math.max(0, (p - offsets[lo]!) / span)) : 1;
+  return values[lo]! + (values[hi]! - values[lo]!) * u;
+}
+
+export type BallSample = FullCourtPoint & { liftPx: number };
+
+/**
+ * The ball at play time `p`, read back from the keyframes the DOM ball runs,
+ * so anything drawn alongside it follows the same path and arc.
+ */
+export function ballSampler(
+  choreo: PlayChoreography,
+): (p: number) => BallSample {
+  const floor = ballFloorKeyframes(choreo).map((frame) => {
+    const match = /translate\((-?[\d.]+)cqw, (-?[\d.]+)cqh\)/.exec(
+      String(frame.transform),
+    );
+    return {
+      offset: frame.offset as number,
+      x: Number(match?.[1] ?? 0) / 100,
+      y: Number(match?.[2] ?? 0) / 100,
+    };
+  });
+  const lift = ballLiftKeyframes(choreo).map((frame) => {
+    const match = /translateY\((-?[\d.]+)px\)/.exec(String(frame.transform));
+    return {
+      offset: frame.offset as number,
+      px: -Number(match?.[1] ?? 0),
+    };
+  });
+  const floorOffsets = floor.map((frame) => frame.offset);
+  const xs = floor.map((frame) => frame.x);
+  const ys = floor.map((frame) => frame.y);
+  const liftOffsets = lift.map((frame) => frame.offset);
+  const lifts = lift.map((frame) => frame.px);
+  return (p) => ({
+    x: lerpAt(floorOffsets, xs, p),
+    y: lerpAt(floorOffsets, ys, p),
+    liftPx: lerpAt(liftOffsets, lifts, p),
+  });
 }
 
 /** Play time (0..1) when a shot or free throw reaches the rim; null without one. */

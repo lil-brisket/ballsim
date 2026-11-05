@@ -253,9 +253,12 @@ body {
 
 /* Court replay (Watch Game): hardwood floor, motion layers, callout and rim flash. */
 /* Full-court floor: lit maple surface; the palette paints the colour inline. */
-.court-wood {
-  /* Motion layers translate in cqw/cqh: fractions of the floor. */
+/* Motion layers translate in cqw/cqh: fractions of the floor's box. */
+.court-stage {
   container-type: size;
+}
+
+.court-wood {
   /* A dark edge and a drop shadow lift the floor off the apron. */
   box-shadow:
     0 0 0 2px rgb(0 0 0 / 0.25),

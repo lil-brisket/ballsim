@@ -40,6 +40,16 @@ export type WatchPlayer = {
   started: boolean;
   /** Final minutes from the box score (not derivable per play). */
   finalMinutes: number;
+  /** How they look on court; absent when the player record is gone. */
+  look?: WatchPlayerLook;
+};
+
+/** Portrait trait indices and height, for drawing the player on court. */
+export type WatchPlayerLook = {
+  skinTone: number;
+  hairColor: number;
+  hairStyle: number;
+  heightInches: number;
 };
 
 export type WatchPlayKind =

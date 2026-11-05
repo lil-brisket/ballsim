@@ -222,6 +222,7 @@ function toWatchPlayers(state: GameState, game: Game): WatchPlayer[] {
       continue;
     }
     const live = state.world.players[row.playerId];
+    const traits = state.world.playerPortraits?.[row.playerId]?.traits;
     const names =
       row.firstName != null && row.lastName != null
         ? formatNames(row.firstName, row.lastName)
@@ -239,6 +240,16 @@ function toWatchPlayers(state: GameState, game: Game): WatchPlayer[] {
       jerseyNumber: live?.jerseyNumber ?? null,
       started: row.started,
       finalMinutes: row.minutes,
+      ...(live && traits
+        ? {
+            look: {
+              skinTone: traits.skinTone,
+              hairColor: traits.hairColor,
+              hairStyle: traits.hairStyle,
+              heightInches: live.heightInches,
+            },
+          }
+        : {}),
     });
   }
   // Home first, then away; stable within each side.

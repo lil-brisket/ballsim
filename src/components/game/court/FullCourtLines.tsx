@@ -11,7 +11,7 @@ const WIDTH = FULL_COURT_FEET.width;
 const MID_Y = WIDTH / 2;
 
 /** Markings for the basket at one baseline; `left` is x = 0, else x = LENGTH. */
-function EndMarkings(props: { left: boolean }) {
+function EndMarkings(props: { left: boolean; hoops: boolean }) {
   /** Feet from this end's baseline to a screen x. */
   const x = (feet: number): number => n(props.left ? feet : LENGTH - feet);
   /** Arc sweep flag toward the centre of the court, and toward the baseline. */
@@ -42,30 +42,34 @@ function EndMarkings(props: { left: boolean }) {
       <path
         d={`M${hoop} ${MID_Y - C.restrictedRadius}a${C.restrictedRadius} ${C.restrictedRadius} 0 0 ${inward} 0 ${C.restrictedRadius * 2}`}
       />
-      <line
-        x1={n(x(C.backboardY) + 0.25)}
-        y1={MID_Y - 3 + 0.3}
-        x2={n(x(C.backboardY) + 0.25)}
-        y2={MID_Y + 3 + 0.3}
-        strokeWidth="0.5"
-        stroke="#000000"
-        strokeOpacity="0.35"
-      />
-      <line
-        x1={x(C.backboardY)}
-        y1={MID_Y - 3}
-        x2={x(C.backboardY)}
-        y2={MID_Y + 3}
-        strokeWidth="0.5"
-      />
-      <circle
-        cx={n(hoop + 0.25)}
-        cy={n(MID_Y + 0.3)}
-        r={C.rimRadius + 0.01}
-        stroke="#000000"
-        strokeOpacity="0.35"
-      />
-      <circle cx={hoop} cy={MID_Y} r={C.rimRadius} />
+      {props.hoops ? (
+        <>
+          <line
+            x1={n(x(C.backboardY) + 0.25)}
+            y1={MID_Y - 3 + 0.3}
+            x2={n(x(C.backboardY) + 0.25)}
+            y2={MID_Y + 3 + 0.3}
+            strokeWidth="0.5"
+            stroke="#000000"
+            strokeOpacity="0.35"
+          />
+          <line
+            x1={x(C.backboardY)}
+            y1={MID_Y - 3}
+            x2={x(C.backboardY)}
+            y2={MID_Y + 3}
+            strokeWidth="0.5"
+          />
+          <circle
+            cx={n(hoop + 0.25)}
+            cy={n(MID_Y + 0.3)}
+            r={C.rimRadius + 0.01}
+            stroke="#000000"
+            strokeOpacity="0.35"
+          />
+          <circle cx={hoop} cy={MID_Y} r={C.rimRadius} />
+        </>
+      ) : null}
       {/* Three-point line: 22 ft corners, 23.75 ft arc */}
       <path
         d={`M${x(0)} ${cornerTop}H${x(C.cornerThreeY)}A${C.threeRadius} ${C.threeRadius} 0 0 ${inward} ${x(C.cornerThreeY)} ${cornerBottom}H${x(0)}`}
@@ -84,7 +88,10 @@ export function FullCourtLines(props: {
   strokeOpacity?: number;
   /** False when the caller paints its own centre ring. */
   centreCircle?: boolean;
+  /** False when the caller draws raised hoops instead of these flat ones. */
+  hoops?: boolean;
 }) {
+  const hoops = props.hoops ?? true;
   return (
     <g
       className="court-lines"
@@ -94,8 +101,8 @@ export function FullCourtLines(props: {
       strokeWidth="0.2"
     >
       <rect x="0.2" y="0.2" width={LENGTH - 0.4} height={WIDTH - 0.4} />
-      <EndMarkings left />
-      <EndMarkings left={false} />
+      <EndMarkings left hoops={hoops} />
+      <EndMarkings left={false} hoops={hoops} />
       {/* Half-court line and centre circle */}
       <line x1={LENGTH / 2} y1="0" x2={LENGTH / 2} y2={WIDTH} />
       {props.centreCircle === false ? null : (

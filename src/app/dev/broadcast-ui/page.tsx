@@ -7,6 +7,7 @@
 
 import { SectionHeading, TeamThemeScope } from "@/components/ui";
 import { FullCourtShowcase } from "./FullCourtShowcase";
+import { FxShowcase } from "./FxShowcase";
 import { MomentShowcase } from "./MomentShowcase";
 import { TeamShowcase } from "./TeamShowcase";
 
@@ -70,6 +71,19 @@ export default function BroadcastUiShowcasePage() {
       >
         <SectionHeading as="h2" eyebrow="Court replay" title="Full court" />
         <FullCourtShowcase />
+      </TeamThemeScope>
+
+      <TeamThemeScope
+        branding={TEAMS[0].branding}
+        as="section"
+        className="mt-10 max-w-4xl space-y-3"
+      >
+        <SectionHeading
+          as="h2"
+          eyebrow="Court replay"
+          title="Broadcast effects"
+        />
+        <FxShowcase />
       </TeamThemeScope>
 
       <TeamThemeScope
